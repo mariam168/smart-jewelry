@@ -42,16 +42,19 @@ const smartUnitSchema = new mongoose.Schema(
     firmwareVersion: {
       type: String,
       default: "",
+      trim: true,
     },
 
     manufacturer: {
       type: String,
       default: "",
+      trim: true,
     },
 
     notes: {
       type: String,
       default: "",
+      trim: true,
     },
 
     status: {
@@ -69,7 +72,10 @@ const smartUnitSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  },
+  }
 );
 
-export default mongoose.model("SmartUnit", smartUnitSchema);
+export default mongoose.model(
+  "SmartUnit",
+  smartUnitSchema
+);

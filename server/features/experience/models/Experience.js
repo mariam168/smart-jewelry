@@ -59,8 +59,28 @@ const experienceSchema = new mongoose.Schema(
 
     slug: {
       type: String,
+      default: "",
       trim: true,
       lowercase: true,
+    },
+
+    accessDate: {
+      type: String,
+      default: "",
+      trim: true,
+      select: false,
+
+      validate: {
+        validator(value) {
+          if (!value) {
+            return true;
+          }
+
+          return /^\d{4}-\d{2}-\d{2}$/.test(value);
+        },
+
+        message: "Access date must use YYYY-MM-DD format",
+      },
     },
 
     type: {
@@ -71,7 +91,13 @@ const experienceSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["waiting", "draft", "active", "expired"],
+      enum: [
+        "waiting",
+        "draft",
+        "active",
+        "expired",
+        "disabled",
+      ],
       default: "waiting",
     },
 
@@ -100,10 +126,6 @@ experienceSchema.index({
   smartUnit: 1,
 });
 
-experienceSchema.index({
-  serialNumber: 1,
-});
-
 experienceSchema.index(
   {
     serialNumber: 1,
@@ -115,4 +137,11 @@ experienceSchema.index(
   },
 );
 
-export default mongoose.model("Experience", experienceSchema);
+const Experience =
+  mongoose.models.Experience ||
+  mongoose.model(
+    "Experience",
+    experienceSchema,
+  );
+
+export default Experience;

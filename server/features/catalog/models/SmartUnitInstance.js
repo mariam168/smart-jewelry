@@ -2,77 +2,84 @@ import mongoose from "mongoose";
 import crypto from "crypto";
 
 const generateUniqueCode = () => {
-  const randomPart = crypto.randomBytes(5).toString("hex").toUpperCase();
+  const randomPart = crypto
+    .randomBytes(5)
+    .toString("hex")
+    .toUpperCase();
 
   return `SU-${randomPart}`;
 };
 
-const smartUnitInstanceSchema = new mongoose.Schema(
-  {
-    smartUnit: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "SmartUnit",
-      required: true,
-      index: true,
-    },
+const smartUnitInstanceSchema =
+  new mongoose.Schema(
+    {
+      smartUnit: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "SmartUnit",
+        required: true,
+        index: true,
+      },
 
-    uniqueCode: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-      uppercase: true,
-      index: true,
-      default: generateUniqueCode,
-    },
+      uniqueCode: {
+        type: String,
+        required: true,
+        unique: true,
+        trim: true,
+        uppercase: true,
+        index: true,
+        default: generateUniqueCode,
+      },
 
-    serialNumber: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-      uppercase: true,
-      index: true,
-    },
+      serialNumber: {
+        type: String,
+        required: true,
+        unique: true,
+        trim: true,
+        uppercase: true,
+        index: true,
+      },
 
-    status: {
-      type: String,
-      enum: [
-        "available",
-        "reserved",
-        "assigned",
-        "activated",
-        "inactive",
-        "damaged",
-      ],
-      default: "available",
-    },
+      status: {
+        type: String,
+        enum: [
+          "available",
+          "reserved",
+          "assigned",
+          "activated",
+          "inactive",
+          "damaged",
+        ],
+        default: "available",
+      },
 
-    firmwareVersion: {
-      type: String,
-      default: "",
-      trim: true,
-    },
+      firmwareVersion: {
+        type: String,
+        default: "",
+        trim: true,
+      },
 
-    assignedAt: {
-      type: Date,
-      default: null,
-    },
+      assignedAt: {
+        type: Date,
+        default: null,
+      },
 
-    activatedAt: {
-      type: Date,
-      default: null,
-    },
+      activatedAt: {
+        type: Date,
+        default: null,
+      },
 
-    notes: {
-      type: String,
-      default: "",
-      trim: true,
+      notes: {
+        type: String,
+        default: "",
+        trim: true,
+      },
     },
-  },
-  {
-    timestamps: true,
-  },
+    {
+      timestamps: true,
+    }
+  );
+
+export default mongoose.model(
+  "SmartUnitInstance",
+  smartUnitInstanceSchema
 );
-
-export default mongoose.model("SmartUnitInstance", smartUnitInstanceSchema);

@@ -1,6 +1,7 @@
 import express from "express";
 
 import upload from "../middlewares/experienceUpload.js";
+
 import {
   createExperienceController,
   getExperienceController,
@@ -9,30 +10,68 @@ import {
   getExperienceBySlugController,
   updatePersonalController,
   updateSlugController,
+  updateAccessDateController,
   checkSlugController,
   uploadMediaController,
+  unlockPublicExperienceController,
 } from "../controllers/experienceController.js";
 
 const router = express.Router();
 
-router.post("/", createExperienceController);
+router.post(
+  "/",
+  createExperienceController,
+);
 
-router.get("/manage/:token", getExperienceController);
+router.get(
+  "/manage/:token",
+  getExperienceController,
+);
 
-router.get("/public/:serialNumber/:slug", getPublicExperience);
+router.put(
+  "/manage/:token/personal",
+  updatePersonalController,
+);
 
-router.get("/customer/:serialNumber/:slug", getCustomerExperience);
+router.put(
+  "/manage/:token/slug",
+  updateSlugController,
+);
 
-router.put("/manage/:token/personal", updatePersonalController);
-
-router.put("/manage/:token/slug", updateSlugController);
-
-router.get("/check-slug/:slug", checkSlugController);
+router.put(
+  "/manage/:token/access-date",
+  updateAccessDateController,
+);
 
 router.post(
   "/manage/:token/media",
   upload.array("files", 20),
   uploadMediaController,
 );
-router.get("/:serialNumber/:slug", getExperienceBySlugController);
+
+router.get(
+  "/check-slug/:slug",
+  checkSlugController,
+);
+
+router.get(
+  "/public/:serialNumber/:slug",
+  getPublicExperience,
+);
+
+router.post(
+  "/public/:serialNumber/:slug/unlock",
+  unlockPublicExperienceController,
+);
+
+router.get(
+  "/customer/:serialNumber/:slug",
+  getCustomerExperience,
+);
+
+router.get(
+  "/:serialNumber/:slug",
+  getExperienceBySlugController,
+);
+
 export default router;

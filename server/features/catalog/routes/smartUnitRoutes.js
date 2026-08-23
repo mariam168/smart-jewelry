@@ -8,20 +8,40 @@ import {
   deleteSmartUnitController,
 } from "../controllers/smartUnitController.js";
 
-import { getSmartUnitInstancesController } from "../controllers/smartUnitInstanceController.js";
+import {
+  getSmartUnitInstancesController,
+} from "../controllers/smartUnitInstanceController.js";
 
 const router = express.Router();
 
-router.post("/", createSmartUnitController);
+router.post(
+  "/",
+  createSmartUnitController
+);
 
-router.get("/", getSmartUnitsController);
+router.get(
+  "/",
+  getSmartUnitsController
+);
 
-router.get("/:smartUnitId/instances", getSmartUnitInstancesController);
+router.get(
+  "/:smartUnitId/instances",
+  getSmartUnitInstancesController
+);
 
-router.get("/:id", getSmartUnitController);
+router.get(
+  "/:id",
+  getSmartUnitController
+);
 
-router.put("/:id", updateSmartUnitController);
+router.put(
+  "/:id",
+  updateSmartUnitController
+);
 
-router.delete("/:id", deleteSmartUnitController);
+router.delete(
+  "/:id",
+  deleteSmartUnitController
+);
 
 export default router;

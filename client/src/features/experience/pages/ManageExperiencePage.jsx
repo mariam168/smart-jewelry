@@ -1,32 +1,69 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  useParams,
+} from "react-router-dom";
 
 import ProductInfoCard from "../components/ProductInfoCard";
 import PersonalInfoForm from "../components/PersonalInfoForm";
 import MediaUploader from "../components/MediaUploader";
 import MediaGallery from "../components/MediaGallery";
+import ExperienceAccessDateCard from "../components/ExperienceAccessDateCard";
 
 import {
   getExperience,
   updatePersonal,
   uploadMedia,
   updatePublicSlug,
+  updateAccessDate,
 } from "../services/experienceApi";
 
-const API_URL = "http://localhost:5173";
-
 const ManageExperiencePage = () => {
-  const { token } = useParams();
+  const { token } =
+    useParams();
 
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
 
-  const [experience, setExperience] = useState(null);
-  const [media, setMedia] = useState([]);
+  const [
+    saving,
+    setSaving,
+  ] = useState(false);
 
-  const [slug, setSlug] = useState("");
+  const [
+    savingAccessDate,
+    setSavingAccessDate,
+  ] = useState(false);
 
-  const [form, setForm] = useState({
+  const [
+    experience,
+    setExperience,
+  ] = useState(null);
+
+  const [
+    media,
+    setMedia,
+  ] = useState([]);
+
+  const [
+    slug,
+    setSlug,
+  ] = useState("");
+
+  const [
+    accessDate,
+    setAccessDate,
+  ] = useState("");
+
+  const [
+    form,
+    setForm,
+  ] = useState({
     ownerName: "",
     receiverName: "",
     receiverEmail: "",
@@ -39,158 +76,342 @@ const ManageExperiencePage = () => {
     loadExperience();
   }, [token]);
 
-  const loadExperience = async () => {
-    try {
-      setLoading(true);
+  const loadExperience =
+    async () => {
+      try {
+        setLoading(true);
 
-      const data = await getExperience(token);
+        const data =
+          await getExperience(
+            token,
+          );
 
-      console.log("MANAGE EXPERIENCE DATA:", data);
+        setExperience(
+          data.experience,
+        );
 
-      setExperience(data.experience);
-      setMedia(data.media || []);
+        setMedia(
+          data.media || [],
+        );
 
-      setSlug(data.experience?.slug || "");
+        setSlug(
+          data.experience
+            ?.slug || "",
+        );
 
-      if (data.personal) {
-        setForm({
-          ownerName: data.personal.ownerName || "",
-          receiverName: data.personal.receiverName || "",
-          receiverEmail: data.personal.receiverEmail || "",
-          title: data.personal.title || "",
-          message: data.personal.message || "",
-          profileImage: data.personal.profileImage || "",
-        });
+        setAccessDate(
+          data.experience
+            ?.accessDate || "",
+        );
+
+        if (data.personal) {
+          setForm({
+            ownerName:
+              data.personal
+                .ownerName || "",
+
+            receiverName:
+              data.personal
+                .receiverName || "",
+
+            receiverEmail:
+              data.personal
+                .receiverEmail || "",
+
+            title:
+              data.personal.title ||
+              "",
+
+            message:
+              data.personal
+                .message || "",
+
+            profileImage:
+              data.personal
+                .profileImage || "",
+          });
+        }
+      } catch (error) {
+        console.error(
+          "Failed to load experience:",
+          error,
+        );
+
+        alert(
+          error?.response?.data
+            ?.message ||
+            "Failed To Load Experience",
+        );
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Failed to load experience:", error);
+    };
 
-      console.error("STATUS:", error?.response?.status);
+  const handleChange = (
+    event,
+  ) => {
+    setForm(
+      (previous) => ({
+        ...previous,
 
-      console.error("RESPONSE:", error?.response?.data);
-
-      alert("Failed To Load Experience");
-    } finally {
-      setLoading(false);
-    }
+        [event.target.name]:
+          event.target.value,
+      }),
+    );
   };
 
-  const handleChange = (e) => {
-    setForm((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
+  const handleSave =
+    async () => {
+      try {
+        setSaving(true);
 
-  const handleSave = async () => {
-    try {
-      setSaving(true);
+        await updatePersonal(
+          token,
+          form,
+        );
 
-      await updatePersonal(token, form);
+        alert(
+          "Saved Successfully",
+        );
 
-      alert("Saved Successfully");
+        await loadExperience();
+      } catch (error) {
+        console.error(
+          "Failed to save personal information:",
+          error,
+        );
 
-      await loadExperience();
-    } catch (error) {
-      console.error("Failed to save personal information:", error);
+        alert(
+          error?.response?.data
+            ?.message ||
+            "Failed To Save",
+        );
+      } finally {
+        setSaving(false);
+      }
+    };
 
-      console.error("STATUS:", error?.response?.status);
+  const handleUpload =
+    async (files) => {
+      if (
+        !files ||
+        files.length === 0
+      ) {
+        return;
+      }
 
-      console.error("RESPONSE:", error?.response?.data);
+      try {
+        await uploadMedia(
+          token,
+          files,
+        );
 
-      alert(error?.response?.data?.message || "Failed To Save");
-    } finally {
-      setSaving(false);
-    }
-  };
+        alert(
+          "Files Uploaded Successfully",
+        );
 
-  const handleUpload = async (files) => {
-    if (!files || files.length === 0) {
-      return;
-    }
+        await loadExperience();
+      } catch (error) {
+        console.error(
+          "UPLOAD ERROR:",
+          error,
+        );
 
-    try {
-      await uploadMedia(token, files);
+        alert(
+          error?.response?.data
+            ?.message ||
+            "Upload Failed",
+        );
 
-      alert("Files Uploaded Successfully");
+        throw error;
+      }
+    };
 
-      await loadExperience();
-    } catch (error) {
-      console.error("UPLOAD ERROR:", error);
+  const handleSaveSlug =
+    async () => {
+      const cleanSlug = slug
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, "-");
 
-      console.error("STATUS:", error?.response?.status);
+      if (!cleanSlug) {
+        alert(
+          "Please enter a link name",
+        );
 
-      console.error("RESPONSE DATA:", error?.response?.data);
+        return;
+      }
 
-      console.error("RESPONSE HEADERS:", error?.response?.headers);
+      try {
+        await updatePublicSlug(
+          token,
+          cleanSlug,
+        );
 
-      alert(error?.response?.data?.message || "Upload Failed");
-    }
-  };
+        setSlug(cleanSlug);
 
-  const handleSaveSlug = async () => {
-    const cleanSlug = slug.trim().toLowerCase().replace(/\s+/g, "-");
+        alert(
+          "Public Link Updated",
+        );
 
-    if (!cleanSlug) {
-      alert("Please enter a link name");
-      return;
-    }
+        await loadExperience();
+      } catch (error) {
+        console.error(
+          "Failed to update slug:",
+          error,
+        );
 
-    try {
-      await updatePublicSlug(token, cleanSlug);
+        alert(
+          error?.response?.data
+            ?.message ||
+            "Failed To Update Public Link",
+        );
+      }
+    };
 
-      setSlug(cleanSlug);
+  const handleSaveAccessDate =
+    async () => {
+      if (!accessDate) {
+        alert(
+          "Please choose a date",
+        );
 
-      alert("Public Link Updated");
+        return;
+      }
 
-      await loadExperience();
-    } catch (error) {
-      console.error("Failed to update slug:", error);
+      try {
+        setSavingAccessDate(
+          true,
+        );
 
-      console.error("STATUS:", error?.response?.status);
+        await updateAccessDate(
+          token,
+          accessDate,
+        );
 
-      console.error("RESPONSE:", error?.response?.data);
+        alert(
+          "Date Protection Enabled",
+        );
 
-      alert(error?.response?.data?.message || "Failed To Update Public Link");
-    }
-  };
+        await loadExperience();
+      } catch (error) {
+        console.error(
+          "ACCESS DATE ERROR:",
+          error,
+        );
 
-  const serialNumber = experience?.serialNumber || "";
+        alert(
+          error?.response?.data
+            ?.message ||
+            "Failed To Save Access Date",
+        );
+      } finally {
+        setSavingAccessDate(
+          false,
+        );
+      }
+    };
+
+  const handleRemoveAccessDate =
+    async () => {
+      try {
+        setSavingAccessDate(
+          true,
+        );
+
+        await updateAccessDate(
+          token,
+          "",
+        );
+
+        setAccessDate("");
+
+        alert(
+          "Date Protection Removed",
+        );
+
+        await loadExperience();
+      } catch (error) {
+        console.error(
+          "REMOVE ACCESS DATE ERROR:",
+          error,
+        );
+
+        alert(
+          error?.response?.data
+            ?.message ||
+            "Failed To Remove Date Protection",
+        );
+      } finally {
+        setSavingAccessDate(
+          false,
+        );
+      }
+    };
+
+  const serialNumber =
+    experience?.serialNumber ||
+    "";
+
+  const clientUrl =
+    window.location.origin;
 
   const publicLink =
-    serialNumber && experience?.slug
-      ? `${API_URL}/experience/${encodeURIComponent(
+    serialNumber &&
+    experience?.slug
+      ? `${clientUrl}/experience/${encodeURIComponent(
           serialNumber,
-        )}/${encodeURIComponent(experience.slug)}`
+        )}/${encodeURIComponent(
+          experience.slug,
+        )}`
       : "";
 
-  const copyLink = async () => {
-    if (!publicLink) {
-      alert("Please save a custom link first");
+  const copyLink =
+    async () => {
+      if (!publicLink) {
+        alert(
+          "Please save a custom link first",
+        );
 
-      return;
-    }
+        return;
+      }
 
-    try {
-      await navigator.clipboard.writeText(publicLink);
+      try {
+        await navigator.clipboard.writeText(
+          publicLink,
+        );
 
-      alert("Copied Successfully");
-    } catch (error) {
-      console.error("Failed to copy link:", error);
+        alert(
+          "Copied Successfully",
+        );
+      } catch (error) {
+        console.error(
+          "Failed to copy link:",
+          error,
+        );
 
-      alert("Failed To Copy Link");
-    }
-  };
+        alert(
+          "Failed To Copy Link",
+        );
+      }
+    };
 
-  const openPublicProfile = () => {
-    if (!publicLink) {
-      alert("Please save a custom link first");
+  const openPublicProfile =
+    () => {
+      if (!publicLink) {
+        alert(
+          "Please save a custom link first",
+        );
 
-      return;
-    }
+        return;
+      }
 
-    window.open(publicLink, "_blank", "noopener,noreferrer");
-  };
+      window.open(
+        publicLink,
+        "_blank",
+        "noopener,noreferrer",
+      );
+    };
 
   if (loading) {
     return (
@@ -212,21 +433,17 @@ const ManageExperiencePage = () => {
 
   if (!experience) {
     return (
-      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-warm-ivory px-4">
-        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-soft-cream blur-[120px]" />
-
-        <div className="relative overflow-hidden rounded-[28px] border border-light-champagne/90 bg-soft-white/90 px-10 py-12 text-center shadow-[0_20px_60px_rgba(7,19,31,0.06)]">
-          <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full border border-champagne-gold/10" />
-
-          <div className="relative mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full border border-champagne-gold/25 bg-soft-cream text-[17px] text-classic-gold">
+      <div className="flex min-h-screen items-center justify-center bg-warm-ivory px-4">
+        <div className="rounded-[28px] border border-light-champagne bg-soft-white px-10 py-12 text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-champagne-gold/25 bg-soft-cream text-classic-gold">
             ✦
           </div>
 
-          <h2 className="relative font-serif text-[2rem] font-normal tracking-[-0.03em] text-midnight-navy">
+          <h2 className="mt-5 font-serif text-[2rem] text-midnight-navy">
             Experience Not Found
           </h2>
 
-          <p className="relative mt-2 text-[13px] leading-6 text-slate-gray">
+          <p className="mt-2 text-[13px] text-slate-gray">
             We couldn't find this jewelry experience.
           </p>
         </div>
@@ -243,13 +460,13 @@ const ManageExperiencePage = () => {
       <header className="relative overflow-hidden border-b border-rich-navy bg-gradient-to-br from-deep-navy via-rich-navy to-luxury-black">
         <div className="pointer-events-none absolute -right-32 -top-44 h-[420px] w-[420px] rounded-full border border-champagne-gold/[0.08]" />
 
-        <div className="pointer-events-none absolute -bottom-40 left-[18%] h-80 w-80 rounded-full bg-champagne-gold/[0.04] blur-[100px]" />
-
         <div className="relative mx-auto max-w-6xl px-5 py-9 sm:px-8 sm:py-10">
           <div className="flex flex-col gap-7 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="flex items-center gap-3">
-                <span className="text-[15px] text-classic-gold">✦</span>
+                <span className="text-classic-gold">
+                  ✦
+                </span>
 
                 <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-soft-white">
                   Smart Jewelry
@@ -261,23 +478,24 @@ const ManageExperiencePage = () => {
               </h1>
 
               <p className="mt-4 max-w-xl text-[13px] leading-7 text-premium-silver">
-                Personalize your jewelry experience, add memories, and manage
-                your public profile.
+                Personalize your jewelry experience, protect it with a special
+                date, add memories, and manage your public profile.
               </p>
             </div>
 
-            <div className="flex w-fit items-center gap-3 rounded-[18px] border border-champagne-gold/20 bg-soft-white/[0.05] px-4 py-3 shadow-[0_10px_30px_rgba(0,0,0,0.08)] backdrop-blur-sm">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-champagne-gold/20 bg-champagne-gold text-[10px] text-deep-navy">
+            <div className="flex w-fit items-center gap-3 rounded-[18px] border border-champagne-gold/20 bg-soft-white/[0.05] px-4 py-3 backdrop-blur-sm">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-champagne-gold text-deep-navy">
                 ✦
               </span>
 
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-premium-silver">
+                <p className="text-[9px] uppercase tracking-[0.15em] text-premium-silver">
                   Experience Serial
                 </p>
 
-                <p className="mt-1 font-mono text-[12px] font-medium tracking-[0.04em] text-soft-white">
-                  {experience.serialNumber || "N/A"}
+                <p className="mt-1 font-mono text-[12px] text-soft-white">
+                  {serialNumber ||
+                    "N/A"}
                 </p>
               </div>
             </div>
@@ -287,150 +505,139 @@ const ManageExperiencePage = () => {
 
       <main className="relative mx-auto max-w-6xl px-5 py-9 sm:px-8 lg:py-12">
         <div className="space-y-8">
-          <section>
-            <ProductInfoCard experience={experience} />
-          </section>
+          <ProductInfoCard
+            experience={
+              experience
+            }
+          />
 
-          <section className="relative overflow-hidden rounded-[28px] border border-light-champagne/90 bg-soft-white/90 shadow-[0_20px_60px_rgba(7,19,31,0.055)]">
-            <div className="pointer-events-none absolute -right-28 -top-28 h-72 w-72 rounded-full border border-champagne-gold/[0.08]" />
+          <ExperienceAccessDateCard
+            accessDate={
+              accessDate
+            }
+            setAccessDate={
+              setAccessDate
+            }
+            hasSavedDate={Boolean(
+              experience.accessDate,
+            )}
+            onSave={
+              handleSaveAccessDate
+            }
+            onRemove={
+              handleRemoveAccessDate
+            }
+            saving={
+              savingAccessDate
+            }
+          />
 
+          <section className="overflow-hidden rounded-[28px] border border-light-champagne/90 bg-soft-white/90 shadow-[0_20px_60px_rgba(7,19,31,0.055)]">
             <div className="border-b border-light-champagne/80 bg-warm-ivory/50 px-6 py-7 sm:px-8">
-              <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[15px] border border-champagne-gold/20 bg-soft-cream text-[17px] text-deep-navy shadow-[0_6px_16px_rgba(7,19,31,0.035)]">
-                    🔗
-                  </div>
-
-                  <div>
-                    <h2 className="font-serif text-[1.65rem] font-normal tracking-[-0.025em] text-midnight-navy">
-                      Public Profile
-                    </h2>
-
-                    <p className="mt-1.5 max-w-xl text-[13px] leading-6 text-slate-gray">
-                      Create a custom link for this specific jewelry piece.
-                    </p>
-                  </div>
+              <div className="flex gap-4">
+                <div className="flex h-11 w-11 items-center justify-center rounded-[15px] border border-champagne-gold/20 bg-soft-cream">
+                  🔗
                 </div>
 
-                {experience.slug && (
-                  <span className="inline-flex w-fit items-center gap-2 rounded-full border border-champagne-gold/25 bg-soft-cream px-3.5 py-2 text-[10px] font-semibold text-antique-gold">
-                    <span className="h-1.5 w-1.5 rounded-full bg-classic-gold" />
-                    Published
-                  </span>
-                )}
+                <div>
+                  <h2 className="font-serif text-[1.65rem]">
+                    Public Profile
+                  </h2>
+
+                  <p className="mt-1.5 text-[13px] text-slate-gray">
+                    Create the public link for this jewelry piece.
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="relative space-y-7 px-6 py-7 sm:px-8 sm:py-8">
+            <div className="space-y-7 px-6 py-7 sm:px-8">
               <div>
-                <label className="mb-2.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+                <label className="mb-2.5 block text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-gray">
                   Jewelry Serial Number
                 </label>
 
                 <div className="rounded-[14px] border border-light-champagne bg-silver-mist/60 px-5 py-4">
-                  <p className="break-all font-mono text-[12px] font-semibold tracking-[0.05em] text-midnight-navy">
-                    {serialNumber || "Serial Number Not Available"}
+                  <p className="font-mono text-[12px] font-semibold">
+                    {serialNumber ||
+                      "Not Available"}
                   </p>
                 </div>
-
-                <p className="mt-2 text-[11px] leading-5 text-slate-gray">
-                  This serial number uniquely identifies this physical jewelry
-                  piece.
-                </p>
               </div>
 
               <div>
-                <label className="mb-2.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+                <label className="mb-2.5 block text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-gray">
                   Custom Link Name
                 </label>
 
-                <div className="flex flex-col overflow-hidden rounded-[14px] border border-light-champagne bg-soft-white transition-all duration-300 focus-within:border-classic-gold focus-within:ring-4 focus-within:ring-classic-gold/10 md:flex-row">
+                <div className="flex flex-col overflow-hidden rounded-[14px] border border-light-champagne bg-soft-white focus-within:border-classic-gold md:flex-row">
                   <div className="flex items-center border-b border-light-champagne bg-warm-ivory/70 px-4 py-3 text-[12px] text-slate-gray md:border-b-0 md:border-r">
-                    <span className="whitespace-nowrap font-mono">
-                      /experience/
-                      {serialNumber || "SERIAL"}/
-                    </span>
+                    /experience/
+                    {serialNumber ||
+                      "SERIAL"}
+                    /
                   </div>
 
                   <input
                     type="text"
                     value={slug}
-                    onChange={(e) =>
-                      setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"))
+                    onChange={(
+                      event,
+                    ) =>
+                      setSlug(
+                        event.target.value
+                          .toLowerCase()
+                          .replace(
+                            /\s+/g,
+                            "-",
+                          ),
+                      )
                     }
-                    className="min-w-0 flex-1 bg-transparent px-4 py-3.5 text-[13px] text-midnight-navy outline-none placeholder:text-steel-gray"
-                    placeholder="marioma"
+                    className="min-w-0 flex-1 px-4 py-3.5 text-[13px] outline-none"
+                    placeholder="special-memory"
                   />
                 </div>
-
-                <p className="mt-2 text-[11px] leading-5 text-slate-gray">
-                  Your final link will look like:
-                  <span className="ml-1 font-medium text-antique-gold">
-                    /experience/
-                    {serialNumber || "SU-XXXXXXXX-XXXXXX"}
-                    /marioma
-                  </span>
-                </p>
               </div>
 
-              <div>
-                <label className="mb-2.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                  Current Public Link
-                </label>
+              {publicLink && (
+                <div className="rounded-[16px] border border-light-champagne bg-warm-ivory/60 p-4">
+                  <p className="break-all text-[12px]">
+                    {publicLink}
+                  </p>
+                </div>
+              )}
 
-                {publicLink ? (
-                  <div className="flex flex-col gap-3 rounded-[16px] border border-light-champagne bg-warm-ivory/60 p-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0">
-                      <p className="break-all text-[12px] font-medium leading-6 text-midnight-navy">
-                        {publicLink}
-                      </p>
-                    </div>
-
-                    <span className="shrink-0 rounded-full border border-champagne-gold/25 bg-soft-cream px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-antique-gold">
-                      Public
-                    </span>
-                  </div>
-                ) : (
-                  <div className="rounded-[16px] border border-dashed border-light-champagne bg-warm-ivory/60 p-5">
-                    <p className="text-[13px] font-semibold text-midnight-navy">
-                      No public link yet.
-                    </p>
-
-                    <p className="mt-1.5 text-[11px] leading-5 text-slate-gray">
-                      Enter a custom link name above and save it.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-3 border-t border-light-champagne/80 pt-6 sm:flex-row">
+              <div className="flex flex-col gap-3 border-t border-light-champagne pt-6 sm:flex-row">
                 <button
-                  onClick={handleSaveSlug}
-                  className="inline-flex min-h-[46px] items-center justify-center rounded-[13px] bg-deep-navy px-6 text-[11px] font-semibold text-soft-white shadow-[0_9px_22px_rgba(13,34,53,0.13)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-midnight-navy hover:shadow-[0_13px_28px_rgba(13,34,53,0.19)] active:scale-[0.98]"
+                  type="button"
+                  onClick={
+                    handleSaveSlug
+                  }
+                  className="min-h-[46px] rounded-[13px] bg-deep-navy px-6 text-[11px] font-semibold text-soft-white"
                 >
                   Save Link
                 </button>
 
                 <button
+                  type="button"
                   onClick={copyLink}
-                  disabled={!publicLink}
-                  className={`inline-flex min-h-[46px] items-center justify-center rounded-[13px] px-6 text-[11px] font-semibold transition-all duration-300 active:scale-[0.98] ${
-                    publicLink
-                      ? "border border-light-champagne bg-soft-white text-midnight-navy hover:-translate-y-0.5 hover:border-champagne-gold hover:bg-warm-ivory"
-                      : "cursor-not-allowed border border-light-champagne bg-silver-mist text-steel-gray"
-                  }`}
+                  disabled={
+                    !publicLink
+                  }
+                  className="min-h-[46px] rounded-[13px] border border-light-champagne bg-soft-white px-6 text-[11px] font-semibold disabled:opacity-40"
                 >
                   Copy Link
                 </button>
 
                 <button
-                  onClick={openPublicProfile}
-                  disabled={!publicLink}
-                  className={`inline-flex min-h-[46px] items-center justify-center rounded-[13px] px-6 text-[11px] font-semibold transition-all duration-300 active:scale-[0.98] ${
-                    publicLink
-                      ? "bg-classic-gold text-deep-navy shadow-[0_8px_20px_rgba(201,162,77,0.13)] hover:-translate-y-0.5 hover:bg-champagne-gold"
-                      : "cursor-not-allowed bg-silver-mist text-steel-gray"
-                  }`}
+                  type="button"
+                  onClick={
+                    openPublicProfile
+                  }
+                  disabled={
+                    !publicLink
+                  }
+                  className="min-h-[46px] rounded-[13px] bg-classic-gold px-6 text-[11px] font-semibold text-deep-navy disabled:opacity-40"
                 >
                   Open Profile
                 </button>
@@ -438,94 +645,42 @@ const ManageExperiencePage = () => {
             </div>
           </section>
 
-          <section className="relative overflow-hidden rounded-[28px] border border-light-champagne/90 bg-soft-white/90 shadow-[0_20px_60px_rgba(7,19,31,0.055)]">
+          <PersonalInfoForm
+            form={form}
+            handleChange={
+              handleChange
+            }
+            handleSave={
+              handleSave
+            }
+            saving={saving}
+          />
+
+          <MediaUploader
+            uploadFiles={
+              handleUpload
+            }
+          />
+
+          <section className="overflow-hidden rounded-[28px] border border-light-champagne/90 bg-soft-white/90 shadow-[0_20px_60px_rgba(7,19,31,0.055)]">
             <div className="border-b border-light-champagne/80 bg-warm-ivory/50 px-6 py-7 sm:px-8">
-              <div className="flex gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[15px] border border-champagne-gold/20 bg-soft-cream text-[17px] text-deep-navy shadow-[0_6px_16px_rgba(7,19,31,0.035)]">
-                  💌
-                </div>
+              <h2 className="font-serif text-[1.65rem]">
+                Your Memories
+              </h2>
 
-                <div>
-                  <h2 className="font-serif text-[1.65rem] font-normal tracking-[-0.025em] text-midnight-navy">
-                    Personal Message
-                  </h2>
-
-                  <p className="mt-1.5 text-[13px] leading-6 text-slate-gray">
-                    Add a personal touch to the jewelry experience.
-                  </p>
-                </div>
-              </div>
+              <p className="mt-1 text-[13px] text-slate-gray">
+                Photos, videos, audio and files connected to this experience.
+              </p>
             </div>
 
             <div className="px-6 py-7 sm:px-8">
-              <PersonalInfoForm
-                form={form}
-                handleChange={handleChange}
-                handleSave={handleSave}
-                saving={saving}
+              <MediaGallery
+                media={media}
               />
-            </div>
-          </section>
-
-          <section className="relative overflow-hidden rounded-[28px] border border-light-champagne/90 bg-soft-white/90 shadow-[0_20px_60px_rgba(7,19,31,0.055)]">
-            <div className="border-b border-light-champagne/80 bg-warm-ivory/50 px-6 py-7 sm:px-8">
-              <div className="flex gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[15px] border border-champagne-gold/20 bg-soft-cream text-[17px] text-deep-navy shadow-[0_6px_16px_rgba(7,19,31,0.035)]">
-                  📷
-                </div>
-
-                <div>
-                  <h2 className="font-serif text-[1.65rem] font-normal tracking-[-0.025em] text-midnight-navy">
-                    Add Memories
-                  </h2>
-
-                  <p className="mt-1.5 text-[13px] leading-6 text-slate-gray">
-                    Upload photos, videos, audio messages, or other memories.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="px-6 py-7 sm:px-8">
-              <MediaUploader uploadFiles={handleUpload} />
-            </div>
-          </section>
-
-          <section className="relative overflow-hidden rounded-[28px] border border-light-champagne/90 bg-soft-white/90 shadow-[0_20px_60px_rgba(7,19,31,0.055)]">
-            <div className="border-b border-light-champagne/80 bg-warm-ivory/50 px-6 py-7 sm:px-8">
-              <div className="flex gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[15px] border border-champagne-gold/20 bg-soft-cream text-[17px] text-deep-navy shadow-[0_6px_16px_rgba(7,19,31,0.035)]">
-                  ✨
-                </div>
-
-                <div>
-                  <h2 className="font-serif text-[1.65rem] font-normal tracking-[-0.025em] text-midnight-navy">
-                    Your Memories
-                  </h2>
-
-                  <p className="mt-1.5 text-[13px] leading-6 text-slate-gray">
-                    All the photos and memories connected to this experience.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="px-6 py-7 sm:px-8">
-              <MediaGallery media={media} />
             </div>
           </section>
         </div>
       </main>
-
-      <footer className="relative overflow-hidden border-t border-rich-navy bg-gradient-to-r from-deep-navy via-rich-navy to-deep-navy">
-        <div className="mx-auto max-w-6xl px-5 py-7 text-center sm:px-8">
-          <p className="text-[11px] tracking-wide text-premium-silver">
-            Crafted with care for your special jewelry experience
-            <span className="mx-2 text-classic-gold">✦</span>
-            Smart Jewelry
-          </p>
-        </div>
-      </footer>
     </div>
   );
 };
