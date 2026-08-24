@@ -76,9 +76,6 @@ const getImageUrl = (image) => {
   }`;
 };
 
-// ==========================================
-// STATUS STYLES
-// ==========================================
 
 const getOrderStatusClass = (orderStatus) => {
   switch (orderStatus) {

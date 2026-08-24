@@ -301,21 +301,20 @@ const AccountPage = () => {
       );
   };
 
-  const getImageUrl = (image) => {
-    if (!image) {
-      return "";
-    }
+ const getImageUrl = (image) => {
+  if (!image) {
+    return "";
+  }
 
-    if (
-      image.startsWith("http://") ||
-      image.startsWith("https://")
-    ) {
-      return image;
-    }
+  if (image.startsWith("http://") || image.startsWith("https://")) {
+    return image;
+  }
+  const baseUrl = import.meta.env.VITE_API_URL 
+    ? import.meta.env.VITE_API_URL.replace("/api", "") 
+    : "http://localhost:5000";
 
-    return `http://localhost:5000${image}`;
-  };
-
+  return `${baseUrl}${image}`;
+};
   const getOrderStepIndex = (status) => {
     return orderSteps.findIndex(
       (step) =>

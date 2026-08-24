@@ -10,10 +10,6 @@ import {
 
 export const CartContext = createContext(null);
 
-// ==========================================
-// Provider
-// ==========================================
-
 const CartProvider = ({ children }) => {
   const [cart, setCart] = useState({
     items: [],
@@ -22,10 +18,6 @@ const CartProvider = ({ children }) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
-
-  // ==========================================
-  // Load Cart
-  // ==========================================
 
   const loadCart = async () => {
     try {
@@ -45,17 +37,9 @@ const CartProvider = ({ children }) => {
     }
   };
 
-  // ==========================================
-  // Load Cart On Start
-  // ==========================================
-
   useEffect(() => {
     loadCart();
   }, []);
-
-  // ==========================================
-  // Add To Cart
-  // ==========================================
 
   const addToCart = async (
     productId,
@@ -91,10 +75,6 @@ const CartProvider = ({ children }) => {
     }
   };
 
-  // ==========================================
-  // Update Quantity
-  // ==========================================
-
   const updateQuantity = async (itemId, quantity) => {
     if (quantity < 1) {
       return;
@@ -117,10 +97,6 @@ const CartProvider = ({ children }) => {
     }
   };
 
-  // ==========================================
-  // Remove Item
-  // ==========================================
-
   const removeFromCart = async (itemId) => {
     try {
       setIsLoading(true);
@@ -139,10 +115,6 @@ const CartProvider = ({ children }) => {
     }
   };
 
-  // ==========================================
-  // Clear Cart
-  // ==========================================
-
   const clearCart = async () => {
     try {
       setIsLoading(true);
@@ -159,69 +131,26 @@ const CartProvider = ({ children }) => {
     }
   };
 
-  // ==========================================
-  // Open Cart
-  // ==========================================
-
   const openCart = () => {
     setIsCartOpen(true);
   };
-
-  // ==========================================
-  // Close Cart
-  // ==========================================
 
   const closeCart = () => {
     setIsCartOpen(false);
   };
 
-  // ==========================================
-  // Cart Items
-  // ==========================================
-
   const cartItems = cart?.items || [];
-
-  // ==========================================
-  // Cart Count
-  // ==========================================
 
   const cartCount = cartItems.reduce((total, item) => {
     return total + Number(item.quantity || 0);
   }, 0);
 
-  // ==========================================
-  // Cart Total
-  // ==========================================
-
   const cartTotal = cartItems.reduce((total, item) => {
-    // ========================================
-    // PRODUCT PRICE
-    // ========================================
-
     const productPrice = Number(item.product?.price || 0);
-
-    // ========================================
-    // VARIANT PRICE
-    // ========================================
 
     const variantPrice = Number(item.variant?.price || 0);
 
-    // ========================================
-    // BASE PRICE
-    // ========================================
-
     const basePrice = variantPrice > 0 ? variantPrice : productPrice;
-
-    // ========================================
-    // TECHNOLOGY EXTRA PRICE
-    // ========================================
-    //
-    // ProductTechnology contains extraPrice.
-    //
-    // Depending on the backend populate,
-    // the value can exist in different places.
-    //
-    // ========================================
 
     const technologyPrice = Number(
       item.technologyModel?.extraPrice ??
@@ -231,30 +160,14 @@ const CartProvider = ({ children }) => {
         0,
     );
 
-    // ========================================
-    // FINAL UNIT PRICE
-    // ========================================
-
     const finalUnitPrice = basePrice + technologyPrice;
 
-    // ========================================
-    // QUANTITY
-    // ========================================
-
     const quantity = Number(item.quantity || 0);
-
-    // ========================================
-    // ITEM TOTAL
-    // ========================================
 
     const itemTotal = finalUnitPrice * quantity;
 
     return total + itemTotal;
   }, 0);
-
-  // ==========================================
-  // Context Value
-  // ==========================================
 
   const value = {
     cart,
@@ -286,10 +199,6 @@ const CartProvider = ({ children }) => {
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
-
-// ==========================================
-// useCart Hook
-// ==========================================
 
 export const useCart = () => {
   const context = useContext(CartContext);
