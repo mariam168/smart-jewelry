@@ -22,22 +22,23 @@ import categoryRoutes from "./features/catalog/routes/categoryRoutes.js";
 import cartRoutes from "./features/cart/routes/cartRoutes.js";
 import productVariantRoutes from "./features/catalog/routes/productVariantRoutes.js";
 import productImageRoutes from "./features/catalog/routes/productImageRoutes.js";
+import financeRoutes from "./features/finance/routes/financeRoutes.js";
 
+import shippingRoutes from "./features/shipping/routes/shippingRoutes.js";
 const app = express();
 const allowedOrigins = [
   "http://localhost:5173",
   "https://jevorya.com",
-  "https://www.jevorya.com"
+  "https://www.jevorya.com",
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-    
       if (!origin || allowedOrigins.indexOf(origin) !== -1) {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        callback(new Error("Not allowed by CORS"));
       }
     },
     credentials: true,
@@ -70,9 +71,12 @@ app.use("/api/technology-models", technologyModelRoutes);
 app.use("/api/product-technologies", productTechnologyRoutes);
 
 app.use("/api/manufacturing", manufacturingRoutes);
-
+app.use(
+  "/api/shipping",
+  shippingRoutes,
+);
 app.use("/api/categories", categoryRoutes);
-
+app.use("/api/finance", financeRoutes);
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,

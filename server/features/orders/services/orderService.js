@@ -2,25 +2,65 @@ import mongoose from "mongoose";
 
 import Order from "../models/Order.js";
 import Cart from "../../cart/models/Cart.js";
+import ShippingArea from "../../shipping/models/ShippingArea.js";
+
+const createError = (message, statusCode = 400) => {
+  const error = new Error(message);
+
+  error.statusCode = statusCode;
+
+  return error;
+};
 
 const generateOrderNumber = () => {
   const timestamp = Date.now();
 
-  const random = Math.floor(1000 + Math.random() * 9000);
+  const random = Math.floor(
+    1000 + Math.random() * 9000,
+  );
 
   return `SJ-${timestamp}-${random}`;
 };
 
 export const createOrder = async (
   userId,
-  { shippingAddress, paymentMethod = "cash_on_delivery" },
+  {
+    shippingAddress,
+    shippingAreaId,
+    paymentMethod = "cash_on_delivery",
+  },
 ) => {
   if (!mongoose.Types.ObjectId.isValid(userId)) {
-    const error = new Error("Invalid user ID");
+    throw createError("Invalid user ID");
+  }
 
-    error.statusCode = 400;
+  if (!shippingAreaId) {
+    throw createError(
+      "Please select a shipping area",
+    );
+  }
 
-    throw error;
+  if (
+    !mongoose.Types.ObjectId.isValid(
+      shippingAreaId,
+    )
+  ) {
+    throw createError(
+      "Invalid shipping area",
+    );
+  }
+
+  const shippingArea =
+    await ShippingArea.findOne({
+      _id: shippingAreaId,
+      isActive: true,
+    });
+
+  if (!shippingArea) {
+    throw createError(
+      "Selected shipping area is not available",
+      404,
+    );
   }
 
   const cart = await Cart.findOne({
@@ -28,7 +68,8 @@ export const createOrder = async (
   })
     .populate({
       path: "items.product",
-      select: "name price images primaryImage image",
+      select:
+        "name price images primaryImage image",
     })
     .populate({
       path: "items.variant",
@@ -45,12 +86,14 @@ export const createOrder = async (
       },
     });
 
-  if (!cart || !cart.items || cart.items.length === 0) {
-    const error = new Error("Your cart is empty");
-
-    error.statusCode = 400;
-
-    throw error;
+  if (
+    !cart ||
+    !cart.items ||
+    cart.items.length === 0
+  ) {
+    throw createError(
+      "Your cart is empty",
+    );
   }
 
   if (
@@ -58,299 +101,534 @@ export const createOrder = async (
     !shippingAddress.firstName ||
     !shippingAddress.lastName ||
     !shippingAddress.phone ||
-    !shippingAddress.address ||
-    !shippingAddress.city
+    !shippingAddress.address
   ) {
-    const error = new Error("Complete shipping address is required");
-
-    error.statusCode = 400;
-
-    throw error;
+    throw createError(
+      "Complete shipping address is required",
+    );
   }
 
-  const allowedPaymentMethods = ["cash_on_delivery", "card"];
+  const allowedPaymentMethods = [
+    "cash_on_delivery",
+    "card",
+  ];
 
-  if (!allowedPaymentMethods.includes(paymentMethod)) {
-    const error = new Error("Invalid payment method");
-
-    error.statusCode = 400;
-
-    throw error;
+  if (
+    !allowedPaymentMethods.includes(
+      paymentMethod,
+    )
+  ) {
+    throw createError(
+      "Invalid payment method",
+    );
   }
 
-  const orderItems = cart.items.map((item) => {
-    const product = item.product;
+  const orderItems =
+    cart.items.map((item) => {
+      const product =
+        item.product;
 
-    if (!product) {
-      const error = new Error(
-        "One of the products in your cart no longer exists",
-      );
+      if (!product) {
+        throw createError(
+          "One of the products in your cart no longer exists",
+        );
+      }
 
-      error.statusCode = 400;
+      const productPrice =
+        Number(
+          product.price || 0,
+        );
 
-      throw error;
-    }
+      const variant =
+        item.variant || null;
 
-    const productPrice = Number(product.price || 0);
+      const variantPrice =
+        Number(
+          variant?.price || 0,
+        );
 
-    const variant = item.variant || null;
+      const productTechnology =
+        item.productTechnology ||
+        null;
 
-    const variantPrice = Number(variant?.price || 0);
+      const technologyModel =
+        productTechnology
+          ?.technologyModel ||
+        null;
 
-    const productTechnology = item.productTechnology || null;
+      const technologyPrice =
+        Number(
+          productTechnology
+            ?.extraPrice || 0,
+        );
 
-    const technologyModel = productTechnology?.technologyModel || null;
+      const basePrice =
+        variantPrice > 0
+          ? variantPrice
+          : productPrice;
 
-    const technologyPrice = Number(productTechnology?.extraPrice || 0);
+      const unitPrice =
+        basePrice +
+        technologyPrice;
 
-    const basePrice = variantPrice > 0 ? variantPrice : productPrice;
+      const quantity =
+        Number(
+          item.quantity || 1,
+        );
 
-    const unitPrice = basePrice + technologyPrice;
+      const itemTotal =
+        unitPrice * quantity;
 
-    const quantity = Number(item.quantity || 1);
+      const variantSnapshot =
+        variant
+          ? {
+              _id:
+                variant._id ||
+                null,
 
-    const itemTotal = unitPrice * quantity;
+              name:
+                variant.name ||
+                "",
 
-    const variantSnapshot = variant
-      ? {
-          _id: variant._id || null,
+              color:
+                variant.color ||
+                "",
 
-          name: variant.name || "",
+              size:
+                variant.size ||
+                "",
 
-          color: variant.color || "",
+              material:
+                variant.material ||
+                "",
 
-          size: variant.size || "",
+              finish:
+                variant.finish ||
+                "",
 
-          material: variant.material || "",
+              sku:
+                variant.sku ||
+                "",
 
-          finish: variant.finish || "",
+              price:
+                variantPrice,
 
-          sku: variant.sku || "",
+              image:
+                variant.image ||
+                "",
+            }
+          : null;
 
-          price: variantPrice,
+      const technologySnapshot =
+        productTechnology
+          ? {
+              _id:
+                productTechnology._id ||
+                null,
 
-          image: variant.image || "",
-        }
-      : null;
+              name:
+                technologyModel
+                  ?.name || "",
 
-    const technologySnapshot = productTechnology
-      ? {
-          _id: productTechnology._id || null,
+              modelName:
+                technologyModel
+                  ?.modelName ||
+                "",
 
-          name: technologyModel?.name || "",
+              modelCode:
+                technologyModel
+                  ?.modelCode ||
+                "",
 
-          modelName: technologyModel?.modelName || "",
+              description:
+                technologyModel
+                  ?.description ||
+                "",
 
-          extraPrice: technologyPrice,
+              manufacturer:
+                technologyModel
+                  ?.manufacturer ||
+                "",
 
-          technology: technologyModel?.technology
-            ? {
-                _id: technologyModel.technology._id || null,
+              image:
+                technologyModel
+                  ?.image || "",
 
-                name: technologyModel.technology.name || "",
-              }
-            : {
-                _id: null,
-                name: "",
-              },
-        }
-      : null;
+              requiresBattery:
+                Boolean(
+                  technologyModel
+                    ?.requiresBattery,
+                ),
 
-    const productImage =
-      product.images?.[0] || product.primaryImage || product.image || "";
+              requiresActivation:
+                Boolean(
+                  technologyModel
+                    ?.requiresActivation,
+                ),
 
-    return {
-      product: product._id,
+              requiresSubscription:
+                Boolean(
+                  technologyModel
+                    ?.requiresSubscription,
+                ),
 
-      name: product.name,
+              status:
+                technologyModel
+                  ?.status ||
+                "active",
 
-      price: productPrice,
+              extraPrice:
+                technologyPrice,
 
-      image: productImage,
+              technology:
+                technologyModel
+                  ?.technology
+                  ? {
+                      _id:
+                        technologyModel
+                          .technology
+                          ._id ||
+                        null,
 
-      variant: variantSnapshot,
+                      name:
+                        technologyModel
+                          .technology
+                          .name ||
+                        "",
 
-      technologyModel: technologySnapshot,
+                      code:
+                        technologyModel
+                          .technology
+                          .code ||
+                        "",
+                    }
+                  : {
+                      _id: null,
+                      name: "",
+                      code: "",
+                    },
+            }
+          : null;
 
-      variantPrice,
+      const productImage =
+        product.images?.[0] ||
+        product.primaryImage ||
+        product.image ||
+        "";
 
-      technologyPrice,
+      return {
+        product:
+          product._id,
 
-      unitPrice,
+        name:
+          product.name,
 
-      quantity,
+        price:
+          productPrice,
 
-      itemTotal,
+        image:
+          productImage,
 
-      smartUnit: null,
+        variant:
+          variantSnapshot,
 
-      experience: null,
+        technologyModel:
+          technologySnapshot,
 
-      manufacturingStatus: technologyModel ? "pending" : "not_required",
-    };
-  });
+        variantPrice,
 
-  const subtotal = orderItems.reduce((total, item) => {
-    return total + item.itemTotal;
-  }, 0);
+        technologyPrice,
 
-  const shippingCost = subtotal >= 1000 ? 0 : 50;
+        unitPrice,
 
-  const total = subtotal + shippingCost;
+        quantity,
 
-  const order = await Order.create({
-    orderNumber: generateOrderNumber(),
+        itemTotal,
 
-    user: userId,
+        smartUnit: null,
 
-    items: orderItems,
+        experience: null,
 
-    shippingAddress,
+        manufacturingStatus:
+          technologyModel
+            ? "pending"
+            : "not_required",
+      };
+    });
 
-    paymentMethod,
+  const subtotal =
+    orderItems.reduce(
+      (total, item) =>
+        total +
+        Number(
+          item.itemTotal || 0,
+        ),
+      0,
+    );
 
-    paymentStatus: "pending",
+  const shippingCost =
+    Number(
+      shippingArea.shippingFee ||
+        0,
+    );
 
-    orderStatus: "pending",
+  const total =
+    subtotal +
+    shippingCost;
 
-    subtotal,
+  const order =
+    await Order.create({
+      orderNumber:
+        generateOrderNumber(),
 
-    shippingCost,
+      user:
+        userId,
 
-    total,
-  });
+      items:
+        orderItems,
+
+      shippingAddress: {
+        firstName:
+          String(
+            shippingAddress.firstName,
+          ).trim(),
+
+        lastName:
+          String(
+            shippingAddress.lastName,
+          ).trim(),
+
+        phone:
+          String(
+            shippingAddress.phone,
+          ).trim(),
+
+        address:
+          String(
+            shippingAddress.address,
+          ).trim(),
+
+        city:
+          shippingArea.name,
+
+        country:
+          String(
+            shippingAddress.country ||
+              "Egypt",
+          ).trim(),
+      },
+
+      shippingArea:
+        shippingArea._id,
+
+      shippingAreaName:
+        shippingArea.name,
+
+      shippingCost,
+
+      paymentMethod,
+
+      paymentStatus:
+        "pending",
+
+      orderStatus:
+        "pending",
+
+      subtotal,
+
+      total,
+    });
 
   cart.items = [];
 
   await cart.save();
 
-  const populatedOrder = await Order.findById(order._id)
-    .populate("user", "email")
-    .populate("items.product", "name price images primaryImage image")
-    .populate("items.smartUnit")
-    .populate("items.experience");
+  const populatedOrder =
+    await Order.findById(
+      order._id,
+    )
+      .populate(
+        "user",
+        "email",
+      )
+      .populate(
+        "shippingArea",
+        "name shippingFee",
+      )
+      .populate(
+        "items.product",
+        "name price images primaryImage image",
+      )
+      .populate(
+        "items.smartUnit",
+      )
+      .populate(
+        "items.experience",
+      );
 
   return populatedOrder;
 };
 
-export const getUserOrders = async (userId) => {
-  const orders = await Order.find({
+export const getUserOrders = async (
+  userId,
+) => {
+  return Order.find({
     user: userId,
   })
-    .populate("items.product", "name price images primaryImage image")
+    .populate(
+      "items.product",
+      "name price images primaryImage image",
+    )
     .sort({
       createdAt: -1,
     });
-
-  return orders;
 };
 
-export const getUserOrderById = async (userId, orderId) => {
-  if (!mongoose.Types.ObjectId.isValid(orderId)) {
-    const error = new Error("Invalid order ID");
-
-    error.statusCode = 400;
-
-    throw error;
-  }
-
-  const order = await Order.findOne({
-    _id: orderId,
-    user: userId,
-  }).populate("items.product", "name price images primaryImage image");
-
-  if (!order) {
-    const error = new Error("Order not found");
-
-    error.statusCode = 404;
-
-    throw error;
-  }
-
-  return order;
-};
-
-export const getAllOrders = async () => {
-  const orders = await Order.find()
-    .populate("user", "email")
-    .populate("items.product", "name price images primaryImage image")
-    .sort({
-      createdAt: -1,
-    });
-
-  return orders;
-};
-
-export const getOrderById = async (orderId) => {
-  if (!mongoose.Types.ObjectId.isValid(orderId)) {
-    const error = new Error("Invalid order ID");
-
-    error.statusCode = 400;
-
-    throw error;
-  }
-
-  const order = await Order.findById(orderId)
-    .populate("user", "email")
-    .populate("items.product", "name price images primaryImage image");
-
-  if (!order) {
-    const error = new Error("Order not found");
-
-    error.statusCode = 404;
-
-    throw error;
-  }
-
-  return order;
-};
-
-export const updateOrderStatus = async (orderId, orderStatus) => {
-  const allowedStatuses = [
-    "pending",
-    "confirmed",
-    "processing",
-    "shipped",
-    "delivered",
-    "cancelled",
-  ];
-
-  if (!allowedStatuses.includes(orderStatus)) {
-    const error = new Error("Invalid order status");
-
-    error.statusCode = 400;
-
-    throw error;
-  }
-
-  if (!mongoose.Types.ObjectId.isValid(orderId)) {
-    const error = new Error("Invalid order ID");
-
-    error.statusCode = 400;
-
-    throw error;
-  }
-
-  const order = await Order.findByIdAndUpdate(
+export const getUserOrderById =
+  async (
+    userId,
     orderId,
-    {
-      orderStatus,
-    },
-    {
-      new: true,
-      runValidators: true,
-    },
-  )
-    .populate("user", "email")
-    .populate("items.product", "name price images primaryImage image");
+  ) => {
+    if (
+      !mongoose.Types.ObjectId.isValid(
+        orderId,
+      )
+    ) {
+      throw createError(
+        "Invalid order ID",
+      );
+    }
 
-  if (!order) {
-    const error = new Error("Order not found");
+    const order =
+      await Order.findOne({
+        _id: orderId,
+        user: userId,
+      }).populate(
+        "items.product",
+        "name price images primaryImage image",
+      );
 
-    error.statusCode = 404;
+    if (!order) {
+      throw createError(
+        "Order not found",
+        404,
+      );
+    }
 
-    throw error;
-  }
+    return order;
+  };
 
-  return order;
-};
+export const getAllOrders =
+  async () => {
+    return Order.find()
+      .populate(
+        "user",
+        "email",
+      )
+      .populate(
+        "items.product",
+        "name price images primaryImage image",
+      )
+      .sort({
+        createdAt: -1,
+      });
+  };
+
+export const getOrderById =
+  async (orderId) => {
+    if (
+      !mongoose.Types.ObjectId.isValid(
+        orderId,
+      )
+    ) {
+      throw createError(
+        "Invalid order ID",
+      );
+    }
+
+    const order =
+      await Order.findById(
+        orderId,
+      )
+        .populate(
+          "user",
+          "email",
+        )
+        .populate(
+          "items.product",
+          "name price images primaryImage image",
+        );
+
+    if (!order) {
+      throw createError(
+        "Order not found",
+        404,
+      );
+    }
+
+    return order;
+  };
+
+export const updateOrderStatus =
+  async (
+    orderId,
+    orderStatus,
+  ) => {
+    const allowedStatuses = [
+      "pending",
+      "confirmed",
+      "processing",
+      "shipped",
+      "delivered",
+      "cancelled",
+    ];
+
+    if (
+      !allowedStatuses.includes(
+        orderStatus,
+      )
+    ) {
+      throw createError(
+        "Invalid order status",
+      );
+    }
+
+    if (
+      !mongoose.Types.ObjectId.isValid(
+        orderId,
+      )
+    ) {
+      throw createError(
+        "Invalid order ID",
+      );
+    }
+
+    const order =
+      await Order.findByIdAndUpdate(
+        orderId,
+        {
+          orderStatus,
+        },
+        {
+          new: true,
+          runValidators: true,
+        },
+      )
+        .populate(
+          "user",
+          "email",
+        )
+        .populate(
+          "items.product",
+          "name price images primaryImage image",
+        );
+
+    if (!order) {
+      throw createError(
+        "Order not found",
+        404,
+      );
+    }
+
+    return order;
+  };

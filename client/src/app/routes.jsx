@@ -51,7 +51,8 @@ import AdminOrdersPage from "../features/admin/pages/AdminOrdersPage";
 import AdminOrderDetailsPage from "../features/admin/pages/AdminOrderDetailsPage";
 import AdminManufacturingOrdersPage from "../features/admin/pages/AdminManufacturingOrdersPage";
 import AdminManufacturingOrderDetailsPage from "../features/admin/pages/AdminManufacturingOrderDetailsPage";
-
+import AdminFinancePage from "../features/finance/pages/AdminFinancePage";
+import AdminShippingAreasPage from "../features/shipping/pages/AdminShippingAreasPage";
 const router = createBrowserRouter([
   {
     element: <MainLayout />,
@@ -140,7 +141,10 @@ const router = createBrowserRouter([
             index: true,
             element: <AdminDashboardPage />,
           },
-
+          {
+            path: "/admin/finance",
+            element: <AdminFinancePage />,
+          },
           {
             path: "products",
             element: <AdminProductsPage />,
@@ -249,6 +253,10 @@ const router = createBrowserRouter([
           {
             path: "manufacturing",
             element: <AdminManufacturingOrdersPage />,
+          },
+          {
+            path: "/admin/shipping",
+            element: <AdminShippingAreasPage />,
           },
 
           {

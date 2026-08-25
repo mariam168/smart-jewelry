@@ -9,18 +9,21 @@ import {
 
 export const createOrderController = async (req, res, next) => {
   try {
-    const { shippingAddress, paymentMethod } = req.body;
+    const {
+      shippingAddress,
+      shippingAreaId,
+      paymentMethod,
+    } = req.body;
 
     const order = await createOrder(req.user.userId, {
       shippingAddress,
+      shippingAreaId,
       paymentMethod,
     });
 
     return res.status(201).json({
       success: true,
-
       message: "Order created successfully",
-
       data: order,
     });
   } catch (error) {
@@ -34,7 +37,6 @@ export const getMyOrders = async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
-
       data: orders,
     });
   } catch (error) {
@@ -44,11 +46,13 @@ export const getMyOrders = async (req, res, next) => {
 
 export const getMyOrderById = async (req, res, next) => {
   try {
-    const order = await getUserOrderById(req.user.userId, req.params.id);
+    const order = await getUserOrderById(
+      req.user.userId,
+      req.params.id,
+    );
 
     return res.status(200).json({
       success: true,
-
       data: order,
     });
   } catch (error) {
@@ -62,7 +66,6 @@ export const getAdminOrders = async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
-
       data: orders,
     });
   } catch (error) {
@@ -76,7 +79,6 @@ export const getAdminOrderById = async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
-
       data: order,
     });
   } catch (error) {
@@ -88,13 +90,14 @@ export const updateAdminOrderStatus = async (req, res, next) => {
   try {
     const { orderStatus } = req.body;
 
-    const order = await updateOrderStatus(req.params.id, orderStatus);
+    const order = await updateOrderStatus(
+      req.params.id,
+      orderStatus,
+    );
 
     return res.status(200).json({
       success: true,
-
       message: "Order status updated successfully",
-
       data: order,
     });
   } catch (error) {

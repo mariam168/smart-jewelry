@@ -234,7 +234,13 @@ const orderItemSchema = new mongoose.Schema(
     manufacturingStatus: {
       type: String,
 
-      enum: ["not_required", "pending", "assigned", "manufacturing", "ready"],
+      enum: [
+        "not_required",
+        "pending",
+        "assigned",
+        "manufacturing",
+        "ready",
+      ],
 
       default: "not_required",
     },
@@ -303,12 +309,10 @@ const orderSchema = new mongoose.Schema(
 
     items: {
       type: [orderItemSchema],
-
       required: true,
 
       validate: {
         validator: (items) => Array.isArray(items) && items.length > 0,
-
         message: "Order must contain at least one item",
       },
     },
@@ -318,19 +322,33 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
+    shippingArea: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ShippingArea",
+      default: null,
+    },
+
+    shippingAreaName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    shippingCost: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
     paymentMethod: {
       type: String,
-
       enum: ["cash_on_delivery", "card"],
-
       default: "cash_on_delivery",
     },
 
     paymentStatus: {
       type: String,
-
       enum: ["pending", "paid", "failed"],
-
       default: "pending",
     },
 
@@ -355,12 +373,6 @@ const orderSchema = new mongoose.Schema(
       min: 0,
     },
 
-    shippingCost: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-
     total: {
       type: Number,
       required: true,
@@ -372,6 +384,8 @@ const orderSchema = new mongoose.Schema(
   },
 );
 
-const Order = mongoose.model("Order", orderSchema);
+const Order =
+  mongoose.models.Order ||
+  mongoose.model("Order", orderSchema);
 
 export default Order;
