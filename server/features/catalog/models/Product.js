@@ -30,21 +30,31 @@ const productSchema = new mongoose.Schema(
         type: String,
       },
     ],
+
     technologyModels: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "TechnologyModel",
       },
     ],
+
     price: {
       type: Number,
       required: true,
       min: 0,
     },
 
+    costPrice: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
+    },
+
     comparePrice: {
       type: Number,
       default: 0,
+      min: 0,
     },
 
     stock: {
@@ -154,6 +164,7 @@ const productSchema = new mongoose.Schema(
   },
 );
 
-const Product = mongoose.model("Product", productSchema);
+const Product =
+  mongoose.models.Product || mongoose.model("Product", productSchema);
 
 export default Product;
