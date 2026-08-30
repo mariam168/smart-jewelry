@@ -1,7 +1,99 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { getProducts, deleteProduct } from "../services/productApi";
+import {
+  getProducts,
+  deleteProduct,
+} from "../services/productApi";
+
+const getBackendOrigin = () => {
+  const explicitBackend =
+    import.meta.env.VITE_BACKEND_URL;
+
+  if (explicitBackend) {
+    return String(explicitBackend).replace(/\/+$/, "");
+  }
+
+  const apiUrl = import.meta.env.VITE_API_URL;
+
+  if (apiUrl && /^https?:\/\//i.test(apiUrl)) {
+    return String(apiUrl)
+      .replace(/\/api\/?$/i, "")
+      .replace(/\/+$/, "");
+  }
+
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname !== "localhost" &&
+    window.location.hostname !== "127.0.0.1"
+  ) {
+    return window.location.origin;
+  }
+
+  return "http://localhost:5000";
+};
+
+const BACKEND_URL = getBackendOrigin();
+
+const getFilePath = (value) => {
+  if (!value) {
+    return "";
+  }
+
+  if (typeof value === "string") {
+    return value.trim();
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const path = getFilePath(item);
+
+      if (path) {
+        return path;
+      }
+    }
+
+    return "";
+  }
+
+  if (typeof value === "object") {
+    return (
+      getFilePath(value.imageUrl) ||
+      getFilePath(value.url) ||
+      getFilePath(value.path) ||
+      getFilePath(value.src) ||
+      getFilePath(value.image) ||
+      getFilePath(value.file) ||
+      getFilePath(value.filename) ||
+      ""
+    );
+  }
+
+  return "";
+};
+
+const getImageUrl = (value) => {
+  let image = getFilePath(value);
+
+  if (!image) {
+    return "";
+  }
+
+  if (
+    image.startsWith("http://") ||
+    image.startsWith("https://") ||
+    image.startsWith("blob:") ||
+    image.startsWith("data:")
+  ) {
+    return image;
+  }
+
+  if (image.startsWith("/api/uploads/")) {
+    image = image.replace(/^\/api/, "");
+  }
+
+  return `${BACKEND_URL}${image.startsWith("/") ? "" : "/"}${image}`;
+};
 
 const AdminProductsPage = () => {
   const [products, setProducts] = useState([]);
@@ -19,7 +111,10 @@ const AdminProductsPage = () => {
     } catch (error) {
       console.error(error);
 
-      setError(error?.response?.data?.message || "Failed to load products.");
+      setError(
+        error?.response?.data?.message ||
+          "Failed to load products.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -40,12 +135,17 @@ const AdminProductsPage = () => {
       await deleteProduct(productId);
 
       setProducts((previous) =>
-        previous.filter((product) => product._id !== productId),
+        previous.filter(
+          (product) => product._id !== productId,
+        ),
       );
     } catch (error) {
       console.error(error);
 
-      alert(error?.response?.data?.message || "Delete failed.");
+      alert(
+        error?.response?.data?.message ||
+          "Delete failed.",
+      );
     }
   };
 
@@ -138,8 +238,10 @@ const AdminProductsPage = () => {
 
               <p className="mt-5 font-serif text-[2.6rem] text-midnight-navy">
                 {
-                  products.filter((product) => product.status === "active")
-                    .length
+                  products.filter(
+                    (product) =>
+                      product.status === "active",
+                  ).length
                 }
               </p>
             </div>
@@ -151,8 +253,10 @@ const AdminProductsPage = () => {
 
               <p className="mt-5 font-serif text-[2.6rem] text-midnight-navy">
                 {
-                  products.filter((product) => Number(product.stock || 0) <= 0)
-                    .length
+                  products.filter(
+                    (product) =>
+                      Number(product.stock || 0) <= 0,
+                  ).length
                 }
               </p>
             </div>
@@ -209,7 +313,9 @@ const AdminProductsPage = () => {
                 to="/admin/products/new"
                 className="inline-flex min-h-[42px] items-center justify-center gap-3 rounded-full border border-champagne-gold/30 bg-warm-ivory/75 px-5 text-[8px] font-semibold uppercase tracking-[0.12em] text-midnight-navy"
               >
-                <span className="text-[14px] text-classic-gold">+</span>
+                <span className="text-[14px] text-classic-gold">
+                  +
+                </span>
 
                 New Product
               </Link>
@@ -254,148 +360,171 @@ const AdminProductsPage = () => {
                 </thead>
 
                 <tbody className="divide-y divide-light-champagne/65">
-                  {products.map((product) => (
-                    <tr
-                      key={product._id}
-                      className="group transition-colors duration-300 hover:bg-warm-ivory/55"
-                    >
-                      <td className="px-6 py-5">
-                        <div className="flex min-w-[300px] items-center gap-4">
-                          {product.image ? (
-                            <div className="h-[74px] w-[74px] shrink-0 overflow-hidden rounded-[16px] border border-light-champagne/80 bg-soft-cream">
-                              <img
-                                src={`http://localhost:5000${product.image}`}
-                                alt={product.name}
-                                className="h-full w-full object-cover"
-                              />
+                  {products.map((product) => {
+                    const productImage =
+                      product.primaryImage ||
+                      product.image ||
+                      product.images?.[0] ||
+                      "";
+
+                    const productImageUrl =
+                      getImageUrl(productImage);
+
+                    return (
+                      <tr
+                        key={product._id}
+                        className="group transition-colors duration-300 hover:bg-warm-ivory/55"
+                      >
+                        <td className="px-6 py-5">
+                          <div className="flex min-w-[300px] items-center gap-4">
+                            {productImageUrl ? (
+                              <div className="h-[74px] w-[74px] shrink-0 overflow-hidden rounded-[16px] border border-light-champagne/80 bg-soft-cream">
+                                <img
+                                  src={productImageUrl}
+                                  alt={product.name}
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div className="flex h-[74px] w-[74px] shrink-0 items-center justify-center rounded-[16px] border border-light-champagne/80 bg-soft-cream text-classic-gold">
+                                ✦
+                              </div>
+                            )}
+
+                            <div className="min-w-0">
+                              <p className="truncate font-serif text-[1.05rem] text-midnight-navy">
+                                {product.name}
+                              </p>
+
+                              {product.shortDescription && (
+                                <p className="mt-1 max-w-[260px] truncate text-[9px] text-slate-gray">
+                                  {product.shortDescription}
+                                </p>
+                              )}
+
+                              {product.sku && (
+                                <p className="mt-2 text-[7px] font-semibold uppercase tracking-[0.17em] text-antique-gold">
+                                  SKU · {product.sku}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="px-6 py-5">
+                          {product.category?.name ||
+                            "No Category"}
+                        </td>
+
+                        <td className="px-6 py-5">
+                          {product.technologyModels?.length >
+                          0 ? (
+                            <div className="flex max-w-[230px] flex-wrap gap-1.5">
+                              {product.technologyModels
+                                .slice(0, 3)
+                                .map((model) => (
+                                  <span
+                                    key={model._id}
+                                    className="rounded-full border border-light-champagne bg-soft-cream px-2.5 py-1.5 text-[7px] text-slate-gray"
+                                  >
+                                    {model.modelName}
+                                  </span>
+                                ))}
                             </div>
                           ) : (
-                            <div className="flex h-[74px] w-[74px] shrink-0 items-center justify-center rounded-[16px] border border-light-champagne/80 bg-soft-cream text-classic-gold">
-                              ✦
-                            </div>
+                            <span className="text-[9px] text-steel-gray">
+                              None
+                            </span>
                           )}
+                        </td>
 
-                          <div className="min-w-0">
-                            <p className="truncate font-serif text-[1.05rem] text-midnight-navy">
-                              {product.name}
-                            </p>
-
-                            {product.shortDescription && (
-                              <p className="mt-1 max-w-[260px] truncate text-[9px] text-slate-gray">
-                                {product.shortDescription}
-                              </p>
-                            )}
-
-                            {product.sku && (
-                              <p className="mt-2 text-[7px] font-semibold uppercase tracking-[0.17em] text-antique-gold">
-                                SKU · {product.sku}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-5">
-                        {product.category?.name || "No Category"}
-                      </td>
-
-                      <td className="px-6 py-5">
-                        {product.technologyModels?.length > 0 ? (
-                          <div className="flex max-w-[230px] flex-wrap gap-1.5">
-                            {product.technologyModels
-                              .slice(0, 3)
-                              .map((model) => (
-                                <span
-                                  key={model._id}
-                                  className="rounded-full border border-light-champagne bg-soft-cream px-2.5 py-1.5 text-[7px] text-slate-gray"
-                                >
-                                  {model.modelName}
-                                </span>
-                              ))}
-                          </div>
-                        ) : (
-                          <span className="text-[9px] text-steel-gray">
-                            None
-                          </span>
-                        )}
-                      </td>
-
-                      <td className="px-6 py-5">
-                        <p className="font-serif text-[1rem] text-midnight-navy">
-                          {Number(product.price || 0).toLocaleString()}{" "}
-                          <span className="font-sans text-[7px] text-slate-gray">
-                            EGP
-                          </span>
-                        </p>
-
-                        {product.comparePrice > 0 &&
-                          product.comparePrice > product.price && (
-                            <p className="mt-1 text-[9px] text-steel-gray line-through">
-                              {Number(product.comparePrice).toLocaleString()} EGP
-                            </p>
-                          )}
-                      </td>
-
-                      <td className="px-6 py-5">
-                        <div className="rounded-[12px] border border-champagne-gold/20 bg-soft-cream/70 px-3 py-2">
-                          <p className="text-[7px] font-semibold uppercase tracking-[0.12em] text-steel-gray">
-                            Cost
-                          </p>
-
-                          <p className="mt-1 font-serif text-[1rem] text-antique-gold">
-                            {Number(product.costPrice || 0).toLocaleString()}{" "}
+                        <td className="px-6 py-5">
+                          <p className="font-serif text-[1rem] text-midnight-navy">
+                            {Number(
+                              product.price || 0,
+                            ).toLocaleString()}{" "}
                             <span className="font-sans text-[7px] text-slate-gray">
                               EGP
                             </span>
                           </p>
-                        </div>
-                      </td>
 
-                      <td className="px-6 py-5">
-                        <span className="text-[10px] font-semibold text-midnight-navy">
-                          {product.stock}
-                        </span>
-                      </td>
+                          {product.comparePrice > 0 &&
+                            product.comparePrice >
+                              product.price && (
+                              <p className="mt-1 text-[9px] text-steel-gray line-through">
+                                {Number(
+                                  product.comparePrice,
+                                ).toLocaleString()}{" "}
+                                EGP
+                              </p>
+                            )}
+                        </td>
 
-                      <td className="px-6 py-5">
-                        <span
-                          className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.1em] ${
-                            product.status === "active"
-                              ? "border-champagne-gold/25 bg-soft-cream text-antique-gold"
-                              : "border-antique-gold/20 bg-warm-ivory text-slate-gray"
-                          }`}
-                        >
-                          {product.status}
-                        </span>
-                      </td>
+                        <td className="px-6 py-5">
+                          <div className="rounded-[12px] border border-champagne-gold/20 bg-soft-cream/70 px-3 py-2">
+                            <p className="text-[7px] font-semibold uppercase tracking-[0.12em] text-steel-gray">
+                              Cost
+                            </p>
 
-                      <td className="px-6 py-5">
-                        <div className="flex items-center justify-end gap-2">
-                          <Link
-                            to={`/admin/products/${product._id}/variants`}
-                            className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-light-champagne bg-soft-white px-3.5 text-[7px] font-semibold uppercase tracking-[0.1em] text-slate-gray"
+                            <p className="mt-1 font-serif text-[1rem] text-antique-gold">
+                              {Number(
+                                product.costPrice || 0,
+                              ).toLocaleString()}{" "}
+                              <span className="font-sans text-[7px] text-slate-gray">
+                                EGP
+                              </span>
+                            </p>
+                          </div>
+                        </td>
+
+                        <td className="px-6 py-5">
+                          <span className="text-[10px] font-semibold text-midnight-navy">
+                            {product.stock}
+                          </span>
+                        </td>
+
+                        <td className="px-6 py-5">
+                          <span
+                            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.1em] ${
+                              product.status === "active"
+                                ? "border-champagne-gold/25 bg-soft-cream text-antique-gold"
+                                : "border-antique-gold/20 bg-warm-ivory text-slate-gray"
+                            }`}
                           >
-                            Variants
-                          </Link>
+                            {product.status}
+                          </span>
+                        </td>
 
-                          <Link
-                            to={`/admin/products/${product._id}/edit`}
-                            className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-light-champagne bg-soft-white px-3.5 text-[7px] font-semibold uppercase tracking-[0.1em] text-slate-gray"
-                          >
-                            Edit
-                          </Link>
+                        <td className="px-6 py-5">
+                          <div className="flex items-center justify-end gap-2">
+                            <Link
+                              to={`/admin/products/${product._id}/variants`}
+                              className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-light-champagne bg-soft-white px-3.5 text-[7px] font-semibold uppercase tracking-[0.1em] text-slate-gray"
+                            >
+                              Variants
+                            </Link>
 
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(product._id)}
-                            className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-antique-gold/20 bg-soft-white px-3.5 text-[7px] font-semibold uppercase tracking-[0.1em] text-antique-gold"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                            <Link
+                              to={`/admin/products/${product._id}/edit`}
+                              className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-light-champagne bg-soft-white px-3.5 text-[7px] font-semibold uppercase tracking-[0.1em] text-slate-gray"
+                            >
+                              Edit
+                            </Link>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleDelete(product._id)
+                              }
+                              className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-antique-gold/20 bg-soft-white px-3.5 text-[7px] font-semibold uppercase tracking-[0.1em] text-antique-gold"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
