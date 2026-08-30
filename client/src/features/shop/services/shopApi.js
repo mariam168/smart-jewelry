@@ -1,66 +1,25 @@
-import axios from "axios";
+import api from "../../../lib/axios";
 
-const API_URL =
-  "http://localhost:5000/api/products";
+export const getShopProducts = async () => {
+  const response = await api.get("/products");
 
-// ==========================================
-// Get All Products
-// ==========================================
+  return response.data.data;
+};
 
-export const getShopProducts =
-  async () => {
+export const getShopProduct = async (id) => {
+  const response = await api.get(`/products/${id}`);
 
-    const response =
-      await axios.get(API_URL);
+  return response.data.data;
+};
 
-    return response.data.data;
+export const getProductImages = async (productId) => {
+  const response = await api.get(`/product-images/product/${productId}`);
 
-  };
+  return response.data.data.images;
+};
 
-// ==========================================
-// Get Product
-// ==========================================
+export const getProductVariants = async (productId) => {
+  const response = await api.get(`/product-variants/product/${productId}`);
 
-export const getShopProduct =
-  async (id) => {
-
-    const response =
-      await axios.get(
-        `${API_URL}/${id}`
-      );
-
-    return response.data.data;
-
-  };
-
-// ==========================================
-// Product Images
-// ==========================================
-
-export const getProductImages =
-  async (productId) => {
-
-    const response =
-      await axios.get(
-        `http://localhost:5000/api/product-images/product/${productId}`
-      );
-
-    return response.data.data.images;
-
-  };
-
-// ==========================================
-// Product Variants
-// ==========================================
-
-export const getProductVariants =
-  async (productId) => {
-
-    const response =
-      await axios.get(
-        `http://localhost:5000/api/product-variants/product/${productId}`
-      );
-
-    return response.data.data.variants;
-
-  };
+  return response.data.data.variants;
+};
