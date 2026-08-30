@@ -4,18 +4,170 @@ import { Link } from "react-router-dom";
 
 import { CartContext } from "../../context/CartContext";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const getBackendOrigin = () => {
+  const explicitBackend =
+    import.meta.env.VITE_BACKEND_URL;
 
-const getImageUrl = (image) => {
+  if (explicitBackend) {
+    return String(explicitBackend).replace(/\/+$/, "");
+  }
+
+  const apiUrl =
+    import.meta.env.VITE_API_URL;
+
+  if (
+    apiUrl &&
+    /^https?:\/\//i.test(apiUrl)
+  ) {
+    return String(apiUrl)
+      .replace(/\/api\/?$/i, "")
+      .replace(/\/+$/, "");
+  }
+
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname !== "localhost" &&
+    window.location.hostname !== "127.0.0.1"
+  ) {
+    return window.location.origin;
+  }
+
+  return "http://localhost:5000";
+};
+
+const API_URL = getBackendOrigin();
+
+const getFilePath = (value) => {
+  if (!value) {
+    return "";
+  }
+
+  if (typeof value === "string") {
+    return value.trim();
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const path = getFilePath(item);
+
+      if (path) {
+        return path;
+      }
+    }
+
+    return "";
+  }
+
+  if (typeof value === "object") {
+    return (
+      getFilePath(value.imageUrl) ||
+      getFilePath(value.url) ||
+      getFilePath(value.path) ||
+      getFilePath(value.src) ||
+      getFilePath(value.image) ||
+      getFilePath(value.file) ||
+      getFilePath(value.filename) ||
+      ""
+    );
+  }
+
+  return "";
+};
+
+const getImageUrl = (value) => {
+  let image = getFilePath(value);
+
   if (!image) {
     return "";
   }
 
-  if (image.startsWith("http://") || image.startsWith("https://")) {
+  if (
+    image.startsWith("http://") ||
+    image.startsWith("https://") ||
+    image.startsWith("blob:") ||
+    image.startsWith("data:")
+  ) {
     return image;
   }
 
-  return `${API_URL}${image}`;
+  if (image.startsWith("//")) {
+    const protocol =
+      typeof window !== "undefined"
+        ? window.location.protocol
+        : "https:";
+
+    return `${protocol}${image}`;
+  }
+
+  if (image.startsWith("/api/uploads/")) {
+    image = image.replace(/^\/api/, "");
+  }
+
+  if (
+    image.startsWith("/assets/") ||
+    image.startsWith("/images/")
+  ) {
+    return image;
+  }
+
+  return `${API_URL}${image.startsWith("/") ? "" : "/"}${image}`;
+};
+
+const getCartItemImage = (item) => {
+  const product =
+    item?.product || {};
+
+  const variant =
+    item?.variant || {};
+
+  const productSnapshot =
+    item?.productSnapshot || {};
+
+  const variantSnapshot =
+    item?.variantSnapshot || {};
+
+  const candidates = [
+    item?.image,
+    item?.imageUrl,
+    item?.productImage,
+    item?.productImageUrl,
+    item?.primaryImage,
+
+    variant?.image,
+    variant?.imageUrl,
+    variant?.primaryImage,
+    variant?.images?.[0],
+    variant?.images,
+
+    product?.primaryImage,
+    product?.image,
+    product?.imageUrl,
+    product?.images?.[0],
+    product?.images,
+
+    variantSnapshot?.image,
+    variantSnapshot?.imageUrl,
+    variantSnapshot?.primaryImage,
+    variantSnapshot?.images?.[0],
+    variantSnapshot?.images,
+
+    productSnapshot?.primaryImage,
+    productSnapshot?.image,
+    productSnapshot?.imageUrl,
+    productSnapshot?.images?.[0],
+    productSnapshot?.images,
+  ];
+
+  for (const candidate of candidates) {
+    const path =
+      getFilePath(candidate);
+
+    if (path) {
+      return path;
+    }
+  }
+
+  return "";
 };
 
 const CartDrawer = () => {
@@ -58,17 +210,24 @@ const CartDrawer = () => {
                   Your Selection
                 </span>
 
-                <span className="text-[7px] text-classic-gold">✦</span>
+                <span className="text-[7px] text-classic-gold">
+                  ✦
+                </span>
               </div>
 
               <h2 className="font-serif text-[1.8rem] font-normal leading-none tracking-[-0.025em] text-soft-white">
                 Your Cart
               </h2>
 
-              {cartItems.length > 0 && (
+              {cartItems.length >
+                0 && (
                 <p className="mt-2 text-[10px] tracking-[0.03em] text-premium-silver/65">
                   {cartItems.length}{" "}
-                  {cartItems.length === 1 ? "piece" : "pieces"} selected
+                  {cartItems.length ===
+                  1
+                    ? "piece"
+                    : "pieces"}{" "}
+                  selected
                 </p>
               )}
             </div>
@@ -124,6 +283,7 @@ const CartDrawer = () => {
                 className="group mt-7 inline-flex min-h-[50px] items-center justify-center gap-7 rounded-[13px] bg-midnight-navy px-7 text-[9px] font-semibold uppercase tracking-[0.12em] text-soft-white shadow-[0_12px_28px_rgba(18,38,58,0.16)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-rich-navy hover:shadow-[0_16px_34px_rgba(18,38,58,0.22)]"
               >
                 Start Shopping
+
                 <span className="text-[15px] text-champagne-gold transition-transform duration-300 group-hover:translate-x-1">
                   →
                 </span>
@@ -131,305 +291,407 @@ const CartDrawer = () => {
             </div>
           ) : (
             <div className="relative space-y-4">
-              {cartItems.map((item) => {
-                const product = item.product || null;
+              {cartItems.map(
+                (item) => {
+                  const product =
+                    item.product ||
+                    null;
 
-                const variant = item.variant || null;
+                  const variant =
+                    item.variant ||
+                    null;
 
-                const productTechnology = item.productTechnology || null;
+                  const productTechnology =
+                    item.productTechnology ||
+                    null;
 
-                const technologyModel =
-                  productTechnology?.technologyModel || null;
+                  const technologyModel =
+                    productTechnology?.technologyModel ||
+                    null;
 
-                const technology = technologyModel?.technology || null;
+                  const technology =
+                    technologyModel?.technology ||
+                    null;
 
-                const productPrice = Number(product?.price || 0);
+                  const productPrice =
+                    Number(
+                      product?.price ||
+                        0,
+                    );
 
-                const variantPrice = Number(variant?.price || 0);
+                  const variantPrice =
+                    Number(
+                      variant?.price ||
+                        0,
+                    );
 
-                const basePrice =
-                  variantPrice > 0 ? variantPrice : productPrice;
+                  const basePrice =
+                    variantPrice > 0
+                      ? variantPrice
+                      : productPrice;
 
-                const technologyPrice = Number(
-                  productTechnology?.extraPrice || 0,
-                );
+                  const technologyPrice =
+                    Number(
+                      productTechnology?.extraPrice ||
+                        0,
+                    );
 
-                const itemUnitPrice = basePrice + technologyPrice;
+                  const itemUnitPrice =
+                    basePrice +
+                    technologyPrice;
 
-                const itemQuantity = Number(item.quantity || 1);
+                  const itemQuantity =
+                    Number(
+                      item.quantity ||
+                        1,
+                    );
 
-                const itemTotal = itemUnitPrice * itemQuantity;
+                  const itemTotal =
+                    itemUnitPrice *
+                    itemQuantity;
 
-                const image =
-                  variant?.image ||
-                  product?.primaryImage ||
-                  product?.image ||
-                  product?.images?.[0] ||
-                  "";
+                  const image =
+                    getCartItemImage(
+                      item,
+                    );
 
-                const imageUrl = getImageUrl(image);
+                  const imageUrl =
+                    getImageUrl(
+                      image,
+                    );
 
-                const variantName =
-                  variant?.name ||
-                  [variant?.color, variant?.size].filter(Boolean).join(" / ");
+                  const variantName =
+                    variant?.name ||
+                    [
+                      variant?.color,
+                      variant?.size,
+                    ]
+                      .filter(Boolean)
+                      .join(" / ");
 
-                const technologyName =
-                  technologyModel?.modelName || technologyModel?.name || "";
+                  const technologyName =
+                    technologyModel?.modelName ||
+                    technologyModel?.name ||
+                    "";
 
-                const technologyType = technology?.name || "";
+                  const technologyType =
+                    technology?.name ||
+                    "";
 
-                return (
-                  <div
-                    key={item._id}
-                    className="group relative overflow-hidden rounded-[22px] border border-light-champagne/90 bg-soft-white/90 p-4 shadow-[0_8px_25px_rgba(7,19,31,0.04)] transition-all duration-300 hover:border-champagne-gold/50 hover:shadow-[0_16px_38px_rgba(7,19,31,0.08)] sm:p-5"
-                  >
-                    <div className="pointer-events-none absolute -right-16 -top-16 h-36 w-36 rounded-full bg-soft-cream blur-[55px]" />
+                  return (
+                    <div
+                      key={item._id}
+                      className="group relative overflow-hidden rounded-[22px] border border-light-champagne/90 bg-soft-white/90 p-4 shadow-[0_8px_25px_rgba(7,19,31,0.04)] transition-all duration-300 hover:border-champagne-gold/50 hover:shadow-[0_16px_38px_rgba(7,19,31,0.08)] sm:p-5"
+                    >
+                      <div className="pointer-events-none absolute -right-16 -top-16 h-36 w-36 rounded-full bg-soft-cream blur-[55px]" />
 
-                    <div className="relative flex gap-4">
-                      <Link
-                        to={`/shop/products/${product?._id}`}
-                        onClick={closeCart}
-                        className="group/image relative h-[106px] w-[92px] shrink-0 overflow-hidden rounded-[14px] border border-light-champagne/80 bg-soft-cream sm:h-[116px] sm:w-[104px]"
-                      >
-                        {imageUrl ? (
-                          <img
-                            src={imageUrl}
-                            alt={product?.name || "Product"}
-                            className="h-full w-full object-cover transition-transform duration-700 group-hover/image:scale-105"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-[8px] uppercase tracking-[0.15em] text-steel-gray">
-                            No Image
-                          </div>
-                        )}
+                      <div className="relative flex gap-4">
+                        <Link
+                          to={`/shop/products/${product?._id}`}
+                          onClick={
+                            closeCart
+                          }
+                          className="group/image relative h-[106px] w-[92px] shrink-0 overflow-hidden rounded-[14px] border border-light-champagne/80 bg-soft-cream sm:h-[116px] sm:w-[104px]"
+                        >
+                          {imageUrl ? (
+                            <img
+                              src={
+                                imageUrl
+                              }
+                              alt={
+                                product?.name ||
+                                "Product"
+                              }
+                              className="h-full w-full object-cover transition-transform duration-700 group-hover/image:scale-105"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-[8px] uppercase tracking-[0.15em] text-steel-gray">
+                              No
+                              Image
+                            </div>
+                          )}
 
-                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-luxury-black/10 to-transparent" />
-                      </Link>
+                          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-luxury-black/10 to-transparent" />
+                        </Link>
 
-                      <div className="flex min-w-0 flex-1 flex-col">
-                        <div className="flex justify-between gap-3">
-                          <div className="min-w-0">
-                            <Link
-                              to={`/shop/products/${product?._id}`}
-                              onClick={closeCart}
-                              className="block truncate font-serif text-[1.15rem] font-normal leading-tight tracking-[-0.02em] text-midnight-navy transition-colors duration-300 hover:text-antique-gold"
+                        <div className="flex min-w-0 flex-1 flex-col">
+                          <div className="flex justify-between gap-3">
+                            <div className="min-w-0">
+                              <Link
+                                to={`/shop/products/${product?._id}`}
+                                onClick={
+                                  closeCart
+                                }
+                                className="block truncate font-serif text-[1.15rem] font-normal leading-tight tracking-[-0.02em] text-midnight-navy transition-colors duration-300 hover:text-antique-gold"
+                              >
+                                {
+                                  product?.name
+                                }
+                              </Link>
+
+                              {variantName && (
+                                <p className="mt-1.5 truncate text-[10px] text-slate-gray">
+                                  {
+                                    variantName
+                                  }
+                                </p>
+                              )}
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                removeFromCart(
+                                  item._id,
+                                )
+                              }
+                              className="shrink-0 self-start text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray transition-colors duration-300 hover:text-antique-gold"
                             >
-                              {product?.name}
-                            </Link>
+                              Remove
+                            </button>
+                          </div>
 
-                            {variantName && (
-                              <p className="mt-1.5 truncate text-[10px] text-slate-gray">
-                                {variantName}
+                          <div className="mt-auto pt-3">
+                            <p className="font-serif text-[1.05rem] font-normal text-midnight-navy">
+                              {itemUnitPrice.toLocaleString()}{" "}
+                              <span className="font-sans text-[8px] font-semibold uppercase tracking-[0.1em] text-slate-gray">
+                                EGP
+                              </span>
+                            </p>
+
+                            {technologyPrice >
+                              0 && (
+                              <p className="mt-1 text-[8px] leading-4 text-steel-gray">
+                                {basePrice.toLocaleString()}{" "}
+                                EGP
+                                {" + "}
+                                {technologyPrice.toLocaleString()}{" "}
+                                EGP
+                                {
+                                  " technology"
+                                }
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {variant && (
+                        <div className="relative mt-4 rounded-[16px] border border-light-champagne/80 bg-warm-ivory/70 p-4">
+                          <div className="mb-3 flex items-center gap-2.5">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-midnight-navy text-[7px] text-champagne-gold">
+                              ✦
+                            </span>
+
+                            <p className="text-[8px] font-semibold uppercase tracking-[0.2em] text-midnight-navy">
+                              Variant
+                            </p>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
+                            {variant.color && (
+                              <p className="text-[10px] text-slate-gray">
+                                <span className="font-semibold text-midnight-navy">
+                                  Color:
+                                </span>{" "}
+                                {
+                                  variant.color
+                                }
+                              </p>
+                            )}
+
+                            {variant.size && (
+                              <p className="text-[10px] text-slate-gray">
+                                <span className="font-semibold text-midnight-navy">
+                                  Size:
+                                </span>{" "}
+                                {
+                                  variant.size
+                                }
+                              </p>
+                            )}
+
+                            {variant.material && (
+                              <p className="text-[10px] text-slate-gray">
+                                <span className="font-semibold text-midnight-navy">
+                                  Material:
+                                </span>{" "}
+                                {
+                                  variant.material
+                                }
+                              </p>
+                            )}
+
+                            {variant.finish && (
+                              <p className="text-[10px] text-slate-gray">
+                                <span className="font-semibold text-midnight-navy">
+                                  Finish:
+                                </span>{" "}
+                                {
+                                  variant.finish
+                                }
                               </p>
                             )}
                           </div>
 
-                          <button
-                            type="button"
-                            onClick={() => removeFromCart(item._id)}
-                            className="shrink-0 self-start text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray transition-colors duration-300 hover:text-antique-gold"
-                          >
-                            Remove
-                          </button>
-                        </div>
+                          {variant.sku && (
+                            <p className="mt-3 border-t border-light-champagne/80 pt-3 text-[8px] uppercase tracking-[0.08em] text-steel-gray">
+                              SKU:{" "}
+                              {
+                                variant.sku
+                              }
+                            </p>
+                          )}
 
-                        <div className="mt-auto pt-3">
-                          <p className="font-serif text-[1.05rem] font-normal text-midnight-navy">
-                            {itemUnitPrice.toLocaleString()}{" "}
-                            <span className="font-sans text-[8px] font-semibold uppercase tracking-[0.1em] text-slate-gray">
+                          <p className="mt-3 text-[10px] font-semibold text-antique-gold">
+                            Price:{" "}
+                            {basePrice.toLocaleString()}{" "}
+                            EGP
+                          </p>
+                        </div>
+                      )}
+
+                      {productTechnology && (
+                        <div className="relative mt-3 overflow-hidden rounded-[16px] border border-champagne-gold/25 bg-soft-cream/75 p-4">
+                          <div className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-champagne-gold/10 blur-[35px]" />
+
+                          <div className="relative mb-3 flex items-center gap-2.5">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-midnight-navy text-[7px] text-champagne-gold">
+                              ✦
+                            </span>
+
+                            <p className="text-[8px] font-semibold uppercase tracking-[0.2em] text-midnight-navy">
+                              Technology
+                            </p>
+                          </div>
+
+                          {technologyType && (
+                            <p className="relative text-[10px] text-slate-gray">
+                              <span className="font-semibold text-midnight-navy">
+                                Type:
+                              </span>{" "}
+                              {
+                                technologyType
+                              }
+                            </p>
+                          )}
+
+                          {technologyName && (
+                            <p className="relative mt-1.5 text-[10px] text-slate-gray">
+                              <span className="font-semibold text-midnight-navy">
+                                Model:
+                              </span>{" "}
+                              {
+                                technologyName
+                              }
+                            </p>
+                          )}
+
+                          {technologyPrice >
+                          0 ? (
+                            <p className="relative mt-2.5 text-[10px] font-semibold text-antique-gold">
+                              +{" "}
+                              {technologyPrice.toLocaleString()}{" "}
+                              EGP
+                            </p>
+                          ) : (
+                            <p className="relative mt-2.5 text-[10px] text-slate-gray">
+                              Included
+                            </p>
+                          )}
+
+                          <div className="relative mt-3 flex flex-wrap gap-1.5">
+                            {technologyModel?.requiresBattery && (
+                              <span className="rounded-full border border-champagne-gold/20 bg-champagne-gold/15 px-2.5 py-1 text-[7px] font-semibold uppercase tracking-[0.08em] text-antique-gold">
+                                Battery
+                              </span>
+                            )}
+
+                            {technologyModel?.requiresActivation && (
+                              <span className="rounded-full border border-light-champagne bg-soft-white/70 px-2.5 py-1 text-[7px] font-semibold uppercase tracking-[0.08em] text-slate-gray">
+                                Activation
+                              </span>
+                            )}
+
+                            {technologyModel?.requiresSubscription && (
+                              <span className="rounded-full border border-light-champagne bg-soft-white/70 px-2.5 py-1 text-[7px] font-semibold uppercase tracking-[0.08em] text-slate-gray">
+                                Subscription
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="relative mt-4 flex items-end justify-between border-t border-light-champagne/80 pt-4">
+                        <div>
+                          {itemQuantity >
+                            1 && (
+                            <p className="mb-1 text-[8px] text-steel-gray">
+                              {
+                                itemQuantity
+                              }{" "}
+                              ×{" "}
+                              {itemUnitPrice.toLocaleString()}{" "}
+                              EGP
+                            </p>
+                          )}
+
+                          <p className="text-[7px] font-semibold uppercase tracking-[0.2em] text-steel-gray">
+                            Total
+                          </p>
+
+                          <p className="mt-1 font-serif text-[1.25rem] font-normal text-midnight-navy">
+                            {itemTotal.toLocaleString()}{" "}
+                            <span className="font-sans text-[8px] font-semibold uppercase tracking-[0.08em] text-slate-gray">
                               EGP
                             </span>
                           </p>
+                        </div>
 
-                          {technologyPrice > 0 && (
-                            <p className="mt-1 text-[8px] leading-4 text-steel-gray">
-                              {basePrice.toLocaleString()} EGP
-                              {" + "}
-                              {technologyPrice.toLocaleString()} EGP
-                              {" technology"}
-                            </p>
-                          )}
+                        <div className="flex items-center overflow-hidden rounded-full border border-light-champagne bg-soft-white shadow-[0_5px_16px_rgba(7,19,31,0.035)]">
+                          <button
+                            type="button"
+                            disabled={
+                              itemQuantity <=
+                              1
+                            }
+                            onClick={() =>
+                              updateQuantity(
+                                item._id,
+                                itemQuantity -
+                                  1,
+                              )
+                            }
+                            className="flex h-9 w-9 items-center justify-center text-[15px] text-midnight-navy transition-all duration-300 hover:bg-midnight-navy hover:text-soft-white disabled:cursor-not-allowed disabled:opacity-30"
+                          >
+                            −
+                          </button>
+
+                          <span className="flex h-9 min-w-10 items-center justify-center border-x border-light-champagne px-2 text-[10px] font-semibold text-midnight-navy">
+                            {
+                              itemQuantity
+                            }
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateQuantity(
+                                item._id,
+                                itemQuantity +
+                                  1,
+                              )
+                            }
+                            className="flex h-9 w-9 items-center justify-center text-[15px] text-midnight-navy transition-all duration-300 hover:bg-midnight-navy hover:text-soft-white"
+                          >
+                            +
+                          </button>
                         </div>
                       </div>
                     </div>
-
-                    {variant && (
-                      <div className="relative mt-4 rounded-[16px] border border-light-champagne/80 bg-warm-ivory/70 p-4">
-                        <div className="mb-3 flex items-center gap-2.5">
-                          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-midnight-navy text-[7px] text-champagne-gold">
-                            ✦
-                          </span>
-
-                          <p className="text-[8px] font-semibold uppercase tracking-[0.2em] text-midnight-navy">
-                            Variant
-                          </p>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
-                          {variant.color && (
-                            <p className="text-[10px] text-slate-gray">
-                              <span className="font-semibold text-midnight-navy">
-                                Color:
-                              </span>{" "}
-                              {variant.color}
-                            </p>
-                          )}
-
-                          {variant.size && (
-                            <p className="text-[10px] text-slate-gray">
-                              <span className="font-semibold text-midnight-navy">
-                                Size:
-                              </span>{" "}
-                              {variant.size}
-                            </p>
-                          )}
-
-                          {variant.material && (
-                            <p className="text-[10px] text-slate-gray">
-                              <span className="font-semibold text-midnight-navy">
-                                Material:
-                              </span>{" "}
-                              {variant.material}
-                            </p>
-                          )}
-
-                          {variant.finish && (
-                            <p className="text-[10px] text-slate-gray">
-                              <span className="font-semibold text-midnight-navy">
-                                Finish:
-                              </span>{" "}
-                              {variant.finish}
-                            </p>
-                          )}
-                        </div>
-
-                        {variant.sku && (
-                          <p className="mt-3 border-t border-light-champagne/80 pt-3 text-[8px] uppercase tracking-[0.08em] text-steel-gray">
-                            SKU: {variant.sku}
-                          </p>
-                        )}
-
-                        <p className="mt-3 text-[10px] font-semibold text-antique-gold">
-                          Price: {basePrice.toLocaleString()} EGP
-                        </p>
-                      </div>
-                    )}
-
-                    {productTechnology && (
-                      <div className="relative mt-3 overflow-hidden rounded-[16px] border border-champagne-gold/25 bg-soft-cream/75 p-4">
-                        <div className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-champagne-gold/10 blur-[35px]" />
-
-                        <div className="relative mb-3 flex items-center gap-2.5">
-                          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-midnight-navy text-[7px] text-champagne-gold">
-                            ✦
-                          </span>
-
-                          <p className="text-[8px] font-semibold uppercase tracking-[0.2em] text-midnight-navy">
-                            Technology
-                          </p>
-                        </div>
-
-                        {technologyType && (
-                          <p className="relative text-[10px] text-slate-gray">
-                            <span className="font-semibold text-midnight-navy">
-                              Type:
-                            </span>{" "}
-                            {technologyType}
-                          </p>
-                        )}
-
-                        {technologyName && (
-                          <p className="relative mt-1.5 text-[10px] text-slate-gray">
-                            <span className="font-semibold text-midnight-navy">
-                              Model:
-                            </span>{" "}
-                            {technologyName}
-                          </p>
-                        )}
-
-                        {technologyPrice > 0 ? (
-                          <p className="relative mt-2.5 text-[10px] font-semibold text-antique-gold">
-                            + {technologyPrice.toLocaleString()} EGP
-                          </p>
-                        ) : (
-                          <p className="relative mt-2.5 text-[10px] text-slate-gray">
-                            Included
-                          </p>
-                        )}
-
-                        <div className="relative mt-3 flex flex-wrap gap-1.5">
-                          {technologyModel?.requiresBattery && (
-                            <span className="rounded-full border border-champagne-gold/20 bg-champagne-gold/15 px-2.5 py-1 text-[7px] font-semibold uppercase tracking-[0.08em] text-antique-gold">
-                              Battery
-                            </span>
-                          )}
-
-                          {technologyModel?.requiresActivation && (
-                            <span className="rounded-full border border-light-champagne bg-soft-white/70 px-2.5 py-1 text-[7px] font-semibold uppercase tracking-[0.08em] text-slate-gray">
-                              Activation
-                            </span>
-                          )}
-
-                          {technologyModel?.requiresSubscription && (
-                            <span className="rounded-full border border-light-champagne bg-soft-white/70 px-2.5 py-1 text-[7px] font-semibold uppercase tracking-[0.08em] text-slate-gray">
-                              Subscription
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="relative mt-4 flex items-end justify-between border-t border-light-champagne/80 pt-4">
-                      <div>
-                        {itemQuantity > 1 && (
-                          <p className="mb-1 text-[8px] text-steel-gray">
-                            {itemQuantity} × {itemUnitPrice.toLocaleString()}{" "}
-                            EGP
-                          </p>
-                        )}
-
-                        <p className="text-[7px] font-semibold uppercase tracking-[0.2em] text-steel-gray">
-                          Total
-                        </p>
-
-                        <p className="mt-1 font-serif text-[1.25rem] font-normal text-midnight-navy">
-                          {itemTotal.toLocaleString()}{" "}
-                          <span className="font-sans text-[8px] font-semibold uppercase tracking-[0.08em] text-slate-gray">
-                            EGP
-                          </span>
-                        </p>
-                      </div>
-
-                      <div className="flex items-center overflow-hidden rounded-full border border-light-champagne bg-soft-white shadow-[0_5px_16px_rgba(7,19,31,0.035)]">
-                        <button
-                          type="button"
-                          disabled={itemQuantity <= 1}
-                          onClick={() =>
-                            updateQuantity(item._id, itemQuantity - 1)
-                          }
-                          className="flex h-9 w-9 items-center justify-center text-[15px] text-midnight-navy transition-all duration-300 hover:bg-midnight-navy hover:text-soft-white disabled:cursor-not-allowed disabled:opacity-30"
-                        >
-                          −
-                        </button>
-
-                        <span className="flex h-9 min-w-10 items-center justify-center border-x border-light-champagne px-2 text-[10px] font-semibold text-midnight-navy">
-                          {itemQuantity}
-                        </span>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateQuantity(item._id, itemQuantity + 1)
-                          }
-                          className="flex h-9 w-9 items-center justify-center text-[15px] text-midnight-navy transition-all duration-300 hover:bg-midnight-navy hover:text-soft-white"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                },
+              )}
             </div>
           )}
         </div>
@@ -453,7 +715,9 @@ const CartDrawer = () => {
                 </div>
 
                 <span className="text-right font-serif text-[1.65rem] font-normal text-champagne-gold">
-                  {Number(cartTotal || 0).toLocaleString()}{" "}
+                  {Number(
+                    cartTotal || 0,
+                  ).toLocaleString()}{" "}
                   <span className="font-sans text-[8px] font-semibold uppercase tracking-[0.1em]">
                     EGP
                   </span>
@@ -463,7 +727,9 @@ const CartDrawer = () => {
               <div className="mb-5 flex items-center gap-3">
                 <span className="h-px flex-1 bg-gradient-to-r from-transparent to-champagne-gold/20" />
 
-                <span className="text-[7px] text-classic-gold">✦</span>
+                <span className="text-[7px] text-classic-gold">
+                  ✦
+                </span>
 
                 <span className="h-px flex-1 bg-gradient-to-l from-transparent to-champagne-gold/20" />
               </div>
@@ -474,6 +740,7 @@ const CartDrawer = () => {
                 className="group flex min-h-[52px] w-full items-center justify-center gap-8 rounded-[13px] bg-soft-white px-6 text-[9px] font-semibold uppercase tracking-[0.12em] text-midnight-navy shadow-[0_12px_30px_rgba(0,0,0,0.16)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-warm-ivory hover:shadow-[0_16px_35px_rgba(0,0,0,0.22)]"
               >
                 View Cart
+
                 <span className="text-[15px] text-classic-gold transition-transform duration-300 group-hover:translate-x-1">
                   →
                 </span>

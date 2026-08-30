@@ -5,27 +5,165 @@ import { useCart } from "../../../context/CartContext";
 import { createOrder } from "../services/orderApi";
 import { getShippingAreas } from "../../shipping/services/shippingApi";
 
-const BACKEND_URL = (
-  import.meta.env.VITE_BACKEND_URL || ""
-).replace(/\/$/, "");
+const getBackendOrigin = () => {
+  const explicitBackend =
+    import.meta.env.VITE_BACKEND_URL;
 
-const getImageUrl = (image) => {
+  if (explicitBackend) {
+    return String(explicitBackend).replace(/\/+$/, "");
+  }
+
+  const apiUrl = import.meta.env.VITE_API_URL;
+
+  if (
+    apiUrl &&
+    /^https?:\/\//i.test(apiUrl)
+  ) {
+    return String(apiUrl)
+      .replace(/\/api\/?$/i, "")
+      .replace(/\/+$/, "");
+  }
+
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname !== "localhost" &&
+    window.location.hostname !== "127.0.0.1"
+  ) {
+    return window.location.origin;
+  }
+
+  return "http://localhost:5000";
+};
+
+const BACKEND_URL = getBackendOrigin();
+
+const getFilePath = (value) => {
+  if (!value) {
+    return "";
+  }
+
+  if (typeof value === "string") {
+    return value.trim();
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const path = getFilePath(item);
+
+      if (path) {
+        return path;
+      }
+    }
+
+    return "";
+  }
+
+  if (typeof value === "object") {
+    return (
+      getFilePath(value.imageUrl) ||
+      getFilePath(value.url) ||
+      getFilePath(value.path) ||
+      getFilePath(value.src) ||
+      getFilePath(value.image) ||
+      getFilePath(value.file) ||
+      getFilePath(value.filename) ||
+      ""
+    );
+  }
+
+  return "";
+};
+
+const getImageUrl = (value) => {
+  let image = getFilePath(value);
+
   if (!image) {
     return "";
   }
 
   if (
     image.startsWith("http://") ||
-    image.startsWith("https://")
+    image.startsWith("https://") ||
+    image.startsWith("blob:") ||
+    image.startsWith("data:")
   ) {
     return image;
   }
 
-  const cleanImage = image.startsWith("/")
-    ? image
-    : `/${image}`;
+  if (image.startsWith("//")) {
+    const protocol =
+      typeof window !== "undefined"
+        ? window.location.protocol
+        : "https:";
 
-  return `${BACKEND_URL}${cleanImage}`;
+    return `${protocol}${image}`;
+  }
+
+  if (image.startsWith("/api/uploads/")) {
+    image = image.replace(/^\/api/, "");
+  }
+
+  if (
+    image.startsWith("/assets/") ||
+    image.startsWith("/images/")
+  ) {
+    return image;
+  }
+
+  return `${BACKEND_URL}${image.startsWith("/") ? "" : "/"}${image}`;
+};
+
+const getCartItemImage = (item) => {
+  const product = item?.product || {};
+  const variant = item?.variant || {};
+
+  const productSnapshot =
+    item?.productSnapshot || {};
+
+  const variantSnapshot =
+    item?.variantSnapshot || {};
+
+  const candidates = [
+    item?.image,
+    item?.imageUrl,
+    item?.productImage,
+    item?.productImageUrl,
+    item?.primaryImage,
+
+    variant?.image,
+    variant?.imageUrl,
+    variant?.primaryImage,
+    variant?.images?.[0],
+    variant?.images,
+
+    product?.primaryImage,
+    product?.image,
+    product?.imageUrl,
+    product?.images?.[0],
+    product?.images,
+
+    variantSnapshot?.image,
+    variantSnapshot?.imageUrl,
+    variantSnapshot?.primaryImage,
+    variantSnapshot?.images?.[0],
+    variantSnapshot?.images,
+
+    productSnapshot?.primaryImage,
+    productSnapshot?.image,
+    productSnapshot?.imageUrl,
+    productSnapshot?.images?.[0],
+    productSnapshot?.images,
+  ];
+
+  for (const candidate of candidates) {
+    const path = getFilePath(candidate);
+
+    if (path) {
+      return path;
+    }
+  }
+
+  return "";
 };
 
 const formatMoney = (value) => {
@@ -391,11 +529,7 @@ const CheckoutPage = () => {
                     unitPrice * quantity;
 
                   const image =
-                    variant?.image ||
-                    product?.primaryImage ||
-                    product?.image ||
-                    product?.images?.[0] ||
-                    "";
+                    getCartItemImage(item);
 
                   const imageUrl =
                     getImageUrl(image);

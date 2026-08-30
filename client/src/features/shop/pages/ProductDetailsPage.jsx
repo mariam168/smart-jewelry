@@ -12,7 +12,114 @@ import { getProductTechnologies } from "../../admin/services/productTechnologyAp
 
 import { useCart } from "../../../context/CartContext";
 
-const API_URL = "http://localhost:5000";
+const getBackendOrigin = () => {
+  const explicitBackend =
+    import.meta.env.VITE_BACKEND_URL;
+
+  if (explicitBackend) {
+    return String(explicitBackend).replace(/\/+$/, "");
+  }
+
+  const apiUrl =
+    import.meta.env.VITE_API_URL;
+
+  if (
+    apiUrl &&
+    /^https?:\/\//i.test(apiUrl)
+  ) {
+    return String(apiUrl)
+      .replace(/\/api\/?$/i, "")
+      .replace(/\/+$/, "");
+  }
+
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname !== "localhost" &&
+    window.location.hostname !== "127.0.0.1"
+  ) {
+    return window.location.origin;
+  }
+
+  return "http://localhost:5000";
+};
+
+const API_URL = getBackendOrigin();
+
+const getFilePath = (value) => {
+  if (!value) {
+    return "";
+  }
+
+  if (typeof value === "string") {
+    return value.trim();
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const path = getFilePath(item);
+
+      if (path) {
+        return path;
+      }
+    }
+
+    return "";
+  }
+
+  if (typeof value === "object") {
+    return (
+      getFilePath(value.imageUrl) ||
+      getFilePath(value.url) ||
+      getFilePath(value.path) ||
+      getFilePath(value.src) ||
+      getFilePath(value.image) ||
+      getFilePath(value.file) ||
+      getFilePath(value.filename) ||
+      ""
+    );
+  }
+
+  return "";
+};
+
+const getImageUrl = (value) => {
+  let image = getFilePath(value);
+
+  if (!image) {
+    return "";
+  }
+
+  if (
+    image.startsWith("http://") ||
+    image.startsWith("https://") ||
+    image.startsWith("blob:") ||
+    image.startsWith("data:")
+  ) {
+    return image;
+  }
+
+  if (image.startsWith("//")) {
+    const protocol =
+      typeof window !== "undefined"
+        ? window.location.protocol
+        : "https:";
+
+    return `${protocol}${image}`;
+  }
+
+  if (image.startsWith("/api/uploads/")) {
+    image = image.replace(/^\/api/, "");
+  }
+
+  if (
+    image.startsWith("/assets/") ||
+    image.startsWith("/images/")
+  ) {
+    return image;
+  }
+
+  return `${API_URL}${image.startsWith("/") ? "" : "/"}${image}`;
+};
 
 const ProductDetailsPage = () => {
   const { id } = useParams();
@@ -23,39 +130,38 @@ const ProductDetailsPage = () => {
 
   const [variants, setVariants] = useState([]);
 
-  const [productTechnologies, setProductTechnologies] = useState([]);
+  const [productTechnologies, setProductTechnologies] =
+    useState([]);
 
-  const [selectedTechnology, setSelectedTechnology] = useState(null);
+  const [selectedTechnology, setSelectedTechnology] =
+    useState(null);
 
-  const [selectedVariant, setSelectedVariant] = useState(null);
+  const [selectedVariant, setSelectedVariant] =
+    useState(null);
 
-  const [selectedColor, setSelectedColor] = useState("");
+  const [selectedColor, setSelectedColor] =
+    useState("");
 
-  const [selectedSize, setSelectedSize] = useState("");
+  const [selectedSize, setSelectedSize] =
+    useState("");
 
-  const [selectedImage, setSelectedImage] = useState("");
+  const [selectedImage, setSelectedImage] =
+    useState("");
 
   const [quantity, setQuantity] = useState(1);
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] =
+    useState(true);
 
   const [error, setError] = useState("");
 
-  const { addToCart, isLoading: isCartLoading } = useCart();
+  const {
+    addToCart,
+    isLoading: isCartLoading,
+  } = useCart();
 
-  const [addedToCart, setAddedToCart] = useState(false);
-
-  const getImageUrl = (image) => {
-    if (!image) {
-      return "";
-    }
-
-    if (image.startsWith("http://") || image.startsWith("https://")) {
-      return image;
-    }
-
-    return `${API_URL}${image}`;
-  };
+  const [addedToCart, setAddedToCart] =
+    useState(false);
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -86,14 +192,19 @@ const ProductDetailsPage = () => {
 
           getProductVariants(id).catch(() => []),
 
-          getProductTechnologies(id).catch(() => []),
+          getProductTechnologies(id).catch(
+            () => [],
+          ),
         ]);
 
         const currentProduct =
-          productResponse?.product || productResponse?.data?.product;
+          productResponse?.product ||
+          productResponse?.data?.product;
 
         if (!currentProduct) {
-          throw new Error("Product not found.");
+          throw new Error(
+            "Product not found.",
+          );
         }
 
         setProduct(currentProduct);
@@ -104,20 +215,31 @@ const ProductDetailsPage = () => {
           imagesResponse ||
           [];
 
-        const safeImages = Array.isArray(loadedImages) ? loadedImages : [];
+        const safeImages =
+          Array.isArray(loadedImages)
+            ? loadedImages
+            : [];
 
         setImages(safeImages);
 
         if (safeImages.length > 0) {
-          const primaryImage = safeImages.find((image) => image.isPrimary);
+          const primaryImage =
+            safeImages.find(
+              (image) => image.isPrimary,
+            );
 
           setSelectedImage(
-            getImageUrl(primaryImage?.imageUrl || safeImages[0]?.imageUrl),
+            getImageUrl(
+              primaryImage?.imageUrl ||
+                safeImages[0]?.imageUrl,
+            ),
           );
         } else {
           setSelectedImage(
             getImageUrl(
-              currentProduct.primaryImage || currentProduct.image || "",
+              currentProduct.primaryImage ||
+                currentProduct.image ||
+                "",
             ),
           );
         }
@@ -128,9 +250,13 @@ const ProductDetailsPage = () => {
           variantsResponse ||
           [];
 
-        const activeVariants = Array.isArray(loadedVariants)
-          ? loadedVariants.filter((variant) => variant.isActive !== false)
-          : [];
+        const activeVariants =
+          Array.isArray(loadedVariants)
+            ? loadedVariants.filter(
+                (variant) =>
+                  variant.isActive !== false,
+              )
+            : [];
 
         setVariants(activeVariants);
 
@@ -139,25 +265,35 @@ const ProductDetailsPage = () => {
         setSelectedSize("");
 
         const loadedTechnologies =
-          technologiesResponse?.data?.productTechnologies ||
-          technologiesResponse?.data?.technologies ||
-          technologiesResponse?.productTechnologies ||
-          technologiesResponse?.technologies ||
+          technologiesResponse?.data
+            ?.productTechnologies ||
+          technologiesResponse?.data
+            ?.technologies ||
+          technologiesResponse
+            ?.productTechnologies ||
+          technologiesResponse
+            ?.technologies ||
           technologiesResponse ||
           [];
 
-        const safeTechnologies = Array.isArray(loadedTechnologies)
-          ? loadedTechnologies
-          : [];
+        const safeTechnologies =
+          Array.isArray(
+            loadedTechnologies,
+          )
+            ? loadedTechnologies
+            : [];
 
-        setProductTechnologies(safeTechnologies);
+        setProductTechnologies(
+          safeTechnologies,
+        );
 
         setSelectedTechnology(null);
       } catch (error) {
         console.error(error);
 
         setError(
-          error?.response?.data?.message ||
+          error?.response?.data
+            ?.message ||
             error?.message ||
             "Failed to load product.",
         );
@@ -171,11 +307,19 @@ const ProductDetailsPage = () => {
     }
   }, [id]);
 
-  const technologyModels = product?.technologyModels || [];
+  const technologyModels =
+    product?.technologyModels || [];
 
   const colors = useMemo(() => {
     return [
-      ...new Set(variants.map((variant) => variant.color).filter(Boolean)),
+      ...new Set(
+        variants
+          .map(
+            (variant) =>
+              variant.color,
+          )
+          .filter(Boolean),
+      ),
     ];
   }, [variants]);
 
@@ -187,8 +331,15 @@ const ProductDetailsPage = () => {
     return [
       ...new Set(
         variants
-          .filter((variant) => variant.color === selectedColor)
-          .map((variant) => variant.size)
+          .filter(
+            (variant) =>
+              variant.color ===
+              selectedColor,
+          )
+          .map(
+            (variant) =>
+              variant.size,
+          )
           .filter(Boolean),
       ),
     ];
@@ -197,7 +348,11 @@ const ProductDetailsPage = () => {
   const handleColorChange = (color) => {
     setSelectedColor(color);
 
-    const colorVariants = variants.filter((variant) => variant.color === color);
+    const colorVariants =
+      variants.filter(
+        (variant) =>
+          variant.color === color,
+      );
 
     if (colorVariants.length === 0) {
       return;
@@ -209,13 +364,22 @@ const ProductDetailsPage = () => {
 
     setQuantity(1);
 
-    const firstColorVariant = colorVariants[0];
+    const firstColorVariant =
+      colorVariants[0];
 
     if (firstColorVariant.image) {
-      setSelectedImage(getImageUrl(firstColorVariant.image));
+      setSelectedImage(
+        getImageUrl(
+          firstColorVariant.image,
+        ),
+      );
     } else {
       setSelectedImage(
-        getImageUrl(product?.primaryImage || product?.image || ""),
+        getImageUrl(
+          product?.primaryImage ||
+            product?.image ||
+            "",
+        ),
       );
     }
   };
@@ -224,7 +388,9 @@ const ProductDetailsPage = () => {
     setSelectedSize(size);
 
     const variant = variants.find(
-      (item) => item.color === selectedColor && item.size === size,
+      (item) =>
+        item.color === selectedColor &&
+        item.size === size,
     );
 
     if (!variant) {
@@ -234,56 +400,95 @@ const ProductDetailsPage = () => {
     setSelectedVariant(variant);
 
     if (variant.image) {
-      setSelectedImage(getImageUrl(variant.image));
+      setSelectedImage(
+        getImageUrl(variant.image),
+      );
     } else {
       setSelectedImage(
-        getImageUrl(product?.primaryImage || product?.image || ""),
+        getImageUrl(
+          product?.primaryImage ||
+            product?.image ||
+            "",
+        ),
       );
     }
 
     setQuantity(1);
   };
 
-  const handleTechnologyChange = (productTechnology) => {
-    setSelectedTechnology(productTechnology);
+  const handleTechnologyChange = (
+    productTechnology,
+  ) => {
+    setSelectedTechnology(
+      productTechnology,
+    );
 
     setQuantity(1);
   };
 
-  const technologyExtraPrice = Number(selectedTechnology?.extraPrice || 0);
+  const technologyExtraPrice =
+    Number(
+      selectedTechnology?.extraPrice ||
+        0,
+    );
 
-  const variantPrice = selectedVariant?.price ?? product?.price ?? 0;
+  const variantPrice =
+    selectedVariant?.price ??
+    product?.price ??
+    0;
 
-  const currentPrice = Number(variantPrice) + technologyExtraPrice;
+  const currentPrice =
+    Number(variantPrice) +
+    technologyExtraPrice;
 
   const comparePrice =
-    selectedVariant?.compareAtPrice ?? product?.comparePrice ?? 0;
+    selectedVariant?.compareAtPrice ??
+    product?.comparePrice ??
+    0;
 
-  const saving = comparePrice > currentPrice ? comparePrice - currentPrice : 0;
+  const saving =
+    comparePrice > currentPrice
+      ? comparePrice - currentPrice
+      : 0;
 
-  const currentStock = selectedVariant?.stock ?? product?.stock ?? 0;
+  const currentStock =
+    selectedVariant?.stock ??
+    product?.stock ??
+    0;
 
   const currentImage =
     selectedImage ||
     getImageUrl(
-      selectedVariant?.image || product?.primaryImage || product?.image || "",
+      selectedVariant?.image ||
+        product?.primaryImage ||
+        product?.image ||
+        "",
     );
 
-  const isOutOfStock = currentStock <= 0;
+  const isOutOfStock =
+    currentStock <= 0;
 
-  const isInactive = product?.status !== "active";
+  const isInactive =
+    product?.status !== "active";
 
-  const isUnavailable = isOutOfStock || isInactive;
+  const isUnavailable =
+    isOutOfStock || isInactive;
 
   const increaseQuantity = () => {
     if (quantity < currentStock) {
-      setQuantity((previous) => previous + 1);
+      setQuantity(
+        (previous) =>
+          previous + 1,
+      );
     }
   };
 
   const decreaseQuantity = () => {
     if (quantity > 1) {
-      setQuantity((previous) => previous - 1);
+      setQuantity(
+        (previous) =>
+          previous - 1,
+      );
     }
   };
 
@@ -292,14 +497,25 @@ const ProductDetailsPage = () => {
       return;
     }
 
-    if (variants.length > 0 && !selectedVariant) {
-      alert("Please select a variant.");
+    if (
+      variants.length > 0 &&
+      !selectedVariant
+    ) {
+      alert(
+        "Please select a variant.",
+      );
 
       return;
     }
 
-    if (productTechnologies.length > 0 && !selectedTechnology) {
-      alert("Please select a technology.");
+    if (
+      productTechnologies.length >
+        0 &&
+      !selectedTechnology
+    ) {
+      alert(
+        "Please select a technology.",
+      );
 
       return;
     }
@@ -308,13 +524,18 @@ const ProductDetailsPage = () => {
       await addToCart(
         product._id,
         quantity,
-        selectedVariant?._id || null,
-        selectedTechnology?._id || null,
+        selectedVariant?._id ||
+          null,
+        selectedTechnology?._id ||
+          null,
       );
 
       setAddedToCart(true);
     } catch (error) {
-      console.error("Add To Cart Error:", error);
+      console.error(
+        "Add To Cart Error:",
+        error,
+      );
     }
   };
 
@@ -325,7 +546,9 @@ const ProductDetailsPage = () => {
 
         <div className="relative text-center">
           <div className="relative mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-champagne-gold/30 bg-midnight-navy text-lg text-champagne-gold shadow-[0_14px_35px_rgba(18,38,58,0.18)]">
-            <span className="animate-pulse">✦</span>
+            <span className="animate-pulse">
+              ✦
+            </span>
           </div>
 
           <p className="mt-6 text-[9px] font-semibold uppercase tracking-[0.35em] text-slate-gray">
@@ -384,7 +607,9 @@ const ProductDetailsPage = () => {
             Shop
           </Link>
 
-          <span className="text-classic-gold">/</span>
+          <span className="text-classic-gold">
+            /
+          </span>
 
           <span className="max-w-[220px] truncate text-midnight-navy">
             {product.name}
@@ -415,7 +640,9 @@ const ProductDetailsPage = () => {
               )}
 
               <div className="pointer-events-none absolute bottom-6 left-6 z-20 flex items-center gap-2 rounded-full border border-soft-white/70 bg-soft-white/75 px-4 py-2 backdrop-blur-md">
-                <span className="text-[8px] text-classic-gold">✦</span>
+                <span className="text-[8px] text-classic-gold">
+                  ✦
+                </span>
 
                 <span className="text-[8px] font-semibold uppercase tracking-[0.18em] text-midnight-navy">
                   Smart Jewelry
@@ -425,30 +652,45 @@ const ProductDetailsPage = () => {
 
             {images.length > 0 && (
               <div className="mt-4 grid grid-cols-5 gap-2.5 sm:gap-3">
-                {images.map((image) => {
-                  const imageUrl = getImageUrl(image.imageUrl);
+                {images.map(
+                  (image) => {
+                    const imageUrl =
+                      getImageUrl(
+                        image.imageUrl,
+                      );
 
-                  return (
-                    <button
-                      type="button"
-                      key={image._id}
-                      onClick={() => setSelectedImage(imageUrl)}
-                      className={`group relative overflow-hidden rounded-[14px] border bg-soft-white p-1 transition-all duration-300 ${
-                        selectedImage === imageUrl
-                          ? "border-classic-gold shadow-[0_8px_22px_rgba(201,162,77,0.14)]"
-                          : "border-light-champagne hover:border-champagne-gold"
-                      }`}
-                    >
-                      <div className="overflow-hidden rounded-[10px] bg-soft-cream">
-                        <img
-                          src={imageUrl}
-                          alt={image.alt || product.name}
-                          className="h-16 w-full object-cover transition-transform duration-500 group-hover:scale-105 sm:h-20 lg:h-24"
-                        />
-                      </div>
-                    </button>
-                  );
-                })}
+                    return (
+                      <button
+                        type="button"
+                        key={image._id}
+                        onClick={() =>
+                          setSelectedImage(
+                            imageUrl,
+                          )
+                        }
+                        className={`group relative overflow-hidden rounded-[14px] border bg-soft-white p-1 transition-all duration-300 ${
+                          selectedImage ===
+                          imageUrl
+                            ? "border-classic-gold shadow-[0_8px_22px_rgba(201,162,77,0.14)]"
+                            : "border-light-champagne hover:border-champagne-gold"
+                        }`}
+                      >
+                        <div className="overflow-hidden rounded-[10px] bg-soft-cream">
+                          <img
+                            src={
+                              imageUrl
+                            }
+                            alt={
+                              image.alt ||
+                              product.name
+                            }
+                            className="h-16 w-full object-cover transition-transform duration-500 group-hover:scale-105 sm:h-20 lg:h-24"
+                          />
+                        </div>
+                      </button>
+                    );
+                  },
+                )}
               </div>
             )}
           </div>
@@ -458,10 +700,14 @@ const ProductDetailsPage = () => {
               <span className="h-px w-10 bg-classic-gold/60" />
 
               <p className="text-[9px] font-semibold uppercase tracking-[0.32em] text-antique-gold">
-                {product.category?.name || "Collection"}
+                {product.category
+                  ?.name ||
+                  "Collection"}
               </p>
 
-              <span className="text-[8px] text-classic-gold">✦</span>
+              <span className="text-[8px] text-classic-gold">
+                ✦
+              </span>
             </div>
 
             <h1 className="mt-5 max-w-[620px] font-serif text-[3rem] font-normal leading-[0.98] tracking-[-0.04em] text-midnight-navy sm:text-[3.8rem] lg:text-[4.2rem]">
@@ -470,7 +716,9 @@ const ProductDetailsPage = () => {
 
             {product.shortDescription && (
               <p className="mt-6 max-w-xl text-[13px] leading-7 text-slate-gray sm:text-[14px] sm:leading-8">
-                {product.shortDescription}
+                {
+                  product.shortDescription
+                }
               </p>
             )}
 
@@ -482,18 +730,24 @@ const ProductDetailsPage = () => {
                   ${currentPrice}
                 </h2>
 
-                {comparePrice > currentPrice && (
+                {comparePrice >
+                  currentPrice && (
                   <span className="pb-1.5 text-[15px] text-steel-gray line-through">
                     ${comparePrice}
                   </span>
                 )}
               </div>
 
-              {technologyExtraPrice > 0 && (
+              {technologyExtraPrice >
+                0 && (
                 <p className="relative mt-3 text-[10px] tracking-[0.02em] text-slate-gray">
-                  Base price: ${variantPrice}
+                  Base price: $
+                  {variantPrice}
                   {" + "}
-                  Technology: ${technologyExtraPrice}
+                  Technology: $
+                  {
+                    technologyExtraPrice
+                  }
                 </p>
               )}
 
@@ -504,7 +758,8 @@ const ProductDetailsPage = () => {
               )}
             </div>
 
-            {productTechnologies.length > 0 && (
+            {productTechnologies.length >
+              0 && (
               <div className="mt-7 rounded-[24px] border border-light-champagne/90 bg-soft-white/85 p-5 shadow-[0_10px_32px_rgba(7,19,31,0.04)] backdrop-blur-sm sm:p-6">
                 <div className="mb-5">
                   <div className="flex items-center gap-3.5">
@@ -514,148 +769,177 @@ const ProductDetailsPage = () => {
 
                     <div>
                       <h2 className="font-serif text-[1.45rem] font-normal text-midnight-navy">
-                        Choose Technology
+                        Choose
+                        Technology
                       </h2>
 
                       <p className="mt-1 text-[10px] leading-5 text-steel-gray">
-                        Select an option to customize your piece.
+                        Select an
+                        option to
+                        customize
+                        your piece.
                       </p>
                     </div>
                   </div>
 
                   {!selectedTechnology && (
                     <div className="mt-5 rounded-[14px] border border-dashed border-champagne-gold/40 bg-warm-ivory/75 px-4 py-3 text-[10px] leading-5 text-slate-gray">
-                      Please choose a technology. The additional price will be
-                      added to the product price.
+                      Please choose
+                      a technology.
+                      The additional
+                      price will be
+                      added to the
+                      product price.
                     </div>
                   )}
                 </div>
 
                 <div className="grid gap-3">
-                  {productTechnologies.map((productTechnology) => {
-                    const technologyModel =
-                      productTechnology.technologyModel || {};
+                  {productTechnologies.map(
+                    (
+                      productTechnology,
+                    ) => {
+                      const technologyModel =
+                        productTechnology.technologyModel ||
+                        {};
 
-                    const technology = technologyModel.technology || {};
+                      const technology =
+                        technologyModel.technology ||
+                        {};
 
-                    const extraPrice = Number(
-                      productTechnology.extraPrice || 0,
-                    );
+                      const extraPrice =
+                        Number(
+                          productTechnology.extraPrice ||
+                            0,
+                        );
 
-                    const isSelected =
-                      selectedTechnology?._id === productTechnology._id;
+                      const isSelected =
+                        selectedTechnology?._id ===
+                        productTechnology._id;
 
-                    return (
-                      <button
-                        type="button"
-                        key={productTechnology._id}
-                        onClick={() =>
-                          handleTechnologyChange(productTechnology)
-                        }
-                        className={`group relative overflow-hidden rounded-[18px] border p-4 text-left transition-all duration-300 sm:p-5 ${
-                          isSelected
-                            ? "border-classic-gold bg-midnight-navy text-soft-white shadow-[0_14px_32px_rgba(18,38,58,0.16)]"
-                            : "border-light-champagne bg-warm-ivory/60 hover:-translate-y-0.5 hover:border-champagne-gold hover:bg-soft-white hover:shadow-[0_10px_25px_rgba(7,19,31,0.05)]"
-                        }`}
-                      >
-                        <div
-                          className={`pointer-events-none absolute right-0 top-0 h-20 w-20 rounded-full blur-[45px] ${
+                      return (
+                        <button
+                          type="button"
+                          key={
+                            productTechnology._id
+                          }
+                          onClick={() =>
+                            handleTechnologyChange(
+                              productTechnology,
+                            )
+                          }
+                          className={`group relative overflow-hidden rounded-[18px] border p-4 text-left transition-all duration-300 sm:p-5 ${
                             isSelected
-                              ? "bg-champagne-gold/15"
-                              : "bg-soft-cream"
+                              ? "border-classic-gold bg-midnight-navy text-soft-white shadow-[0_14px_32px_rgba(18,38,58,0.16)]"
+                              : "border-light-champagne bg-warm-ivory/60 hover:-translate-y-0.5 hover:border-champagne-gold hover:bg-soft-white hover:shadow-[0_10px_25px_rgba(7,19,31,0.05)]"
                           }`}
-                        />
+                        >
+                          <div
+                            className={`pointer-events-none absolute right-0 top-0 h-20 w-20 rounded-full blur-[45px] ${
+                              isSelected
+                                ? "bg-champagne-gold/15"
+                                : "bg-soft-cream"
+                            }`}
+                          />
 
-                        <div className="relative flex items-start justify-between gap-4">
-                          <div>
-                            <h3
-                              className={`text-[13px] font-semibold ${
-                                isSelected
-                                  ? "text-soft-white"
-                                  : "text-midnight-navy"
-                              }`}
-                            >
-                              {technology.name || "Technology"}
-                            </h3>
-
-                            {technologyModel.modelName && (
-                              <p
-                                className={`mt-1.5 text-[11px] ${
+                          <div className="relative flex items-start justify-between gap-4">
+                            <div>
+                              <h3
+                                className={`text-[13px] font-semibold ${
                                   isSelected
-                                    ? "text-premium-silver/75"
-                                    : "text-slate-gray"
+                                    ? "text-soft-white"
+                                    : "text-midnight-navy"
                                 }`}
                               >
-                                {technologyModel.modelName}
-                              </p>
-                            )}
+                                {technology.name ||
+                                  "Technology"}
+                              </h3>
+
+                              {technologyModel.modelName && (
+                                <p
+                                  className={`mt-1.5 text-[11px] ${
+                                    isSelected
+                                      ? "text-premium-silver/75"
+                                      : "text-slate-gray"
+                                  }`}
+                                >
+                                  {
+                                    technologyModel.modelName
+                                  }
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="shrink-0 text-right">
+                              {extraPrice >
+                              0 ? (
+                                <span
+                                  className={`text-[12px] font-semibold ${
+                                    isSelected
+                                      ? "text-champagne-gold"
+                                      : "text-antique-gold"
+                                  }`}
+                                >
+                                  +$
+                                  {
+                                    extraPrice
+                                  }
+                                </span>
+                              ) : (
+                                <span
+                                  className={`text-[10px] font-medium ${
+                                    isSelected
+                                      ? "text-premium-silver/70"
+                                      : "text-slate-gray"
+                                  }`}
+                                >
+                                  Included
+                                </span>
+                              )}
+                            </div>
                           </div>
 
-                          <div className="shrink-0 text-right">
-                            {extraPrice > 0 ? (
+                          <div className="relative mt-4 flex flex-wrap gap-2">
+                            {technologyModel.requiresBattery && (
                               <span
-                                className={`text-[12px] font-semibold ${
+                                className={`rounded-full px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.15em] ${
                                   isSelected
-                                    ? "text-champagne-gold"
-                                    : "text-antique-gold"
+                                    ? "bg-soft-white/10 text-champagne-gold"
+                                    : "bg-soft-cream text-antique-gold"
                                 }`}
                               >
-                                +${extraPrice}
+                                Battery
                               </span>
-                            ) : (
+                            )}
+
+                            {technologyModel.requiresActivation && (
                               <span
-                                className={`text-[10px] font-medium ${
+                                className={`rounded-full px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.15em] ${
                                   isSelected
-                                    ? "text-premium-silver/70"
-                                    : "text-slate-gray"
+                                    ? "bg-soft-white/10 text-champagne-gold"
+                                    : "bg-soft-cream text-slate-gray"
                                 }`}
                               >
-                                Included
+                                Activation
+                              </span>
+                            )}
+
+                            {technologyModel.requiresSubscription && (
+                              <span
+                                className={`rounded-full px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.15em] ${
+                                  isSelected
+                                    ? "bg-soft-white/10 text-champagne-gold"
+                                    : "bg-soft-cream text-antique-gold"
+                                }`}
+                              >
+                                Subscription
                               </span>
                             )}
                           </div>
-                        </div>
-
-                        <div className="relative mt-4 flex flex-wrap gap-2">
-                          {technologyModel.requiresBattery && (
-                            <span
-                              className={`rounded-full px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.15em] ${
-                                isSelected
-                                  ? "bg-soft-white/10 text-champagne-gold"
-                                  : "bg-soft-cream text-antique-gold"
-                              }`}
-                            >
-                              Battery
-                            </span>
-                          )}
-
-                          {technologyModel.requiresActivation && (
-                            <span
-                              className={`rounded-full px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.15em] ${
-                                isSelected
-                                  ? "bg-soft-white/10 text-champagne-gold"
-                                  : "bg-soft-cream text-slate-gray"
-                              }`}
-                            >
-                              Activation
-                            </span>
-                          )}
-
-                          {technologyModel.requiresSubscription && (
-                            <span
-                              className={`rounded-full px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.15em] ${
-                                isSelected
-                                  ? "bg-soft-white/10 text-champagne-gold"
-                                  : "bg-soft-cream text-antique-gold"
-                              }`}
-                            >
-                              Subscription
-                            </span>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
+                        </button>
+                      );
+                    },
+                  )}
                 </div>
               </div>
             )}
@@ -671,25 +955,32 @@ const ProductDetailsPage = () => {
                         </span>
 
                         <h2 className="font-serif text-[1.45rem] font-normal text-midnight-navy">
-                          Choose Your Variant
+                          Choose Your
+                          Variant
                         </h2>
                       </div>
 
                       <p className="ml-[54px] mt-1.5 text-[10px] text-steel-gray">
-                        Select your preferred color and size.
+                        Select your
+                        preferred color
+                        and size.
                       </p>
                     </div>
                   </div>
 
                   {!selectedVariant && (
                     <div className="mt-5 rounded-[14px] border border-dashed border-champagne-gold/40 bg-warm-ivory/75 px-4 py-3 text-[10px] leading-5 text-slate-gray">
-                      Please select your variant before adding the product to
+                      Please select
+                      your variant
+                      before adding
+                      the product to
                       your cart.
                     </div>
                   )}
                 </div>
 
-                {colors.length > 0 && (
+                {colors.length >
+                  0 && (
                   <div>
                     <div className="mb-3 flex items-center justify-between">
                       <h3 className="text-[9px] font-semibold uppercase tracking-[0.18em] text-midnight-navy">
@@ -698,26 +989,37 @@ const ProductDetailsPage = () => {
 
                       {selectedColor && (
                         <span className="text-[10px] text-slate-gray">
-                          {selectedColor}
+                          {
+                            selectedColor
+                          }
                         </span>
                       )}
                     </div>
 
                     <div className="flex flex-wrap gap-2.5">
-                      {colors.map((color) => (
-                        <button
-                          type="button"
-                          key={color}
-                          onClick={() => handleColorChange(color)}
-                          className={`min-h-[44px] rounded-full border px-5 text-[11px] font-medium transition-all duration-300 ${
-                            selectedColor === color
-                              ? "border-midnight-navy bg-midnight-navy text-soft-white shadow-[0_8px_20px_rgba(18,38,58,0.14)]"
-                              : "border-light-champagne bg-warm-ivory/70 text-midnight-navy hover:border-classic-gold hover:bg-soft-white"
-                          }`}
-                        >
-                          {color}
-                        </button>
-                      ))}
+                      {colors.map(
+                        (color) => (
+                          <button
+                            type="button"
+                            key={
+                              color
+                            }
+                            onClick={() =>
+                              handleColorChange(
+                                color,
+                              )
+                            }
+                            className={`min-h-[44px] rounded-full border px-5 text-[11px] font-medium transition-all duration-300 ${
+                              selectedColor ===
+                              color
+                                ? "border-midnight-navy bg-midnight-navy text-soft-white shadow-[0_8px_20px_rgba(18,38,58,0.14)]"
+                                : "border-light-champagne bg-warm-ivory/70 text-midnight-navy hover:border-classic-gold hover:bg-soft-white"
+                            }`}
+                          >
+                            {color}
+                          </button>
+                        ),
+                      )}
                     </div>
                   </div>
                 )}
@@ -731,26 +1033,37 @@ const ProductDetailsPage = () => {
 
                       {selectedSize && (
                         <span className="text-[10px] text-slate-gray">
-                          {selectedSize}
+                          {
+                            selectedSize
+                          }
                         </span>
                       )}
                     </div>
 
                     <div className="flex flex-wrap gap-2.5">
-                      {sizes.map((size) => (
-                        <button
-                          type="button"
-                          key={size}
-                          onClick={() => handleSizeChange(size)}
-                          className={`min-h-[44px] min-w-20 rounded-[12px] border px-5 text-[11px] font-medium transition-all duration-300 ${
-                            selectedSize === size
-                              ? "border-midnight-navy bg-midnight-navy text-soft-white shadow-[0_8px_20px_rgba(18,38,58,0.14)]"
-                              : "border-light-champagne bg-warm-ivory/70 text-midnight-navy hover:border-classic-gold hover:bg-soft-white"
-                          }`}
-                        >
-                          {size}
-                        </button>
-                      ))}
+                      {sizes.map(
+                        (size) => (
+                          <button
+                            type="button"
+                            key={
+                              size
+                            }
+                            onClick={() =>
+                              handleSizeChange(
+                                size,
+                              )
+                            }
+                            className={`min-h-[44px] min-w-20 rounded-[12px] border px-5 text-[11px] font-medium transition-all duration-300 ${
+                              selectedSize ===
+                              size
+                                ? "border-midnight-navy bg-midnight-navy text-soft-white shadow-[0_8px_20px_rgba(18,38,58,0.14)]"
+                                : "border-light-champagne bg-warm-ivory/70 text-midnight-navy hover:border-classic-gold hover:bg-soft-white"
+                            }`}
+                          >
+                            {size}
+                          </button>
+                        ),
+                      )}
                     </div>
                   </div>
                 )}
@@ -758,10 +1071,13 @@ const ProductDetailsPage = () => {
                 {selectedVariant && (
                   <div className="mt-6 rounded-[18px] border border-light-champagne/70 bg-warm-ivory/75 p-5">
                     <div className="mb-4 flex items-center gap-2">
-                      <span className="text-[9px] text-classic-gold">✦</span>
+                      <span className="text-[9px] text-classic-gold">
+                        ✦
+                      </span>
 
                       <span className="text-[8px] font-semibold uppercase tracking-[0.2em] text-antique-gold">
-                        Selected Variant
+                        Selected
+                        Variant
                       </span>
                     </div>
 
@@ -773,7 +1089,9 @@ const ProductDetailsPage = () => {
                           </span>
 
                           <p className="mt-1 text-[12px] font-semibold text-midnight-navy">
-                            {selectedVariant.sku}
+                            {
+                              selectedVariant.sku
+                            }
                           </p>
                         </div>
                       )}
@@ -785,7 +1103,9 @@ const ProductDetailsPage = () => {
                           </span>
 
                           <p className="mt-1 text-[12px] font-semibold text-midnight-navy">
-                            {selectedVariant.material}
+                            {
+                              selectedVariant.material
+                            }
                           </p>
                         </div>
                       )}
@@ -797,18 +1117,23 @@ const ProductDetailsPage = () => {
                           </span>
 
                           <p className="mt-1 text-[12px] font-semibold text-midnight-navy">
-                            {selectedVariant.finish}
+                            {
+                              selectedVariant.finish
+                            }
                           </p>
                         </div>
                       )}
 
                       <div>
                         <span className="text-[9px] uppercase tracking-[0.12em] text-steel-gray">
-                          Available Stock
+                          Available
+                          Stock
                         </span>
 
                         <p className="mt-1 text-[12px] font-semibold text-midnight-navy">
-                          {selectedVariant.stock}
+                          {
+                            selectedVariant.stock
+                          }
                         </p>
                       </div>
                     </div>
@@ -817,50 +1142,64 @@ const ProductDetailsPage = () => {
               </div>
             )}
 
-            {productTechnologies.length === 0 &&
-              technologyModels.length > 0 && (
+            {productTechnologies.length ===
+              0 &&
+              technologyModels.length >
+                0 && (
                 <div className="mt-7 rounded-[24px] border border-light-champagne/90 bg-soft-white/85 p-5 shadow-[0_10px_32px_rgba(7,19,31,0.04)] backdrop-blur-sm sm:p-6">
                   <h2 className="mb-5 font-serif text-[1.45rem] font-normal text-midnight-navy">
                     Technology Models
                   </h2>
 
                   <div className="grid gap-3 sm:grid-cols-2">
-                    {technologyModels.map((model) => (
-                      <div
-                        key={model._id}
-                        className="rounded-[18px] border border-light-champagne bg-warm-ivory/60 p-5"
-                      >
-                        <h3 className="text-[12px] font-semibold text-midnight-navy">
-                          {model.modelName}
-                        </h3>
+                    {technologyModels.map(
+                      (model) => (
+                        <div
+                          key={
+                            model._id
+                          }
+                          className="rounded-[18px] border border-light-champagne bg-warm-ivory/60 p-5"
+                        >
+                          <h3 className="text-[12px] font-semibold text-midnight-navy">
+                            {
+                              model.modelName
+                            }
+                          </h3>
 
-                        {model.technology?.name && (
-                          <p className="mt-1.5 text-[10px] text-slate-gray">
-                            {model.technology.name}
-                          </p>
-                        )}
-
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          {model.requiresBattery && (
-                            <span className="rounded-full bg-soft-cream px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.14em] text-antique-gold">
-                              Battery
-                            </span>
+                          {model
+                            .technology
+                            ?.name && (
+                            <p className="mt-1.5 text-[10px] text-slate-gray">
+                              {
+                                model
+                                  .technology
+                                  .name
+                              }
+                            </p>
                           )}
 
-                          {model.requiresActivation && (
-                            <span className="rounded-full bg-soft-cream px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.14em] text-slate-gray">
-                              Activation
-                            </span>
-                          )}
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            {model.requiresBattery && (
+                              <span className="rounded-full bg-soft-cream px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.14em] text-antique-gold">
+                                Battery
+                              </span>
+                            )}
 
-                          {model.requiresSubscription && (
-                            <span className="rounded-full bg-soft-cream px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.14em] text-antique-gold">
-                              Subscription
-                            </span>
-                          )}
+                            {model.requiresActivation && (
+                              <span className="rounded-full bg-soft-cream px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.14em] text-slate-gray">
+                                Activation
+                              </span>
+                            )}
+
+                            {model.requiresSubscription && (
+                              <span className="rounded-full bg-soft-cream px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.14em] text-antique-gold">
+                                Subscription
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ),
+                    )}
                   </div>
                 </div>
               )}
@@ -872,7 +1211,8 @@ const ProductDetailsPage = () => {
                 </span>
 
                 <h2 className="font-serif text-[1.4rem] font-normal text-midnight-navy">
-                  Product Specifications
+                  Product
+                  Specifications
                 </h2>
               </div>
 
@@ -884,14 +1224,18 @@ const ProductDetailsPage = () => {
                     </span>
 
                     <strong className="text-right text-[11px] font-semibold text-midnight-navy">
-                      {product.material}
+                      {
+                        product.material
+                      }
                     </strong>
                   </div>
                 )}
 
                 {product.color && (
                   <div className="flex justify-between gap-5 py-3.5">
-                    <span className="text-[10px] text-steel-gray">Color</span>
+                    <span className="text-[10px] text-steel-gray">
+                      Color
+                    </span>
 
                     <strong className="text-right text-[11px] font-semibold text-midnight-navy">
                       {product.color}
@@ -899,28 +1243,39 @@ const ProductDetailsPage = () => {
                   </div>
                 )}
 
-                {product.weight > 0 && (
+                {product.weight >
+                  0 && (
                   <div className="flex justify-between gap-5 py-3.5">
-                    <span className="text-[10px] text-steel-gray">Weight</span>
+                    <span className="text-[10px] text-steel-gray">
+                      Weight
+                    </span>
 
                     <strong className="text-right text-[11px] font-semibold text-midnight-navy">
-                      {product.weight} g
+                      {
+                        product.weight
+                      }{" "}
+                      g
                     </strong>
                   </div>
                 )}
 
                 {product.sku && (
                   <div className="flex justify-between gap-5 py-3.5">
-                    <span className="text-[10px] text-steel-gray">SKU</span>
+                    <span className="text-[10px] text-steel-gray">
+                      SKU
+                    </span>
 
                     <strong className="text-right text-[11px] font-semibold text-midnight-navy">
-                      {selectedVariant?.sku || product.sku}
+                      {selectedVariant?.sku ||
+                        product.sku}
                     </strong>
                   </div>
                 )}
 
                 <div className="flex justify-between gap-5 py-3.5">
-                  <span className="text-[10px] text-steel-gray">Stock</span>
+                  <span className="text-[10px] text-steel-gray">
+                    Stock
+                  </span>
 
                   <strong className="text-right text-[11px] font-semibold text-midnight-navy">
                     {currentStock}
@@ -928,10 +1283,14 @@ const ProductDetailsPage = () => {
                 </div>
 
                 <div className="flex justify-between gap-5 py-3.5">
-                  <span className="text-[10px] text-steel-gray">Status</span>
+                  <span className="text-[10px] text-steel-gray">
+                    Status
+                  </span>
 
                   <strong className="text-right text-[11px] font-semibold capitalize text-midnight-navy">
-                    {isOutOfStock ? "Out Of Stock" : product.status}
+                    {isOutOfStock
+                      ? "Out Of Stock"
+                      : product.status}
                   </strong>
                 </div>
               </div>
@@ -946,8 +1305,12 @@ const ProductDetailsPage = () => {
                 <div className="flex w-fit items-center overflow-hidden rounded-full border border-light-champagne bg-soft-white shadow-[0_7px_20px_rgba(7,19,31,0.04)]">
                   <button
                     type="button"
-                    onClick={decreaseQuantity}
-                    disabled={quantity <= 1}
+                    onClick={
+                      decreaseQuantity
+                    }
+                    disabled={
+                      quantity <= 1
+                    }
                     className="flex h-12 w-14 items-center justify-center text-lg text-midnight-navy transition-colors duration-300 hover:bg-soft-cream disabled:opacity-30"
                   >
                     −
@@ -959,8 +1322,13 @@ const ProductDetailsPage = () => {
 
                   <button
                     type="button"
-                    onClick={increaseQuantity}
-                    disabled={quantity >= currentStock}
+                    onClick={
+                      increaseQuantity
+                    }
+                    disabled={
+                      quantity >=
+                      currentStock
+                    }
                     className="flex h-12 w-14 items-center justify-center text-lg text-midnight-navy transition-colors duration-300 hover:bg-soft-cream disabled:opacity-30"
                   >
                     +
@@ -972,30 +1340,39 @@ const ProductDetailsPage = () => {
             <div className="mt-7">
               <button
                 type="button"
-                disabled={isUnavailable || isCartLoading}
-                onClick={handleAddToCart}
+                disabled={
+                  isUnavailable ||
+                  isCartLoading
+                }
+                onClick={
+                  handleAddToCart
+                }
                 className="group flex min-h-[58px] w-full items-center justify-center gap-4 rounded-[14px] bg-midnight-navy px-8 text-[10px] font-semibold uppercase tracking-[0.1em] text-soft-white shadow-[0_15px_35px_rgba(18,38,58,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-rich-navy hover:shadow-[0_20px_42px_rgba(18,38,58,0.23)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
               >
-                {isCartLoading ? (
-                  "Adding..."
-                ) : isOutOfStock ? (
-                  "Out Of Stock"
-                ) : (
-                  <>
-                    Add To Cart
-                    <span className="text-[16px] text-champagne-gold transition-transform duration-300 group-hover:translate-x-1">
-                      →
-                    </span>
-                    <span className="font-serif text-[14px] font-normal text-champagne-gold">
-                      ${currentPrice}
-                    </span>
-                  </>
-                )}
+                {isCartLoading
+                  ? "Adding..."
+                  : isOutOfStock
+                    ? "Out Of Stock"
+                    : (
+                      <>
+                        Add To Cart
+                        <span className="text-[16px] text-champagne-gold transition-transform duration-300 group-hover:translate-x-1">
+                          →
+                        </span>
+                        <span className="font-serif text-[14px] font-normal text-champagne-gold">
+                          $
+                          {
+                            currentPrice
+                          }
+                        </span>
+                      </>
+                    )}
               </button>
 
               {addedToCart && (
                 <div className="mt-3 rounded-[14px] border border-champagne-gold/30 bg-soft-cream px-4 py-3 text-center text-[10px] font-medium text-antique-gold">
-                  Product added successfully.
+                  Product added
+                  successfully.
                 </div>
               )}
             </div>
@@ -1011,7 +1388,9 @@ const ProductDetailsPage = () => {
                 </div>
 
                 <p className="text-[13px] leading-8 text-slate-gray">
-                  {product.description}
+                  {
+                    product.description
+                  }
                 </p>
               </div>
             )}
@@ -1022,17 +1401,21 @@ const ProductDetailsPage = () => {
                   <span className="h-px w-8 bg-classic-gold/60" />
 
                   <h2 className="text-[8px] font-semibold uppercase tracking-[0.28em] text-antique-gold">
-                    Care Instructions
+                    Care
+                    Instructions
                   </h2>
                 </div>
 
                 <p className="text-[13px] leading-8 text-slate-gray">
-                  {product.careInstructions}
+                  {
+                    product.careInstructions
+                  }
                 </p>
               </div>
             )}
 
-            {product.tags?.length > 0 && (
+            {product.tags?.length >
+              0 && (
               <div className="mt-8 border-t border-light-champagne pt-8">
                 <div className="mb-4 flex items-center gap-3">
                   <span className="h-px w-8 bg-classic-gold/60" />
@@ -1043,28 +1426,35 @@ const ProductDetailsPage = () => {
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  {product.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-full border border-light-champagne bg-soft-white px-4 py-2 text-[9px] font-medium text-slate-gray shadow-[0_4px_12px_rgba(7,19,31,0.025)]"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
+                  {product.tags.map(
+                    (tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full border border-light-champagne bg-soft-white px-4 py-2 text-[9px] font-medium text-slate-gray shadow-[0_4px_12px_rgba(7,19,31,0.025)]"
+                      >
+                        #{tag}
+                      </span>
+                    ),
+                  )}
                 </div>
               </div>
             )}
 
-            {product.preparationDays > 0 && (
+            {product.preparationDays >
+              0 && (
               <div className="mt-8 rounded-[20px] border border-champagne-gold/30 bg-soft-cream/80 p-5">
                 <h3 className="font-serif text-[1.2rem] font-normal text-midnight-navy">
                   Preparation Time
                 </h3>
 
                 <p className="mt-2 text-[11px] leading-6 text-slate-gray">
-                  Estimated preparation:
+                  Estimated
+                  preparation:
                   <strong className="ml-1 font-semibold text-antique-gold">
-                    {product.preparationDays} day(s)
+                    {
+                      product.preparationDays
+                    }{" "}
+                    day(s)
                   </strong>
                 </p>
               </div>
@@ -1073,11 +1463,15 @@ const ProductDetailsPage = () => {
             {product.isCustomizable && (
               <div className="mt-7 rounded-[20px] border border-champagne-gold/30 bg-soft-cream/80 p-5">
                 <h3 className="font-serif text-[1.2rem] font-normal text-midnight-navy">
-                  ✨ Customizable Product
+                  ✨ Customizable
+                  Product
                 </h3>
 
                 <p className="mt-2 text-[11px] leading-6 text-slate-gray">
-                  This product can be customized before manufacturing.
+                  This product can
+                  be customized
+                  before
+                  manufacturing.
                 </p>
               </div>
             )}
@@ -1087,15 +1481,20 @@ const ProductDetailsPage = () => {
                 <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-champagne-gold/10 blur-[55px]" />
 
                 <div className="relative flex items-center gap-3">
-                  <span className="text-[10px] text-champagne-gold">✦</span>
+                  <span className="text-[10px] text-champagne-gold">
+                    ✦
+                  </span>
 
                   <h2 className="font-serif text-[1.35rem] font-normal">
-                    About This Product
+                    About This
+                    Product
                   </h2>
                 </div>
 
                 <p className="relative mt-4 text-[12px] leading-7 text-premium-silver/75">
-                  {product.seoDescription}
+                  {
+                    product.seoDescription
+                  }
                 </p>
               </div>
             )}

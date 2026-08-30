@@ -2,58 +2,242 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { useCart } from "../../../context/CartContext";
 
-const API_URL = import.meta.env.VITE_API_URL 
-  ? import.meta.env.VITE_API_URL.replace("/api", "") 
-  : "http://localhost:5000";
+const getBackendOrigin = () => {
+  const explicitBackend =
+    import.meta.env.VITE_BACKEND_URL;
 
-const getImageUrl = (image) => {
+  if (explicitBackend) {
+    return String(explicitBackend).replace(/\/+$/, "");
+  }
+
+  const apiUrl =
+    import.meta.env.VITE_API_URL;
+
+  if (
+    apiUrl &&
+    /^https?:\/\//i.test(apiUrl)
+  ) {
+    return String(apiUrl)
+      .replace(/\/api\/?$/i, "")
+      .replace(/\/+$/, "");
+  }
+
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname !== "localhost" &&
+    window.location.hostname !== "127.0.0.1"
+  ) {
+    return window.location.origin;
+  }
+
+  return "http://localhost:5000";
+};
+
+const API_URL = getBackendOrigin();
+
+const getFilePath = (value) => {
+  if (!value) {
+    return "";
+  }
+
+  if (typeof value === "string") {
+    return value.trim();
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const path = getFilePath(item);
+
+      if (path) {
+        return path;
+      }
+    }
+
+    return "";
+  }
+
+  if (typeof value === "object") {
+    return (
+      getFilePath(value.imageUrl) ||
+      getFilePath(value.url) ||
+      getFilePath(value.path) ||
+      getFilePath(value.src) ||
+      getFilePath(value.image) ||
+      getFilePath(value.file) ||
+      getFilePath(value.filename) ||
+      ""
+    );
+  }
+
+  return "";
+};
+
+const getImageUrl = (value) => {
+  let image = getFilePath(value);
+
   if (!image) {
     return "";
   }
 
-  if (image.startsWith("http://") || image.startsWith("https://")) {
+  if (
+    image.startsWith("http://") ||
+    image.startsWith("https://") ||
+    image.startsWith("blob:") ||
+    image.startsWith("data:")
+  ) {
     return image;
   }
 
-  return `${API_URL}${image}`;
+  if (image.startsWith("//")) {
+    const protocol =
+      typeof window !== "undefined"
+        ? window.location.protocol
+        : "https:";
+
+    return `${protocol}${image}`;
+  }
+
+  if (image.startsWith("/api/uploads/")) {
+    image = image.replace(/^\/api/, "");
+  }
+
+  if (
+    image.startsWith("/assets/") ||
+    image.startsWith("/images/")
+  ) {
+    return image;
+  }
+
+  return `${API_URL}${image.startsWith("/") ? "" : "/"}${image}`;
+};
+
+const getCartItemImage = (item) => {
+  const product =
+    item?.product || {};
+
+  const variant =
+    item?.variant || {};
+
+  const productSnapshot =
+    item?.productSnapshot || {};
+
+  const variantSnapshot =
+    item?.variantSnapshot || {};
+
+  const candidates = [
+    item?.image,
+    item?.imageUrl,
+    item?.productImage,
+    item?.productImageUrl,
+    item?.primaryImage,
+
+    variant?.image,
+    variant?.imageUrl,
+    variant?.primaryImage,
+    variant?.images?.[0],
+    variant?.images,
+
+    product?.primaryImage,
+    product?.image,
+    product?.imageUrl,
+    product?.images?.[0],
+    product?.images,
+
+    variantSnapshot?.image,
+    variantSnapshot?.imageUrl,
+    variantSnapshot?.primaryImage,
+    variantSnapshot?.images?.[0],
+    variantSnapshot?.images,
+
+    productSnapshot?.primaryImage,
+    productSnapshot?.image,
+    productSnapshot?.imageUrl,
+    productSnapshot?.images?.[0],
+    productSnapshot?.images,
+  ];
+
+  for (const candidate of candidates) {
+    const path =
+      getFilePath(candidate);
+
+    if (path) {
+      return path;
+    }
+  }
+
+  return "";
 };
 
 const CartPage = () => {
   const navigate = useNavigate();
 
-  const { cart, isLoading, updateQuantity, removeFromCart, clearCart } =
-    useCart();
+  const {
+    cart,
+    isLoading,
+    updateQuantity,
+    removeFromCart,
+    clearCart,
+  } = useCart();
 
-  const items = cart?.items || [];
+  const items =
+    cart?.items || [];
 
-  const subtotal = items.reduce((total, item) => {
-    const product = item.product || null;
+  const subtotal = items.reduce(
+    (total, item) => {
+      const product =
+        item.product || null;
 
-    const variant = item.variant || null;
+      const variant =
+        item.variant || null;
 
-    const productTechnology = item.productTechnology || null;
+      const productTechnology =
+        item.productTechnology ||
+        null;
 
-    const technologyModel =
-      productTechnology?.technologyModel || item.technologyModel || null;
+      const technologyModel =
+        productTechnology?.technologyModel ||
+        item.technologyModel ||
+        null;
 
-    const productPrice = Number(product?.price || 0);
+      const productPrice =
+        Number(
+          product?.price || 0,
+        );
 
-    const variantPrice = Number(variant?.price || 0);
+      const variantPrice =
+        Number(
+          variant?.price || 0,
+        );
 
-    const technologyPrice = Number(
-      productTechnology?.extraPrice || technologyModel?.extraPrice || 0,
-    );
+      const technologyPrice =
+        Number(
+          productTechnology?.extraPrice ||
+            technologyModel?.extraPrice ||
+            0,
+        );
 
-    const basePrice = variantPrice > 0 ? variantPrice : productPrice;
+      const basePrice =
+        variantPrice > 0
+          ? variantPrice
+          : productPrice;
 
-    const finalUnitPrice = basePrice + technologyPrice;
+      const finalUnitPrice =
+        basePrice +
+        technologyPrice;
 
-    const quantity = Number(item.quantity || 0);
+      const quantity =
+        Number(
+          item.quantity || 0,
+        );
 
-    const itemTotal = finalUnitPrice * quantity;
+      const itemTotal =
+        finalUnitPrice *
+        quantity;
 
-    return total + itemTotal;
-  }, 0);
+      return total + itemTotal;
+    },
+    0,
+  );
 
   if (isLoading) {
     return (
@@ -63,7 +247,9 @@ const CartPage = () => {
         <div className="flex min-h-screen items-center justify-center px-6">
           <div className="relative text-center">
             <div className="relative mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-champagne-gold/30 bg-midnight-navy text-lg text-champagne-gold shadow-[0_16px_36px_rgba(18,38,58,0.18)]">
-              <span className="animate-pulse">✦</span>
+              <span className="animate-pulse">
+                ✦
+              </span>
             </div>
 
             <p className="text-[9px] font-semibold uppercase tracking-[0.32em] text-slate-gray">
@@ -110,6 +296,7 @@ const CartPage = () => {
 
                 <h1 className="mt-8 font-serif text-[2.7rem] font-normal leading-[1.02] tracking-[-0.035em] text-soft-white sm:text-[3.5rem]">
                   Your cart is
+
                   <span className="mt-1 block italic text-champagne-gold">
                     waiting for you.
                   </span>
@@ -125,6 +312,7 @@ const CartPage = () => {
                   className="group mt-9 inline-flex min-h-[52px] items-center justify-center gap-8 rounded-[13px] bg-soft-white px-8 text-[9px] font-semibold uppercase tracking-[0.12em] text-midnight-navy shadow-[0_14px_32px_rgba(0,0,0,0.16)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-warm-ivory hover:shadow-[0_18px_38px_rgba(0,0,0,0.22)]"
                 >
                   Continue Shopping
+
                   <span className="text-[15px] text-classic-gold transition-transform duration-300 group-hover:translate-x-1">
                     →
                   </span>
@@ -152,14 +340,18 @@ const CartPage = () => {
               Your Selection
             </span>
 
-            <span className="text-[8px] text-classic-gold">✦</span>
+            <span className="text-[8px] text-classic-gold">
+              ✦
+            </span>
           </div>
 
           <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
             <div>
               <h1 className="font-serif text-[3rem] font-normal leading-none tracking-[-0.045em] text-midnight-navy sm:text-[4rem] lg:text-[4.8rem]">
                 Shopping
-                <span className="ml-2 italic text-navy-soft">Cart</span>
+                <span className="ml-2 italic text-navy-soft">
+                  Cart
+                </span>
               </h1>
 
               <p className="mt-5 max-w-[560px] text-[13px] leading-7 text-slate-gray sm:text-[14px]">
@@ -173,7 +365,9 @@ const CartPage = () => {
               </span>
 
               <span className="text-[8px] font-semibold uppercase tracking-[0.22em] text-steel-gray">
-                {items.length === 1 ? "Item" : "Items"}
+                {items.length === 1
+                  ? "Item"
+                  : "Items"}
               </span>
             </div>
           </div>
@@ -182,54 +376,90 @@ const CartPage = () => {
         <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_370px] xl:gap-10">
           <div className="space-y-5">
             {items.map((item) => {
-              const product = item.product || null;
+              const product =
+                item.product || null;
 
-              const variant = item.variant || null;
+              const variant =
+                item.variant || null;
 
-              const productTechnology = item.productTechnology || null;
+              const productTechnology =
+                item.productTechnology ||
+                null;
 
               const technologyModel =
                 productTechnology?.technologyModel ||
                 item.technologyModel ||
                 null;
 
-              const productPrice = Number(product?.price || 0);
+              const productPrice =
+                Number(
+                  product?.price ||
+                    0,
+                );
 
-              const variantPrice = Number(variant?.price || 0);
+              const variantPrice =
+                Number(
+                  variant?.price ||
+                    0,
+                );
 
-              const technologyPrice = Number(
-                productTechnology?.extraPrice ||
-                  technologyModel?.extraPrice ||
-                  0,
-              );
+              const technologyPrice =
+                Number(
+                  productTechnology?.extraPrice ||
+                    technologyModel?.extraPrice ||
+                    0,
+                );
 
-              const basePrice = variantPrice > 0 ? variantPrice : productPrice;
+              const basePrice =
+                variantPrice > 0
+                  ? variantPrice
+                  : productPrice;
 
-              const finalUnitPrice = basePrice + technologyPrice;
+              const finalUnitPrice =
+                basePrice +
+                technologyPrice;
 
-              const quantity = Number(item.quantity || 0);
+              const quantity =
+                Number(
+                  item.quantity ||
+                    0,
+                );
 
-              const itemTotal = finalUnitPrice * quantity;
+              const itemTotal =
+                finalUnitPrice *
+                quantity;
 
               const image =
-                variant?.image ||
-                product?.primaryImage ||
-                product?.image ||
-                product?.images?.[0] ||
-                "";
+                getCartItemImage(
+                  item,
+                );
 
-              const imageUrl = getImageUrl(image);
+              const imageUrl =
+                getImageUrl(
+                  image,
+                );
 
               const variantName =
                 variant?.name ||
-                [variant?.color, variant?.size].filter(Boolean).join(" / ");
+                [
+                  variant?.color,
+                  variant?.size,
+                ]
+                  .filter(Boolean)
+                  .join(" / ");
 
               const technologyName =
-                technologyModel?.modelName || technologyModel?.name || "";
+                technologyModel?.modelName ||
+                technologyModel?.name ||
+                "";
 
               const technologyType =
-                technologyModel?.technology?.name ||
-                technologyModel?.technology?.title ||
+                technologyModel
+                  ?.technology
+                  ?.name ||
+                technologyModel
+                  ?.technology
+                  ?.title ||
                 "";
 
               return (
@@ -249,7 +479,10 @@ const CartPage = () => {
                       {imageUrl ? (
                         <img
                           src={imageUrl}
-                          alt={product?.name || "Product"}
+                          alt={
+                            product?.name ||
+                            "Product"
+                          }
                           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                       ) : (
@@ -268,7 +501,9 @@ const CartPage = () => {
                             to={`/shop/products/${product?._id}`}
                             className="block font-serif text-[1.55rem] font-normal leading-tight tracking-[-0.025em] text-midnight-navy transition-colors duration-300 hover:text-antique-gold"
                           >
-                            {product?.name}
+                            {
+                              product?.name
+                            }
                           </Link>
 
                           <div className="mt-2.5 flex items-center gap-2">
@@ -293,7 +528,9 @@ const CartPage = () => {
 
                                   {variantName && (
                                     <p className="mt-0.5 text-[11px] font-semibold text-midnight-navy">
-                                      {variantName}
+                                      {
+                                        variantName
+                                      }
                                     </p>
                                   )}
                                 </div>
@@ -305,7 +542,9 @@ const CartPage = () => {
                                     <span className="font-semibold text-midnight-navy">
                                       Color:
                                     </span>{" "}
-                                    {variant.color}
+                                    {
+                                      variant.color
+                                    }
                                   </p>
                                 )}
 
@@ -314,7 +553,9 @@ const CartPage = () => {
                                     <span className="font-semibold text-midnight-navy">
                                       Size:
                                     </span>{" "}
-                                    {variant.size}
+                                    {
+                                      variant.size
+                                    }
                                   </p>
                                 )}
 
@@ -323,7 +564,9 @@ const CartPage = () => {
                                     <span className="font-semibold text-midnight-navy">
                                       Material:
                                     </span>{" "}
-                                    {variant.material}
+                                    {
+                                      variant.material
+                                    }
                                   </p>
                                 )}
 
@@ -332,20 +575,28 @@ const CartPage = () => {
                                     <span className="font-semibold text-midnight-navy">
                                       Finish:
                                     </span>{" "}
-                                    {variant.finish}
+                                    {
+                                      variant.finish
+                                    }
                                   </p>
                                 )}
                               </div>
 
                               {variant.sku && (
                                 <p className="mt-3 border-t border-light-champagne/80 pt-3 text-[8px] uppercase tracking-[0.08em] text-steel-gray">
-                                  SKU: {variant.sku}
+                                  SKU:{" "}
+                                  {
+                                    variant.sku
+                                  }
                                 </p>
                               )}
 
-                              {variantPrice > 0 && (
+                              {variantPrice >
+                                0 && (
                                 <p className="mt-2 text-[10px] font-semibold text-midnight-navy">
-                                  Variant Price: {variantPrice.toLocaleString()}{" "}
+                                  Variant
+                                  Price:{" "}
+                                  {variantPrice.toLocaleString()}{" "}
                                   EGP
                                 </p>
                               )}
@@ -369,7 +620,9 @@ const CartPage = () => {
 
                                     {technologyName && (
                                       <p className="mt-1 text-[11px] font-semibold text-soft-white">
-                                        {technologyName}
+                                        {
+                                          technologyName
+                                        }
                                       </p>
                                     )}
                                   </div>
@@ -381,7 +634,8 @@ const CartPage = () => {
                                   </p>
 
                                   <p className="mt-1 text-[11px] font-semibold text-champagne-gold">
-                                    {technologyPrice.toLocaleString()} EGP
+                                    {technologyPrice.toLocaleString()}{" "}
+                                    EGP
                                   </p>
                                 </div>
                               </div>
@@ -391,7 +645,9 @@ const CartPage = () => {
                                   <span className="font-semibold text-champagne-gold">
                                     Type:
                                   </span>{" "}
-                                  {technologyType}
+                                  {
+                                    technologyType
+                                  }
                                 </p>
                               )}
 
@@ -413,7 +669,9 @@ const CartPage = () => {
                                   <span className="font-semibold text-champagne-gold">
                                     Default:
                                   </span>{" "}
-                                  {productTechnology.isDefault ? "Yes" : "No"}
+                                  {productTechnology.isDefault
+                                    ? "Yes"
+                                    : "No"}
                                 </p>
                               )}
 
@@ -422,7 +680,9 @@ const CartPage = () => {
                                   <span className="font-semibold text-champagne-gold">
                                     Status:
                                   </span>{" "}
-                                  {productTechnology.status}
+                                  {
+                                    productTechnology.status
+                                  }
                                 </p>
                               )}
                             </div>
@@ -431,7 +691,11 @@ const CartPage = () => {
 
                         <button
                           type="button"
-                          onClick={() => removeFromCart(item._id)}
+                          onClick={() =>
+                            removeFromCart(
+                              item._id,
+                            )
+                          }
                           className="shrink-0 rounded-full border border-transparent px-2.5 py-1.5 text-[7px] font-semibold uppercase tracking-[0.15em] text-steel-gray transition-all duration-300 hover:border-antique-gold/20 hover:bg-soft-cream hover:text-antique-gold"
                         >
                           Remove
@@ -489,9 +753,16 @@ const CartPage = () => {
                             <div className="mt-2.5 flex w-fit items-center overflow-hidden rounded-full border border-light-champagne bg-soft-white shadow-[0_5px_16px_rgba(7,19,31,0.035)]">
                               <button
                                 type="button"
-                                disabled={quantity <= 1}
+                                disabled={
+                                  quantity <=
+                                  1
+                                }
                                 onClick={() =>
-                                  updateQuantity(item._id, quantity - 1)
+                                  updateQuantity(
+                                    item._id,
+                                    quantity -
+                                      1,
+                                  )
                                 }
                                 className="flex h-9 w-10 items-center justify-center text-[14px] text-midnight-navy transition-all duration-300 hover:bg-midnight-navy hover:text-soft-white disabled:cursor-not-allowed disabled:opacity-30"
                               >
@@ -505,7 +776,11 @@ const CartPage = () => {
                               <button
                                 type="button"
                                 onClick={() =>
-                                  updateQuantity(item._id, quantity + 1)
+                                  updateQuantity(
+                                    item._id,
+                                    quantity +
+                                      1,
+                                  )
                                 }
                                 className="flex h-9 w-10 items-center justify-center text-[14px] text-midnight-navy transition-all duration-300 hover:bg-midnight-navy hover:text-soft-white"
                               >
@@ -542,6 +817,7 @@ const CartPage = () => {
                 className="group flex items-center gap-2.5 text-[8px] font-semibold uppercase tracking-[0.2em] text-steel-gray transition-colors duration-300 hover:text-antique-gold"
               >
                 <span className="h-px w-5 bg-current transition-all duration-300 group-hover:w-8" />
+
                 Clear Cart
               </button>
             </div>
@@ -577,15 +853,20 @@ const CartPage = () => {
 
               <div className="space-y-5">
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-premium-silver/60">Subtotal</span>
+                  <span className="text-premium-silver/60">
+                    Subtotal
+                  </span>
 
                   <span className="font-semibold text-soft-white">
-                    {subtotal.toLocaleString()} EGP
+                    {subtotal.toLocaleString()}{" "}
+                    EGP
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-premium-silver/60">Shipping</span>
+                  <span className="text-premium-silver/60">
+                    Shipping
+                  </span>
 
                   <span className="font-semibold text-champagne-gold">
                     Free
@@ -610,15 +891,22 @@ const CartPage = () => {
                   </p>
                 </div>
 
-                <span className="mb-1 text-[12px] text-classic-gold">✦</span>
+                <span className="mb-1 text-[12px] text-classic-gold">
+                  ✦
+                </span>
               </div>
 
               <button
                 type="button"
-                onClick={() => navigate("/checkout")}
+                onClick={() =>
+                  navigate(
+                    "/checkout",
+                  )
+                }
                 className="group mt-8 flex min-h-[54px] w-full items-center justify-center gap-8 rounded-[13px] bg-soft-white px-6 text-[9px] font-semibold uppercase tracking-[0.12em] text-midnight-navy shadow-[0_14px_32px_rgba(0,0,0,0.16)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-warm-ivory hover:shadow-[0_18px_38px_rgba(0,0,0,0.22)]"
               >
                 Proceed to Checkout
+
                 <span className="text-[15px] text-classic-gold transition-transform duration-300 group-hover:translate-x-1">
                   →
                 </span>
@@ -632,15 +920,25 @@ const CartPage = () => {
               </Link>
 
               <div className="mt-8 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-[7px] font-semibold uppercase tracking-[0.22em] text-premium-silver/30">
-                <span>Elegant</span>
+                <span>
+                  Elegant
+                </span>
 
-                <span className="text-classic-gold/70">✦</span>
+                <span className="text-classic-gold/70">
+                  ✦
+                </span>
 
-                <span>Personal</span>
+                <span>
+                  Personal
+                </span>
 
-                <span className="text-classic-gold/70">✦</span>
+                <span className="text-classic-gold/70">
+                  ✦
+                </span>
 
-                <span>Yours</span>
+                <span>
+                  Yours
+                </span>
               </div>
             </div>
           </aside>
