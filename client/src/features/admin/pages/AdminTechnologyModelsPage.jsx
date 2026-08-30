@@ -6,6 +6,40 @@ import {
   deleteTechnologyModel,
 } from "../services/technologyModelApi";
 
+const getImageUrl = (image) => {
+  if (!image) return "";
+
+  let imagePath = String(image).trim();
+
+  const backendUrl = (
+    import.meta.env.VITE_BACKEND_URL ||
+    import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, "") ||
+    "http://localhost:5000"
+  ).replace(/\/+$/, "");
+
+  if (
+    /^https?:\/\/localhost:5000/i.test(imagePath) ||
+    /^https?:\/\/127\.0\.0\.1:5000/i.test(imagePath)
+  ) {
+    imagePath = imagePath.replace(
+      /^https?:\/\/(?:localhost|127\.0\.0\.1):5000/i,
+      "",
+    );
+  } else if (/^https?:\/\//i.test(imagePath)) {
+    return imagePath;
+  }
+
+  if (imagePath.startsWith("/api/uploads/")) {
+    imagePath = imagePath.replace(/^\/api/, "");
+  }
+
+  if (!imagePath.startsWith("/")) {
+    imagePath = `/${imagePath}`;
+  }
+
+  return `${backendUrl}${imagePath}`;
+};
+
 const AdminTechnologyModelsPage = () => {
   const [technologyModels, setTechnologyModels] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -236,7 +270,7 @@ const AdminTechnologyModelsPage = () => {
                         {model.image ? (
                           <div className="relative h-16 w-16 overflow-hidden rounded-[15px] border border-light-champagne/80 bg-soft-cream shadow-[0_5px_16px_rgba(7,19,31,0.035)]">
                             <img
-                              src={`http://localhost:5000${model.image}`}
+                              src={getImageUrl(model.image)}
                               alt={model.modelName}
                               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                             />

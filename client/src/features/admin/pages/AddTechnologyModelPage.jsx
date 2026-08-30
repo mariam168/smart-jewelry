@@ -8,6 +8,40 @@ import {
 
 import { getTechnologies } from "../services/technologyApi";
 
+const getImageUrl = (image) => {
+  if (!image) return "";
+
+  let imagePath = String(image).trim();
+
+  const backendUrl = (
+    import.meta.env.VITE_BACKEND_URL ||
+    import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, "") ||
+    "http://localhost:5000"
+  ).replace(/\/+$/, "");
+
+  if (
+    /^https?:\/\/localhost:5000/i.test(imagePath) ||
+    /^https?:\/\/127\.0\.0\.1:5000/i.test(imagePath)
+  ) {
+    imagePath = imagePath.replace(
+      /^https?:\/\/(?:localhost|127\.0\.0\.1):5000/i,
+      "",
+    );
+  } else if (/^https?:\/\//i.test(imagePath)) {
+    return imagePath;
+  }
+
+  if (imagePath.startsWith("/api/uploads/")) {
+    imagePath = imagePath.replace(/^\/api/, "");
+  }
+
+  if (!imagePath.startsWith("/")) {
+    imagePath = `/${imagePath}`;
+  }
+
+  return `${backendUrl}${imagePath}`;
+};
+
 const AddTechnologyModelPage = () => {
   const navigate = useNavigate();
 
@@ -320,7 +354,7 @@ const AddTechnologyModelPage = () => {
 
                       <div className="relative h-40 w-40 overflow-hidden rounded-[18px] border border-light-champagne bg-soft-white shadow-[0_10px_26px_rgba(7,19,31,0.045)]">
                         <img
-                          src={`http://localhost:5000${formData.image}`}
+                          src={getImageUrl(formData.image)}
                           alt="Technology Model Preview"
                           className="h-full w-full object-cover"
                         />
@@ -468,7 +502,7 @@ const AddTechnologyModelPage = () => {
                   <div className="flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-[18px] border border-light-champagne bg-soft-white shadow-[0_8px_22px_rgba(7,19,31,0.04)]">
                     {formData.image ? (
                       <img
-                        src={`http://localhost:5000${formData.image}`}
+                        src={getImageUrl(formData.image)}
                         alt="Preview"
                         className="h-full w-full object-cover"
                       />

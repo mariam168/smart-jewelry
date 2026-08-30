@@ -9,6 +9,40 @@ import {
 
 import { getTechnologies } from "../services/technologyApi";
 
+const getImageUrl = (image) => {
+  if (!image) return "";
+
+  let imagePath = String(image).trim();
+
+  const backendUrl = (
+    import.meta.env.VITE_BACKEND_URL ||
+    import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, "") ||
+    "http://localhost:5000"
+  ).replace(/\/+$/, "");
+
+  if (
+    /^https?:\/\/localhost:5000/i.test(imagePath) ||
+    /^https?:\/\/127\.0\.0\.1:5000/i.test(imagePath)
+  ) {
+    imagePath = imagePath.replace(
+      /^https?:\/\/(?:localhost|127\.0\.0\.1):5000/i,
+      "",
+    );
+  } else if (/^https?:\/\//i.test(imagePath)) {
+    return imagePath;
+  }
+
+  if (imagePath.startsWith("/api/uploads/")) {
+    imagePath = imagePath.replace(/^\/api/, "");
+  }
+
+  if (!imagePath.startsWith("/")) {
+    imagePath = `/${imagePath}`;
+  }
+
+  return `${backendUrl}${imagePath}`;
+};
+
 const EditTechnologyModelPage = () => {
   const { id } = useParams();
 
@@ -396,7 +430,7 @@ const EditTechnologyModelPage = () => {
 
                     <div className="relative h-40 w-40 overflow-hidden rounded-[18px] border border-light-champagne bg-soft-white shadow-[0_9px_24px_rgba(7,19,31,0.045)]">
                       <img
-                        src={`http://localhost:5000${formData.image}`}
+                        src={getImageUrl(formData.image)}
                         alt="Technology Model"
                         className="h-full w-full object-cover"
                       />
@@ -543,7 +577,7 @@ const EditTechnologyModelPage = () => {
                   {formData.image ? (
                     <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-[16px] border border-light-champagne bg-soft-white shadow-[0_8px_22px_rgba(7,19,31,0.04)]">
                       <img
-                        src={`http://localhost:5000${formData.image}`}
+                        src={getImageUrl(formData.image)}
                         alt="Preview"
                         className="h-full w-full object-cover"
                       />
