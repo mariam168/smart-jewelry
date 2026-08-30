@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -24,22 +23,12 @@ const initialValues = {
 const RegisterPage = () => {
   const navigate = useNavigate();
 
-  const [formValues, setFormValues] =
-    useState(initialValues);
+  const [formValues, setFormValues] = useState(initialValues);
+  const [errors, setErrors] = useState({});
+  const [serverError, setServerError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
-  const [errors, setErrors] =
-    useState({});
-
-  const [serverError, setServerError] =
-    useState("");
-
-  const [isLoading, setIsLoading] =
-    useState(false);
-
-  const [isSuccess, setIsSuccess] =
-    useState(false);
-
-  // Handle input changes
   const handleChange = (event) => {
     const {
       name,
@@ -56,46 +45,26 @@ const RegisterPage = () => {
           : value,
     }));
 
-    // Clear field error
     setErrors((previousErrors) => ({
       ...previousErrors,
       [name]: "",
     }));
 
-    // Clear server error
     setServerError("");
-
-    // Hide success message when user edits form
     setIsSuccess(false);
   };
 
-  // Handle register form submit
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    console.log(
-      "Register form submitted"
-    );
-
-    // Clear previous messages
     setServerError("");
     setIsSuccess(false);
 
-    // Validate form
     const validationErrors =
-      validateRegisterForm(
-        formValues
-      );
+      validateRegisterForm(formValues);
 
-    console.log(
-      "Validation Errors:",
-      validationErrors
-    );
-
-    // Stop if validation fails
     if (
-      Object.keys(validationErrors)
-        .length > 0
+      Object.keys(validationErrors).length > 0
     ) {
       setErrors(validationErrors);
       return;
@@ -105,75 +74,33 @@ const RegisterPage = () => {
       setIsLoading(true);
       setErrors({});
 
-      // Remove confirmPassword
-      // because it is only used
-      // for frontend validation
       const {
         confirmPassword,
         ...registerData
       } = formValues;
 
-      console.log(
-        "Register Data:",
-        registerData
-      );
+      await registerUser(registerData);
 
-      // Call Register API
-      const response =
-        await registerUser(
-          registerData
-        );
-
-      console.log(
-        "Register Response:",
-        response
-      );
-
-      // Show success message
       setIsSuccess(true);
+      setFormValues(initialValues);
 
-      // Clear form
-      setFormValues(
-        initialValues
-      );
-
-      // Redirect to email verification
       setTimeout(() => {
-        navigate(
-          "/verify-email",
-          {
-            state: {
-              email:
-                registerData.email,
-            },
-          }
-        );
-      }, 1500);
-
+        navigate("/", {
+          replace: true,
+        });
+      }, 1200);
     } catch (error) {
-      console.error(
-        "Register Error:",
-        error
-      );
-
       const responseError =
         error?.response?.data;
 
-      // Backend validation errors
-      if (
-        responseError?.errors
-      ) {
-        setErrors(
-          responseError.errors
-        );
+      if (responseError?.errors) {
+        setErrors(responseError.errors);
       } else {
-        // General backend error
         setServerError(
           responseError?.message ||
             "Something went wrong. Please try again."
         );
       }
-
     } finally {
       setIsLoading(false);
     }
@@ -182,188 +109,186 @@ const RegisterPage = () => {
   return (
     <AuthLayout
       title="Create your account"
-      subtitle="Join the Smart Jewelry experience"
+      subtitle="Become part of the JEVORYA experience"
     >
-      {/* Success Message */}
-      {isSuccess && (
-        <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700">
-          Account created successfully!
-          Please check your email to verify
-          your account.
-        </div>
-      )}
+      <div className="w-full">
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 h-px w-16 bg-[#C9A24D]" />
 
-      {/* Server Error */}
-      {serverError && (
-        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600">
-          {serverError}
-        </div>
-      )}
-
-      {/* Register Form */}
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-5"
-      >
-        {/* First Name & Last Name */}
-        <div className="grid gap-5 sm:grid-cols-2">
-          <AuthInput
-            label="First Name"
-            name="firstName"
-            value={
-              formValues.firstName
-            }
-            onChange={handleChange}
-            placeholder="Mariam"
-            error={
-              errors.firstName
-            }
-            required
-          />
-
-          <AuthInput
-            label="Last Name"
-            name="lastName"
-            value={
-              formValues.lastName
-            }
-            onChange={handleChange}
-            placeholder="Samuel"
-            error={
-              errors.lastName
-            }
-            required
-          />
+          <p className="text-xs font-medium uppercase tracking-[0.28em] text-[#9B7428]">
+            JEVORYA
+          </p>
         </div>
 
-        {/* Email */}
-        <AuthInput
-          label="Email"
-          name="email"
-          type="email"
-          value={formValues.email}
-          onChange={handleChange}
-          placeholder="you@example.com"
-          error={errors.email}
-          required
-        />
+        {isSuccess && (
+          <div className="mb-6 rounded-xl border border-[#E3C47A]/60 bg-[#F8F5EF] px-5 py-4 text-center">
+            <p className="text-sm font-medium text-[#12263A]">
+              Account created successfully.
+            </p>
 
-        {/* Phone */}
-        <AuthInput
-          label="Phone"
-          name="phone"
-          type="tel"
-          value={formValues.phone}
-          onChange={handleChange}
-          placeholder="01000000000"
-          error={errors.phone}
-        />
+            <p className="mt-1 text-xs text-[#5E6B78]">
+              Redirecting you to JEVORYA...
+            </p>
+          </div>
+        )}
 
-        {/* Password */}
-        <PasswordInput
-          label="Password"
-          name="password"
-          value={
-            formValues.password
-          }
-          onChange={handleChange}
-          placeholder="Enter your password"
-          error={errors.password}
-          required
-        />
+        {serverError && (
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600">
+            {serverError}
+          </div>
+        )}
 
-        {/* Confirm Password */}
-        <PasswordInput
-          label="Confirm Password"
-          name="confirmPassword"
-          value={
-            formValues.confirmPassword
-          }
-          onChange={handleChange}
-          placeholder="Confirm your password"
-          error={
-            errors.confirmPassword
-          }
-          required
-        />
-
-        {/* Consent Checkboxes */}
-        <div className="space-y-4">
-
-          {/* Privacy Consent */}
-          <label className="flex items-start gap-3">
-            <input
-              type="checkbox"
-              name="privacyConsent"
-              checked={
-                formValues.privacyConsent
-              }
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-5"
+        >
+          <div className="grid gap-5 sm:grid-cols-2">
+            <AuthInput
+              label="First Name"
+              name="firstName"
+              value={formValues.firstName}
               onChange={handleChange}
-              className="mt-1 h-4 w-4"
+              placeholder="Mariam"
+              error={errors.firstName}
+              required
             />
 
-            <span className="text-sm text-gray-600">
-              I agree to the Privacy Policy
-              and Terms of Service.
+            <AuthInput
+              label="Last Name"
+              name="lastName"
+              value={formValues.lastName}
+              onChange={handleChange}
+              placeholder="Samuel"
+              error={errors.lastName}
+              required
+            />
+          </div>
 
-              <span className="ml-1 text-red-500">
-                *
-              </span>
+          <AuthInput
+            label="Email"
+            name="email"
+            type="email"
+            value={formValues.email}
+            onChange={handleChange}
+            placeholder="you@example.com"
+            error={errors.email}
+            required
+          />
 
-              {errors.privacyConsent && (
-                <span className="mt-1 block text-red-500">
-                  {
-                    errors.privacyConsent
-                  }
+          <AuthInput
+            label="Phone"
+            name="phone"
+            type="tel"
+            value={formValues.phone}
+            onChange={handleChange}
+            placeholder="+20 100 000 0000"
+            error={errors.phone}
+          />
+
+          <PasswordInput
+            label="Password"
+            name="password"
+            value={formValues.password}
+            onChange={handleChange}
+            placeholder="Enter your password"
+            error={errors.password}
+            required
+          />
+
+          <PasswordInput
+            label="Confirm Password"
+            name="confirmPassword"
+            value={formValues.confirmPassword}
+            onChange={handleChange}
+            placeholder="Confirm your password"
+            error={errors.confirmPassword}
+            required
+          />
+
+          <div className="space-y-4 rounded-xl border border-[#EDE5D9] bg-[#F9F7F2] p-5">
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                name="privacyConsent"
+                checked={formValues.privacyConsent}
+                onChange={handleChange}
+                className="mt-0.5 h-4 w-4 cursor-pointer accent-[#12263A]"
+              />
+
+              <span className="text-sm leading-6 text-[#5E6B78]">
+                I agree to the{" "}
+                <Link
+                  to="/privacy-policy"
+                  className="font-medium text-[#12263A] underline decoration-[#C9A24D] underline-offset-4 transition hover:text-[#9B7428]"
+                >
+                  Privacy Policy
+                </Link>{" "}
+                and{" "}
+                <Link
+                  to="/terms"
+                  className="font-medium text-[#12263A] underline decoration-[#C9A24D] underline-offset-4 transition hover:text-[#9B7428]"
+                >
+                  Terms of Service
+                </Link>
+                .
+
+                <span className="ml-1 text-[#9B7428]">
+                  *
                 </span>
-              )}
-            </span>
-          </label>
 
-          {/* Marketing Consent */}
-          <label className="flex items-start gap-3">
-            <input
-              type="checkbox"
-              name="marketingConsent"
-              checked={
-                formValues.marketingConsent
-              }
-              onChange={handleChange}
-              className="mt-1 h-4 w-4"
-            />
+                {errors.privacyConsent && (
+                  <span className="mt-1 block text-xs text-red-500">
+                    {errors.privacyConsent}
+                  </span>
+                )}
+              </span>
+            </label>
 
-            <span className="text-sm text-gray-600">
-              I would like to receive
-              updates and special offers.
-            </span>
-          </label>
+            <div className="h-px bg-[#EDE5D9]" />
 
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                name="marketingConsent"
+                checked={formValues.marketingConsent}
+                onChange={handleChange}
+                className="mt-0.5 h-4 w-4 cursor-pointer accent-[#12263A]"
+              />
+
+              <span className="text-sm leading-6 text-[#5E6B78]">
+                I would like to receive JEVORYA
+                updates, new collections and
+                special offers.
+              </span>
+            </label>
+          </div>
+
+          <div className="pt-2">
+            <AuthButton
+              type="submit"
+              loading={isLoading}
+              disabled={isLoading || isSuccess}
+            >
+              Create Account
+            </AuthButton>
+          </div>
+        </form>
+
+        <div className="mt-8 border-t border-[#EDE5D9] pt-6">
+          <p className="text-center text-sm text-[#5E6B78]">
+            Already have an account?
+
+            <Link
+              to="/login"
+              className="ml-2 font-semibold text-[#12263A] transition hover:text-[#9B7428]"
+            >
+              Login
+            </Link>
+          </p>
         </div>
-
-        {/* Submit Button */}
-        <AuthButton
-          type="submit"
-          loading={isLoading}
-          disabled={isLoading}
-        >
-          Create Account
-        </AuthButton>
-      </form>
-
-      {/* Login Link */}
-      <p className="mt-6 text-center text-sm text-gray-600">
-        Already have an account?
-
-        <Link
-          to="/login"
-          className="ml-1 font-semibold text-black hover:underline"
-        >
-          Login
-        </Link>
-      </p>
+      </div>
     </AuthLayout>
   );
 };
 
 export default RegisterPage;
-

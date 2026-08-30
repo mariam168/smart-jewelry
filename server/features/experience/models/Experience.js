@@ -79,13 +79,17 @@ const experienceSchema = new mongoose.Schema(
           return /^\d{4}-\d{2}-\d{2}$/.test(value);
         },
 
-        message: "Access date must use YYYY-MM-DD format",
+        message:
+          "Access date must use YYYY-MM-DD format",
       },
     },
 
     type: {
       type: String,
-      enum: ["personal", "gift"],
+      enum: [
+        "personal",
+        "gift",
+      ],
       default: "personal",
     },
 
@@ -133,7 +137,7 @@ experienceSchema.index(
   },
   {
     unique: true,
-    sparse: true,
+    name: "serialNumber_1_slug_1",
   },
 );
 

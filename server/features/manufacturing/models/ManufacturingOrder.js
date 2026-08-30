@@ -45,6 +45,36 @@ const productionUnitSchema = new mongoose.Schema(
       uppercase: true,
     },
 
+    productCostSnapshot: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    smartUnitCostSnapshot: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    assemblyCost: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    packagingCost: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    packagingNotes: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
     status: {
       type: String,
 
@@ -53,6 +83,8 @@ const productionUnitSchema = new mongoose.Schema(
         "unit_assigned",
         "experience_created",
         "in_production",
+        "ready_for_packaging",
+        "packaging",
         "completed",
         "failed",
       ],
@@ -67,6 +99,16 @@ const productionUnitSchema = new mongoose.Schema(
     },
 
     startedAt: {
+      type: Date,
+      default: null,
+    },
+
+    packagingStartedAt: {
+      type: Date,
+      default: null,
+    },
+
+    packagingCompletedAt: {
       type: Date,
       default: null,
     },
@@ -106,9 +148,7 @@ const manufacturingOrderSchema = new mongoose.Schema(
 
     status: {
       type: String,
-
       enum: ["pending", "in_progress", "completed", "cancelled"],
-
       default: "pending",
       index: true,
     },
@@ -151,9 +191,8 @@ const manufacturingOrderSchema = new mongoose.Schema(
   },
 );
 
-const ManufacturingOrder = mongoose.model(
-  "ManufacturingOrder",
-  manufacturingOrderSchema,
-);
+const ManufacturingOrder =
+  mongoose.models.ManufacturingOrder ||
+  mongoose.model("ManufacturingOrder", manufacturingOrderSchema);
 
 export default ManufacturingOrder;

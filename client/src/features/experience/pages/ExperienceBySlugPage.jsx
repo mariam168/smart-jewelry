@@ -8,11 +8,81 @@ import {
 
 import MediaGallery from "../components/MediaGallery";
 
-const BACKEND_URL =
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:5000";
+const getBackendOrigin = () => {
+  const explicitBackend =
+    import.meta.env.VITE_BACKEND_URL;
 
-const getMediaUrl = (url) => {
+  if (explicitBackend) {
+    return String(explicitBackend).replace(
+      /\/+$/,
+      "",
+    );
+  }
+
+  const apiUrl =
+    import.meta.env.VITE_API_URL;
+
+  if (
+    apiUrl &&
+    /^https?:\/\//i.test(apiUrl)
+  ) {
+    return String(apiUrl)
+      .replace(/\/api\/?$/i, "")
+      .replace(/\/+$/, "");
+  }
+
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname !==
+      "localhost" &&
+    window.location.hostname !==
+      "127.0.0.1"
+  ) {
+    return window.location.origin;
+  }
+
+  return "http://localhost:5000";
+};
+
+const BACKEND_URL =
+  getBackendOrigin();
+
+const getFilePath = (
+  value,
+) => {
+  if (!value) {
+    return "";
+  }
+
+  if (
+    typeof value === "string"
+  ) {
+    return value.trim();
+  }
+
+  if (
+    typeof value === "object"
+  ) {
+    return (
+      value.url ||
+      value.path ||
+      value.src ||
+      value.image ||
+      value.file ||
+      value.secure_url ||
+      ""
+    );
+  }
+
+  return "";
+};
+
+const getMediaUrl = (
+  value,
+) => {
+  const url =
+    getFilePath(value);
+
   if (!url) {
     return "";
   }
@@ -20,73 +90,150 @@ const getMediaUrl = (url) => {
   if (
     url.startsWith("http://") ||
     url.startsWith("https://") ||
-    url.startsWith("blob:")
+    url.startsWith("blob:") ||
+    url.startsWith("data:")
   ) {
     return url;
   }
 
-  if (url.startsWith("/")) {
-    return `${BACKEND_URL}${url}`;
+  if (
+    url.startsWith("//")
+  ) {
+    return `${
+      window.location.protocol
+    }${url}`;
   }
 
-  return `${BACKEND_URL}/${url}`;
+  return `${BACKEND_URL}${
+    url.startsWith("/")
+      ? ""
+      : "/"
+  }${url}`;
 };
 
 const ExperienceBySlugPage = () => {
-  const { serialNumber, slug } = useParams();
+  const {
+    serialNumber,
+    slug,
+  } = useParams();
 
-  const [loading, setLoading] = useState(true);
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
 
-  const [experience, setExperience] = useState(null);
+  const [
+    experience,
+    setExperience,
+  ] = useState(null);
 
-  const [personal, setPersonal] = useState(null);
+  const [
+    personal,
+    setPersonal,
+  ] = useState(null);
 
-  const [media, setMedia] = useState([]);
+  const [
+    media,
+    setMedia,
+  ] = useState([]);
 
-  const [requiresDate, setRequiresDate] = useState(false);
+  const [
+    requiresDate,
+    setRequiresDate,
+  ] = useState(false);
 
-  const [accessDate, setAccessDate] = useState("");
+  const [
+    accessDate,
+    setAccessDate,
+  ] = useState("");
 
-  const [unlocking, setUnlocking] = useState(false);
+  const [
+    unlocking,
+    setUnlocking,
+  ] = useState(false);
 
-  const [unlockError, setUnlockError] = useState("");
+  const [
+    unlockError,
+    setUnlockError,
+  ] = useState("");
 
-  const [pageError, setPageError] = useState("");
+  const [
+    pageError,
+    setPageError,
+  ] = useState("");
 
   useEffect(() => {
     loadExperience();
-  }, [serialNumber, slug]);
+  }, [
+    serialNumber,
+    slug,
+  ]);
 
-  const normalizeMedia = (items) => {
-    if (!Array.isArray(items)) {
+  const normalizeMedia = (
+    items,
+  ) => {
+    if (
+      !Array.isArray(items)
+    ) {
       return [];
     }
 
     return items
-      .map((item) => {
-        if (typeof item === "string") {
-          return {
-            url: item,
-          };
-        }
+      .map(
+        (
+          item,
+          index,
+        ) => {
+          if (
+            typeof item ===
+            "string"
+          ) {
+            return {
+              _id:
+                `media-${index}`,
 
-        if (!item || typeof item !== "object") {
-          return null;
-        }
+              url:
+                getMediaUrl(
+                  item,
+                ),
+            };
+          }
 
-        return {
-          ...item,
-          url:
+          if (
+            !item ||
+            typeof item !==
+              "object"
+          ) {
+            return null;
+          }
+
+          const source =
             item.url ||
             item.path ||
             item.file ||
-            "",
-        };
-      })
-      .filter(Boolean);
+            item.src ||
+            "";
+
+          return {
+            ...item,
+
+            url:
+              getMediaUrl(
+                source,
+              ),
+          };
+        },
+      )
+      .filter(
+        (item) =>
+          item &&
+          item.url,
+      );
   };
 
-  const applyExperiencePayload = (payload) => {
+  const applyExperiencePayload = (
+    payload,
+  ) => {
     if (!payload) {
       setExperience(null);
       setPersonal(null);
@@ -99,7 +246,9 @@ const ExperienceBySlugPage = () => {
       payload.experience ||
       null;
 
-    if (!loadedExperience?._id) {
+    if (
+      !loadedExperience?._id
+    ) {
       setExperience(null);
       setPersonal(null);
       setMedia([]);
@@ -107,7 +256,9 @@ const ExperienceBySlugPage = () => {
       return false;
     }
 
-    setExperience(loadedExperience);
+    setExperience(
+      loadedExperience,
+    );
 
     setPersonal(
       payload.personal ||
@@ -128,154 +279,170 @@ const ExperienceBySlugPage = () => {
     return true;
   };
 
-  const loadExperience = async () => {
-    if (!serialNumber || !slug) {
-      setExperience(null);
-      setPersonal(null);
-      setMedia([]);
-      setRequiresDate(false);
-      setPageError(
-        "The experience link is incomplete.",
-      );
-      setLoading(false);
+  const loadExperience =
+    async () => {
+      if (
+        !serialNumber ||
+        !slug
+      ) {
+        setExperience(null);
+        setPersonal(null);
+        setMedia([]);
+        setRequiresDate(false);
 
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      setPageError("");
-
-      setUnlockError("");
-
-      setAccessDate("");
-
-      const response =
-        await getPublicExperience(
-          serialNumber,
-          slug,
+        setPageError(
+          "The experience link is incomplete.",
         );
 
-      if (response?.requiresDate === true) {
-        setRequiresDate(true);
+        setLoading(false);
+
+        return;
+      }
+
+      try {
+        setLoading(true);
+
+        setPageError("");
+        setUnlockError("");
+        setAccessDate("");
+
+        const response =
+          await getPublicExperience(
+            serialNumber,
+            slug,
+          );
+
+        if (
+          response?.requiresDate ===
+          true
+        ) {
+          setRequiresDate(
+            true,
+          );
+
+          setExperience(null);
+          setPersonal(null);
+          setMedia([]);
+
+          return;
+        }
+
+        const payload =
+          response?.data ||
+          null;
+
+        setRequiresDate(
+          false,
+        );
+
+        const loaded =
+          applyExperiencePayload(
+            payload,
+          );
+
+        if (!loaded) {
+          setPageError(
+            "This experience does not exist or is no longer available.",
+          );
+        }
+      } catch (error) {
+        console.error(
+          "FAILED TO LOAD PUBLIC EXPERIENCE:",
+          error,
+        );
+
+        console.error(
+          "STATUS:",
+          error?.response?.status,
+        );
+
+        console.error(
+          "RESPONSE:",
+          error?.response?.data,
+        );
 
         setExperience(null);
         setPersonal(null);
         setMedia([]);
+        setRequiresDate(false);
 
-        return;
-      }
-
-      const payload =
-        response?.data ||
-        null;
-
-      setRequiresDate(false);
-
-      const loaded =
-        applyExperiencePayload(
-          payload,
-        );
-
-      if (!loaded) {
         setPageError(
-          "This experience does not exist or is no longer available.",
+          error?.response?.data
+            ?.message ||
+            "This experience does not exist or is no longer available.",
         );
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error(
-        "FAILED TO LOAD PUBLIC EXPERIENCE:",
-        error,
-      );
+    };
 
-      console.error(
-        "STATUS:",
-        error?.response?.status,
-      );
+  const handleUnlock =
+    async (event) => {
+      event.preventDefault();
 
-      console.error(
-        "RESPONSE:",
-        error?.response?.data,
-      );
-
-      setExperience(null);
-      setPersonal(null);
-      setMedia([]);
-      setRequiresDate(false);
-
-      setPageError(
-        error?.response?.data?.message ||
-          "This experience does not exist or is no longer available.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUnlock = async (event) => {
-    event.preventDefault();
-
-    if (!accessDate) {
-      setUnlockError(
-        "Please enter the special date.",
-      );
-
-      return;
-    }
-
-    try {
-      setUnlocking(true);
-
-      setUnlockError("");
-
-      const payload =
-        await unlockPublicExperience(
-          serialNumber,
-          slug,
-          accessDate,
-        );
-
-      const loaded =
-        applyExperiencePayload(
-          payload,
-        );
-
-      if (!loaded) {
+      if (!accessDate) {
         setUnlockError(
-          "Unable to open this experience.",
+          "Please enter the special date.",
         );
 
         return;
       }
 
-      setRequiresDate(false);
+      try {
+        setUnlocking(true);
 
-      setAccessDate("");
-    } catch (error) {
-      console.error(
-        "UNLOCK EXPERIENCE ERROR:",
-        error,
-      );
+        setUnlockError("");
 
-      console.error(
-        "STATUS:",
-        error?.response?.status,
-      );
+        const payload =
+          await unlockPublicExperience(
+            serialNumber,
+            slug,
+            accessDate,
+          );
 
-      console.error(
-        "RESPONSE:",
-        error?.response?.data,
-      );
+        const loaded =
+          applyExperiencePayload(
+            payload,
+          );
 
-      setUnlockError(
-        error?.response?.data?.message ||
-          "The date you entered is incorrect.",
-      );
-    } finally {
-      setUnlocking(false);
-    }
-  };
+        if (!loaded) {
+          setUnlockError(
+            "Unable to open this experience.",
+          );
+
+          return;
+        }
+
+        setRequiresDate(
+          false,
+        );
+
+        setAccessDate("");
+      } catch (error) {
+        console.error(
+          "UNLOCK EXPERIENCE ERROR:",
+          error,
+        );
+
+        console.error(
+          "STATUS:",
+          error?.response?.status,
+        );
+
+        console.error(
+          "RESPONSE:",
+          error?.response?.data,
+        );
+
+        setUnlockError(
+          error?.response?.data
+            ?.message ||
+            "The date you entered is incorrect.",
+        );
+      } finally {
+        setUnlocking(false);
+      }
+    };
 
   if (loading) {
     return (
@@ -374,27 +541,34 @@ const ExperienceBySlugPage = () => {
           </div>
 
           <form
-            onSubmit={handleUnlock}
+            onSubmit={
+              handleUnlock
+            }
             className="relative px-8 pb-9 pt-8 sm:px-11 sm:pb-11"
           >
             <label className="mb-3 block text-[9px] font-semibold uppercase tracking-[0.24em] text-premium-silver/60">
               Enter The Special Date
             </label>
 
-            <div className="relative">
-              <input
-                type="date"
-                value={accessDate}
-                onChange={(event) => {
-                  setAccessDate(
-                    event.target.value,
-                  );
+            <input
+              type="date"
+              value={
+                accessDate
+              }
+              onChange={(
+                event,
+              ) => {
+                setAccessDate(
+                  event.target
+                    .value,
+                );
 
-                  setUnlockError("");
-                }}
-                className="h-[60px] w-full rounded-[15px] border border-soft-white/10 bg-soft-white/[0.055] px-5 text-[14px] font-medium text-soft-white outline-none transition-all duration-300 [color-scheme:dark] hover:border-classic-gold/30 hover:bg-soft-white/[0.07] focus:border-classic-gold/60 focus:bg-soft-white/[0.08] focus:ring-4 focus:ring-classic-gold/10"
-              />
-            </div>
+                setUnlockError(
+                  "",
+                );
+              }}
+              className="h-[60px] w-full rounded-[15px] border border-soft-white/10 bg-soft-white/[0.055] px-5 text-[14px] font-medium text-soft-white outline-none transition-all duration-300 [color-scheme:dark] hover:border-classic-gold/30 hover:bg-soft-white/[0.07] focus:border-classic-gold/60 focus:bg-soft-white/[0.08] focus:ring-4 focus:ring-classic-gold/10"
+            />
 
             {unlockError && (
               <div className="mt-4 flex items-start gap-3 rounded-[14px] border border-red-400/20 bg-red-400/[0.08] px-4 py-3.5">
@@ -410,7 +584,9 @@ const ExperienceBySlugPage = () => {
 
             <button
               type="submit"
-              disabled={unlocking}
+              disabled={
+                unlocking
+              }
               className="mt-6 inline-flex min-h-[54px] w-full items-center justify-center gap-3 rounded-[15px] bg-champagne-gold px-7 text-[11px] font-semibold text-deep-navy shadow-[0_14px_35px_rgba(201,162,77,0.20)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-classic-gold hover:shadow-[0_18px_45px_rgba(201,162,77,0.25)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {unlocking ? (
@@ -457,8 +633,6 @@ const ExperienceBySlugPage = () => {
         <div className="relative w-full max-w-lg overflow-hidden rounded-[32px] border border-light-champagne/90 bg-soft-white/90 p-10 text-center shadow-[0_30px_100px_rgba(13,34,53,0.10)] backdrop-blur-sm md:p-14">
           <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-classic-gold/[0.07] blur-3xl" />
 
-          <div className="absolute -bottom-24 -left-24 h-56 w-56 rounded-full border border-champagne-gold/[0.08]" />
-
           <div className="relative z-10">
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-champagne-gold/20 bg-deep-navy shadow-[0_15px_40px_rgba(7,19,31,0.18)]">
               <span className="text-3xl text-champagne-gold">
@@ -484,11 +658,33 @@ const ExperienceBySlugPage = () => {
     );
   }
 
-  const productImage =
-    experience.product?.primaryImage ||
-    experience.product?.image ||
-    experience.product?.images?.[0] ||
-    "/placeholder.png";
+  const productImageSource =
+    getFilePath(
+      experience.product
+        ?.primaryImage,
+    ) ||
+    getFilePath(
+      experience.product
+        ?.image,
+    ) ||
+    getFilePath(
+      experience.product
+        ?.images?.[0],
+    );
+
+  const productImageUrl =
+    productImageSource
+      ? getMediaUrl(
+          productImageSource,
+        )
+      : "/placeholder.png";
+
+  const profileImageUrl =
+    personal?.profileImage
+      ? getMediaUrl(
+          personal.profileImage,
+        )
+      : "";
 
   return (
     <div className="min-h-screen overflow-hidden bg-warm-ivory text-rich-navy">
@@ -500,26 +696,6 @@ const ExperienceBySlugPage = () => {
         <div className="absolute -right-48 top-20 h-[550px] w-[550px] rounded-full bg-navy-soft/35 blur-[110px]" />
 
         <div className="absolute left-1/2 top-[120px] h-[520px] w-[520px] -translate-x-1/2 rounded-full border border-classic-gold/[0.055] md:h-[720px] md:w-[720px]" />
-
-        <div className="absolute left-1/2 top-[180px] h-[400px] w-[400px] -translate-x-1/2 rounded-full border border-polished-silver/[0.03] md:h-[560px] md:w-[560px]" />
-
-        <div className="absolute left-1/2 top-[240px] h-[280px] w-[280px] -translate-x-1/2 rounded-full border border-classic-gold/[0.03] md:h-[400px] md:w-[400px]" />
-
-        <span className="absolute left-[8%] top-[28%] text-sm text-classic-gold/30">
-          ✦
-        </span>
-
-        <span className="absolute right-[10%] top-[35%] text-lg text-classic-gold/20">
-          ✦
-        </span>
-
-        <span className="absolute bottom-[18%] left-[15%] text-xs text-polished-silver/10">
-          ✦
-        </span>
-
-        <span className="absolute bottom-[25%] right-[18%] text-xs text-classic-gold/15">
-          ✦
-        </span>
 
         <div className="relative mx-auto max-w-7xl px-5 pb-32 pt-14 md:px-8 md:pb-44 md:pt-20">
           <div className="mx-auto max-w-5xl text-center">
@@ -541,18 +717,29 @@ const ExperienceBySlugPage = () => {
 
                 <div className="absolute -inset-10 rounded-full border border-classic-gold/[0.05]" />
 
-                <div className="absolute -inset-14 rounded-full border border-polished-silver/[0.025]" />
-
-                {personal?.profileImage ? (
+                {profileImageUrl ? (
                   <img
-                    src={getMediaUrl(
-                      personal.profileImage,
-                    )}
+                    src={
+                      profileImageUrl
+                    }
                     alt={
                       personal?.ownerName ||
                       "Profile"
                     }
                     className="relative h-28 w-28 rounded-full border-2 border-champagne-gold/80 object-cover shadow-[0_25px_70px_rgba(0,0,0,0.45)] md:h-36 md:w-36"
+                    onError={(
+                      event,
+                    ) => {
+                      console.error(
+                        "PROFILE IMAGE FAILED:",
+                        event
+                          .currentTarget
+                          .src,
+                      );
+
+                      event.currentTarget.style.display =
+                        "none";
+                    }}
                   />
                 ) : (
                   <div className="relative flex h-28 w-28 items-center justify-center rounded-full border-2 border-champagne-gold/80 bg-midnight-navy text-4xl text-champagne-gold shadow-[0_25px_70px_rgba(0,0,0,0.45)] md:h-36 md:w-36">
@@ -570,16 +757,17 @@ const ExperienceBySlugPage = () => {
 
             <h1 className="mt-5 font-serif text-5xl font-normal leading-[0.98] tracking-[-0.045em] text-soft-white sm:text-6xl md:text-8xl lg:text-[100px]">
               {personal?.title ||
-                experience.product?.name ||
+                experience.product
+                  ?.name ||
                 "Your Experience"}
             </h1>
 
             {personal?.receiverName && (
-              <div className="mt-8">
-                <p className="font-serif text-3xl font-normal text-champagne-gold md:text-5xl">
-                  {personal.receiverName}
-                </p>
-              </div>
+              <p className="mt-8 font-serif text-3xl font-normal text-champagne-gold md:text-5xl">
+                {
+                  personal.receiverName
+                }
+              </p>
             )}
 
             {personal?.ownerName && (
@@ -589,7 +777,9 @@ const ExperienceBySlugPage = () => {
                 <p className="text-[9px] uppercase tracking-[0.3em] text-polished-silver/55">
                   With love from{" "}
                   <span className="font-semibold text-champagne-gold">
-                    {personal.ownerName}
+                    {
+                      personal.ownerName
+                    }
                   </span>
                 </p>
 
@@ -620,8 +810,6 @@ const ExperienceBySlugPage = () => {
 
               <div className="absolute left-1/2 top-1/2 h-[250px] w-[250px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-soft-white/70 blur-2xl md:h-[350px] md:w-[350px]" />
 
-              <div className="absolute left-1/2 top-1/2 h-[180px] w-[180px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-classic-gold/10 md:h-[260px] md:w-[260px]" />
-
               <div className="absolute left-7 top-7 z-20 md:left-10 md:top-10">
                 <div className="flex items-center gap-3 rounded-full border border-rich-navy/10 bg-soft-white/85 px-4 py-2.5 shadow-sm backdrop-blur-xl">
                   <span className="h-1.5 w-1.5 rounded-full bg-classic-gold" />
@@ -632,24 +820,45 @@ const ExperienceBySlugPage = () => {
                 </div>
               </div>
 
-              <div className="absolute bottom-7 left-7 z-20 md:bottom-10 md:left-10">
-                <p className="text-[9px] uppercase tracking-[0.3em] text-rich-navy/45">
-                  Connected to your story
-                </p>
-              </div>
-
               <img
-                src={getMediaUrl(
-                  productImage,
-                )}
+                src={
+                  productImageUrl
+                }
                 alt={
-                  experience.product?.name ||
+                  experience.product
+                    ?.name ||
                   "Smart Jewelry"
                 }
                 className="relative z-10 h-full min-h-[440px] w-full object-contain p-10 drop-shadow-[0_35px_35px_rgba(13,34,53,0.16)] transition-transform duration-700 hover:scale-[1.025] md:min-h-[650px] md:p-20"
-                onError={(event) => {
-                  event.currentTarget.src =
-                    "/placeholder.png";
+                onLoad={(
+                  event,
+                ) => {
+                  console.log(
+                    "PRODUCT IMAGE LOADED:",
+                    event
+                      .currentTarget
+                      .src,
+                  );
+                }}
+                onError={(
+                  event,
+                ) => {
+                  console.error(
+                    "PRODUCT IMAGE FAILED:",
+                    event
+                      .currentTarget
+                      .src,
+                  );
+
+                  if (
+                    !event.currentTarget
+                      .src.endsWith(
+                        "/placeholder.png",
+                      )
+                  ) {
+                    event.currentTarget.src =
+                      "/placeholder.png";
+                  }
                 }}
               />
             </div>
@@ -665,7 +874,8 @@ const ExperienceBySlugPage = () => {
                 </p>
 
                 <h2 className="mt-5 max-w-lg font-serif text-4xl font-normal leading-[1.05] tracking-[-0.035em] text-rich-navy md:text-5xl">
-                  {experience.product?.name ||
+                  {experience.product
+                    ?.name ||
                     "Smart Jewelry"}
                 </h2>
 
@@ -680,7 +890,8 @@ const ExperienceBySlugPage = () => {
                 </div>
 
                 <p className="mt-8 text-[14px] leading-8 text-slate-gray md:text-[15px]">
-                  {experience.product?.description ||
+                  {experience.product
+                    ?.description ||
                     "This jewelry piece has a special digital experience connected to it."}
                 </p>
 
@@ -746,8 +957,6 @@ const ExperienceBySlugPage = () => {
 
           <div className="absolute left-0 top-0 h-px w-1/3 bg-gradient-to-r from-classic-gold/60 to-transparent" />
 
-          <div className="absolute bottom-0 right-0 h-px w-1/3 bg-gradient-to-l from-classic-gold/30 to-transparent" />
-
           <div className="relative grid gap-10 px-7 py-12 md:px-14 md:py-16 lg:grid-cols-[150px_1fr] lg:gap-14 lg:px-20 lg:py-20">
             <div className="hidden lg:block">
               <div className="flex h-24 w-24 items-center justify-center rounded-full border border-classic-gold/25 bg-midnight-navy font-serif text-6xl text-classic-gold shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
@@ -781,7 +990,9 @@ const ExperienceBySlugPage = () => {
                     </p>
 
                     <p className="mt-1 font-serif text-xl text-champagne-gold md:text-2xl">
-                      {personal.ownerName}
+                      {
+                        personal.ownerName
+                      }
                     </p>
                   </div>
                 </div>
@@ -794,8 +1005,6 @@ const ExperienceBySlugPage = () => {
           <section className="overflow-hidden rounded-[30px] border border-light-champagne/90 bg-soft-white shadow-[0_30px_80px_rgba(13,34,53,0.09)] md:rounded-[40px]">
             <div className="relative overflow-hidden px-7 pb-8 pt-10 md:px-12 md:pb-10 md:pt-12">
               <div className="absolute right-0 top-0 h-48 w-48 rounded-bl-full bg-warm-ivory" />
-
-              <div className="absolute -left-24 -top-24 h-56 w-56 rounded-full border border-champagne-gold/[0.07]" />
 
               <div className="relative z-10 flex flex-col justify-between gap-7 md:flex-row md:items-end">
                 <div>
@@ -833,7 +1042,9 @@ const ExperienceBySlugPage = () => {
 
             <div className="border-t border-light-champagne/90 bg-warm-ivory/45 p-7 md:p-12">
               <MediaGallery
-                media={media}
+                media={
+                  media
+                }
               />
             </div>
           </section>

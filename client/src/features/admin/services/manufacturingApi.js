@@ -7,13 +7,17 @@ export const getManufacturingOrders = async () => {
 };
 
 export const getManufacturingOrderById = async (manufacturingOrderId) => {
-  const response = await api.get(`/manufacturing/${manufacturingOrderId}`);
+  const response = await api.get(
+    `/manufacturing/${manufacturingOrderId}`,
+  );
 
   return response.data;
 };
 
 export const createManufacturingOrder = async (orderId) => {
-  const response = await api.post(`/manufacturing/from-order/${orderId}`);
+  const response = await api.post(
+    `/manufacturing/from-order/${orderId}`,
+  );
 
   return response.data;
 };
@@ -31,57 +35,33 @@ export const assignSmartUnit = async (
   unitId,
   smartUnitId,
   smartUnitInstanceId,
+  assemblyCost = 0,
 ) => {
-  if (!manufacturingOrderId) {
-    throw new Error("Manufacturing order ID is required");
-  }
+  const response = await api.patch(
+    `/manufacturing/${manufacturingOrderId}/units/${unitId}/smart-unit`,
+    {
+      smartUnitId,
+      smartUnitInstanceId,
+      assemblyCost,
+    },
+  );
 
-  if (!unitId) {
-    throw new Error("Production unit ID is required");
-  }
+  return response.data;
+};
 
-  if (!smartUnitId) {
-    throw new Error("Smart unit ID is required");
-  }
+export const updateAssemblyCost = async (
+  manufacturingOrderId,
+  unitId,
+  assemblyCost,
+) => {
+  const response = await api.patch(
+    `/manufacturing/${manufacturingOrderId}/units/${unitId}/assembly-cost`,
+    {
+      assemblyCost,
+    },
+  );
 
-  if (!smartUnitInstanceId) {
-    throw new Error("Smart unit instance ID is required");
-  }
-
-  console.log("ASSIGN SMART UNIT INSTANCE REQUEST:", {
-    manufacturingOrderId,
-    unitId,
-    smartUnitId,
-    smartUnitInstanceId,
-  });
-
-  try {
-    const response = await api.patch(
-      `/manufacturing/${manufacturingOrderId}/units/${unitId}/smart-unit`,
-      {
-        smartUnitId,
-        smartUnitInstanceId,
-      },
-    );
-
-    console.log("ASSIGN SMART UNIT INSTANCE RESPONSE:", response.data);
-
-    return response.data;
-  } catch (error) {
-    console.error("ASSIGN SMART UNIT INSTANCE API ERROR:", error);
-
-    console.error(
-      "ASSIGN SMART UNIT INSTANCE API STATUS:",
-      error?.response?.status,
-    );
-
-    console.error(
-      "ASSIGN SMART UNIT INSTANCE API DATA:",
-      error?.response?.data,
-    );
-
-    throw error;
-  }
+  return response.data;
 };
 
 export const createExperienceForUnit = async (
@@ -89,41 +69,18 @@ export const createExperienceForUnit = async (
   unitId,
   experienceData = {},
 ) => {
-  if (!manufacturingOrderId) {
-    throw new Error("Manufacturing order ID is required");
-  }
-
-  if (!unitId) {
-    throw new Error("Production unit ID is required");
-  }
-
-  console.log("CREATE EXPERIENCE REQUEST:", {
-    manufacturingOrderId,
-    unitId,
+  const response = await api.post(
+    `/manufacturing/${manufacturingOrderId}/units/${unitId}/experience`,
     experienceData,
-  });
+  );
 
-  try {
-    const response = await api.post(
-      `/manufacturing/${manufacturingOrderId}/units/${unitId}/experience`,
-      experienceData,
-    );
-
-    console.log("CREATE EXPERIENCE RESPONSE:", response.data);
-
-    return response.data;
-  } catch (error) {
-    console.error("CREATE EXPERIENCE API ERROR:", error);
-
-    console.error("CREATE EXPERIENCE API STATUS:", error?.response?.status);
-
-    console.error("CREATE EXPERIENCE API DATA:", error?.response?.data);
-
-    throw error;
-  }
+  return response.data;
 };
 
-export const startProductionUnit = async (manufacturingOrderId, unitId) => {
+export const startProductionUnit = async (
+  manufacturingOrderId,
+  unitId,
+) => {
   const response = await api.patch(
     `/manufacturing/${manufacturingOrderId}/units/${unitId}/start`,
   );
@@ -146,7 +103,37 @@ export const completeProductionUnit = async (
   return response.data;
 };
 
-export const cancelManufacturingOrder = async (manufacturingOrderId) => {
+export const startPackaging = async (
+  manufacturingOrderId,
+  unitId,
+) => {
+  const response = await api.patch(
+    `/manufacturing/${manufacturingOrderId}/units/${unitId}/packaging/start`,
+  );
+
+  return response.data;
+};
+
+export const completePackaging = async (
+  manufacturingOrderId,
+  unitId,
+  packagingCost,
+  packagingNotes = "",
+) => {
+  const response = await api.patch(
+    `/manufacturing/${manufacturingOrderId}/units/${unitId}/packaging/complete`,
+    {
+      packagingCost,
+      packagingNotes,
+    },
+  );
+
+  return response.data;
+};
+
+export const cancelManufacturingOrder = async (
+  manufacturingOrderId,
+) => {
   const response = await api.patch(
     `/manufacturing/${manufacturingOrderId}/cancel`,
   );

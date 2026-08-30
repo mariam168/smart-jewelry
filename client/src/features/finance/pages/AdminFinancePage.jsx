@@ -5,6 +5,10 @@ import {
 } from "react";
 
 import {
+  Link,
+} from "react-router-dom";
+
+import {
   getFinanceDashboard,
   createFinanceExpense,
   deleteFinanceExpense,
@@ -70,7 +74,10 @@ const AdminFinancePage = () => {
     expenseDate:
       new Date()
         .toISOString()
-        .slice(0, 10),
+        .slice(
+          0,
+          10,
+        ),
     note: "",
   });
 
@@ -82,6 +89,7 @@ const AdminFinancePage = () => {
     async () => {
       try {
         setLoading(true);
+
         setError("");
 
         const response =
@@ -129,6 +137,26 @@ const AdminFinancePage = () => {
     );
   };
 
+  const formatPercent = (
+    value,
+  ) => {
+    const number =
+      Number(value || 0);
+
+    return `${
+      number >= 0
+        ? ""
+        : "-"
+    }${Math.abs(
+      number,
+    ).toLocaleString(
+      "en-EG",
+      {
+        maximumFractionDigits: 2,
+      },
+    )}%`;
+  };
+
   const formatLabel = (
     value,
   ) => {
@@ -137,7 +165,10 @@ const AdminFinancePage = () => {
     }
 
     return String(value)
-      .replaceAll("_", " ")
+      .replaceAll(
+        "_",
+        " ",
+      )
       .replace(
         /\b\w/g,
         (letter) =>
@@ -173,7 +204,9 @@ const AdminFinancePage = () => {
 
   const maxChartValue =
     useMemo(() => {
-      if (!monthly.length) {
+      if (
+        !monthly.length
+      ) {
         return 1;
       }
 
@@ -185,15 +218,19 @@ const AdminFinancePage = () => {
                 item.sales ||
                   0,
               ),
+
               Number(
                 item.expenses ||
                   0,
               ),
             ),
         ),
+
         1,
       );
-    }, [monthly]);
+    }, [
+      monthly,
+    ]);
 
   const handleApplyFilters =
     () => {
@@ -224,7 +261,10 @@ const AdminFinancePage = () => {
         to: "",
       };
 
-      setFilters(empty);
+      setFilters(
+        empty,
+      );
+
       setAppliedFilters(
         empty,
       );
@@ -241,7 +281,9 @@ const AdminFinancePage = () => {
       setExpenseForm(
         (previous) => ({
           ...previous,
-          [name]: value,
+
+          [name]:
+            value,
         }),
       );
     };
@@ -274,7 +316,10 @@ const AdminFinancePage = () => {
       }
 
       try {
-        setSavingExpense(true);
+        setSavingExpense(
+          true,
+        );
+
         setError("");
 
         await createFinanceExpense({
@@ -298,8 +343,12 @@ const AdminFinancePage = () => {
 
         setExpenseForm({
           title: "",
-          category: "other",
+
+          category:
+            "other",
+
           amount: "",
+
           expenseDate:
             new Date()
               .toISOString()
@@ -307,6 +356,7 @@ const AdminFinancePage = () => {
                 0,
                 10,
               ),
+
           note: "",
         });
 
@@ -375,6 +425,38 @@ const AdminFinancePage = () => {
     data?.overview ||
     {};
 
+  const costBreakdown =
+    data?.costBreakdown ||
+    {};
+
+  const costing =
+    data?.costing ||
+    {};
+
+  const productProfitability =
+    Array.isArray(
+      data?.productProfitability,
+    )
+      ? data.productProfitability
+      : [];
+
+  const orderProfitability =
+    Array.isArray(
+      data?.orderProfitability,
+    )
+      ? data.orderProfitability
+      : [];
+
+  const hasIncompleteCosting =
+    Number(
+      costing.inProgress ||
+        0,
+    ) > 0 ||
+    Number(
+      costing.notStarted ||
+        0,
+    ) > 0;
+
   return (
     <main className="min-h-screen bg-warm-ivory text-rich-navy">
       <header className="border-b border-light-champagne bg-soft-white">
@@ -394,7 +476,7 @@ const AdminFinancePage = () => {
               </h1>
 
               <p className="mt-3 text-[13px] text-slate-gray">
-                Revenue, payments, expenses and cash performance.
+                Revenue, product costs, manufacturing costs, profit and cash performance.
               </p>
             </div>
 
@@ -417,6 +499,7 @@ const AdminFinancePage = () => {
                         previous,
                       ) => ({
                         ...previous,
+
                         from:
                           event
                             .target
@@ -446,6 +529,7 @@ const AdminFinancePage = () => {
                         previous,
                       ) => ({
                         ...previous,
+
                         to:
                           event
                             .target
@@ -488,6 +572,27 @@ const AdminFinancePage = () => {
           </div>
         )}
 
+        {hasIncompleteCosting && (
+          <div className="mb-6 rounded-[20px] border border-champagne-gold/30 bg-soft-cream px-5 py-4">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-antique-gold">
+              Profit calculation is still provisional
+            </p>
+
+            <p className="mt-2 text-[10px] leading-6 text-slate-gray">
+              {Number(
+                costing.inProgress ||
+                  0,
+              )}{" "}
+              order(s) are still in manufacturing and{" "}
+              {Number(
+                costing.notStarted ||
+                  0,
+              )}{" "}
+              order(s) do not have manufacturing costs yet. Final profit becomes exact after production and packaging costs are completed.
+            </p>
+          </div>
+        )}
+
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <FinanceCard
             dark
@@ -509,9 +614,43 @@ const AdminFinancePage = () => {
             currency={
               currency
             }
-            helper={`${formatMoney(overview.collectionRate)}% collection rate`}
+            helper={`${formatMoney(
+              overview.collectionRate,
+            )}% collection rate`}
           />
 
+          <FinanceCard
+            label="Direct Production Cost"
+            value={formatMoney(
+              overview.directProductionCost,
+            )}
+            currency={
+              currency
+            }
+            helper="Product + smart unit + assembly + packaging"
+          />
+
+          <FinanceCard
+            label="Gross Product Profit"
+            value={formatMoney(
+              overview.grossProductProfit,
+            )}
+            currency={
+              currency
+            }
+            helper={`${formatPercent(
+              overview.grossMargin,
+            )} gross margin`}
+            profit={
+              Number(
+                overview.grossProductProfit ||
+                  0,
+              )
+            }
+          />
+        </section>
+
+        <section className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <FinanceCard
             label="Outstanding"
             value={formatMoney(
@@ -524,6 +663,17 @@ const AdminFinancePage = () => {
           />
 
           <FinanceCard
+            label="Expenses"
+            value={formatMoney(
+              overview.expenses,
+            )}
+            currency={
+              currency
+            }
+            helper="Manually recorded business expenses"
+          />
+
+          <FinanceCard
             label="Net Cash"
             value={formatMoney(
               overview.netCash,
@@ -531,51 +681,106 @@ const AdminFinancePage = () => {
             currency={
               currency
             }
-            helper="Paid revenue minus recorded expenses"
+            helper="Paid revenue minus manual expenses"
+          />
+
+          <FinanceCard
+            label="Net Profit"
+            value={formatMoney(
+              overview.netProfit,
+            )}
+            currency={
+              currency
+            }
+            helper="Paid revenue minus paid-order direct costs and expenses"
+            profit={
+              Number(
+                overview.netProfit ||
+                  0,
+              )
+            }
           />
         </section>
 
-        <section className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <MiniCard
-            label="Expenses"
-            value={`${formatMoney(overview.expenses)} ${currency}`}
+        <section className="mt-7">
+          <SectionHeaderStandalone
+            eyebrow="Cost Structure"
+            title="Direct Production Cost Breakdown"
           />
 
-          <MiniCard
-            label="Shipping Charged"
-            value={`${formatMoney(overview.shippingRevenue)} ${currency}`}
-          />
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            <MiniCard
+              label="Product Cost"
+              value={`${formatMoney(
+                costBreakdown.productCost,
+              )} ${currency}`}
+            />
 
-          <MiniCard
-            label="Failed Payments"
-            value={`${formatMoney(overview.failedPayments)} ${currency}`}
-          />
+            <MiniCard
+              label="Smart Unit Cost"
+              value={`${formatMoney(
+                costBreakdown.smartUnitCost,
+              )} ${currency}`}
+            />
 
-          <MiniCard
-            label="Cancelled Value"
-            value={`${formatMoney(overview.cancelledValue)} ${currency}`}
-          />
+            <MiniCard
+              label="Assembly Cost"
+              value={`${formatMoney(
+                costBreakdown.assemblyCost,
+              )} ${currency}`}
+            />
+
+            <MiniCard
+              label="Packaging Cost"
+              value={`${formatMoney(
+                costBreakdown.packagingCost,
+              )} ${currency}`}
+            />
+
+            <MiniCard
+              label="Total Direct Cost"
+              value={`${formatMoney(
+                costBreakdown.total,
+              )} ${currency}`}
+              accent
+            />
+          </div>
         </section>
 
         <section className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MiniCard
             label="Today Sales"
-            value={`${formatMoney(data?.periods?.today?.sales)} ${currency}`}
+            value={`${formatMoney(
+              data?.periods?.today?.sales,
+            )} ${currency}`}
           />
 
           <MiniCard
             label="This Month"
-            value={`${formatMoney(data?.periods?.thisMonth?.sales)} ${currency}`}
+            value={`${formatMoney(
+              data?.periods?.thisMonth?.sales,
+            )} ${currency}`}
           />
 
           <MiniCard
             label="Last Month"
-            value={`${formatMoney(data?.periods?.lastMonth?.sales)} ${currency}`}
+            value={`${formatMoney(
+              data?.periods?.lastMonth?.sales,
+            )} ${currency}`}
           />
 
           <MiniCard
             label="Monthly Growth"
-            value={`${Number(data?.periods?.monthlyGrowth || 0) >= 0 ? "+" : ""}${formatMoney(data?.periods?.monthlyGrowth)}%`}
+            value={`${
+              Number(
+                data?.periods?.monthlyGrowth ||
+                  0,
+              ) >= 0
+                ? "+"
+                : ""
+            }${formatMoney(
+              data?.periods?.monthlyGrowth,
+            )}%`}
           />
         </section>
 
@@ -598,6 +803,7 @@ const AdminFinancePage = () => {
                         ) /
                           maxChartValue) *
                           100,
+
                         item.sales
                           ? 3
                           : 0,
@@ -611,6 +817,7 @@ const AdminFinancePage = () => {
                         ) /
                           maxChartValue) *
                           100,
+
                         item.expenses
                           ? 3
                           : 0,
@@ -658,7 +865,7 @@ const AdminFinancePage = () => {
 
                 <Legend
                   className="bg-classic-gold"
-                  label="Expenses"
+                  label="Manual Expenses"
                 />
               </div>
             </div>
@@ -715,6 +922,435 @@ const AdminFinancePage = () => {
           </div>
         </section>
 
+        <section className="mt-7 overflow-hidden rounded-[26px] border border-light-champagne bg-soft-white">
+          <SectionHeader
+            eyebrow="Product Economics"
+            title="Product Profitability"
+          />
+
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1450px]">
+              <thead>
+                <tr className="border-b border-light-champagne bg-warm-ivory/55 text-left">
+                  <TableHead text="Product" />
+                  <TableHead text="Qty" />
+                  <TableHead
+                    text="Avg Sold Price"
+                    right
+                  />
+                  <TableHead
+                    text="Revenue"
+                    right
+                  />
+                  <TableHead
+                    text="Product Cost"
+                    right
+                  />
+                  <TableHead
+                    text="Smart Unit"
+                    right
+                  />
+                  <TableHead
+                    text="Assembly"
+                    right
+                  />
+                  <TableHead
+                    text="Packaging"
+                    right
+                  />
+                  <TableHead
+                    text="Total Cost"
+                    right
+                  />
+                  <TableHead
+                    text="Gross Profit"
+                    right
+                  />
+                  <TableHead
+                    text="Margin"
+                    right
+                  />
+                  <TableHead text="Costing" />
+                </tr>
+              </thead>
+
+              <tbody className="divide-y divide-light-champagne">
+                {productProfitability.length ? (
+                  productProfitability.map(
+                    (
+                      product,
+                      index,
+                    ) => (
+                      <tr
+                        key={
+                          product.productId ||
+                          `${product.productName}-${index}`
+                        }
+                        className="transition hover:bg-warm-ivory/40"
+                      >
+                        <td className="px-5 py-4">
+                          <p className="max-w-[230px] truncate text-[11px] font-semibold text-rich-navy">
+                            {
+                              product.productName
+                            }
+                          </p>
+
+                          {product.sku && (
+                            <p className="mt-1 text-[8px] uppercase tracking-[0.08em] text-steel-gray">
+                              SKU ·{" "}
+                              {
+                                product.sku
+                              }
+                            </p>
+                          )}
+                        </td>
+
+                        <td className="px-5 py-4 text-[11px]">
+                          {
+                            product.quantity
+                          }
+                        </td>
+
+                        <MoneyCell
+                          value={
+                            product.averageSellingPrice
+                          }
+                          currency={
+                            currency
+                          }
+                        />
+
+                        <MoneyCell
+                          value={
+                            product.revenue
+                          }
+                          currency={
+                            currency
+                          }
+                        />
+
+                        <MoneyCell
+                          value={
+                            product.productCost
+                          }
+                          currency={
+                            currency
+                          }
+                        />
+
+                        <MoneyCell
+                          value={
+                            product.smartUnitCost
+                          }
+                          currency={
+                            currency
+                          }
+                        />
+
+                        <MoneyCell
+                          value={
+                            product.assemblyCost
+                          }
+                          currency={
+                            currency
+                          }
+                        />
+
+                        <MoneyCell
+                          value={
+                            product.packagingCost
+                          }
+                          currency={
+                            currency
+                          }
+                        />
+
+                        <MoneyCell
+                          value={
+                            product.totalCost
+                          }
+                          currency={
+                            currency
+                          }
+                          strong
+                        />
+
+                        <ProfitCell
+                          value={
+                            product.grossProfit
+                          }
+                          currency={
+                            currency
+                          }
+                          formatMoney={
+                            formatMoney
+                          }
+                        />
+
+                        <td className="px-5 py-4 text-right text-[11px] font-semibold">
+                          {formatPercent(
+                            product.margin,
+                          )}
+                        </td>
+
+                        <td className="px-5 py-4">
+                          <CostingBadge
+                            status={
+                              product.costingStatus
+                            }
+                          />
+                        </td>
+                      </tr>
+                    ),
+                  )
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={12}
+                    >
+                      <EmptyState text="No product profitability data yet." />
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="mt-7 overflow-hidden rounded-[26px] border border-light-champagne bg-soft-white">
+          <SectionHeader
+            eyebrow="Order Economics"
+            title="Order Profitability"
+          />
+
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1600px]">
+              <thead>
+                <tr className="border-b border-light-champagne bg-warm-ivory/55 text-left">
+                  <TableHead text="Order" />
+                  <TableHead text="Customer" />
+                  <TableHead text="Payment" />
+                  <TableHead
+                    text="Product Revenue"
+                    right
+                  />
+                  <TableHead
+                    text="Shipping"
+                    right
+                  />
+                  <TableHead
+                    text="Order Total"
+                    right
+                  />
+                  <TableHead
+                    text="Product Cost"
+                    right
+                  />
+                  <TableHead
+                    text="Smart Unit"
+                    right
+                  />
+                  <TableHead
+                    text="Assembly"
+                    right
+                  />
+                  <TableHead
+                    text="Packaging"
+                    right
+                  />
+                  <TableHead
+                    text="Direct Cost"
+                    right
+                  />
+                  <TableHead
+                    text="Gross Profit"
+                    right
+                  />
+                  <TableHead
+                    text="Margin"
+                    right
+                  />
+                  <TableHead text="Costing" />
+                  <TableHead
+                    text=""
+                    right
+                  />
+                </tr>
+              </thead>
+
+              <tbody className="divide-y divide-light-champagne">
+                {orderProfitability.length ? (
+                  orderProfitability.map(
+                    (order) => (
+                      <tr
+                        key={
+                          order._id
+                        }
+                        className="transition hover:bg-warm-ivory/40"
+                      >
+                        <td className="px-5 py-4">
+                          <p className="font-mono text-[10px] font-semibold text-rich-navy">
+                            {
+                              order.orderNumber
+                            }
+                          </p>
+
+                          <p className="mt-1 text-[8px] text-steel-gray">
+                            {formatDate(
+                              order.createdAt,
+                            )}
+                          </p>
+                        </td>
+
+                        <td className="px-5 py-4">
+                          <p className="max-w-[180px] truncate text-[10px] font-semibold">
+                            {
+                              order.customer
+                            }
+                          </p>
+
+                          {order.customerEmail && (
+                            <p className="mt-1 max-w-[180px] truncate text-[8px] text-steel-gray">
+                              {
+                                order.customerEmail
+                              }
+                            </p>
+                          )}
+                        </td>
+
+                        <td className="px-5 py-4">
+                          <PaymentBadge
+                            status={
+                              order.paymentStatus
+                            }
+                          />
+                        </td>
+
+                        <MoneyCell
+                          value={
+                            order.productRevenue
+                          }
+                          currency={
+                            currency
+                          }
+                        />
+
+                        <MoneyCell
+                          value={
+                            order.shippingCost
+                          }
+                          currency={
+                            currency
+                          }
+                        />
+
+                        <MoneyCell
+                          value={
+                            order.orderTotal
+                          }
+                          currency={
+                            currency
+                          }
+                          strong
+                        />
+
+                        <MoneyCell
+                          value={
+                            order.productCost
+                          }
+                          currency={
+                            currency
+                          }
+                        />
+
+                        <MoneyCell
+                          value={
+                            order.smartUnitCost
+                          }
+                          currency={
+                            currency
+                          }
+                        />
+
+                        <MoneyCell
+                          value={
+                            order.assemblyCost
+                          }
+                          currency={
+                            currency
+                          }
+                        />
+
+                        <MoneyCell
+                          value={
+                            order.packagingCost
+                          }
+                          currency={
+                            currency
+                          }
+                        />
+
+                        <MoneyCell
+                          value={
+                            order.directProductionCost
+                          }
+                          currency={
+                            currency
+                          }
+                          strong
+                        />
+
+                        <ProfitCell
+                          value={
+                            order.grossProductProfit
+                          }
+                          currency={
+                            currency
+                          }
+                          formatMoney={
+                            formatMoney
+                          }
+                        />
+
+                        <td className="px-5 py-4 text-right text-[11px] font-semibold">
+                          {formatPercent(
+                            order.grossMargin,
+                          )}
+                        </td>
+
+                        <td className="px-5 py-4">
+                          <CostingBadge
+                            status={
+                              order.costingStatus
+                            }
+                          />
+                        </td>
+
+                        <td className="px-5 py-4 text-right">
+                          <Link
+                            to={`/admin/orders/${order._id}`}
+                            className="inline-flex rounded-full border border-light-champagne bg-white px-4 py-2 text-[8px] font-semibold uppercase tracking-[0.08em] text-rich-navy transition hover:border-classic-gold"
+                          >
+                            Open
+                          </Link>
+                        </td>
+                      </tr>
+                    ),
+                  )
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={15}
+                    >
+                      <EmptyState text="No order profitability data yet." />
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
         <section className="mt-7 grid gap-6 xl:grid-cols-2">
           <div className="rounded-[26px] border border-light-champagne bg-soft-white">
             <SectionHeader
@@ -725,7 +1361,8 @@ const AdminFinancePage = () => {
             <div className="divide-y divide-light-champagne px-6">
               {data
                 ?.orderStatuses
-                ?.map(
+                ?.length ? (
+                data.orderStatuses.map(
                   (item) => (
                     <div
                       key={
@@ -758,7 +1395,10 @@ const AdminFinancePage = () => {
                       </p>
                     </div>
                   ),
-                )}
+                )
+              ) : (
+                <EmptyState text="No orders yet." />
+              )}
             </div>
           </div>
 
@@ -825,9 +1465,7 @@ const AdminFinancePage = () => {
             }
             className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-5"
           >
-            <Field
-              label="Title"
-            >
+            <Field label="Title">
               <input
                 name="title"
                 value={
@@ -836,14 +1474,12 @@ const AdminFinancePage = () => {
                 onChange={
                   handleExpenseChange
                 }
-                placeholder="Packaging materials"
+                placeholder="Marketing campaign"
                 className="finance-input"
               />
             </Field>
 
-            <Field
-              label="Category"
-            >
+            <Field label="Category">
               <select
                 name="category"
                 value={
@@ -875,9 +1511,7 @@ const AdminFinancePage = () => {
               </select>
             </Field>
 
-            <Field
-              label="Amount"
-            >
+            <Field label="Amount">
               <input
                 type="number"
                 min="0"
@@ -894,9 +1528,7 @@ const AdminFinancePage = () => {
               />
             </Field>
 
-            <Field
-              label="Date"
-            >
+            <Field label="Date">
               <input
                 type="date"
                 name="expenseDate"
@@ -924,9 +1556,7 @@ const AdminFinancePage = () => {
             </div>
 
             <div className="md:col-span-2 xl:col-span-5">
-              <Field
-                label="Note"
-              >
+              <Field label="Note">
                 <textarea
                   name="note"
                   value={
@@ -977,11 +1607,14 @@ const AdminFinancePage = () => {
                           }
                         >
                           <td className="px-5 py-4">
-                            <p className="font-mono text-[10px] font-semibold">
+                            <Link
+                              to={`/admin/orders/${order._id}`}
+                              className="font-mono text-[10px] font-semibold text-rich-navy hover:text-antique-gold"
+                            >
                               {
                                 order.orderNumber
                               }
-                            </p>
+                            </Link>
 
                             <p className="mt-1 text-[9px] text-steel-gray">
                               {formatDate(
@@ -996,10 +1629,12 @@ const AdminFinancePage = () => {
                             }
                           </td>
 
-                          <td className="px-5 py-4 text-[10px]">
-                            {formatLabel(
-                              order.paymentStatus,
-                            )}
+                          <td className="px-5 py-4">
+                            <PaymentBadge
+                              status={
+                                order.paymentStatus
+                              }
+                            />
                           </td>
 
                           <td className="px-5 py-4 text-[10px]">
@@ -1066,6 +1701,14 @@ const AdminFinancePage = () => {
                             )}
                           </span>
                         </div>
+
+                        {expense.note && (
+                          <p className="mt-2 max-w-md truncate text-[9px] text-slate-gray">
+                            {
+                              expense.note
+                            }
+                          </p>
+                        )}
                       </div>
 
                       <div className="flex shrink-0 items-center gap-4">
@@ -1101,12 +1744,55 @@ const AdminFinancePage = () => {
           </div>
         </section>
 
-        <div className="mt-7 rounded-2xl border border-light-champagne bg-soft-white px-5 py-4">
-          <p className="text-[10px] leading-6 text-steel-gray">
-            Net Cash represents paid order revenue minus manually recorded
-            expenses. It is not accounting profit because historical product,
-            manufacturing and inventory costs are not currently snapshotted
-            inside each order.
+        <div className="mt-7 rounded-[22px] border border-light-champagne bg-soft-white px-6 py-5">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-antique-gold">
+            How profit is calculated
+          </p>
+
+          <div className="mt-4 grid gap-4 text-[10px] leading-6 text-slate-gray lg:grid-cols-2">
+            <div className="rounded-[16px] bg-warm-ivory/60 p-4">
+              <strong className="text-rich-navy">
+                Direct Production Cost
+              </strong>
+
+              <p className="mt-1">
+                Product original cost + Smart Unit cost + Smart Unit installation cost + Packaging cost.
+              </p>
+            </div>
+
+            <div className="rounded-[16px] bg-warm-ivory/60 p-4">
+              <strong className="text-rich-navy">
+                Gross Product Profit
+              </strong>
+
+              <p className="mt-1">
+                Product revenue minus direct production cost. Customer shipping charge is shown separately.
+              </p>
+            </div>
+
+            <div className="rounded-[16px] bg-warm-ivory/60 p-4">
+              <strong className="text-rich-navy">
+                Net Cash
+              </strong>
+
+              <p className="mt-1">
+                Paid order revenue minus manually recorded expenses.
+              </p>
+            </div>
+
+            <div className="rounded-[16px] bg-warm-ivory/60 p-4">
+              <strong className="text-rich-navy">
+                Net Profit
+              </strong>
+
+              <p className="mt-1">
+                Paid revenue minus direct production cost of paid orders minus manually recorded business expenses.
+              </p>
+            </div>
+          </div>
+
+          <p className="mt-4 text-[9px] leading-5 text-steel-gray">
+            Do not enter the same Product, Smart Unit, Assembly or Packaging cost again as a manual expense, otherwise that cost will be deducted twice.
           </p>
         </div>
       </div>
@@ -1127,6 +1813,10 @@ const AdminFinancePage = () => {
             transition: 0.2s;
           }
 
+          textarea.finance-input {
+            height: auto;
+          }
+
           .finance-input:focus {
             border-color: #C9A24D;
             box-shadow: 0 0 0 4px rgba(201, 162, 77, 0.08);
@@ -1143,7 +1833,12 @@ const FinanceCard = ({
   currency,
   helper,
   dark = false,
+  profit = null,
 }) => {
+  const isNegative =
+    profit !== null &&
+    Number(profit) < 0;
+
   return (
     <div
       className={`relative overflow-hidden rounded-[24px] border p-6 ${
@@ -1167,7 +1862,13 @@ const FinanceCard = ({
       </p>
 
       <div className="mt-5 flex items-end gap-2">
-        <span className="font-serif text-[2.1rem] leading-none">
+        <span
+          className={`font-serif text-[2.1rem] leading-none ${
+            isNegative
+              ? "text-red-600"
+              : ""
+          }`}
+        >
           {value}
         </span>
 
@@ -1198,14 +1899,27 @@ const FinanceCard = ({
 const MiniCard = ({
   label,
   value,
+  accent = false,
 }) => {
   return (
-    <div className="rounded-[20px] border border-light-champagne bg-soft-white p-5">
+    <div
+      className={`rounded-[20px] border p-5 ${
+        accent
+          ? "border-champagne-gold/30 bg-soft-cream"
+          : "border-light-champagne bg-soft-white"
+      }`}
+    >
       <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
         {label}
       </p>
 
-      <p className="mt-3 font-serif text-[1.45rem] text-rich-navy">
+      <p
+        className={`mt-3 font-serif text-[1.45rem] ${
+          accent
+            ? "text-antique-gold"
+            : "text-rich-navy"
+        }`}
+      >
         {value}
       </p>
     </div>
@@ -1223,6 +1937,27 @@ const SectionHeader = ({
       </p>
 
       <h2 className="mt-1.5 font-serif text-[1.55rem] tracking-[-0.025em] text-rich-navy">
+        {title}
+      </h2>
+    </div>
+  );
+};
+
+const SectionHeaderStandalone = ({
+  eyebrow,
+  title,
+}) => {
+  return (
+    <div>
+      <div className="flex items-center gap-3">
+        <span className="h-px w-8 bg-classic-gold" />
+
+        <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-antique-gold">
+          {eyebrow}
+        </p>
+      </div>
+
+      <h2 className="mt-2 font-serif text-[1.65rem] tracking-[-0.025em] text-rich-navy">
         {title}
       </h2>
     </div>
@@ -1267,7 +2002,7 @@ const TableHead = ({
 }) => {
   return (
     <th
-      className={`px-5 py-4 text-[8px] font-semibold uppercase tracking-[0.16em] text-steel-gray ${
+      className={`whitespace-nowrap px-5 py-4 text-[8px] font-semibold uppercase tracking-[0.16em] text-steel-gray ${
         right
           ? "text-right"
           : ""
@@ -1275,6 +2010,120 @@ const TableHead = ({
     >
       {text}
     </th>
+  );
+};
+
+const MoneyCell = ({
+  value,
+  currency,
+  strong = false,
+}) => {
+  return (
+    <td
+      className={`whitespace-nowrap px-5 py-4 text-right text-[10px] ${
+        strong
+          ? "font-semibold text-rich-navy"
+          : "text-slate-gray"
+      }`}
+    >
+      {Number(
+        value || 0,
+      ).toLocaleString(
+        "en-EG",
+        {
+          maximumFractionDigits: 2,
+        },
+      )}{" "}
+      <span className="text-[7px] text-steel-gray">
+        {currency}
+      </span>
+    </td>
+  );
+};
+
+const ProfitCell = ({
+  value,
+  currency,
+  formatMoney,
+}) => {
+  const positive =
+    Number(
+      value || 0,
+    ) >= 0;
+
+  return (
+    <td
+      className={`whitespace-nowrap px-5 py-4 text-right text-[11px] font-semibold ${
+        positive
+          ? "text-antique-gold"
+          : "text-red-600"
+      }`}
+    >
+      {formatMoney(
+        value,
+      )}{" "}
+      <span className="text-[7px] text-steel-gray">
+        {currency}
+      </span>
+    </td>
+  );
+};
+
+const CostingBadge = ({
+  status,
+}) => {
+  if (
+    status ===
+    "completed"
+  ) {
+    return (
+      <span className="inline-flex rounded-full border border-classic-gold/30 bg-soft-cream px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.08em] text-antique-gold">
+        Completed
+      </span>
+    );
+  }
+
+  if (
+    status ===
+    "in_progress"
+  ) {
+    return (
+      <span className="inline-flex rounded-full border border-champagne-gold/30 bg-warm-ivory px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.08em] text-antique-gold">
+        In Progress
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex rounded-full border border-light-champagne bg-silver-mist px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.08em] text-slate-gray">
+      Not Started
+    </span>
+  );
+};
+
+const PaymentBadge = ({
+  status,
+}) => {
+  const classes =
+    status === "paid"
+      ? "border-classic-gold/30 bg-soft-cream text-antique-gold"
+      : status ===
+          "failed"
+        ? "border-red-200 bg-red-50 text-red-600"
+        : "border-light-champagne bg-warm-ivory text-slate-gray";
+
+  return (
+    <span
+      className={`inline-flex rounded-full border px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.08em] ${classes}`}
+    >
+      {String(
+        status ||
+          "pending",
+      ).replaceAll(
+        "_",
+        " ",
+      )}
+    </span>
   );
 };
 

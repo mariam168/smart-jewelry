@@ -3,11 +3,13 @@ import { Link, useParams } from "react-router-dom";
 
 import {
   getManufacturingOrderById,
-  startManufacturing,
   assignSmartUnit,
+  updateAssemblyCost,
   createExperienceForUnit,
   startProductionUnit,
   completeProductionUnit,
+  startPackaging,
+  completePackaging,
   cancelManufacturingOrder,
 } from "../services/manufacturingApi";
 
@@ -16,1296 +18,1641 @@ import {
   getSmartUnitInstances,
 } from "../smart-units/services/smartUnitApi";
 
-const manufacturingStatusLabels = {
-  pending: "Pending",
-  in_progress: "In Progress",
-  completed: "Completed",
-  cancelled: "Cancelled",
-};
-
-const unitStatusLabels = {
+const statusLabels = {
   pending: "Pending",
   unit_assigned: "Unit Assigned",
   experience_created: "Experience Created",
   in_production: "In Production",
+  ready_for_packaging: "Ready for Packaging",
+  packaging: "Packaging",
   completed: "Completed",
   failed: "Failed",
 };
 
-const getManufacturingStatusClasses = (status) => {
-  switch (status) {
-    case "pending":
-      return "border-champagne-gold/30 bg-champagne-gold/10 text-antique-gold";
+const statusClasses = {
+  pending:
+    "border-champagne-gold/30 bg-champagne-gold/10 text-antique-gold",
 
-    case "in_progress":
-      return "border-navy-soft/20 bg-silver-mist text-navy-soft";
+  unit_assigned:
+    "border-light-champagne bg-silver-mist text-navy-soft",
 
-    case "completed":
-      return "border-classic-gold/30 bg-soft-cream text-antique-gold";
+  experience_created:
+    "border-classic-gold/30 bg-soft-cream text-antique-gold",
 
-    case "cancelled":
-      return "border-antique-gold/25 bg-warm-ivory text-antique-gold";
+  in_production:
+    "border-navy-soft/20 bg-silver-mist text-navy-soft",
 
-    default:
-      return "border-light-champagne bg-silver-mist text-slate-gray";
-  }
+  ready_for_packaging:
+    "border-champagne-gold/30 bg-warm-ivory text-antique-gold",
+
+  packaging:
+    "border-classic-gold/30 bg-champagne-gold/10 text-antique-gold",
+
+  completed:
+    "border-classic-gold/30 bg-soft-cream text-antique-gold",
+
+  failed:
+    "border-antique-gold/25 bg-warm-ivory text-antique-gold",
 };
 
-const getUnitStatusClasses = (status) => {
-  switch (status) {
-    case "pending":
-      return "border-champagne-gold/30 bg-champagne-gold/10 text-antique-gold";
-
-    case "unit_assigned":
-      return "border-navy-soft/20 bg-silver-mist text-navy-soft";
-
-    case "experience_created":
-      return "border-champagne-gold/25 bg-soft-cream text-antique-gold";
-
-    case "in_production":
-      return "border-navy-soft/20 bg-silver-mist text-navy-soft";
-
-    case "completed":
-      return "border-classic-gold/30 bg-soft-cream text-antique-gold";
-
-    case "failed":
-      return "border-antique-gold/25 bg-warm-ivory text-antique-gold";
-
-    default:
-      return "border-light-champagne bg-silver-mist text-slate-gray";
-  }
-};
-
-const getObjectId = (value) => {
+const formatDate = (value) => {
   if (!value) {
-    return null;
+    return "N/A";
   }
 
-  if (typeof value === "string") {
-    return value;
-  }
-
-  if (typeof value === "number") {
-    return value.toString();
-  }
-
-  if (value?._id) {
-    return value._id.toString();
-  }
-
-  if (value?.id) {
-    return value.id.toString();
-  }
-
-  return value?.toString?.() || null;
+  return new Date(value).toLocaleString(
+    "en-US",
+    {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    },
+  );
 };
 
-const extractArray = (response, possibleKeys = []) => {
-  if (Array.isArray(response)) {
-    return response;
-  }
-
-  if (Array.isArray(response?.data)) {
-    return response.data;
-  }
-
-  for (const key of possibleKeys) {
-    if (Array.isArray(response?.[key])) {
-      return response[key];
-    }
-
-    if (Array.isArray(response?.data?.[key])) {
-      return response.data[key];
-    }
-
-    if (Array.isArray(response?.data?.data?.[key])) {
-      return response.data.data[key];
-    }
-  }
-
-  return [];
+const formatMoney = (value) => {
+  return `${Number(
+    value || 0,
+  ).toLocaleString()} EGP`;
 };
 
-const AdminManufacturingOrderDetailsPage = () => {
-  const { id } = useParams();
+const getImageUrl = (image) => {
+  if (!image) {
+    return "";
+  }
 
-  const [manufacturingOrder, setManufacturingOrder] = useState(null);
+  if (
+    image.startsWith("http://") ||
+    image.startsWith("https://") ||
+    image.startsWith("blob:")
+  ) {
+    return image;
+  }
 
-  const [smartUnits, setSmartUnits] = useState([]);
+  const backendUrl =
+    import.meta.env
+      .VITE_BACKEND_URL || "";
 
-  const [smartUnitInstances, setSmartUnitInstances] = useState([]);
+  const normalizedImage =
+    image.startsWith("/")
+      ? image
+      : `/${image}`;
 
-  const [selectedSmartUnits, setSelectedSmartUnits] = useState({});
+  return `${backendUrl}${normalizedImage}`;
+};
 
-  const [notes, setNotes] = useState({});
+const getProductImage = (product) => {
+  return (
+    product?.image ||
+    product?.primaryImage ||
+    product?.images?.[0] ||
+    ""
+  );
+};
 
-  const [isLoading, setIsLoading] = useState(true);
+const getManageExperienceUrl = (
+  experience,
+) => {
+  if (!experience?.manageToken) {
+    return "";
+  }
 
-  const [actionLoading, setActionLoading] = useState("");
+  return `/experience/manage/${encodeURIComponent(
+    experience.manageToken,
+  )}`;
+};
 
-  const [error, setError] = useState("");
+const getPublicExperienceUrl = (
+  experience,
+) => {
+  if (
+    !experience?.serialNumber ||
+    !experience?.slug
+  ) {
+    return "";
+  }
 
-  const [success, setSuccess] = useState("");
+  return `/experience/public/${encodeURIComponent(
+    experience.serialNumber,
+  )}/${encodeURIComponent(
+    experience.slug,
+  )}`;
+};
 
-  const [instancesLoading, setInstancesLoading] = useState(false);
+const InfoRow = ({
+  label,
+  value,
+}) => {
+  return (
+    <div className="border-b border-light-champagne/70 py-3 last:border-none">
+      <p className="text-[8px] font-semibold uppercase tracking-[0.16em] text-steel-gray">
+        {label}
+      </p>
 
-  const loadManufacturingOrder = async () => {
-    try {
-      setIsLoading(true);
-      setError("");
+      <p className="mt-1.5 break-words text-[11px] text-midnight-navy">
+        {value !== undefined &&
+        value !== null &&
+        value !== ""
+          ? value
+          : "N/A"}
+      </p>
+    </div>
+  );
+};
 
-      const response = await getManufacturingOrderById(id);
+const AdminManufacturingOrderDetailsPage =
+  () => {
+    const { id } = useParams();
 
-      console.log("MANUFACTURING ORDER RESPONSE:", response);
+    const [
+      manufacturingOrder,
+      setManufacturingOrder,
+    ] = useState(null);
 
-      const orderData =
-        response?.data?.data ||
-        response?.data?.manufacturingOrder ||
-        response?.data;
+    const [
+      smartUnits,
+      setSmartUnits,
+    ] = useState([]);
 
-      setManufacturingOrder(orderData || null);
-    } catch (err) {
-      console.error("Unable to load manufacturing order:", err);
+    const [
+      unitForms,
+      setUnitForms,
+    ] = useState({});
 
-      setError(
-        err?.response?.data?.message || "Unable to load manufacturing order",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const [
+      instancesByUnit,
+      setInstancesByUnit,
+    ] = useState({});
 
-  const loadSmartUnits = async () => {
-    try {
-      setInstancesLoading(true);
+    const [
+      loading,
+      setLoading,
+    ] = useState(true);
 
-      const response = await getSmartUnits();
+    const [
+      workingKey,
+      setWorkingKey,
+    ] = useState("");
 
-      console.log("SMART UNITS API RESPONSE:", response);
+    const [
+      error,
+      setError,
+    ] = useState("");
 
-      const units = extractArray(response, ["smartUnits", "units"]);
+    const syncForms = (order) => {
+      const next = {};
 
-      console.log("SMART UNITS ARRAY:", units);
+      for (
+        const unit of
+          order?.units || []
+      ) {
+        next[unit._id] = {
+          smartUnitId:
+            unit.smartUnit?._id ||
+            unit.smartUnit ||
+            "",
 
-      setSmartUnits(units);
+          smartUnitInstanceId:
+            unit
+              .smartUnitInstance
+              ?._id ||
+            unit.smartUnitInstance ||
+            "",
 
-      const allInstances = [];
+          assemblyCost:
+            unit.assemblyCost ??
+            0,
 
-      await Promise.all(
-        units.map(async (smartUnit) => {
-          const smartUnitId = getObjectId(smartUnit?._id);
+          packagingCost:
+            unit.packagingCost ??
+            0,
 
-          if (!smartUnitId) {
-            return;
-          }
+          packagingNotes:
+            unit.packagingNotes ||
+            "",
 
-          try {
-            const instanceResponse = await getSmartUnitInstances(smartUnitId);
+          productionNotes:
+            unit.notes || "",
+        };
+      }
 
-            console.log("SMART UNIT INSTANCES RESPONSE:", {
-              smartUnitId,
-              name: smartUnit?.name,
-              response: instanceResponse,
-            });
+      setUnitForms(next);
+    };
 
-            const instances = extractArray(instanceResponse, [
-              "instances",
-              "smartUnitInstances",
-            ]);
+    const loadOrder = async () => {
+      try {
+        setLoading(true);
 
-            console.log("SMART UNIT INSTANCES:", {
-              smartUnitId,
-              name: smartUnit?.name,
-              instances,
-            });
+        setError("");
 
-            instances.forEach((instance) => {
-              const instanceId = getObjectId(instance?._id);
+        const response =
+          await getManufacturingOrderById(
+            id,
+          );
 
-              if (!instanceId) {
-                return;
-              }
+        const data =
+          response?.data ??
+          response;
 
-              allInstances.push({
-                ...instance,
+        if (!data?._id) {
+          throw new Error(
+            "Manufacturing order was not found",
+          );
+        }
 
-                smartUnitId,
+        setManufacturingOrder(
+          data,
+        );
 
-                smartUnit,
+        syncForms(data);
+      } catch (error) {
+        console.error(
+          "LOAD MANUFACTURING ORDER ERROR:",
+          error,
+        );
 
-                technologyModel:
-                  instance?.technologyModel ||
-                  smartUnit?.technologyModel ||
-                  null,
-              });
-            });
-          } catch (err) {
-            console.error(
-              "Unable to load instances for Smart Unit:",
-              smartUnitId,
-              err,
-            );
-          }
+        setError(
+          error?.response?.data
+            ?.message ||
+            error?.message ||
+            "Unable to load manufacturing order",
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const loadSmartUnits =
+      async () => {
+        try {
+          const response =
+            await getSmartUnits();
+
+          const data =
+            response?.data
+              ?.smartUnits ||
+            response?.data?.data
+              ?.smartUnits ||
+            response?.smartUnits ||
+            response?.data ||
+            [];
+
+          setSmartUnits(
+            Array.isArray(data)
+              ? data
+              : [],
+          );
+        } catch (error) {
+          console.error(
+            "LOAD SMART UNITS ERROR:",
+            error,
+          );
+        }
+      };
+
+    useEffect(() => {
+      if (!id) return;
+
+      loadOrder();
+
+      loadSmartUnits();
+    }, [id]);
+
+    const updateUnitForm = (
+      unitId,
+      field,
+      value,
+    ) => {
+      setUnitForms(
+        (previous) => ({
+          ...previous,
+
+          [unitId]: {
+            ...previous[
+              unitId
+            ],
+
+            [field]:
+              value,
+          },
         }),
       );
+    };
 
-      console.log("ALL SMART UNIT INSTANCES:", allInstances);
-
-      const availableInstances = allInstances.filter(
-        (instance) => instance?.status === "available",
-      );
-
-      console.log("AVAILABLE SMART UNIT INSTANCES:", availableInstances);
-
-      setSmartUnitInstances(availableInstances);
-    } catch (err) {
-      console.error("Unable to load smart units:", err);
-
-      setSmartUnits([]);
-      setSmartUnitInstances([]);
-    } finally {
-      setInstancesLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!id) {
-      return;
-    }
-
-    loadManufacturingOrder();
-    loadSmartUnits();
-  }, [id]);
-
-  const refreshData = async () => {
-    await Promise.all([loadManufacturingOrder(), loadSmartUnits()]);
-  };
-
-  const handleStartManufacturing = async () => {
-    try {
-      setActionLoading("start-manufacturing");
-
-      setError("");
-      setSuccess("");
-
-      await startManufacturing(id);
-
-      setSuccess("Manufacturing started successfully.");
-
-      await refreshData();
-    } catch (err) {
-      console.error("Unable to start manufacturing:", err);
-
-      setError(err?.response?.data?.message || "Unable to start manufacturing");
-    } finally {
-      setActionLoading("");
-    }
-  };
-
-  const handleSmartUnitChange = (unitId, instanceId) => {
-    const selectedInstance = smartUnitInstances.find(
-      (instance) => getObjectId(instance?._id) === getObjectId(instanceId),
-    );
-
-    console.log("SELECTED INSTANCE:", selectedInstance);
-
-    if (!selectedInstance) {
-      setSelectedSmartUnits((previous) => ({
-        ...previous,
-
-        [unitId]: {
-          smartUnitId: "",
-          smartUnitInstanceId: "",
-        },
-      }));
-
-      return;
-    }
-
-    const smartUnitId = getObjectId(
-      selectedInstance?.smartUnitId || selectedInstance?.smartUnit?._id,
-    );
-
-    const smartUnitInstanceId = getObjectId(selectedInstance?._id);
-
-    console.log("SELECTED ASSIGN DATA:", {
-      unitId,
-      smartUnitId,
-      smartUnitInstanceId,
-    });
-
-    setSelectedSmartUnits((previous) => ({
-      ...previous,
-
-      [unitId]: {
-        smartUnitId,
-        smartUnitInstanceId,
-      },
-    }));
-
-    setError("");
-    setSuccess("");
-  };
-
-  const handleAssignSmartUnit = async (unitId) => {
-    const selection = selectedSmartUnits[unitId];
-
-    const smartUnitId = selection?.smartUnitId;
-
-    const smartUnitInstanceId = selection?.smartUnitInstanceId;
-
-    console.log("ASSIGN CLICK:", {
-      manufacturingOrderId: id,
-      unitId,
-      smartUnitId,
-      smartUnitInstanceId,
-    });
-
-    if (!smartUnitId) {
-      setError("Please select a Smart Unit Instance first.");
-      return;
-    }
-
-    if (!smartUnitInstanceId) {
-      setError("Selected Smart Unit Instance is invalid.");
-      return;
-    }
-
-    try {
-      setActionLoading("assign-" + unitId);
-
-      setError("");
-      setSuccess("");
-
-      console.log("SENDING ASSIGN REQUEST:", {
-        manufacturingOrderId: id,
+    const loadInstances =
+      async (
         unitId,
         smartUnitId,
-        smartUnitInstanceId,
-      });
+      ) => {
+        if (!smartUnitId) {
+          setInstancesByUnit(
+            (previous) => ({
+              ...previous,
 
-      const response = await assignSmartUnit(
-        id,
+              [unitId]:
+                [],
+            }),
+          );
+
+          return;
+        }
+
+        try {
+          const response =
+            await getSmartUnitInstances(
+              smartUnitId,
+            );
+
+          const data =
+            response?.data
+              ?.instances ||
+            response?.data
+              ?.smartUnitInstances ||
+            response?.data?.data
+              ?.instances ||
+            response?.instances ||
+            response?.data ||
+            [];
+
+          const instances =
+            Array.isArray(data)
+              ? data.filter(
+                  (
+                    instance,
+                  ) =>
+                    instance.status ===
+                    "available",
+                )
+              : [];
+
+          setInstancesByUnit(
+            (previous) => ({
+              ...previous,
+
+              [unitId]:
+                instances,
+            }),
+          );
+        } catch (error) {
+          console.error(
+            "LOAD SMART UNIT INSTANCES ERROR:",
+            error,
+          );
+
+          setInstancesByUnit(
+            (previous) => ({
+              ...previous,
+
+              [unitId]:
+                [],
+            }),
+          );
+        }
+      };
+
+    const handleSmartUnitChange =
+      async (
         unitId,
         smartUnitId,
-        smartUnitInstanceId,
-      );
+      ) => {
+        updateUnitForm(
+          unitId,
+          "smartUnitId",
+          smartUnitId,
+        );
 
-      console.log("ASSIGN SMART UNIT RESPONSE:", response);
+        updateUnitForm(
+          unitId,
+          "smartUnitInstanceId",
+          "",
+        );
 
-      setSuccess("Smart Unit Instance assigned successfully.");
+        await loadInstances(
+          unitId,
+          smartUnitId,
+        );
+      };
 
-      setSelectedSmartUnits((previous) => ({
-        ...previous,
+    const runAction = async (
+      key,
+      callback,
+    ) => {
+      try {
+        setWorkingKey(key);
 
-        [unitId]: {
-          smartUnitId: "",
-          smartUnitInstanceId: "",
-        },
-      }));
+        setError("");
 
-      await refreshData();
-    } catch (err) {
-      console.error("Unable to assign smart unit:", err);
+        const response =
+          await callback();
 
-      console.error("ASSIGN ERROR STATUS:", err?.response?.status);
+        const data =
+          response?.data ??
+          response;
 
-      console.error("ASSIGN ERROR DATA:", err?.response?.data);
+        if (data?._id) {
+          setManufacturingOrder(
+            data,
+          );
 
-      setError(
-        err?.response?.data?.message ||
-          err?.response?.data?.error ||
-          "Unable to assign smart unit",
-      );
-    } finally {
-      setActionLoading("");
-    }
-  };
+          syncForms(data);
+        } else {
+          await loadOrder();
+        }
+      } catch (error) {
+        console.error(
+          "MANUFACTURING ACTION ERROR:",
+          error,
+        );
 
-  const handleCreateExperience = async (unitId) => {
-    try {
-      setActionLoading("experience-" + unitId);
+        setError(
+          error?.response
+            ?.data?.message ||
+            error?.message ||
+            "Operation failed",
+        );
+      } finally {
+        setWorkingKey("");
+      }
+    };
 
-      setError("");
-      setSuccess("");
+    const handleAssignSmartUnit =
+      async (unit) => {
+        const form =
+          unitForms[
+            unit._id
+          ] || {};
 
-      console.log("CREATE EXPERIENCE:", {
-        manufacturingOrderId: id,
-        productionUnitId: unitId,
-      });
+        if (
+          !form.smartUnitId
+        ) {
+          setError(
+            "Please select a Smart Unit.",
+          );
 
-      const response = await createExperienceForUnit(id, unitId, {
-        type: "personal",
-      });
+          return;
+        }
 
-      console.log("CREATE EXPERIENCE RESPONSE:", response);
+        if (
+          !form.smartUnitInstanceId
+        ) {
+          setError(
+            "Please select a physical Smart Unit instance.",
+          );
 
-      setSuccess("Experience created successfully.");
+          return;
+        }
 
-      await refreshData();
-    } catch (err) {
-      console.error("Unable to create experience:", err);
+        await runAction(
+          `assign-${unit._id}`,
+          () =>
+            assignSmartUnit(
+              id,
+              unit._id,
+              form.smartUnitId,
+              form.smartUnitInstanceId,
+              Number(
+                form.assemblyCost ||
+                  0,
+              ),
+            ),
+        );
+      };
 
-      setError(
-        err?.response?.data?.message ||
-          err?.response?.data?.error ||
-          "Unable to create experience",
-      );
-    } finally {
-      setActionLoading("");
-    }
-  };
+    const handleSaveAssemblyCost =
+      async (unit) => {
+        const form =
+          unitForms[
+            unit._id
+          ] || {};
 
-  const handleStartProduction = async (unitId) => {
-    try {
-      setActionLoading("start-" + unitId);
+        await runAction(
+          `assembly-${unit._id}`,
+          () =>
+            updateAssemblyCost(
+              id,
+              unit._id,
+              Number(
+                form.assemblyCost ||
+                  0,
+              ),
+            ),
+        );
+      };
 
-      setError("");
-      setSuccess("");
+    const handleCreateExperience =
+      async (unit) => {
+        await runAction(
+          `experience-${unit._id}`,
+          () =>
+            createExperienceForUnit(
+              id,
+              unit._id,
+              {
+                type:
+                  "personal",
+              },
+            ),
+        );
+      };
 
-      await startProductionUnit(id, unitId);
+    const handleStartProduction =
+      async (unit) => {
+        await runAction(
+          `start-${unit._id}`,
+          () =>
+            startProductionUnit(
+              id,
+              unit._id,
+            ),
+        );
+      };
 
-      setSuccess("Production started successfully.");
+    const handleCompleteProduction =
+      async (unit) => {
+        const form =
+          unitForms[
+            unit._id
+          ] || {};
 
-      await refreshData();
-    } catch (err) {
-      console.error("Unable to start production:", err);
+        await runAction(
+          `production-complete-${unit._id}`,
+          () =>
+            completeProductionUnit(
+              id,
+              unit._id,
+              form.productionNotes ||
+                "",
+            ),
+        );
+      };
 
-      setError(err?.response?.data?.message || "Unable to start production");
-    } finally {
-      setActionLoading("");
-    }
-  };
+    const handleStartPackaging =
+      async (unit) => {
+        await runAction(
+          `packaging-start-${unit._id}`,
+          () =>
+            startPackaging(
+              id,
+              unit._id,
+            ),
+        );
+      };
 
-  const handleCompleteProduction = async (unitId) => {
-    try {
-      setActionLoading("complete-" + unitId);
+    const handleCompletePackaging =
+      async (unit) => {
+        const form =
+          unitForms[
+            unit._id
+          ] || {};
 
-      setError("");
-      setSuccess("");
+        await runAction(
+          `packaging-complete-${unit._id}`,
+          () =>
+            completePackaging(
+              id,
+              unit._id,
+              Number(
+                form.packagingCost ||
+                  0,
+              ),
+              form.packagingNotes ||
+                "",
+            ),
+        );
+      };
 
-      await completeProductionUnit(id, unitId, notes[unitId] || "");
+    const handleCancelOrder =
+      async () => {
+        const confirmed =
+          window.confirm(
+            "Are you sure you want to cancel this manufacturing order?",
+          );
 
-      setSuccess("Production unit completed successfully.");
+        if (!confirmed) {
+          return;
+        }
 
-      await refreshData();
-    } catch (err) {
-      console.error("Unable to complete production:", err);
+        await runAction(
+          "cancel-order",
+          () =>
+            cancelManufacturingOrder(
+              id,
+            ),
+        );
+      };
 
-      setError(err?.response?.data?.message || "Unable to complete production");
-    } finally {
-      setActionLoading("");
-    }
-  };
+    if (loading) {
+      return (
+        <div className="flex min-h-[500px] items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-light-champagne border-t-classic-gold" />
 
-  const handleCancelManufacturing = async () => {
-    const confirmed = window.confirm(
-      "Are you sure you want to cancel this manufacturing order?",
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      setActionLoading("cancel-manufacturing");
-
-      setError("");
-      setSuccess("");
-
-      await cancelManufacturingOrder(id);
-
-      setSuccess("Manufacturing order cancelled successfully.");
-
-      await refreshData();
-    } catch (err) {
-      console.error("Unable to cancel manufacturing order:", err);
-
-      setError(
-        err?.response?.data?.message || "Unable to cancel manufacturing order",
-      );
-    } finally {
-      setActionLoading("");
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="relative flex min-h-[440px] items-center justify-center overflow-hidden p-8">
-        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[360px] w-[360px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-soft-cream blur-[100px]" />
-
-        <div className="relative text-center">
-          <div className="relative mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-champagne-gold/25 bg-midnight-navy shadow-[0_12px_30px_rgba(18,38,58,0.15)]">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-champagne-gold/20 border-t-champagne-gold" />
+            <p className="mt-5 text-[9px] font-semibold uppercase tracking-[0.25em] text-steel-gray">
+              Loading
+              Manufacturing
+            </p>
           </div>
-
-          <p className="text-[9px] font-semibold uppercase tracking-[0.24em] text-slate-gray">
-            Loading manufacturing order...
-          </p>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  if (!manufacturingOrder) {
-    return (
-      <div className="relative overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85 p-10 text-center shadow-[0_14px_40px_rgba(7,19,31,0.045)]">
-        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[260px] w-[360px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-soft-cream blur-[80px]" />
-
-        <div className="relative">
-          <p className="text-[11px] text-antique-gold">
-            {error || "Manufacturing order not found"}
+    if (
+      !manufacturingOrder
+    ) {
+      return (
+        <div className="rounded-[24px] border border-light-champagne bg-soft-white p-10 text-center">
+          <p className="text-antique-gold">
+            {error ||
+              "Manufacturing order not found"}
           </p>
 
           <Link
             to="/admin/manufacturing"
-            className="mt-5 inline-flex min-h-[42px] items-center justify-center rounded-[12px] bg-midnight-navy px-5 text-[8px] font-semibold uppercase tracking-[0.12em] text-soft-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-rich-navy"
+            className="mt-5 inline-flex rounded-full bg-midnight-navy px-5 py-3 text-[9px] font-semibold uppercase text-soft-white"
           >
-            Back to Manufacturing
+            Back
           </Link>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  const units = Array.isArray(manufacturingOrder.units)
-    ? manufacturingOrder.units
-    : [];
-
-  const totalUnits = units.length;
-
-  const completedUnits = units.filter(
-    (unit) => unit.status === "completed",
-  ).length;
-
-  const progress =
-    totalUnits > 0 ? Math.round((completedUnits / totalUnits) * 100) : 0;
-
-  const getOrderItemForUnit = (unit) => {
     return (
-      manufacturingOrder.order?.items?.find(
-        (item) => getObjectId(item?._id) === getObjectId(unit?.orderItemId),
-      ) || null
-    );
-  };
+      <div className="space-y-8">
+        <div>
+          <Link
+            to="/admin/manufacturing"
+            className="text-[9px] font-semibold uppercase tracking-[0.13em] text-steel-gray transition hover:text-midnight-navy"
+          >
+            ← Manufacturing
+            Orders
+          </Link>
+        </div>
 
-  return (
-    <div className="relative space-y-8 pb-10">
-      <Link
-        to="/admin/manufacturing"
-        className="group inline-flex items-center gap-2.5 text-[8px] font-semibold uppercase tracking-[0.15em] text-slate-gray transition-colors duration-300 hover:text-antique-gold"
-      >
-        <span className="transition-transform duration-300 group-hover:-translate-x-1">
-          ←
-        </span>
-        Back to Manufacturing
-      </Link>
+        <div className="relative overflow-hidden rounded-[28px] bg-midnight-navy px-7 py-8 text-soft-white shadow-[0_24px_65px_rgba(7,19,31,0.16)] sm:px-9">
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-rich-navy via-midnight-navy to-luxury-black" />
 
-      <div className="relative overflow-hidden rounded-[28px] border border-champagne-gold/15 bg-midnight-navy px-6 py-7 shadow-[0_24px_65px_rgba(7,19,31,0.16)] sm:px-8 sm:py-8">
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-rich-navy via-midnight-navy to-luxury-black" />
-
-        <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full border border-champagne-gold/10" />
-
-        <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full border border-champagne-gold/[0.08]" />
-
-        <div className="pointer-events-none absolute -bottom-24 -left-20 h-52 w-52 rounded-full bg-champagne-gold/[0.06] blur-[70px]" />
-
-        <div className="relative flex flex-col justify-between gap-7 md:flex-row md:items-start">
-          <div>
+          <div className="relative">
             <div className="mb-3 flex items-center gap-3">
-              <span className="h-px w-8 bg-classic-gold/65" />
+              <span className="h-px w-8 bg-classic-gold" />
 
-              <span className="text-[8px] font-semibold uppercase tracking-[0.28em] text-champagne-gold">
-                Manufacturing Order
+              <span className="text-[8px] font-semibold uppercase tracking-[0.3em] text-champagne-gold">
+                Manufacturing
               </span>
             </div>
 
-            <h1 className="font-serif text-[2.4rem] font-normal leading-none tracking-[-0.035em] text-soft-white sm:text-[3rem]">
-              Manufacturing Order
-            </h1>
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <h1 className="font-serif text-[2.6rem] tracking-[-0.04em]">
+                  #
+                  {
+                    manufacturingOrder.orderNumber
+                  }
+                </h1>
 
-            <p className="mt-3 font-serif text-[1.25rem] italic text-champagne-gold">
-              {manufacturingOrder.orderNumber}
-            </p>
+                <p className="mt-3 text-[11px] text-premium-silver/70">
+                  Smart unit,
+                  experience,
+                  production and
+                  packaging
+                </p>
+              </div>
 
-            <p className="mt-3 text-[9px] leading-5 text-premium-silver/55">
-              Created:{" "}
-              {manufacturingOrder.createdAt
-                ? new Date(manufacturingOrder.createdAt).toLocaleString()
-                : "N/A"}
-            </p>
-          </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="rounded-full border border-champagne-gold/20 bg-white/5 px-4 py-2 text-[8px] font-semibold uppercase tracking-[0.12em] text-champagne-gold">
+                  {manufacturingOrder.status?.replaceAll(
+                    "_",
+                    " ",
+                  )}
+                </span>
 
-          <div className="flex flex-wrap gap-3">
-            <span
-              className={
-                "inline-flex min-h-[40px] items-center rounded-full border px-4 text-[8px] font-semibold uppercase tracking-[0.1em] " +
-                getManufacturingStatusClasses(manufacturingOrder.status)
-              }
-            >
-              {manufacturingStatusLabels[manufacturingOrder.status] ||
-                manufacturingOrder.status}
-            </span>
-
-            {manufacturingOrder.status !== "completed" &&
-              manufacturingOrder.status !== "cancelled" && (
-                <>
-                  {manufacturingOrder.status === "pending" && (
+                {manufacturingOrder.status !==
+                  "completed" &&
+                  manufacturingOrder.status !==
+                    "cancelled" && (
                     <button
-                      onClick={handleStartManufacturing}
-                      disabled={actionLoading === "start-manufacturing"}
-                      className="inline-flex min-h-[42px] items-center justify-center rounded-[12px] bg-soft-white px-5 text-[8px] font-semibold uppercase tracking-[0.1em] text-midnight-navy shadow-[0_8px_20px_rgba(0,0,0,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-warm-ivory disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+                      type="button"
+                      onClick={
+                        handleCancelOrder
+                      }
+                      disabled={
+                        workingKey ===
+                        "cancel-order"
+                      }
+                      className="rounded-full border border-white/15 px-4 py-2 text-[8px] font-semibold uppercase tracking-[0.1em] text-soft-white transition hover:border-champagne-gold/50 disabled:opacity-50"
                     >
-                      {actionLoading === "start-manufacturing"
-                        ? "Starting..."
-                        : "Start Manufacturing"}
+                      {workingKey ===
+                      "cancel-order"
+                        ? "Cancelling..."
+                        : "Cancel"}
                     </button>
                   )}
-
-                  <button
-                    onClick={handleCancelManufacturing}
-                    disabled={actionLoading === "cancel-manufacturing"}
-                    className="inline-flex min-h-[42px] items-center justify-center rounded-[12px] border border-champagne-gold/25 bg-soft-white/[0.04] px-5 text-[8px] font-semibold uppercase tracking-[0.1em] text-champagne-gold transition-all duration-300 hover:-translate-y-0.5 hover:bg-soft-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
-                  >
-                    {actionLoading === "cancel-manufacturing"
-                      ? "Cancelling..."
-                      : "Cancel"}
-                  </button>
-                </>
-              )}
-          </div>
-        </div>
-      </div>
-
-      {error && (
-        <div className="rounded-[16px] border border-antique-gold/25 bg-soft-cream/80 p-4 text-[10px] leading-5 text-antique-gold shadow-[0_7px_20px_rgba(7,19,31,0.03)]">
-          {error}
-        </div>
-      )}
-
-      {success && (
-        <div className="rounded-[16px] border border-classic-gold/30 bg-soft-cream/80 p-4 text-[10px] leading-5 text-antique-gold shadow-[0_7px_20px_rgba(7,19,31,0.03)]">
-          {success}
-        </div>
-      )}
-
-      <div className="relative overflow-hidden rounded-[24px] border border-light-champagne/90 bg-soft-white/85 p-6 shadow-[0_10px_32px_rgba(7,19,31,0.04)] backdrop-blur-sm">
-        <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-soft-cream blur-[55px]" />
-
-        <div className="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-          <div>
-            <p className="text-[7px] font-semibold uppercase tracking-[0.22em] text-steel-gray">
-              Production Progress
-            </p>
-
-            <h2 className="mt-1.5 font-serif text-[1.4rem] font-normal text-midnight-navy">
-              Production Progress
-            </h2>
-
-            <p className="mt-2 text-[10px] text-slate-gray">
-              {completedUnits} of {totalUnits} units completed
-            </p>
-          </div>
-
-          <p className="font-serif text-[2.2rem] font-normal leading-none text-midnight-navy">
-            {progress}%
-          </p>
-        </div>
-
-        <div className="relative mt-6 h-2.5 overflow-hidden rounded-full bg-light-champagne/70">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-classic-gold to-champagne-gold transition-all duration-500"
-            style={{
-              width: progress + "%",
-            }}
-          />
-        </div>
-      </div>
-
-      <div className="grid gap-5 lg:grid-cols-3">
-        <div className="relative overflow-hidden rounded-[22px] border border-light-champagne/90 bg-soft-white/85 p-6 shadow-[0_9px_28px_rgba(7,19,31,0.04)]">
-          <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-soft-cream blur-[45px]" />
-
-          <h2 className="relative font-serif text-[1.25rem] font-normal text-midnight-navy">
-            Customer
-          </h2>
-
-          <div className="relative mt-5 space-y-3 text-[10px] leading-5 text-slate-gray">
-            <p>
-              <span className="font-semibold text-midnight-navy">Email:</span>{" "}
-              {manufacturingOrder.customer?.email || "Unknown"}
-            </p>
-
-            {manufacturingOrder.customer?.firstName && (
-              <p>
-                <span className="font-semibold text-midnight-navy">Name:</span>{" "}
-                {manufacturingOrder.customer.firstName}{" "}
-                {manufacturingOrder.customer.lastName || ""}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="relative overflow-hidden rounded-[22px] border border-light-champagne/90 bg-soft-white/85 p-6 shadow-[0_9px_28px_rgba(7,19,31,0.04)]">
-          <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-soft-cream blur-[45px]" />
-
-          <h2 className="relative font-serif text-[1.25rem] font-normal text-midnight-navy">
-            Original Order
-          </h2>
-
-          <div className="relative mt-5 space-y-3 text-[10px] leading-5 text-slate-gray">
-            <p>
-              <span className="font-semibold text-midnight-navy">Order:</span>{" "}
-              {manufacturingOrder.order?.orderNumber}
-            </p>
-
-            <p>
-              <span className="font-semibold text-midnight-navy">Status:</span>{" "}
-              {manufacturingOrder.order?.orderStatus}
-            </p>
-
-            <p>
-              <span className="font-semibold text-midnight-navy">Payment:</span>{" "}
-              {manufacturingOrder.order?.paymentStatus}
-            </p>
-          </div>
-        </div>
-
-        <div className="relative overflow-hidden rounded-[22px] border border-champagne-gold/15 bg-midnight-navy p-6 text-soft-white shadow-[0_14px_35px_rgba(18,38,58,0.13)]">
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-rich-navy to-midnight-navy" />
-
-          <div className="pointer-events-none absolute -right-14 -top-14 h-32 w-32 rounded-full bg-champagne-gold/10 blur-[45px]" />
-
-          <h2 className="relative font-serif text-[1.25rem] font-normal text-soft-white">
-            Order Total
-          </h2>
-
-          <p className="relative mt-5 font-serif text-[2rem] font-normal text-champagne-gold">
-            {manufacturingOrder.order?.total || 0}{" "}
-            <span className="font-sans text-[8px] font-semibold uppercase tracking-[0.08em] text-premium-silver/55">
-              EGP
-            </span>
-          </p>
-        </div>
-      </div>
-
-      <div>
-        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-          <div>
-            <div className="mb-2 flex items-center gap-3">
-              <span className="h-px w-7 bg-classic-gold/60" />
-
-              <span className="text-[7px] font-semibold uppercase tracking-[0.22em] text-antique-gold">
-                Production Units
-              </span>
+              </div>
             </div>
+          </div>
+        </div>
 
-            <h2 className="font-serif text-[1.7rem] font-normal tracking-[-0.025em] text-midnight-navy">
+        {error && (
+          <div className="rounded-[18px] border border-antique-gold/25 bg-soft-cream px-5 py-4 text-[11px] text-antique-gold">
+            {error}
+          </div>
+        )}
+
+        <div className="grid gap-5 sm:grid-cols-3">
+          <div className="rounded-[22px] border border-light-champagne bg-soft-white p-5">
+            <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
               Production Units
-            </h2>
+            </p>
 
-            <p className="mt-2 text-[10px] leading-5 text-slate-gray">
-              Every physical product has its own Smart Unit and Experience.
+            <p className="mt-3 font-serif text-[2rem] text-midnight-navy">
+              {manufacturingOrder
+                .units?.length ||
+                0}
+            </p>
+          </div>
+
+          <div className="rounded-[22px] border border-light-champagne bg-soft-white p-5">
+            <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
+              Started
+            </p>
+
+            <p className="mt-3 text-[11px] text-midnight-navy">
+              {formatDate(
+                manufacturingOrder.startedAt,
+              )}
+            </p>
+          </div>
+
+          <div className="rounded-[22px] border border-light-champagne bg-soft-white p-5">
+            <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
+              Completed
+            </p>
+
+            <p className="mt-3 text-[11px] text-midnight-navy">
+              {formatDate(
+                manufacturingOrder.completedAt,
+              )}
             </p>
           </div>
         </div>
 
-        <div className="mt-6 space-y-6">
-          {units.map((unit) => {
-            const orderItem = getOrderItemForUnit(unit);
+        <div className="space-y-7">
+          {manufacturingOrder.units?.map(
+            (
+              unit,
+              index,
+            ) => {
+              const form =
+                unitForms[
+                  unit._id
+                ] || {};
 
-            const product = unit?.product || orderItem?.product || null;
+              const orderItem =
+                manufacturingOrder.order?.items?.find(
+                  (
+                    item,
+                  ) =>
+                    item._id?.toString() ===
+                    unit.orderItemId?.toString(),
+                ) || null;
 
-            const selectedSmartUnit = unit?.smartUnit || null;
+              const product =
+                unit.product ||
+                orderItem?.product ||
+                null;
 
-            const technologyModel =
-              selectedSmartUnit?.technologyModel ||
-              product?.technologyModel ||
-              orderItem?.technologyModel ||
-              null;
+              const productImage =
+                getProductImage(
+                  product,
+                );
 
-            const experience = unit?.experience || null;
+              const experience =
+                unit.experience ||
+                null;
 
-            const isAssigned = Boolean(selectedSmartUnit);
+              const manageExperienceUrl =
+                getManageExperienceUrl(
+                  experience,
+                );
 
-            const hasExperience = Boolean(experience);
+              const publicExperienceUrl =
+                getPublicExperienceUrl(
+                  experience,
+                );
 
-            const isCompleted = unit?.status === "completed";
+              const selectedInstances =
+                instancesByUnit[
+                  unit._id
+                ] || [];
 
-            const availableInstances = smartUnitInstances;
+              const status =
+                unit.status ||
+                "pending";
 
-            const selectedInstanceId =
-              selectedSmartUnits[unit?._id]?.smartUnitInstanceId || "";
-
-            return (
-              <div
-                key={unit._id}
-                className="relative overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85 shadow-[0_14px_42px_rgba(7,19,31,0.045)] backdrop-blur-sm"
-              >
-                <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-soft-cream blur-[75px]" />
-
-                <div className="relative border-b border-light-champagne/80 bg-warm-ivory/60 p-6">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h3 className="font-serif text-[1.35rem] font-normal text-midnight-navy">
-                      {product?.name || orderItem?.name || "Product"}
-
-                      {" — Unit #"}
-                      {unit.unitNumber}
-                    </h3>
-
-                    <span
-                      className={
-                        "inline-flex rounded-full border px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.08em] " +
-                        getUnitStatusClasses(unit.status)
-                      }
-                    >
-                      {unitStatusLabels[unit.status] || unit.status}
-                    </span>
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-[9px] text-slate-gray">
-                    <span>
-                      Product:{" "}
-                      <strong className="font-semibold text-midnight-navy">
-                        {product?.name || orderItem?.name || "Unknown"}
-                      </strong>
-                    </span>
-
-                    <span>
-                      Unit:{" "}
-                      <strong className="font-semibold text-midnight-navy">
-                        {unit.unitNumber}
-                      </strong>
-                    </span>
-
-                    <span>
-                      Serial:{" "}
-                      <strong className="font-semibold text-midnight-navy">
-                        {unit.serialNumber ||
-                          selectedSmartUnit?.serialNumber ||
-                          "Not assigned"}
-                      </strong>
-                    </span>
-                  </div>
-                </div>
-
-                <div className="relative grid gap-4 p-6 md:grid-cols-3">
-                  <div className="rounded-[18px] border border-light-champagne/85 bg-soft-white p-5 shadow-[0_6px_20px_rgba(7,19,31,0.025)]">
-                    <h4 className="font-serif text-[1.1rem] font-normal text-midnight-navy">
-                      Product
-                    </h4>
-
-                    <div className="mt-4">
-                      {product?.image ||
-                      product?.primaryImage ||
-                      product?.images?.[0] ? (
-                        <img
-                          src={
-                            product?.image ||
-                            product?.primaryImage ||
-                            product?.images?.[0]
-                          }
-                          alt={product?.name || orderItem?.name || "Product"}
-                          className="h-36 w-full rounded-[15px] border border-light-champagne/70 bg-soft-cream object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-36 items-center justify-center rounded-[15px] border border-light-champagne/70 bg-soft-cream text-[9px] text-steel-gray">
-                          No image
-                        </div>
-                      )}
-
-                      <h5 className="mt-4 text-[12px] font-semibold text-midnight-navy">
-                        {product?.name || orderItem?.name || "Unknown Product"}
-                      </h5>
-
-                      <p className="mt-1.5 text-[9px] text-slate-gray">
-                        Quantity in order: {orderItem?.quantity || 1}
+              return (
+                <section
+                  key={
+                    unit._id
+                  }
+                  className="overflow-hidden rounded-[28px] border border-light-champagne bg-soft-white shadow-[0_14px_40px_rgba(7,19,31,0.045)]"
+                >
+                  <div className="flex flex-col gap-5 border-b border-light-champagne bg-warm-ivory/50 px-6 py-6 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-[8px] font-semibold uppercase tracking-[0.24em] text-antique-gold">
+                        Production Unit{" "}
+                        {index +
+                          1}
                       </p>
 
-                      {orderItem?.variant?.name && (
-                        <p className="mt-1 text-[9px] text-slate-gray">
-                          Variant: {orderItem.variant.name}
-                        </p>
-                      )}
-
-                      {technologyModel && (
-                        <div className="mt-4 rounded-[14px] border border-champagne-gold/20 bg-soft-cream p-4">
-                          <p className="text-[7px] font-semibold uppercase tracking-[0.16em] text-antique-gold">
-                            Technology
-                          </p>
-
-                          <p className="mt-1.5 text-[11px] font-semibold text-midnight-navy">
-                            {technologyModel.modelName ||
-                              technologyModel.name ||
-                              "Unknown"}
-                          </p>
-
-                          {technologyModel.modelCode && (
-                            <p className="mt-1 text-[8px] text-slate-gray">
-                              Code: {technologyModel.modelCode}
-                            </p>
-                          )}
-
-                          {technologyModel.manufacturer && (
-                            <p className="mt-1 text-[8px] text-slate-gray">
-                              Manufacturer: {technologyModel.manufacturer}
-                            </p>
-                          )}
-                        </div>
-                      )}
+                      <h2 className="mt-2 font-serif text-[1.55rem] text-midnight-navy">
+                        {product?.name ||
+                          "Product"}
+                      </h2>
                     </div>
+
+                    <span
+                      className={`inline-flex w-fit rounded-full border px-4 py-2 text-[8px] font-semibold uppercase tracking-[0.08em] ${
+                        statusClasses[
+                          status
+                        ] ||
+                        statusClasses.pending
+                      }`}
+                    >
+                      {statusLabels[
+                        status
+                      ] ||
+                        status}
+                    </span>
                   </div>
 
-                  <div className="rounded-[18px] border border-light-champagne/85 bg-warm-ivory/65 p-5">
-                    <h4 className="font-serif text-[1.1rem] font-normal text-midnight-navy">
-                      Smart Unit
-                    </h4>
-
-                    {selectedSmartUnit ? (
-                      <div className="mt-4 space-y-3 text-[9px] leading-5 text-slate-gray">
-                        <div className="rounded-[14px] border border-champagne-gold/20 bg-soft-cream p-4">
-                          <p className="text-[7px] font-semibold uppercase tracking-[0.16em] text-antique-gold">
-                            Assigned To
-                          </p>
-
-                          <p className="mt-1.5 font-serif text-[1.2rem] font-normal text-midnight-navy">
-                            {product?.name || orderItem?.name || "Product"}
-                          </p>
-
-                          <p className="mt-1 text-[8px] text-slate-gray">
-                            Production Unit #{unit.unitNumber}
-                          </p>
-                        </div>
-
-                        <p>
-                          <span className="font-semibold text-midnight-navy">
-                            Name:
-                          </span>{" "}
-                          {selectedSmartUnit.name || "N/A"}
-                        </p>
-
-                        <p>
-                          <span className="font-semibold text-midnight-navy">
-                            Serial:
-                          </span>{" "}
-                          {selectedSmartUnit.serialNumber || "N/A"}
-                        </p>
-
-                        <p>
-                          <span className="font-semibold text-midnight-navy">
-                            Status:
-                          </span>{" "}
-                          {selectedSmartUnit.status || "N/A"}
-                        </p>
-
-                        {selectedSmartUnit.manufacturer && (
-                          <p>
-                            <span className="font-semibold text-midnight-navy">
-                              Manufacturer:
-                            </span>{" "}
-                            {selectedSmartUnit.manufacturer}
-                          </p>
-                        )}
-
-                        {selectedSmartUnit.technologyModel && (
-                          <div className="rounded-[14px] border border-light-champagne bg-soft-white p-4">
-                            <p className="text-[7px] font-semibold uppercase tracking-[0.16em] text-antique-gold">
-                              Technology
-                            </p>
-
-                            <p className="mt-1.5 text-[11px] font-semibold text-midnight-navy">
-                              {selectedSmartUnit.technologyModel.modelName ||
-                                selectedSmartUnit.technologyModel.name ||
-                                "Unknown"}
-                            </p>
-
-                            {selectedSmartUnit.technologyModel.modelCode && (
-                              <p className="mt-1 text-[8px] text-slate-gray">
-                                Code:{" "}
-                                {selectedSmartUnit.technologyModel.modelCode}
-                              </p>
+                  <div className="grid gap-8 p-6 lg:grid-cols-[310px_minmax(0,1fr)]">
+                    <div className="space-y-5">
+                      <div className="overflow-hidden rounded-[22px] border border-light-champagne bg-warm-ivory">
+                        {productImage ? (
+                          <img
+                            src={getImageUrl(
+                              productImage,
                             )}
+                            alt={
+                              product?.name ||
+                              "Product"
+                            }
+                            className="aspect-square w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex aspect-square items-center justify-center text-2xl text-classic-gold">
+                            ✦
                           </div>
                         )}
-
-                        <div className="rounded-[12px] border border-classic-gold/20 bg-soft-cream p-3 text-[8px] text-antique-gold">
-                          ✓ Smart Unit is linked to this physical product.
-                        </div>
                       </div>
-                    ) : (
-                      <div className="mt-4">
-                        <p className="text-[9px] leading-5 text-steel-gray">
-                          No Smart Unit assigned to this product yet.
+
+                      <div className="rounded-[20px] border border-light-champagne bg-warm-ivory/55 p-5">
+                        <p className="mb-3 text-[8px] font-semibold uppercase tracking-[0.2em] text-antique-gold">
+                          Product
+                          Information
                         </p>
 
-                        {!isCompleted &&
-                          manufacturingOrder.status !== "cancelled" && (
-                            <div className="mt-4">
-                              {instancesLoading ? (
-                                <div className="rounded-[14px] border border-light-champagne bg-soft-white p-4 text-center text-[9px] text-slate-gray">
-                                  Loading Smart Unit Instances...
-                                </div>
-                              ) : (
-                                <>
-                                  <select
-                                    value={selectedInstanceId}
-                                    onChange={(event) =>
-                                      handleSmartUnitChange(
-                                        unit._id,
-                                        event.target.value,
-                                      )
-                                    }
-                                    className="h-[48px] w-full rounded-[12px] border border-light-champagne bg-soft-white px-4 text-[9px] text-midnight-navy outline-none transition-all duration-300 hover:border-champagne-gold/60 focus:border-classic-gold focus:shadow-[0_0_0_4px_rgba(201,162,77,0.08)]"
-                                  >
-                                    <option value="">
-                                      Select Available Smart Unit Instance
-                                    </option>
-
-                                    {availableInstances.length === 0 ? (
-                                      <option disabled value="">
-                                        No available Smart Unit Instances
-                                      </option>
-                                    ) : (
-                                      availableInstances.map((instance) => (
-                                        <option
-                                          key={instance._id}
-                                          value={instance._id}
-                                        >
-                                          {instance?.smartUnit?.name ||
-                                            "Unnamed Smart Unit"}
-
-                                          {" — Instance: "}
-
-                                          {instance?.serialNumber ||
-                                            instance?.instanceNumber ||
-                                            instance?._id}
-                                        </option>
-                                      ))
-                                    )}
-                                  </select>
-
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      handleAssignSmartUnit(unit._id)
-                                    }
-                                    disabled={
-                                      !selectedInstanceId ||
-                                      instancesLoading ||
-                                      actionLoading === "assign-" + unit._id
-                                    }
-                                    className="mt-3 min-h-[46px] w-full rounded-[12px] bg-midnight-navy px-4 text-[8px] font-semibold uppercase tracking-[0.1em] text-soft-white shadow-[0_8px_20px_rgba(18,38,58,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-rich-navy disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
-                                  >
-                                    {actionLoading === "assign-" + unit._id
-                                      ? "Assigning..."
-                                      : "Assign Smart Unit"}
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          )}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="rounded-[18px] border border-light-champagne/85 bg-warm-ivory/65 p-5">
-                    <h4 className="font-serif text-[1.1rem] font-normal text-midnight-navy">
-                      Experience
-                    </h4>
-
-                    {experience ? (
-                      <div className="mt-4 space-y-3 text-[9px] leading-5 text-slate-gray">
-                        <div className="rounded-[14px] border border-champagne-gold/20 bg-soft-cream p-4">
-                          <p className="text-[7px] font-semibold uppercase tracking-[0.16em] text-antique-gold">
-                            Belongs To
-                          </p>
-
-                          <p className="mt-1.5 text-[11px] font-semibold text-midnight-navy">
-                            {product?.name || orderItem?.name || "Product"}
-                          </p>
-                        </div>
-
-                        <p>
-                          <span className="font-semibold text-midnight-navy">
-                            Serial:
-                          </span>{" "}
-                          {experience.serialNumber || "N/A"}
-                        </p>
-
-                        <p>
-                          <span className="font-semibold text-midnight-navy">
-                            Status:
-                          </span>{" "}
-                          {experience.status || "N/A"}
-                        </p>
-
-                        {experience.slug && (
-                          <p>
-                            <span className="font-semibold text-midnight-navy">
-                              Slug:
-                            </span>{" "}
-                            {experience.slug}
-                          </p>
-                        )}
-
-                        {experience.manageToken && (
-                          <div className="mt-4 rounded-[14px] border border-light-champagne bg-soft-white p-4">
-                            <p className="text-[7px] font-semibold uppercase tracking-[0.16em] text-antique-gold">
-                              Owner Management
-                            </p>
-
-                            <a
-                              href={
-                                "/experience/manage/" + experience.manageToken
-                              }
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="mt-3 flex min-h-[44px] w-full items-center justify-center rounded-[11px] bg-midnight-navy px-4 text-center text-[8px] font-semibold uppercase tracking-[0.1em] text-soft-white transition-all duration-300 hover:bg-rich-navy"
-                            >
-                              Open Manage Page
-                            </a>
-
-                            <p className="mt-3 break-all text-[8px] text-steel-gray">
-                              /manage/
-                              {experience.manageToken}
-                            </p>
-                          </div>
-                        )}
-
-                        <div className="rounded-[12px] border border-classic-gold/20 bg-soft-cream p-3 text-[8px] text-antique-gold">
-                          ✓ Experience belongs to this product unit.
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="mt-4">
-                        <p className="text-[9px] leading-5 text-steel-gray">
-                          No Experience created.
-                        </p>
-
-                        {isAssigned &&
-                          !hasExperience &&
-                          !isCompleted &&
-                          manufacturingOrder.status !== "cancelled" && (
-                            <button
-                              type="button"
-                              onClick={() => handleCreateExperience(unit._id)}
-                              disabled={
-                                actionLoading === "experience-" + unit._id
-                              }
-                              className="mt-4 min-h-[46px] w-full rounded-[12px] bg-midnight-navy px-4 text-[8px] font-semibold uppercase tracking-[0.1em] text-soft-white shadow-[0_8px_20px_rgba(18,38,58,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-rich-navy disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
-                            >
-                              {actionLoading === "experience-" + unit._id
-                                ? "Creating..."
-                                : "Create Experience"}
-                            </button>
-                          )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="relative border-t border-light-champagne/80 p-6">
-                  <h4 className="font-serif text-[1.1rem] font-normal text-midnight-navy">
-                    Production Actions
-                  </h4>
-
-                  <div className="mt-4">
-                    {unit.status === "experience_created" &&
-                      manufacturingOrder.status !== "cancelled" && (
-                        <button
-                          type="button"
-                          onClick={() => handleStartProduction(unit._id)}
-                          disabled={actionLoading === "start-" + unit._id}
-                          className="min-h-[48px] w-full rounded-[12px] bg-midnight-navy px-5 text-[8px] font-semibold uppercase tracking-[0.1em] text-soft-white shadow-[0_9px_22px_rgba(18,38,58,0.13)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-rich-navy disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
-                        >
-                          {actionLoading === "start-" + unit._id
-                            ? "Starting..."
-                            : "Start Production"}
-                        </button>
-                      )}
-
-                    {unit.status === "in_production" && (
-                      <div>
-                        <textarea
-                          value={notes[unit._id] || ""}
-                          onChange={(event) =>
-                            setNotes((previous) => ({
-                              ...previous,
-
-                              [unit._id]: event.target.value,
-                            }))
+                        <InfoRow
+                          label="Product"
+                          value={
+                            product?.name
                           }
-                          placeholder="Production notes (optional)"
-                          rows={3}
-                          className="w-full resize-none rounded-[12px] border border-light-champagne bg-warm-ivory/65 px-4 py-3 text-[10px] leading-5 text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/70 hover:border-champagne-gold/60 focus:border-classic-gold focus:bg-soft-white focus:shadow-[0_0_0_4px_rgba(201,162,77,0.08)]"
                         />
 
-                        <button
-                          type="button"
-                          onClick={() => handleCompleteProduction(unit._id)}
-                          disabled={actionLoading === "complete-" + unit._id}
-                          className="mt-3 min-h-[48px] w-full rounded-[12px] bg-midnight-navy px-5 text-[8px] font-semibold uppercase tracking-[0.1em] text-soft-white shadow-[0_9px_22px_rgba(18,38,58,0.13)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-rich-navy disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
-                        >
-                          {actionLoading === "complete-" + unit._id
-                            ? "Completing..."
-                            : "Complete Production"}
-                        </button>
+                        <InfoRow
+                          label="SKU"
+                          value={
+                            product?.sku
+                          }
+                        />
+
+                        <InfoRow
+                          label="Material"
+                          value={
+                            orderItem
+                              ?.variant
+                              ?.material ||
+                            product?.material
+                          }
+                        />
+
+                        <InfoRow
+                          label="Color"
+                          value={
+                            orderItem
+                              ?.variant
+                              ?.color ||
+                            product?.color
+                          }
+                        />
+
+                        <InfoRow
+                          label="Variant"
+                          value={
+                            orderItem
+                              ?.variant
+                              ?.name ||
+                            "Standard"
+                          }
+                        />
+
+                        <InfoRow
+                          label="Technology"
+                          value={
+                            orderItem
+                              ?.technologyModel
+                              ?.modelName ||
+                            orderItem
+                              ?.technologyModel
+                              ?.name ||
+                            "N/A"
+                          }
+                        />
                       </div>
-                    )}
+                    </div>
 
-                    {unit.status === "completed" && (
-                      <div className="rounded-[14px] border border-classic-gold/20 bg-soft-cream p-4 text-[9px] text-antique-gold">
-                        ✓ This production unit has been completed successfully.
+                    <div className="space-y-6">
+                      <div className="rounded-[22px] border border-light-champagne p-5">
+                        <div className="mb-5 flex items-center justify-between">
+                          <div>
+                            <p className="text-[8px] font-semibold uppercase tracking-[0.22em] text-antique-gold">
+                              Step 01
+                            </p>
+
+                            <h3 className="mt-2 font-serif text-[1.3rem] text-midnight-navy">
+                              Smart
+                              Unit
+                              Assembly
+                            </h3>
+                          </div>
+
+                          <span className="text-classic-gold">
+                            ✦
+                          </span>
+                        </div>
+
+                        {!unit.smartUnit ? (
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <div>
+                              <label className="mb-2 block text-[8px] font-semibold uppercase tracking-[0.14em] text-steel-gray">
+                                Smart
+                                Unit
+                                Model
+                              </label>
+
+                              <select
+                                value={
+                                  form.smartUnitId ||
+                                  ""
+                                }
+                                onChange={(
+                                  event,
+                                ) =>
+                                  handleSmartUnitChange(
+                                    unit._id,
+                                    event
+                                      .target
+                                      .value,
+                                  )
+                                }
+                                className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory px-4 py-3 text-[11px] outline-none focus:border-classic-gold"
+                              >
+                                <option value="">
+                                  Select
+                                  Smart
+                                  Unit
+                                </option>
+
+                                {smartUnits.map(
+                                  (
+                                    smartUnit,
+                                  ) => (
+                                    <option
+                                      key={
+                                        smartUnit._id
+                                      }
+                                      value={
+                                        smartUnit._id
+                                      }
+                                    >
+                                      {
+                                        smartUnit.name
+                                      }
+                                    </option>
+                                  ),
+                                )}
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="mb-2 block text-[8px] font-semibold uppercase tracking-[0.14em] text-steel-gray">
+                                Physical
+                                Unit
+                              </label>
+
+                              <select
+                                value={
+                                  form.smartUnitInstanceId ||
+                                  ""
+                                }
+                                onChange={(
+                                  event,
+                                ) =>
+                                  updateUnitForm(
+                                    unit._id,
+                                    "smartUnitInstanceId",
+                                    event
+                                      .target
+                                      .value,
+                                  )
+                                }
+                                disabled={
+                                  !form.smartUnitId
+                                }
+                                className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory px-4 py-3 text-[11px] outline-none disabled:opacity-50"
+                              >
+                                <option value="">
+                                  Select
+                                  Serial
+                                  Number
+                                </option>
+
+                                {selectedInstances.map(
+                                  (
+                                    instance,
+                                  ) => (
+                                    <option
+                                      key={
+                                        instance._id
+                                      }
+                                      value={
+                                        instance._id
+                                      }
+                                    >
+                                      {
+                                        instance.serialNumber
+                                      }
+                                    </option>
+                                  ),
+                                )}
+                              </select>
+                            </div>
+
+                            <div className="md:col-span-2">
+                              <label className="mb-2 block text-[8px] font-semibold uppercase tracking-[0.14em] text-steel-gray">
+                                Smart
+                                Unit
+                                Installation
+                                Cost
+                              </label>
+
+                              <div className="relative max-w-sm">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={
+                                    form.assemblyCost ??
+                                    0
+                                  }
+                                  onChange={(
+                                    event,
+                                  ) =>
+                                    updateUnitForm(
+                                      unit._id,
+                                      "assemblyCost",
+                                      event
+                                        .target
+                                        .value,
+                                    )
+                                  }
+                                  className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory px-4 py-3 pr-14 text-[11px] outline-none focus:border-classic-gold"
+                                />
+
+                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-semibold text-antique-gold">
+                                  EGP
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="md:col-span-2">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleAssignSmartUnit(
+                                    unit,
+                                  )
+                                }
+                                disabled={
+                                  workingKey ===
+                                  `assign-${unit._id}`
+                                }
+                                className="inline-flex rounded-[13px] bg-midnight-navy px-6 py-3 text-[8px] font-semibold uppercase tracking-[0.12em] text-soft-white transition hover:bg-rich-navy disabled:opacity-50"
+                              >
+                                {workingKey ===
+                                `assign-${unit._id}`
+                                  ? "Assigning..."
+                                  : "Assign Smart Unit"}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <div className="grid gap-4 md:grid-cols-3">
+                              <InfoRow
+                                label="Smart Unit"
+                                value={
+                                  unit
+                                    .smartUnit
+                                    ?.name ||
+                                  "Assigned"
+                                }
+                              />
+
+                              <InfoRow
+                                label="Serial Number"
+                                value={
+                                  unit
+                                    .smartUnitInstance
+                                    ?.serialNumber ||
+                                  unit.serialNumber
+                                }
+                              />
+
+                              <InfoRow
+                                label="Unit Status"
+                                value={
+                                  unit
+                                    .smartUnitInstance
+                                    ?.status ||
+                                  "N/A"
+                                }
+                              />
+                            </div>
+
+                            <div className="mt-5">
+                              <label className="mb-2 block text-[8px] font-semibold uppercase tracking-[0.14em] text-steel-gray">
+                                Smart
+                                Unit
+                                Installation
+                                Cost
+                              </label>
+
+                              <div className="flex max-w-md gap-3">
+                                <div className="relative flex-1">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={
+                                      form.assemblyCost ??
+                                      0
+                                    }
+                                    onChange={(
+                                      event,
+                                    ) =>
+                                      updateUnitForm(
+                                        unit._id,
+                                        "assemblyCost",
+                                        event
+                                          .target
+                                          .value,
+                                      )
+                                    }
+                                    className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory px-4 py-3 pr-14 text-[11px] outline-none focus:border-classic-gold"
+                                  />
+
+                                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-semibold text-antique-gold">
+                                    EGP
+                                  </span>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleSaveAssemblyCost(
+                                      unit,
+                                    )
+                                  }
+                                  disabled={
+                                    workingKey ===
+                                    `assembly-${unit._id}`
+                                  }
+                                  className="rounded-[13px] bg-midnight-navy px-5 text-[8px] font-semibold uppercase tracking-[0.1em] text-soft-white disabled:opacity-50"
+                                >
+                                  {workingKey ===
+                                  `assembly-${unit._id}`
+                                    ? "Saving..."
+                                    : "Save"}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    )}
+
+                      <div className="rounded-[22px] border border-champagne-gold/30 bg-soft-cream/35 p-5">
+                        <div className="mb-5 flex items-center justify-between">
+                          <div>
+                            <p className="text-[8px] font-semibold uppercase tracking-[0.22em] text-antique-gold">
+                              Step 02
+                            </p>
+
+                            <h3 className="mt-2 font-serif text-[1.3rem] text-midnight-navy">
+                              Experience
+                            </h3>
+                          </div>
+
+                          <span className="text-classic-gold">
+                            ✦
+                          </span>
+                        </div>
+
+                        {experience ? (
+                          <div>
+                            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                              <InfoRow
+                                label="Serial"
+                                value={
+                                  experience.serialNumber
+                                }
+                              />
+
+                              <InfoRow
+                                label="Slug"
+                                value={
+                                  experience.slug
+                                }
+                              />
+
+                              <InfoRow
+                                label="Type"
+                                value={
+                                  experience.type
+                                }
+                              />
+
+                              <InfoRow
+                                label="Status"
+                                value={
+                                  experience.status
+                                }
+                              />
+                            </div>
+
+                            <div className="mt-5 flex flex-wrap gap-3">
+                              {manageExperienceUrl && (
+                                <Link
+                                  to={
+                                    manageExperienceUrl
+                                  }
+                                  className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-full bg-midnight-navy px-5 text-[8px] font-semibold uppercase tracking-[0.1em] text-soft-white transition hover:bg-rich-navy"
+                                >
+                                  Manage
+                                  Experience
+
+                                  <span className="text-champagne-gold">
+                                    →
+                                  </span>
+                                </Link>
+                              )}
+
+                              {publicExperienceUrl && (
+                                <Link
+                                  to={
+                                    publicExperienceUrl
+                                  }
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-full border border-champagne-gold/40 bg-soft-white px-5 text-[8px] font-semibold uppercase tracking-[0.1em] text-antique-gold transition hover:border-classic-gold"
+                                >
+                                  Public
+                                  Experience
+
+                                  <span>
+                                    ↗
+                                  </span>
+                                </Link>
+                              )}
+                            </div>
+                          </div>
+                        ) : unit.smartUnit ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleCreateExperience(
+                                unit,
+                              )
+                            }
+                            disabled={
+                              workingKey ===
+                              `experience-${unit._id}`
+                            }
+                            className="rounded-[13px] bg-midnight-navy px-5 py-3 text-[8px] font-semibold uppercase tracking-[0.1em] text-soft-white disabled:opacity-50"
+                          >
+                            {workingKey ===
+                            `experience-${unit._id}`
+                              ? "Creating..."
+                              : "Create Experience"}
+                          </button>
+                        ) : (
+                          <p className="text-[11px] text-steel-gray">
+                            Assign a
+                            Smart Unit
+                            first.
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="rounded-[22px] border border-light-champagne p-5">
+                        <div className="mb-5">
+                          <p className="text-[8px] font-semibold uppercase tracking-[0.22em] text-antique-gold">
+                            Step 03
+                          </p>
+
+                          <h3 className="mt-2 font-serif text-[1.3rem] text-midnight-navy">
+                            Production
+                          </h3>
+                        </div>
+
+                        {status ===
+                          "experience_created" ||
+                        status ===
+                          "unit_assigned" ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleStartProduction(
+                                unit,
+                              )
+                            }
+                            disabled={
+                              workingKey ===
+                              `start-${unit._id}`
+                            }
+                            className="rounded-[13px] bg-midnight-navy px-6 py-3 text-[8px] font-semibold uppercase tracking-[0.11em] text-soft-white disabled:opacity-50"
+                          >
+                            {workingKey ===
+                            `start-${unit._id}`
+                              ? "Starting..."
+                              : "Start Production"}
+                          </button>
+                        ) : status ===
+                          "in_production" ? (
+                          <div className="space-y-4">
+                            <textarea
+                              rows={
+                                3
+                              }
+                              value={
+                                form.productionNotes ||
+                                ""
+                              }
+                              onChange={(
+                                event,
+                              ) =>
+                                updateUnitForm(
+                                  unit._id,
+                                  "productionNotes",
+                                  event
+                                    .target
+                                    .value,
+                                )
+                              }
+                              placeholder="Production notes..."
+                              className="w-full resize-none rounded-[13px] border border-light-champagne bg-warm-ivory px-4 py-3 text-[11px] outline-none focus:border-classic-gold"
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleCompleteProduction(
+                                  unit,
+                                )
+                              }
+                              disabled={
+                                workingKey ===
+                                `production-complete-${unit._id}`
+                              }
+                              className="rounded-[13px] bg-midnight-navy px-6 py-3 text-[8px] font-semibold uppercase tracking-[0.11em] text-soft-white disabled:opacity-50"
+                            >
+                              {workingKey ===
+                              `production-complete-${unit._id}`
+                                ? "Completing..."
+                                : "Complete Production"}
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            <InfoRow
+                              label="Started"
+                              value={formatDate(
+                                unit.startedAt,
+                              )}
+                            />
+
+                            <InfoRow
+                              label="Production Status"
+                              value={
+                                statusLabels[
+                                  status
+                                ] ||
+                                status
+                              }
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="rounded-[22px] border border-champagne-gold/25 bg-soft-cream/45 p-5">
+                        <div className="mb-5">
+                          <p className="text-[8px] font-semibold uppercase tracking-[0.22em] text-antique-gold">
+                            Step 04
+                          </p>
+
+                          <h3 className="mt-2 font-serif text-[1.3rem] text-midnight-navy">
+                            Packaging
+                          </h3>
+                        </div>
+
+                        {status ===
+                        "ready_for_packaging" ? (
+                          <div>
+                            <p className="mb-4 text-[11px] leading-6 text-slate-gray">
+                              Production
+                              is
+                              complete.
+                              This
+                              unit is
+                              ready
+                              for
+                              packaging.
+                            </p>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleStartPackaging(
+                                  unit,
+                                )
+                              }
+                              disabled={
+                                workingKey ===
+                                `packaging-start-${unit._id}`
+                              }
+                              className="rounded-[13px] bg-midnight-navy px-6 py-3 text-[8px] font-semibold uppercase tracking-[0.11em] text-soft-white disabled:opacity-50"
+                            >
+                              {workingKey ===
+                              `packaging-start-${unit._id}`
+                                ? "Starting..."
+                                : "Start Packaging"}
+                            </button>
+                          </div>
+                        ) : status ===
+                          "packaging" ? (
+                          <div className="space-y-5">
+                            <div>
+                              <label className="mb-2 block text-[8px] font-semibold uppercase tracking-[0.14em] text-steel-gray">
+                                Packaging
+                                Cost
+                              </label>
+
+                              <div className="relative max-w-sm">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={
+                                    form.packagingCost ??
+                                    0
+                                  }
+                                  onChange={(
+                                    event,
+                                  ) =>
+                                    updateUnitForm(
+                                      unit._id,
+                                      "packagingCost",
+                                      event
+                                        .target
+                                        .value,
+                                    )
+                                  }
+                                  className="w-full rounded-[13px] border border-light-champagne bg-soft-white px-4 py-3 pr-14 text-[11px] outline-none focus:border-classic-gold"
+                                />
+
+                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-semibold text-antique-gold">
+                                  EGP
+                                </span>
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="mb-2 block text-[8px] font-semibold uppercase tracking-[0.14em] text-steel-gray">
+                                Packaging
+                                Notes
+                              </label>
+
+                              <textarea
+                                rows={
+                                  3
+                                }
+                                value={
+                                  form.packagingNotes ||
+                                  ""
+                                }
+                                onChange={(
+                                  event,
+                                ) =>
+                                  updateUnitForm(
+                                    unit._id,
+                                    "packagingNotes",
+                                    event
+                                      .target
+                                      .value,
+                                  )
+                                }
+                                placeholder="Packaging notes..."
+                                className="w-full resize-none rounded-[13px] border border-light-champagne bg-soft-white px-4 py-3 text-[11px] outline-none focus:border-classic-gold"
+                              />
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleCompletePackaging(
+                                  unit,
+                                )
+                              }
+                              disabled={
+                                workingKey ===
+                                `packaging-complete-${unit._id}`
+                              }
+                              className="rounded-[13px] bg-midnight-navy px-6 py-3 text-[8px] font-semibold uppercase tracking-[0.11em] text-soft-white disabled:opacity-50"
+                            >
+                              {workingKey ===
+                              `packaging-complete-${unit._id}`
+                                ? "Completing..."
+                                : "Complete Packaging"}
+                            </button>
+                          </div>
+                        ) : status ===
+                          "completed" ? (
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            <InfoRow
+                              label="Packaging Started"
+                              value={formatDate(
+                                unit.packagingStartedAt,
+                              )}
+                            />
+
+                            <InfoRow
+                              label="Packaging Completed"
+                              value={formatDate(
+                                unit.packagingCompletedAt,
+                              )}
+                            />
+
+                            <InfoRow
+                              label="Packaging Cost"
+                              value={formatMoney(
+                                unit.packagingCost,
+                              )}
+                            />
+
+                            <InfoRow
+                              label="Packaging Status"
+                              value="Completed"
+                            />
+
+                            <div className="sm:col-span-2">
+                              <InfoRow
+                                label="Packaging Notes"
+                                value={
+                                  unit.packagingNotes ||
+                                  "No notes"
+                                }
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-[11px] leading-6 text-steel-gray">
+                            Complete
+                            production
+                            before
+                            packaging.
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-
-                <div className="relative grid gap-4 border-t border-light-champagne/80 bg-warm-ivory/45 p-6 text-[9px] text-slate-gray md:grid-cols-2">
-                  <div>
-                    <span className="font-semibold text-midnight-navy">
-                      Started:
-                    </span>{" "}
-                    {unit.startedAt
-                      ? new Date(unit.startedAt).toLocaleString()
-                      : "Not started"}
-                  </div>
-
-                  <div>
-                    <span className="font-semibold text-midnight-navy">
-                      Completed:
-                    </span>{" "}
-                    {unit.completedAt
-                      ? new Date(unit.completedAt).toLocaleString()
-                      : "Not completed"}
-                  </div>
-                </div>
-
-                {unit.notes && (
-                  <div className="relative border-t border-light-champagne/80 bg-soft-cream/60 p-4 text-[9px] leading-5 text-slate-gray">
-                    <span className="font-semibold text-midnight-navy">
-                      Notes:
-                    </span>{" "}
-                    {unit.notes}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-
-          {units.length === 0 && (
-            <div className="relative overflow-hidden rounded-[24px] border border-light-champagne/90 bg-soft-white/85 p-10 text-center shadow-[0_10px_30px_rgba(7,19,31,0.04)]">
-              <div className="pointer-events-none absolute left-1/2 top-1/2 h-[240px] w-[340px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-soft-cream blur-[75px]" />
-
-              <p className="relative text-[10px] text-slate-gray">
-                No production units found.
-              </p>
-            </div>
+                </section>
+              );
+            },
           )}
         </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
 export default AdminManufacturingOrderDetailsPage;
