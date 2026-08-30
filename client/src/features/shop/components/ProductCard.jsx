@@ -4,9 +4,43 @@ import { FaHeart, FaArrowRight, FaPlus } from "react-icons/fa6";
 const ProductCard = ({ product, index = 0 }) => {
   const isOutOfStock = product.stock <= 0;
 
-  const imageUrl = product.image
-    ? `http://localhost:5000${product.image}`
-    : "/placeholder.png";
+  const backendUrl = (
+    import.meta.env.VITE_BACKEND_URL ||
+    import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, "") ||
+    "http://localhost:5000"
+  ).replace(/\/+$/, "");
+
+  const getImageUrl = (image) => {
+    if (!image) {
+      return "/placeholder.png";
+    }
+
+    let imagePath = String(image).trim();
+
+    if (
+      /^https?:\/\/localhost:5000/i.test(imagePath) ||
+      /^https?:\/\/127\.0\.0\.1:5000/i.test(imagePath)
+    ) {
+      imagePath = imagePath.replace(
+        /^https?:\/\/(?:localhost|127\.0\.0\.1):5000/i,
+        "",
+      );
+    } else if (/^https?:\/\//i.test(imagePath)) {
+      return imagePath;
+    }
+
+    if (imagePath.startsWith("/api/uploads/")) {
+      imagePath = imagePath.replace(/^\/api/, "");
+    }
+
+    if (!imagePath.startsWith("/")) {
+      imagePath = `/${imagePath}`;
+    }
+
+    return `${backendUrl}${imagePath}`;
+  };
+
+  const imageUrl = getImageUrl(product.image);
 
   const number = String(index + 1).padStart(2, "0");
 
