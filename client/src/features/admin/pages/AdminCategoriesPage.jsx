@@ -1,37 +1,135 @@
 import { useEffect, useState } from "react";
-
 import { Link } from "react-router-dom";
 
-import { getCategories, deleteCategory } from "../services/categoryApi";
+import {
+  getCategories,
+  deleteCategory,
+} from "../services/categoryApi";
+
+const getBackendOrigin = () => {
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+  if (backendUrl) {
+    return String(backendUrl).replace(/\/+$/, "");
+  }
+
+  const apiUrl = import.meta.env.VITE_API_URL;
+
+  if (apiUrl && /^https?:\/\//i.test(apiUrl)) {
+    return String(apiUrl)
+      .replace(/\/api\/?$/i, "")
+      .replace(/\/+$/, "");
+  }
+
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+
+  return "";
+};
+
+const BACKEND_URL = getBackendOrigin();
+
+const getFilePath = (value) => {
+  if (!value) {
+    return "";
+  }
+
+  if (typeof value === "string") {
+    return value.trim();
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const path = getFilePath(item);
+
+      if (path) {
+        return path;
+      }
+    }
+
+    return "";
+  }
+
+  if (typeof value === "object") {
+    return (
+      getFilePath(value.imageUrl) ||
+      getFilePath(value.url) ||
+      getFilePath(value.path) ||
+      getFilePath(value.src) ||
+      getFilePath(value.image) ||
+      getFilePath(value.file) ||
+      ""
+    );
+  }
+
+  return "";
+};
+
+const getImageUrl = (value) => {
+  let image = getFilePath(value);
+
+  if (!image) {
+    return "";
+  }
+
+  if (
+    image.startsWith("blob:") ||
+    image.startsWith("data:")
+  ) {
+    return image;
+  }
+
+  if (
+    /^https?:\/\/localhost:5000/i.test(image) ||
+    /^https?:\/\/127\.0\.0\.1:5000/i.test(image)
+  ) {
+    image = image.replace(
+      /^https?:\/\/(?:localhost|127\.0\.0\.1):5000/i,
+      "",
+    );
+  } else if (
+    image.startsWith("http://") ||
+    image.startsWith("https://")
+  ) {
+    return image;
+  }
+
+  if (image.startsWith("/api/uploads/")) {
+    image = image.replace(/^\/api/, "");
+  }
+
+  if (!image.startsWith("/")) {
+    image = `/${image}`;
+  }
+
+  return `${BACKEND_URL}${image}`;
+};
 
 const AdminCategoriesPage = () => {
   const [categories, setCategories] = useState([]);
-
   const [isLoading, setIsLoading] = useState(true);
-
   const [deletingId, setDeletingId] = useState(null);
-
   const [error, setError] = useState("");
-
   const [success, setSuccess] = useState("");
-
-
-const API_BASE_URL = import.meta.env.VITE_API_URL 
-    ? import.meta.env.VITE_API_URL.replace("/api", "") 
-    : "http://localhost:5000";
 
   const loadCategories = async () => {
     try {
       setIsLoading(true);
-
       setError("");
 
       const response = await getCategories();
 
       const categoriesData =
-        response?.data?.categories || response?.categories || [];
+        response?.data?.categories ||
+        response?.categories ||
+        [];
 
-      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+      setCategories(
+        Array.isArray(categoriesData)
+          ? categoriesData
+          : [],
+      );
     } catch (error) {
       console.error(error);
 
@@ -49,22 +147,6 @@ const API_BASE_URL = import.meta.env.VITE_API_URL
     loadCategories();
   }, []);
 
-  const getImageUrl = (image) => {
-    if (!image) {
-      return "";
-    }
-
-    if (image.startsWith("http://") || image.startsWith("https://")) {
-      return image;
-    }
-
-    if (image.startsWith("/")) {
-      return `${API_BASE_URL}${image}`;
-    }
-
-    return `${API_BASE_URL}/${image}`;
-  };
-
   const handleDelete = async (categoryId) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this category?",
@@ -76,18 +158,20 @@ const API_BASE_URL = import.meta.env.VITE_API_URL
 
     try {
       setDeletingId(categoryId);
-
       setError("");
-
       setSuccess("");
 
       await deleteCategory(categoryId);
 
       setCategories((previousCategories) =>
-        previousCategories.filter((category) => category._id !== categoryId),
+        previousCategories.filter(
+          (category) => category._id !== categoryId,
+        ),
       );
 
-      setSuccess("Category deleted successfully.");
+      setSuccess(
+        "Category deleted successfully.",
+      );
     } catch (error) {
       console.error(error);
 
@@ -185,6 +269,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL
             <span className="text-[16px] font-light leading-none text-champagne-gold">
               +
             </span>
+
             Add Category
           </Link>
         </div>
@@ -197,7 +282,9 @@ const API_BASE_URL = import.meta.env.VITE_API_URL
               !
             </div>
 
-            <div className="flex-1">{error}</div>
+            <div className="flex-1">
+              {error}
+            </div>
 
             <button
               type="button"
@@ -231,7 +318,9 @@ const API_BASE_URL = import.meta.env.VITE_API_URL
 
             <p className="mt-1.5 text-[10px] text-slate-gray">
               {categories.length}{" "}
-              {categories.length === 1 ? "category" : "categories"}
+              {categories.length === 1
+                ? "category"
+                : "categories"}
             </p>
           </div>
 
@@ -239,7 +328,10 @@ const API_BASE_URL = import.meta.env.VITE_API_URL
             to="/admin/categories/new"
             className="group inline-flex min-h-[42px] w-fit items-center justify-center gap-3 rounded-full border border-champagne-gold/30 bg-soft-white/80 px-4 text-[8px] font-semibold uppercase tracking-[0.1em] text-midnight-navy transition-all duration-300 hover:-translate-y-0.5 hover:border-champagne-gold hover:bg-warm-ivory"
           >
-            <span className="text-[14px] text-classic-gold">+</span>
+            <span className="text-[14px] text-classic-gold">
+              +
+            </span>
+
             New Category
           </Link>
         </div>
@@ -253,7 +345,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL
             <div className="pointer-events-none absolute left-1/2 top-1/2 h-[300px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-soft-cream blur-[90px]" />
 
             <div className="relative">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[20px] border border-champagne-gold/25 bg-warm-ivory text-[1.4rem] font-serif text-antique-gold shadow-[0_8px_22px_rgba(7,19,31,0.04)]">
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[20px] border border-champagne-gold/25 bg-warm-ivory font-serif text-[1.4rem] text-antique-gold shadow-[0_8px_22px_rgba(7,19,31,0.04)]">
                 C
               </div>
 
@@ -262,15 +354,19 @@ const API_BASE_URL = import.meta.env.VITE_API_URL
               </h2>
 
               <p className="mx-auto mt-3 max-w-md text-[11px] leading-6 text-slate-gray">
-                You don't have any product categories yet. Create your first
-                category to start organizing your products.
+                You don't have any product categories yet.
+                Create your first category to start organizing
+                your products.
               </p>
 
               <Link
                 to="/admin/categories/new"
                 className="mt-7 inline-flex min-h-[48px] items-center justify-center gap-3 rounded-[13px] bg-midnight-navy px-6 text-[8px] font-semibold uppercase tracking-[0.11em] text-soft-white shadow-[0_10px_24px_rgba(18,38,58,0.14)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-rich-navy"
               >
-                <span className="text-[15px] text-champagne-gold">+</span>
+                <span className="text-[15px] text-champagne-gold">
+                  +
+                </span>
+
                 Add Category
               </Link>
             </div>
@@ -303,11 +399,14 @@ const API_BASE_URL = import.meta.env.VITE_API_URL
 
             <div className="relative divide-y divide-light-champagne/65">
               {categories.map((category) => {
-                const imageUrl = getImageUrl(category.image);
+                const imageUrl =
+                  getImageUrl(category.image);
 
-                const productCount = category.productCount ?? 0;
+                const productCount =
+                  category.productCount ?? 0;
 
-                const isDeleting = deletingId === category._id;
+                const isDeleting =
+                  deletingId === category._id;
 
                 return (
                   <div
@@ -322,17 +421,26 @@ const API_BASE_URL = import.meta.env.VITE_API_URL
                             alt={category.name}
                             className="h-16 w-16 rounded-[14px] border border-light-champagne/80 bg-soft-cream object-cover shadow-[0_5px_16px_rgba(7,19,31,0.035)] transition-transform duration-300 group-hover:scale-[1.03]"
                             onError={(event) => {
-                              event.currentTarget.style.display = "none";
+                              event.currentTarget.style.display =
+                                "none";
 
-                              event.currentTarget.nextElementSibling.style.display =
-                                "flex";
+                              const fallback =
+                                event.currentTarget
+                                  .nextElementSibling;
+
+                              if (fallback) {
+                                fallback.style.display =
+                                  "flex";
+                              }
                             }}
                           />
                         ) : null}
 
                         <div
                           className={`${
-                            imageUrl ? "hidden" : "flex"
+                            imageUrl
+                              ? "hidden"
+                              : "flex"
                           } h-16 w-16 items-center justify-center rounded-[14px] border border-light-champagne/80 bg-soft-cream text-[8px] font-medium text-steel-gray`}
                         >
                           No Image
@@ -353,7 +461,8 @@ const API_BASE_URL = import.meta.env.VITE_API_URL
 
                       <div className="min-w-0">
                         <p className="line-clamp-2 text-[10px] leading-5 text-slate-gray">
-                          {category.description || "No description provided."}
+                          {category.description ||
+                            "No description provided."}
                         </p>
                       </div>
 
@@ -374,10 +483,14 @@ const API_BASE_URL = import.meta.env.VITE_API_URL
                         <button
                           type="button"
                           disabled={isDeleting}
-                          onClick={() => handleDelete(category._id)}
+                          onClick={() =>
+                            handleDelete(category._id)
+                          }
                           className="inline-flex min-h-[38px] items-center justify-center rounded-full border border-antique-gold/20 bg-soft-white px-4 text-[7px] font-semibold uppercase tracking-[0.1em] text-antique-gold transition-all duration-300 hover:-translate-y-0.5 hover:border-antique-gold/40 hover:bg-soft-cream hover:text-midnight-navy disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
                         >
-                          {isDeleting ? "Deleting..." : "Delete"}
+                          {isDeleting
+                            ? "Deleting..."
+                            : "Delete"}
                         </button>
                       </div>
                     </div>
@@ -391,17 +504,26 @@ const API_BASE_URL = import.meta.env.VITE_API_URL
                               alt={category.name}
                               className="h-20 w-20 rounded-[16px] border border-light-champagne/80 bg-soft-cream object-cover shadow-[0_5px_16px_rgba(7,19,31,0.035)]"
                               onError={(event) => {
-                                event.currentTarget.style.display = "none";
+                                event.currentTarget.style.display =
+                                  "none";
 
-                                event.currentTarget.nextElementSibling.style.display =
-                                  "flex";
+                                const fallback =
+                                  event.currentTarget
+                                    .nextElementSibling;
+
+                                if (fallback) {
+                                  fallback.style.display =
+                                    "flex";
+                                }
                               }}
                             />
                           ) : null}
 
                           <div
                             className={`${
-                              imageUrl ? "hidden" : "flex"
+                              imageUrl
+                                ? "hidden"
+                                : "flex"
                             } h-20 w-20 items-center justify-center rounded-[16px] border border-light-champagne/80 bg-soft-cream text-[8px] font-medium text-steel-gray`}
                           >
                             No Image
@@ -433,7 +555,8 @@ const API_BASE_URL = import.meta.env.VITE_API_URL
 
                       <div>
                         <p className="text-[10px] leading-6 text-slate-gray">
-                          {category.description || "No description provided."}
+                          {category.description ||
+                            "No description provided."}
                         </p>
                       </div>
 
@@ -448,10 +571,14 @@ const API_BASE_URL = import.meta.env.VITE_API_URL
                         <button
                           type="button"
                           disabled={isDeleting}
-                          onClick={() => handleDelete(category._id)}
+                          onClick={() =>
+                            handleDelete(category._id)
+                          }
                           className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-[12px] border border-antique-gold/20 bg-soft-white px-4 text-[8px] font-semibold uppercase tracking-[0.1em] text-antique-gold transition-all duration-300 hover:-translate-y-0.5 hover:border-antique-gold/40 hover:bg-soft-cream hover:text-midnight-navy disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
                         >
-                          {isDeleting ? "Deleting..." : "Delete Category"}
+                          {isDeleting
+                            ? "Deleting..."
+                            : "Delete Category"}
                         </button>
                       </div>
                     </div>
