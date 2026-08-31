@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+
 import { FaHeart, FaArrowRight, FaPlus } from "react-icons/fa6";
 
 const ProductCard = ({ product, index = 0 }) => {
@@ -44,13 +45,27 @@ const ProductCard = ({ product, index = 0 }) => {
 
   const number = String(index + 1).padStart(2, "0");
 
-  const badge = product.newArrival
-    ? "New"
-    : product.bestSeller
-      ? "Bestseller"
-      : product.featured
-        ? "Featured"
-        : null;
+  const price = Number(product.price || 0);
+  const comparePrice = Number(product.comparePrice || 0);
+
+  const hasDiscount =
+    comparePrice > 0 &&
+    price > 0 &&
+    comparePrice > price;
+
+  const discountPercentage = hasDiscount
+    ? Math.round(((comparePrice - price) / comparePrice) * 100)
+    : 0;
+
+  const badge = hasDiscount
+    ? `${discountPercentage}% OFF`
+    : product.newArrival
+      ? "New"
+      : product.bestSeller
+        ? "Bestseller"
+        : product.featured
+          ? "Featured"
+          : null;
 
   return (
     <article className="group relative">
@@ -93,7 +108,13 @@ const ProductCard = ({ product, index = 0 }) => {
 
             {badge && (
               <div className="absolute right-5 top-5 sm:right-6 sm:top-6">
-                <span className="inline-flex min-h-[30px] items-center rounded-full border border-soft-white/40 bg-soft-white/15 px-3.5 text-[8px] font-semibold uppercase tracking-[0.18em] text-soft-white shadow-sm backdrop-blur-md">
+                <span
+                  className={`inline-flex min-h-[30px] items-center rounded-full border px-3.5 text-[8px] font-semibold uppercase tracking-[0.18em] shadow-sm backdrop-blur-md ${
+                    hasDiscount
+                      ? "border-champagne-gold/70 bg-midnight-navy/90 text-champagne-gold"
+                      : "border-soft-white/40 bg-soft-white/15 text-soft-white"
+                  }`}
+                >
                   {badge}
                 </span>
               </div>
@@ -102,12 +123,18 @@ const ProductCard = ({ product, index = 0 }) => {
             <div className="absolute bottom-6 right-6 translate-y-3 opacity-0 transition-all duration-700 group-hover:translate-y-0 group-hover:opacity-100">
               <div className="text-right">
                 <span className="block text-[7px] font-semibold uppercase tracking-[0.25em] text-soft-white/60">
-                  Price
+                  {hasDiscount ? "Sale Price" : "Price"}
                 </span>
 
                 <span className="mt-1 block font-serif text-[1.45rem] font-normal text-soft-white">
                   ${product.price}
                 </span>
+
+                {hasDiscount && (
+                  <span className="mt-1 block text-[9px] text-soft-white/60 line-through">
+                    ${product.comparePrice}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -169,14 +196,26 @@ const ProductCard = ({ product, index = 0 }) => {
             </div>
 
             <div className="shrink-0 text-right">
+              {hasDiscount && (
+                <span className="mb-1 block text-[7px] font-semibold uppercase tracking-[0.14em] text-antique-gold">
+                  Sale
+                </span>
+              )}
+
               <span className="font-serif text-[1.2rem] font-normal text-midnight-navy">
                 ${product.price}
               </span>
 
-              {product.comparePrice > product.price && (
-                <span className="mt-1 block text-[9px] text-steel-gray line-through">
-                  ${product.comparePrice}
-                </span>
+              {hasDiscount && (
+                <>
+                  <span className="mt-1 block text-[9px] text-steel-gray line-through">
+                    ${product.comparePrice}
+                  </span>
+
+                  <span className="mt-1.5 inline-flex rounded-full bg-soft-cream px-2.5 py-1 text-[7px] font-semibold uppercase tracking-[0.08em] text-antique-gold">
+                    Save {discountPercentage}%
+                  </span>
+                </>
               )}
             </div>
           </div>

@@ -27,7 +27,9 @@ const ShopPage = () => {
       } catch (error) {
         console.error("Shop Products Error:", error);
 
-        setError(error?.response?.data?.message || "Failed to load products.");
+        setError(
+          error?.response?.data?.message || "Failed to load products.",
+        );
       } finally {
         setIsLoading(false);
       }
@@ -40,7 +42,9 @@ const ShopPage = () => {
     return [
       "all",
       ...new Set(
-        products.map((product) => product.category?.name).filter(Boolean),
+        products
+          .map((product) => product.category?.name)
+          .filter(Boolean),
       ),
     ];
   }, [products]);
