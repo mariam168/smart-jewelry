@@ -50,7 +50,6 @@ const AddTechnologyModelPage = () => {
   const [formData, setFormData] = useState({
     technology: "",
     modelName: "",
-    modelCode: "",
     description: "",
     manufacturer: "",
     image: "",
@@ -130,7 +129,8 @@ const AddTechnologyModelPage = () => {
       console.error(error);
 
       setError(
-        error?.response?.data?.message || "Failed to create technology model.",
+        error?.response?.data?.message ||
+          "Failed to create technology model.",
       );
     } finally {
       setIsLoading(false);
@@ -170,6 +170,7 @@ const AddTechnologyModelPage = () => {
             <span className="text-[14px] text-classic-gold transition-transform duration-300 group-hover:-translate-x-1">
               ←
             </span>
+
             Back
           </Link>
         </div>
@@ -233,7 +234,10 @@ const AddTechnologyModelPage = () => {
                   <option value="">Select Technology</option>
 
                   {technologies.map((technology) => (
-                    <option key={technology._id} value={technology._id}>
+                    <option
+                      key={technology._id}
+                      value={technology._id}
+                    >
                       {technology.name}
                     </option>
                   ))}
@@ -267,18 +271,20 @@ const AddTechnologyModelPage = () => {
                   </label>
 
                   <p className="mb-3 text-[10px] leading-5 text-steel-gray">
-                    A unique code used to identify this model.
+                    A unique code is generated automatically by the system.
                   </p>
 
-                  <input
-                    type="text"
-                    name="modelCode"
-                    value={formData.modelCode}
-                    onChange={handleChange}
-                    placeholder="NFC-RING-01"
-                    required
-                    className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/65 px-5 font-mono text-[12px] uppercase tracking-[0.12em] text-midnight-navy outline-none transition-all duration-300 placeholder:font-sans placeholder:tracking-normal placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:shadow-[0_0_0_4px_rgba(201,162,77,0.08)]"
-                  />
+                  <div className="flex h-[54px] items-center rounded-[14px] border border-dashed border-champagne-gold/40 bg-soft-cream px-5">
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] text-classic-gold">
+                        ✦
+                      </span>
+
+                      <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-gray">
+                        Auto Generated
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -342,6 +348,7 @@ const AddTechnologyModelPage = () => {
                   {isUploading && (
                     <div className="relative mt-4 flex items-center gap-3 text-[10px] text-slate-gray">
                       <span className="h-4 w-4 animate-spin rounded-full border-2 border-champagne-gold/25 border-t-classic-gold" />
+
                       Uploading image...
                     </div>
                   )}
@@ -507,7 +514,9 @@ const AddTechnologyModelPage = () => {
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <span className="text-[18px] text-classic-gold">✦</span>
+                      <span className="text-[18px] text-classic-gold">
+                        ✦
+                      </span>
                     )}
                   </div>
 
@@ -533,9 +542,7 @@ const AddTechnologyModelPage = () => {
                     </div>
 
                     <p className="mt-2 font-mono text-[8px] font-semibold uppercase tracking-[0.14em] text-slate-gray">
-                      {formData.modelCode
-                        ? formData.modelCode.toUpperCase()
-                        : "MODEL_CODE"}
+                      MODEL CODE WILL BE GENERATED AUTOMATICALLY
                     </p>
 
                     <p className="mt-3 text-[10px] leading-6 text-slate-gray">
@@ -572,13 +579,16 @@ const AddTechnologyModelPage = () => {
                 {isLoading ? (
                   <>
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-champagne-gold/25 border-t-champagne-gold" />
+
                     Creating...
                   </>
                 ) : isUploading ? (
                   "Uploading Image..."
                 ) : (
                   <>
-                    <span className="text-[9px] text-champagne-gold">✦</span>
+                    <span className="text-[9px] text-champagne-gold">
+                      ✦
+                    </span>
 
                     <span>Create Technology Model</span>
                   </>

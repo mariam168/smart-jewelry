@@ -12,9 +12,7 @@ export const createTechnologyModelController = async (req, res, next) => {
 
     return res.status(201).json({
       success: true,
-
       message: "Technology model created successfully.",
-
       data: {
         technologyModel,
       },
@@ -30,7 +28,6 @@ export const getTechnologyModelsController = async (req, res, next) => {
 
     return res.json({
       success: true,
-
       data: {
         technologyModels,
       },
@@ -47,14 +44,12 @@ export const getTechnologyModelController = async (req, res, next) => {
     if (!technologyModel) {
       return res.status(404).json({
         success: false,
-
         message: "Technology model not found.",
       });
     }
 
     return res.json({
       success: true,
-
       data: {
         technologyModel,
       },
@@ -68,23 +63,19 @@ export const updateTechnologyModelController = async (req, res, next) => {
   try {
     const technologyModel = await updateTechnologyModel(
       req.params.id,
-
       req.body,
     );
 
     if (!technologyModel) {
       return res.status(404).json({
         success: false,
-
         message: "Technology model not found.",
       });
     }
 
     return res.json({
       success: true,
-
       message: "Technology model updated successfully.",
-
       data: {
         technologyModel,
       },
@@ -101,14 +92,12 @@ export const deleteTechnologyModelController = async (req, res, next) => {
     if (!technologyModel) {
       return res.status(404).json({
         success: false,
-
         message: "Technology model not found.",
       });
     }
 
     return res.json({
       success: true,
-
       message: "Technology model deleted successfully.",
     });
   } catch (error) {

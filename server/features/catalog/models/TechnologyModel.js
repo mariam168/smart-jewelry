@@ -21,6 +21,7 @@ const technologyModelSchema = new mongoose.Schema(
       unique: true,
       uppercase: true,
       trim: true,
+      index: true,
     },
 
     description: {
@@ -66,4 +67,8 @@ const technologyModelSchema = new mongoose.Schema(
   },
 );
 
-export default mongoose.model("TechnologyModel", technologyModelSchema);
+const TechnologyModel =
+  mongoose.models.TechnologyModel ||
+  mongoose.model("TechnologyModel", technologyModelSchema);
+
+export default TechnologyModel;
