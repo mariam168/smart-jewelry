@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 
-import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 
 import {
   getProduct,
@@ -20,79 +24,142 @@ import {
   updateProductTechnology,
 } from "../services/productTechnologyApi";
 
+import { getSmartUnits } from "../smart-units/services/smartUnitApi";
+
+const sanitizeMoneyInput = (value) => {
+  let cleanValue = String(value || "")
+    .replace(/,/g, "")
+    .replace(/[^\d.]/g, "");
+
+  const parts = cleanValue.split(".");
+
+  if (parts.length > 1) {
+    cleanValue = `${parts[0]}.${parts
+      .slice(1)
+      .join("")
+      .slice(0, 2)}`;
+  }
+
+  return cleanValue;
+};
+
 const EditProductPage = () => {
   const { id } = useParams();
 
   const navigate = useNavigate();
 
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] =
+    useState([]);
 
-  const [technologyModels, setTechnologyModels] = useState([]);
+  const [
+    technologyModels,
+    setTechnologyModels,
+  ] = useState([]);
 
-  const [selectedTechnologyModels, setSelectedTechnologyModels] = useState([]);
+  const [
+    smartUnits,
+    setSmartUnits,
+  ] = useState([]);
 
-  const [technologyPrices, setTechnologyPrices] = useState({});
+  const [
+    selectedTechnologyModels,
+    setSelectedTechnologyModels,
+  ] = useState([]);
 
-  const [existingImages, setExistingImages] = useState([]);
+  const [
+    technologyPrices,
+    setTechnologyPrices,
+  ] = useState({});
 
-  const [primaryImage, setPrimaryImage] = useState("");
+  const [
+    existingImages,
+    setExistingImages,
+  ] = useState([]);
 
-  const [newImages, setNewImages] = useState([]);
+  const [
+    primaryImage,
+    setPrimaryImage,
+  ] = useState("");
 
-  const [previewNewImages, setPreviewNewImages] = useState([]);
+  const [
+    newImages,
+    setNewImages,
+  ] = useState([]);
 
-  const [formData, setFormData] = useState({
-    name: "",
+  const [
+    previewNewImages,
+    setPreviewNewImages,
+  ] = useState([]);
 
-    shortDescription: "",
+  const [formData, setFormData] =
+    useState({
+      name: "",
 
-    description: "",
+      shortDescription: "",
 
-    category: "",
+      description: "",
 
-    price: "",
+      category: "",
 
-    comparePrice: "",
+      price: "",
 
-    stock: "",
+      costPrice: "",
 
-    sku: "",
+      comparePrice: "",
 
-    material: "",
+      stock: "",
 
-    color: "",
+      sku: "",
 
-    weight: "",
+      material: "",
 
-    featured: false,
+      color: "",
 
-    bestSeller: false,
+      weight: "",
 
-    newArrival: false,
+      featured: false,
 
-    tags: "",
+      bestSeller: false,
 
-    seoTitle: "",
+      newArrival: false,
 
-    seoDescription: "",
+      tags: "",
 
-    seoSlug: "",
+      seoTitle: "",
 
-    preparationDays: "",
+      seoDescription: "",
 
-    careInstructions: "",
+      seoSlug: "",
 
-    isCustomizable: false,
+      preparationDays: "",
 
-    status: "active",
-  });
-  const [isLoading, setIsLoading] = useState(true);
+      careInstructions: "",
 
-  const [isSaving, setIsSaving] = useState(false);
+      isCustomizable: false,
 
-  const [error, setError] = useState("");
+      status: "active",
+    });
 
-  const [successMessage, setSuccessMessage] = useState("");
+  const [
+    isLoading,
+    setIsLoading,
+  ] = useState(true);
+
+  const [
+    isSaving,
+    setIsSaving,
+  ] = useState(false);
+
+  const [
+    error,
+    setError,
+  ] = useState("");
+
+  const [
+    successMessage,
+    setSuccessMessage,
+  ] = useState("");
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -103,6 +170,7 @@ const EditProductPage = () => {
         const [
           categoriesResponse,
           technologyModelsResponse,
+          smartUnitsResponse,
           productResponse,
           productTechnologiesResponse,
           productImagesResponse,
@@ -111,183 +179,353 @@ const EditProductPage = () => {
 
           getTechnologyModels(),
 
+          getSmartUnits().catch(() => ({
+            data: {
+              smartUnits: [],
+            },
+          })),
+
           getProduct(id),
 
-          getProductTechnologies(id).catch(() => []),
+          getProductTechnologies(
+            id,
+          ).catch(() => []),
 
-          getProductImages(id).catch(() => []),
+          getProductImages(
+            id,
+          ).catch(() => []),
         ]);
 
         const categoriesData =
-          categoriesResponse?.data?.categories ||
-          categoriesResponse?.categories ||
-          (Array.isArray(categoriesResponse) ? categoriesResponse : []);
+          categoriesResponse?.data
+            ?.categories ||
+          categoriesResponse
+            ?.categories ||
+          (Array.isArray(
+            categoriesResponse,
+          )
+            ? categoriesResponse
+            : []);
 
-        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+        setCategories(
+          Array.isArray(
+            categoriesData,
+          )
+            ? categoriesData
+            : [],
+        );
 
         const technologyModelsData =
-          technologyModelsResponse?.data?.technologyModels ||
-          technologyModelsResponse?.technologyModels ||
-          (Array.isArray(technologyModelsResponse)
+          technologyModelsResponse?.data
+            ?.technologyModels ||
+          technologyModelsResponse
+            ?.technologyModels ||
+          (Array.isArray(
+            technologyModelsResponse,
+          )
             ? technologyModelsResponse
             : []);
 
         setTechnologyModels(
-          Array.isArray(technologyModelsData) ? technologyModelsData : [],
+          Array.isArray(
+            technologyModelsData,
+          )
+            ? technologyModelsData
+            : [],
+        );
+
+        const smartUnitsData =
+          smartUnitsResponse?.data
+            ?.smartUnits ||
+          smartUnitsResponse
+            ?.smartUnits ||
+          [];
+
+        setSmartUnits(
+          Array.isArray(
+            smartUnitsData,
+          )
+            ? smartUnitsData
+            : [],
         );
 
         const product =
-          productResponse?.data?.product || productResponse?.product;
+          productResponse?.data
+            ?.product ||
+          productResponse?.product;
 
         if (!product) {
-          throw new Error("Product not found.");
+          throw new Error(
+            "Product not found.",
+          );
         }
 
         const loadedImages =
-          productImagesResponse?.data?.productImages ||
-          productImagesResponse?.productImages ||
-          (Array.isArray(productImagesResponse) ? productImagesResponse : []);
+          productImagesResponse?.data
+            ?.productImages ||
+          productImagesResponse
+            ?.productImages ||
+          (Array.isArray(
+            productImagesResponse,
+          )
+            ? productImagesResponse
+            : []);
 
-        const imagesData = Array.isArray(loadedImages) ? loadedImages : [];
+        const imagesData =
+          Array.isArray(
+            loadedImages,
+          )
+            ? loadedImages
+            : [];
 
-        setExistingImages(imagesData);
-
-        const productPrimaryImage = product.primaryImage || "";
-
-        const primaryFromImages = imagesData.find(
-          (image) => image.isPrimary === true,
+        setExistingImages(
+          imagesData,
         );
+
+        const productPrimaryImage =
+          product.primaryImage ||
+          "";
+
+        const primaryFromImages =
+          imagesData.find(
+            (image) =>
+              image.isPrimary ===
+              true,
+          );
 
         setPrimaryImage(
           productPrimaryImage ||
-            primaryFromImages?.imageUrl ||
-            imagesData[0]?.imageUrl ||
+            primaryFromImages
+              ?.imageUrl ||
+            imagesData[0]
+              ?.imageUrl ||
             "",
         );
 
         let productTags = "";
 
-        if (Array.isArray(product.tags)) {
-          productTags = product.tags.join(", ");
-        } else if (typeof product.tags === "string") {
-          productTags = product.tags;
+        if (
+          Array.isArray(
+            product.tags,
+          )
+        ) {
+          productTags =
+            product.tags.join(", ");
+        } else if (
+          typeof product.tags ===
+          "string"
+        ) {
+          productTags =
+            product.tags;
         }
 
         setFormData({
-          name: product.name || "",
+          name:
+            product.name || "",
 
-          shortDescription: product.shortDescription || "",
+          shortDescription:
+            product.shortDescription ||
+            "",
 
-          description: product.description || "",
+          description:
+            product.description ||
+            "",
 
-          category: product.category?._id || product.category || "",
+          category:
+            product.category?._id ||
+            product.category ||
+            "",
 
-          price: product.price ?? "",
+          price:
+            product.price ?? "",
 
-          comparePrice: product.comparePrice ?? "",
+          costPrice:
+            product.costPrice ?? "",
 
-          stock: product.stock ?? "",
+          comparePrice:
+            product.comparePrice ??
+            "",
 
-          sku: product.sku || "",
+          stock:
+            product.stock ?? "",
 
-          material: product.material || "",
+          sku:
+            product.sku || "",
 
-          color: product.color || "",
+          material:
+            product.material || "",
 
-          weight: product.weight ?? "",
+          color:
+            product.color || "",
 
-          featured: Boolean(product.featured),
+          weight:
+            product.weight ?? "",
 
-          bestSeller: Boolean(product.bestSeller),
+          featured:
+            Boolean(
+              product.featured,
+            ),
 
-          newArrival: Boolean(product.newArrival),
+          bestSeller:
+            Boolean(
+              product.bestSeller,
+            ),
 
-          tags: productTags,
+          newArrival:
+            Boolean(
+              product.newArrival,
+            ),
 
-          seoTitle: product.seoTitle || "",
+          tags:
+            productTags,
 
-          seoDescription: product.seoDescription || "",
+          seoTitle:
+            product.seoTitle || "",
 
-          seoSlug: product.seoSlug || "",
+          seoDescription:
+            product.seoDescription ||
+            "",
 
-          preparationDays: product.preparationDays ?? "",
+          seoSlug:
+            product.seoSlug || "",
 
-          careInstructions: product.careInstructions || "",
+          preparationDays:
+            product.preparationDays ??
+            "",
 
-          isCustomizable: Boolean(product.isCustomizable),
+          careInstructions:
+            product.careInstructions ||
+            "",
 
-          status: product.status || "active",
+          isCustomizable:
+            Boolean(
+              product.isCustomizable,
+            ),
+
+          status:
+            product.status ||
+            "active",
         });
 
         const loadedProductTechnologies =
-          productTechnologiesResponse?.data?.productTechnologies ||
-          productTechnologiesResponse?.productTechnologies ||
-          (Array.isArray(productTechnologiesResponse)
+          productTechnologiesResponse
+            ?.data
+            ?.productTechnologies ||
+          productTechnologiesResponse
+            ?.productTechnologies ||
+          (Array.isArray(
+            productTechnologiesResponse,
+          )
             ? productTechnologiesResponse
             : []);
 
-        const relations = Array.isArray(loadedProductTechnologies)
-          ? loadedProductTechnologies
-          : [];
+        const relations =
+          Array.isArray(
+            loadedProductTechnologies,
+          )
+            ? loadedProductTechnologies
+            : [];
 
         const selectedIds = [];
 
         const prices = {};
 
-        relations.forEach((relation) => {
-          const modelId =
-            relation.technologyModel?._id || relation.technologyModel;
-
-          if (!modelId) {
-            return;
-          }
-
-          const idString = modelId.toString();
-
-          if (!selectedIds.includes(idString)) {
-            selectedIds.push(idString);
-          }
-
-          prices[idString] = {
-            relationId: relation._id || "",
-
-            extraPrice: relation.extraPrice ?? 0,
-          };
-        });
-
-        if (
-          selectedIds.length === 0 &&
-          Array.isArray(product.technologyModels)
-        ) {
-          product.technologyModels.forEach((model) => {
-            const modelId = typeof model === "object" ? model._id : model;
+        relations.forEach(
+          (relation) => {
+            const modelId =
+              relation
+                .technologyModel?._id ||
+              relation
+                .technologyModel;
 
             if (!modelId) {
               return;
             }
 
-            const idString = modelId.toString();
+            const idString =
+              modelId.toString();
 
-            if (!selectedIds.includes(idString)) {
-              selectedIds.push(idString);
+            if (
+              !selectedIds.includes(
+                idString,
+              )
+            ) {
+              selectedIds.push(
+                idString,
+              );
             }
 
             prices[idString] = {
-              relationId: "",
+              relationId:
+                relation._id || "",
 
-              extraPrice: 0,
+              extraPrice:
+                relation.extraPrice ===
+                  undefined ||
+                relation.extraPrice ===
+                  null
+                  ? ""
+                  : String(
+                      relation.extraPrice,
+                    ),
             };
-          });
+          },
+        );
+
+        if (
+          selectedIds.length ===
+            0 &&
+          Array.isArray(
+            product.technologyModels,
+          )
+        ) {
+          product.technologyModels.forEach(
+            (model) => {
+              const modelId =
+                typeof model ===
+                "object"
+                  ? model._id
+                  : model;
+
+              if (!modelId) {
+                return;
+              }
+
+              const idString =
+                modelId.toString();
+
+              if (
+                !selectedIds.includes(
+                  idString,
+                )
+              ) {
+                selectedIds.push(
+                  idString,
+                );
+              }
+
+              prices[idString] = {
+                relationId: "",
+
+                extraPrice: "",
+              };
+            },
+          );
         }
 
-        setSelectedTechnologyModels(selectedIds);
+        setSelectedTechnologyModels(
+          selectedIds,
+        );
 
-        setTechnologyPrices(prices);
+        setTechnologyPrices(
+          prices,
+        );
       } catch (error) {
         console.error(error);
 
         setError(
-          error?.response?.data?.message ||
+          error?.response?.data
+            ?.message ||
             error?.message ||
             "Failed to load product.",
         );
@@ -301,85 +539,268 @@ const EditProductPage = () => {
     }
   }, [id]);
 
-  const handleChange = (event) => {
-    const { name, value, type, checked } = event.target;
+  const handleChange = (
+    event,
+  ) => {
+    const {
+      name,
+      value,
+      type,
+      checked,
+    } = event.target;
 
-    setFormData((previous) => ({
-      ...previous,
+    setFormData(
+      (previous) => ({
+        ...previous,
 
-      [name]: type === "checkbox" ? checked : value,
-    }));
+        [name]:
+          type === "checkbox"
+            ? checked
+            : value,
+      }),
+    );
   };
 
-  const handleTechnologyModelChange = (modelId) => {
-    setSelectedTechnologyModels((previous) => {
-      if (previous.includes(modelId)) {
-        return previous.filter((selectedId) => selectedId !== modelId);
-      }
+  const handleTechnologyModelChange =
+    (modelId) => {
+      setSelectedTechnologyModels(
+        (previous) => {
+          if (
+            previous.includes(
+              modelId,
+            )
+          ) {
+            return previous.filter(
+              (selectedId) =>
+                selectedId !==
+                modelId,
+            );
+          }
 
-      setTechnologyPrices((previousPrices) => ({
-        ...previousPrices,
+          setTechnologyPrices(
+            (previousPrices) => ({
+              ...previousPrices,
+
+              [modelId]: {
+                relationId:
+                  previousPrices[
+                    modelId
+                  ]?.relationId ||
+                  "",
+
+                extraPrice:
+                  previousPrices[
+                    modelId
+                  ]?.extraPrice ??
+                  "",
+              },
+            }),
+          );
+
+          return [
+            ...previous,
+
+            modelId,
+          ];
+        },
+      );
+    };
+
+  const handleExtraPriceChange = (
+    modelId,
+    value,
+  ) => {
+    const cleanValue =
+      sanitizeMoneyInput(value);
+
+    setTechnologyPrices(
+      (previous) => ({
+        ...previous,
 
         [modelId]: {
-          relationId: "",
+          ...previous[modelId],
 
-          extraPrice: previousPrices[modelId]?.extraPrice ?? 0,
+          extraPrice:
+            cleanValue,
         },
-      }));
-
-      return [...previous, modelId];
-    });
+      }),
+    );
   };
 
-  const handleExtraPriceChange = (modelId, value) => {
-    setTechnologyPrices((previous) => ({
-      ...previous,
+  const getExtraPrice = (
+    modelId,
+  ) => {
+    return (
+      technologyPrices[modelId]
+        ?.extraPrice ?? ""
+    );
+  };
 
-      [modelId]: {
-        ...previous[modelId],
+  const getSmartUnitPriceInfo = (
+    modelId,
+  ) => {
+    const relatedSmartUnits =
+      smartUnits.filter(
+        (smartUnit) => {
+          const technologyModelId =
+            smartUnit
+              ?.technologyModel?._id ||
+            smartUnit
+              ?.technologyModel;
 
-        extraPrice: value === "" ? "" : Number(value),
+          return (
+            String(
+              technologyModelId ||
+                "",
+            ) ===
+            String(modelId)
+          );
+        },
+      );
+
+    const costs =
+      relatedSmartUnits
+        .map((smartUnit) =>
+          Number(
+            smartUnit.costPrice,
+          ),
+        )
+        .filter((price) =>
+          Number.isFinite(price),
+        );
+
+    const availableStock =
+      relatedSmartUnits.reduce(
+        (
+          total,
+          smartUnit,
+        ) =>
+          total +
+          Number(
+            smartUnit.availableStock ??
+              smartUnit.stock ??
+              0,
+          ),
+        0,
+      );
+
+    if (costs.length === 0) {
+      return {
+        count:
+          relatedSmartUnits.length,
+
+        min:
+          null,
+
+        max:
+          null,
+
+        availableStock,
+      };
+    }
+
+    return {
+      count:
+        relatedSmartUnits.length,
+
+      min:
+        Math.min(...costs),
+
+      max:
+        Math.max(...costs),
+
+      availableStock,
+    };
+  };
+
+  const formatMoney = (
+    value,
+  ) => {
+    return Number(
+      value || 0,
+    ).toLocaleString(
+      "en-EG",
+      {
+        maximumFractionDigits: 2,
       },
-    }));
+    );
   };
 
-  const getExtraPrice = (modelId) => {
-    return technologyPrices[modelId]?.extraPrice ?? 0;
-  };
-
-  const handleImageChange = (event) => {
-    const files = Array.from(event.target.files || []);
+  const handleImageChange = (
+    event,
+  ) => {
+    const files =
+      Array.from(
+        event.target.files ||
+          [],
+      );
 
     if (!files.length) {
       return;
     }
 
-    setNewImages((previous) => [...previous, ...files]);
+    setNewImages(
+      (previous) => [
+        ...previous,
 
-    setPreviewNewImages((previous) => [
-      ...previous,
+        ...files,
+      ],
+    );
 
-      ...files.map((file) => URL.createObjectURL(file)),
-    ]);
+    setPreviewNewImages(
+      (previous) => [
+        ...previous,
+
+        ...files.map(
+          (file) =>
+            URL.createObjectURL(
+              file,
+            ),
+        ),
+      ],
+    );
 
     event.target.value = "";
   };
 
-  const handleRemoveNewImage = (index) => {
-    setNewImages((previous) =>
-      previous.filter((_, imageIndex) => imageIndex !== index),
+  const handleRemoveNewImage = (
+    index,
+  ) => {
+    setNewImages(
+      (previous) =>
+        previous.filter(
+          (
+            _,
+            imageIndex,
+          ) =>
+            imageIndex !==
+            index,
+        ),
     );
 
-    setPreviewNewImages((previous) =>
-      previous.filter((_, imageIndex) => imageIndex !== index),
+    setPreviewNewImages(
+      (previous) =>
+        previous.filter(
+          (
+            _,
+            imageIndex,
+          ) =>
+            imageIndex !==
+            index,
+        ),
     );
   };
 
-  const handleSelectExistingPrimary = (imageUrl) => {
-    setPrimaryImage(imageUrl);
-  };
+  const handleSelectExistingPrimary =
+    (imageUrl) => {
+      setPrimaryImage(
+        imageUrl,
+      );
+    };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (
+    event,
+  ) => {
     event.preventDefault();
 
     setError("");
@@ -393,144 +814,251 @@ const EditProductPage = () => {
         id,
 
         {
-          name: formData.name,
+          name:
+            formData.name,
 
-          shortDescription: formData.shortDescription,
+          shortDescription:
+            formData.shortDescription,
 
-          description: formData.description,
+          description:
+            formData.description,
 
-          category: formData.category,
+          category:
+            formData.category,
 
-          price: Number(formData.price),
+          price:
+            Number(
+              formData.price,
+            ),
 
-          comparePrice: Number(formData.comparePrice) || 0,
+          costPrice:
+            Number(
+              formData.costPrice,
+            ),
 
-          stock: Number(formData.stock),
+          comparePrice:
+            Number(
+              formData.comparePrice,
+            ) || 0,
 
-          sku: formData.sku,
+          stock:
+            Number(
+              formData.stock,
+            ),
 
-          material: formData.material,
+          sku:
+            formData.sku,
 
-          color: formData.color,
+          material:
+            formData.material,
 
-          weight: Number(formData.weight) || 0,
+          color:
+            formData.color,
 
-          featured: formData.featured,
+          weight:
+            Number(
+              formData.weight,
+            ) || 0,
 
-          bestSeller: formData.bestSeller,
+          featured:
+            formData.featured,
 
-          newArrival: formData.newArrival,
+          bestSeller:
+            formData.bestSeller,
+
+          newArrival:
+            formData.newArrival,
 
           tags: formData.tags
             .split(",")
-            .map((tag) => tag.trim())
+            .map((tag) =>
+              tag.trim(),
+            )
             .filter(Boolean),
 
-          seoTitle: formData.seoTitle,
+          seoTitle:
+            formData.seoTitle,
 
-          seoDescription: formData.seoDescription,
+          seoDescription:
+            formData.seoDescription,
 
-          seoSlug: formData.seoSlug,
+          seoSlug:
+            formData.seoSlug,
 
-          preparationDays: Number(formData.preparationDays) || 0,
+          preparationDays:
+            Number(
+              formData.preparationDays,
+            ) || 0,
 
-          careInstructions: formData.careInstructions,
+          careInstructions:
+            formData.careInstructions,
 
-          isCustomizable: formData.isCustomizable,
+          isCustomizable:
+            formData.isCustomizable,
 
-          status: formData.status,
+          status:
+            formData.status,
 
-          technologyModels: selectedTechnologyModels,
+          technologyModels:
+            selectedTechnologyModels,
 
-          primaryImage: primaryImage,
+          primaryImage,
         },
       );
 
-      for (const modelId of selectedTechnologyModels) {
-        const priceData = technologyPrices[modelId];
+      for (
+        let index = 0;
+        index <
+        selectedTechnologyModels.length;
+        index += 1
+      ) {
+        const modelId =
+          selectedTechnologyModels[
+            index
+          ];
 
-        const extraPrice = Number(priceData?.extraPrice || 0);
+        const priceData =
+          technologyPrices[
+            modelId
+          ];
 
-        if (priceData?.relationId) {
+        const extraPrice =
+          Number(
+            priceData
+              ?.extraPrice || 0,
+          );
+
+        if (
+          priceData?.relationId
+        ) {
           await updateProductTechnology(
             priceData.relationId,
 
             {
               extraPrice,
+
+              displayOrder:
+                index,
             },
           );
         } else {
-          await createProductTechnology({
-            product: id,
+          await createProductTechnology(
+            {
+              product:
+                id,
 
-            technologyModel: modelId,
+              technologyModel:
+                modelId,
 
-            extraPrice,
+              extraPrice,
 
-            isDefault: false,
+              isDefault:
+                false,
 
-            isSelectable: true,
+              isSelectable:
+                true,
 
-            displayOrder: selectedTechnologyModels.indexOf(modelId),
+              displayOrder:
+                index,
 
-            status: "active",
-          });
+              status:
+                "active",
+            },
+          );
         }
       }
 
-      let uploadedPrimaryImage = primaryImage;
+      let uploadedPrimaryImage =
+        primaryImage;
 
-      for (let i = 0; i < newImages.length; i++) {
-        const imageFile = newImages[i];
+      for (
+        let i = 0;
+        i < newImages.length;
+        i += 1
+      ) {
+        const imageFile =
+          newImages[i];
 
-        const form = new FormData();
+        const form =
+          new FormData();
 
-        form.append("image", imageFile);
+        form.append(
+          "image",
+          imageFile,
+        );
 
-        const upload = await uploadImage(form);
+        const upload =
+          await uploadImage(
+            form,
+          );
 
-        const uploadedImage = upload?.image || upload?.data?.image || "";
+        const uploadedImage =
+          upload?.image ||
+          upload?.data
+            ?.image ||
+          "";
 
         if (!uploadedImage) {
           continue;
         }
 
-        const shouldBePrimary = !uploadedPrimaryImage && i === 0;
+        const shouldBePrimary =
+          !uploadedPrimaryImage &&
+          i === 0;
 
-        await createProductImage({
-          product: id,
+        await createProductImage(
+          {
+            product:
+              id,
 
-          imageUrl: uploadedImage,
+            imageUrl:
+              uploadedImage,
 
-          isPrimary: shouldBePrimary,
+            isPrimary:
+              shouldBePrimary,
 
-          sortOrder: existingImages.length + i,
-        });
+            sortOrder:
+              existingImages.length +
+              i,
+          },
+        );
 
-        if (shouldBePrimary) {
-          uploadedPrimaryImage = uploadedImage;
+        if (
+          shouldBePrimary
+        ) {
+          uploadedPrimaryImage =
+            uploadedImage;
         }
       }
 
-      if (uploadedPrimaryImage) {
+      if (
+        uploadedPrimaryImage
+      ) {
         await updateProduct(
           id,
 
           {
-            primaryImage: uploadedPrimaryImage,
+            primaryImage:
+              uploadedPrimaryImage,
           },
         );
       }
-      setSuccessMessage("Product updated successfully.");
+
+      setSuccessMessage(
+        "Product updated successfully.",
+      );
 
       setTimeout(() => {
-        navigate("/admin/products");
+        navigate(
+          "/admin/products",
+        );
       }, 800);
     } catch (error) {
       console.error(error);
 
       setError(
-        error?.response?.data?.message ||
+        error?.response?.data
+          ?.message ||
           error?.message ||
           "Failed to update product.",
       );
@@ -553,7 +1081,8 @@ const EditProductPage = () => {
             </p>
 
             <p className="mt-1 text-[8px] text-steel-gray">
-              Preparing product information
+              Preparing product
+              information
             </p>
           </div>
         </div>
@@ -595,27 +1124,27 @@ const EditProductPage = () => {
             to="/admin/products"
             className="group inline-flex min-h-[46px] w-fit items-center justify-center gap-3 rounded-full border border-champagne-gold/30 bg-soft-white/85 px-5 text-[8px] font-semibold uppercase tracking-[0.11em] text-slate-gray shadow-[0_7px_18px_rgba(7,19,31,0.035)] transition-all duration-300 hover:-translate-y-0.5 hover:border-classic-gold hover:bg-warm-ivory hover:text-midnight-navy"
           >
-            <span className="text-antique-gold transition-transform duration-300 group-hover:-translate-x-1">
+            <span className="text-antique-gold">
               ←
             </span>
+
             Back to Products
           </Link>
         </div>
       </header>
 
       <main className="relative mx-auto max-w-[1500px] px-6 py-10 sm:px-8 lg:px-10 lg:py-12">
-        <div className="pointer-events-none absolute -left-32 top-20 h-72 w-72 rounded-full bg-classic-gold/[0.06] blur-[90px]" />
-
-        <div className="pointer-events-none absolute -right-32 top-[30rem] h-80 w-80 rounded-full bg-classic-gold/[0.05] blur-[100px]" />
-
         {error && (
-          <div className="relative mb-8 flex items-center justify-between rounded-[16px] border border-antique-gold/25 bg-soft-cream/85 px-5 py-4 text-[10px] leading-5 text-antique-gold shadow-[0_7px_20px_rgba(7,19,31,0.03)]">
-            <span>{error}</span>
+          <div className="mb-8 flex items-center justify-between rounded-[16px] border border-antique-gold/25 bg-soft-cream/85 px-5 py-4 text-[10px] text-antique-gold">
+            <span>
+              {error}
+            </span>
 
             <button
               type="button"
-              onClick={() => setError("")}
-              className="font-semibold text-antique-gold"
+              onClick={() =>
+                setError("")
+              }
             >
               ×
             </button>
@@ -623,7 +1152,7 @@ const EditProductPage = () => {
         )}
 
         {successMessage && (
-          <div className="relative mb-8 rounded-[16px] border border-classic-gold/25 bg-soft-cream/85 px-5 py-4 text-[10px] font-medium leading-5 text-antique-gold shadow-[0_7px_20px_rgba(7,19,31,0.03)]">
+          <div className="mb-8 rounded-[16px] border border-classic-gold/25 bg-soft-cream/85 px-5 py-4 text-[10px] text-antique-gold">
             {successMessage}
           </div>
         )}
@@ -633,10 +1162,12 @@ const EditProductPage = () => {
           className="relative grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_380px]"
         >
           <div className="space-y-8">
-            <section className="overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85 shadow-[0_16px_46px_rgba(7,19,31,0.05)] backdrop-blur-sm">
+            <section className="overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85 shadow-[0_16px_46px_rgba(7,19,31,0.05)]">
               <div className="border-b border-light-champagne/80 bg-warm-ivory/50 px-7 py-6 sm:px-9">
                 <div className="flex items-center gap-3">
-                  <span className="text-antique-gold">01</span>
+                  <span className="text-antique-gold">
+                    01
+                  </span>
 
                   <span className="h-px w-8 bg-antique-gold" />
 
@@ -645,109 +1176,135 @@ const EditProductPage = () => {
                   </span>
                 </div>
 
-                <h2 className="mt-3 font-serif text-[1.55rem] font-normal tracking-[-0.02em] text-midnight-navy">
+                <h2 className="mt-3 font-serif text-[1.55rem]">
                   Edit your piece
                 </h2>
-
-                <p className="mt-2 text-[10px] leading-6 text-slate-gray">
-                  Update the essential information customers see when
-                  discovering this product.
-                </p>
               </div>
 
               <div className="space-y-6 p-7 sm:p-9">
                 <div>
-                  <label className="mb-2.5 block text-[8px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+                  <label className="mb-2.5 block text-[8px] font-semibold uppercase">
                     Product Name
                   </label>
 
                   <input
                     type="text"
                     name="name"
-                    value={formData.name}
-                    onChange={handleChange}
+                    value={
+                      formData.name
+                    }
+                    onChange={
+                      handleChange
+                    }
                     required
-                    placeholder="e.g. Aurelia Gold Ring"
-                    className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5 text-[11px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
+                    className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5 text-[11px] outline-none focus:border-classic-gold"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2.5 block text-[8px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+                  <label className="mb-2.5 block text-[8px] font-semibold uppercase">
                     Short Description
                   </label>
 
                   <input
                     type="text"
                     name="shortDescription"
-                    value={formData.shortDescription}
-                    onChange={handleChange}
-                    placeholder="A short elegant description"
-                    className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5 text-[11px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
+                    value={
+                      formData.shortDescription
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5 text-[11px]"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2.5 block text-[8px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+                  <label className="mb-2.5 block text-[8px] font-semibold uppercase">
                     Description
                   </label>
 
                   <textarea
                     rows={6}
                     name="description"
-                    value={formData.description}
-                    onChange={handleChange}
+                    value={
+                      formData.description
+                    }
+                    onChange={
+                      handleChange
+                    }
                     required
-                    placeholder="Describe the piece, its details, inspiration and materials..."
-                    className="w-full resize-none rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5 text-[11px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
+                    className="w-full resize-none rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5 text-[11px]"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div className="grid gap-5 md:grid-cols-2">
                   <div>
-                    <label className="mb-2.5 block text-[8px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+                    <label className="mb-2.5 block text-[8px] font-semibold uppercase">
                       Category
                     </label>
 
                     <select
                       name="category"
-                      value={formData.category}
-                      onChange={handleChange}
+                      value={
+                        formData.category
+                      }
+                      onChange={
+                        handleChange
+                      }
                       required
-                      className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5 text-[11px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
+                      className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5 text-[11px]"
                     >
-                      <option value="">Select Category</option>
+                      <option value="">
+                        Select Category
+                      </option>
 
-                      {categories.map((category) => (
-                        <option key={category._id} value={category._id}>
-                          {category.name}
-                        </option>
-                      ))}
+                      {categories.map(
+                        (category) => (
+                          <option
+                            key={
+                              category._id
+                            }
+                            value={
+                              category._id
+                            }
+                          >
+                            {
+                              category.name
+                            }
+                          </option>
+                        ),
+                      )}
                     </select>
                   </div>
 
                   <div>
-                    <label className="mb-2.5 block text-[8px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+                    <label className="mb-2.5 block text-[8px] font-semibold uppercase">
                       SKU
                     </label>
 
                     <input
                       type="text"
                       name="sku"
-                      value={formData.sku}
-                      onChange={handleChange}
-                      placeholder="SKU-001"
-                      className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5 text-[11px] uppercase text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
+                      value={
+                        formData.sku
+                      }
+                      onChange={
+                        handleChange
+                      }
+                      className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5 text-[11px]"
                     />
                   </div>
                 </div>
               </div>
             </section>
 
-            <section className="overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85 shadow-[0_16px_46px_rgba(7,19,31,0.05)] backdrop-blur-sm">
+            <section className="overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85 shadow-[0_16px_46px_rgba(7,19,31,0.05)]">
               <div className="border-b border-light-champagne/80 bg-warm-ivory/50 px-7 py-6 sm:px-9">
                 <div className="flex items-center gap-3">
-                  <span className="text-antique-gold">02</span>
+                  <span className="text-antique-gold">
+                    02
+                  </span>
 
                   <span className="h-px w-8 bg-antique-gold" />
 
@@ -756,15 +1313,15 @@ const EditProductPage = () => {
                   </span>
                 </div>
 
-                <h2 className="mt-3 font-serif text-[1.55rem] font-normal tracking-[-0.02em] text-midnight-navy">
+                <h2 className="mt-3 font-serif text-[1.55rem]">
                   Pricing & availability
                 </h2>
               </div>
 
-              <div className="grid grid-cols-1 gap-6 p-7 sm:grid-cols-2 sm:p-9 lg:grid-cols-4">
+              <div className="grid grid-cols-1 gap-6 p-7 sm:grid-cols-2 sm:p-9 xl:grid-cols-5">
                 <div>
-                  <label className="mb-2.5 block text-[8px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                    Price
+                  <label className="mb-2.5 block text-[8px] font-semibold uppercase">
+                    Selling Price
                   </label>
 
                   <div className="relative">
@@ -773,10 +1330,14 @@ const EditProductPage = () => {
                       min="0"
                       step="0.01"
                       name="price"
-                      value={formData.price}
-                      onChange={handleChange}
+                      value={
+                        formData.price
+                      }
+                      onChange={
+                        handleChange
+                      }
                       required
-                      className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 pr-14 py-3.5 text-[11px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
+                      className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5 pr-14 text-[11px]"
                     />
 
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-antique-gold">
@@ -786,7 +1347,38 @@ const EditProductPage = () => {
                 </div>
 
                 <div>
-                  <label className="mb-2.5 block text-[8px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+                  <label className="mb-2.5 block text-[8px] font-semibold uppercase text-midnight-navy">
+                    Product Cost
+                  </label>
+
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      name="costPrice"
+                      value={
+                        formData.costPrice
+                      }
+                      onChange={
+                        handleChange
+                      }
+                      required
+                      className="w-full rounded-[13px] border border-champagne-gold/35 bg-soft-cream px-4 py-3.5 pr-14 text-[11px] outline-none focus:border-classic-gold"
+                    />
+
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-antique-gold">
+                      EGP
+                    </span>
+                  </div>
+
+                  <p className="mt-2 text-[8px] text-steel-gray">
+                    Jewelry piece cost only
+                  </p>
+                </div>
+
+                <div>
+                  <label className="mb-2.5 block text-[8px] font-semibold uppercase">
                     Compare Price
                   </label>
 
@@ -796,19 +1388,23 @@ const EditProductPage = () => {
                       min="0"
                       step="0.01"
                       name="comparePrice"
-                      value={formData.comparePrice}
-                      onChange={handleChange}
-                      className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 pr-14 py-3.5 text-[11px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
+                      value={
+                        formData.comparePrice
+                      }
+                      onChange={
+                        handleChange
+                      }
+                      className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5 pr-14 text-[11px]"
                     />
 
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-antique-gold">
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-antique-gold">
                       EGP
                     </span>
                   </div>
                 </div>
 
                 <div>
-                  <label className="mb-2.5 block text-[8px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+                  <label className="mb-2.5 block text-[8px] font-semibold uppercase">
                     Stock
                   </label>
 
@@ -816,15 +1412,19 @@ const EditProductPage = () => {
                     type="number"
                     min="0"
                     name="stock"
-                    value={formData.stock}
-                    onChange={handleChange}
+                    value={
+                      formData.stock
+                    }
+                    onChange={
+                      handleChange
+                    }
                     required
-                    className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5 text-[11px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
+                    className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5 text-[11px]"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2.5 block text-[8px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+                  <label className="mb-2.5 block text-[8px] font-semibold uppercase">
                     Weight
                   </label>
 
@@ -834,12 +1434,16 @@ const EditProductPage = () => {
                       min="0"
                       step="0.01"
                       name="weight"
-                      value={formData.weight}
-                      onChange={handleChange}
-                      className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 pr-10 py-3.5 text-[11px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
+                      value={
+                        formData.weight
+                      }
+                      onChange={
+                        handleChange
+                      }
+                      className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5 pr-10 text-[11px]"
                     />
 
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-steel-gray">
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-steel-gray">
                       g
                     </span>
                   </div>
@@ -847,756 +1451,757 @@ const EditProductPage = () => {
               </div>
             </section>
 
-            <section className="overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85 shadow-[0_16px_46px_rgba(7,19,31,0.05)] backdrop-blur-sm">
+            <section className="overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85">
               <div className="border-b border-light-champagne/80 bg-warm-ivory/50 px-7 py-6 sm:px-9">
-                <div className="flex items-center gap-3">
-                  <span className="text-antique-gold">03</span>
-
-                  <span className="h-px w-8 bg-antique-gold" />
-
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-steel-gray">
-                    Details
-                  </span>
-                </div>
-
-                <h2 className="mt-3 font-serif text-[1.55rem] font-normal tracking-[-0.02em] text-midnight-navy">
-                  Product characteristics
-                </h2>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-steel-gray">
+                  03 · Details
+                </span>
               </div>
 
               <div className="space-y-6 p-7 sm:p-9">
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-                  <div>
-                    <label className="mb-2.5 block text-[8px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                      Material
-                    </label>
-
-                    <input
-                      type="text"
-                      name="material"
-                      value={formData.material}
-                      onChange={handleChange}
-                      placeholder="18K Gold"
-                      className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5 text-[11px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-2.5 block text-[8px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                      Color
-                    </label>
-
-                    <input
-                      type="text"
-                      name="color"
-                      value={formData.color}
-                      onChange={handleChange}
-                      placeholder="Gold"
-                      className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5 text-[11px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-2.5 block text-[8px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                      Preparation Days
-                    </label>
-
-                    <input
-                      type="number"
-                      min="0"
-                      name="preparationDays"
-                      value={formData.preparationDays}
-                      onChange={handleChange}
-                      className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5 text-[11px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="mb-2.5 block text-[8px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                    Tags
-                  </label>
+                <div className="grid gap-5 md:grid-cols-3">
+                  <input
+                    type="text"
+                    name="material"
+                    value={
+                      formData.material
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder="Material"
+                    className="rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5"
+                  />
 
                   <input
                     type="text"
-                    name="tags"
-                    value={formData.tags}
-                    onChange={handleChange}
-                    placeholder="gold, ring, luxury, gift"
-                    className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5 text-[11px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
+                    name="color"
+                    value={
+                      formData.color
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder="Color"
+                    className="rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5"
                   />
 
-                  <p className="mt-2 text-[8px] text-steel-gray">
-                    Separate tags with commas.
-                  </p>
-                </div>
-
-                <div>
-                  <label className="mb-2.5 block text-[8px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                    Care Instructions
-                  </label>
-
-                  <textarea
-                    rows={4}
-                    name="careInstructions"
-                    value={formData.careInstructions}
-                    onChange={handleChange}
-                    placeholder="How should the customer care for this piece?"
-                    className="w-full resize-none rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5 text-[11px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
+                  <input
+                    type="number"
+                    min="0"
+                    name="preparationDays"
+                    value={
+                      formData.preparationDays
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder="Preparation Days"
+                    className="rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5"
                   />
                 </div>
 
-                <label className="flex cursor-pointer items-center justify-between rounded-[16px] border border-light-champagne bg-warm-ivory/60 p-5 transition-all duration-300 hover:border-champagne-gold/55 hover:bg-soft-white">
+                <input
+                  type="text"
+                  name="tags"
+                  value={
+                    formData.tags
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  placeholder="gold, ring, luxury, gift"
+                  className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5"
+                />
+
+                <textarea
+                  rows={4}
+                  name="careInstructions"
+                  value={
+                    formData.careInstructions
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  placeholder="Care instructions"
+                  className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5"
+                />
+
+                <label className="flex items-center justify-between rounded-[16px] border border-light-champagne bg-warm-ivory/60 p-5">
                   <div>
                     <p className="text-[10px] font-semibold">
-                      Customizable Product
+                      Customizable
+                      Product
                     </p>
 
                     <p className="mt-1 text-[8px] text-steel-gray">
-                      Allow customers to customize this piece.
+                      Allow customers to
+                      customize this piece.
                     </p>
                   </div>
 
                   <input
                     type="checkbox"
                     name="isCustomizable"
-                    checked={formData.isCustomizable}
-                    onChange={handleChange}
+                    checked={
+                      formData.isCustomizable
+                    }
+                    onChange={
+                      handleChange
+                    }
                     className="h-4 w-4 accent-classic-gold"
                   />
                 </label>
               </div>
             </section>
 
-            <section className="overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85 shadow-[0_16px_46px_rgba(7,19,31,0.05)] backdrop-blur-sm">
+            <section className="overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85">
               <div className="border-b border-light-champagne/80 bg-warm-ivory/50 px-7 py-6 sm:px-9">
-                <div className="flex items-center gap-3">
-                  <span className="text-antique-gold">04</span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-steel-gray">
+                  04 · Technology
+                </span>
 
-                  <span className="h-px w-8 bg-antique-gold" />
-
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-steel-gray">
-                    Technology
-                  </span>
-                </div>
-
-                <h2 className="mt-3 font-serif text-[1.55rem] font-normal tracking-[-0.02em] text-midnight-navy">
+                <h2 className="mt-3 font-serif text-[1.55rem]">
                   Technology Models
                 </h2>
 
                 <p className="mt-2 max-w-2xl text-[10px] leading-6 text-slate-gray">
-                  Select the technologies available for this product and define
-                  any additional price.
+                  Select technologies,
+                  enter their extra selling
+                  prices directly, and use
+                  Smart Unit costs as a
+                  pricing reference.
                 </p>
               </div>
 
               <div className="space-y-4 p-7 sm:p-9">
-                {technologyModels.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-light-champagne bg-soft-white p-8 text-center">
-                    <div className="text-2xl text-classic-gold">✦</div>
-
-                    <p className="mt-3 text-[10px] font-semibold">
-                      No technology models available
-                    </p>
-
-                    <p className="mt-1 text-[8px] text-steel-gray">
-                      Add technology models before assigning them to products.
-                    </p>
+                {technologyModels.length ===
+                0 ? (
+                  <div className="rounded-2xl border border-dashed border-light-champagne p-8 text-center">
+                    No technology models
+                    available
                   </div>
                 ) : (
-                  technologyModels.map((model) => {
-                    const selected = selectedTechnologyModels.includes(
-                      model._id,
-                    );
+                  technologyModels.map(
+                    (model) => {
+                      const selected =
+                        selectedTechnologyModels.includes(
+                          model._id,
+                        );
 
-                    const extraPrice = getExtraPrice(model._id);
+                      const extraPrice =
+                        getExtraPrice(
+                          model._id,
+                        );
 
-                    return (
-                      <div
-                        key={model._id}
-                        className={`rounded-[18px] border p-5 transition-all duration-300 ${
-                          selected
-                            ? "border-champagne-gold/60 bg-soft-cream shadow-[0_8px_22px_rgba(7,19,31,0.035)]"
-                            : "border-light-champagne bg-warm-ivory/50 hover:border-champagne-gold/50 hover:bg-soft-white"
-                        }`}
-                      >
-                        <div className="flex items-start gap-4">
-                          <input
-                            type="checkbox"
-                            checked={selected}
-                            onChange={() =>
-                              handleTechnologyModelChange(model._id)
-                            }
-                            className="mt-1 h-4 w-4 accent-classic-gold"
-                          />
+                      const smartUnitInfo =
+                        getSmartUnitPriceInfo(
+                          model._id,
+                        );
 
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                              <div>
-                                <h3 className="font-semibold text-midnight-navy">
-                                  {model.modelName}
-                                </h3>
+                      return (
+                        <div
+                          key={
+                            model._id
+                          }
+                          className={`rounded-[18px] border p-5 ${
+                            selected
+                              ? "border-champagne-gold/60 bg-soft-cream"
+                              : "border-light-champagne bg-warm-ivory/50"
+                          }`}
+                        >
+                          <div className="flex items-start gap-4">
+                            <input
+                              type="checkbox"
+                              checked={
+                                selected
+                              }
+                              onChange={() =>
+                                handleTechnologyModelChange(
+                                  model._id,
+                                )
+                              }
+                              className="mt-1 h-4 w-4 accent-classic-gold"
+                            />
 
-                                {model.modelCode && (
-                                  <p className="mt-1 text-xs uppercase tracking-wider text-antique-gold">
-                                    {model.modelCode}
-                                  </p>
-                                )}
-
-                                {model.technology?.name && (
-                                  <p className="mt-2 text-[8px] text-steel-gray">
-                                    Technology: {model.technology.name}
-                                  </p>
-                                )}
-                              </div>
-
-                              {model.status && (
-                                <span
-                                  className={`inline-flex w-fit rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wider ${
-                                    model.status === "active"
-                                      ? "bg-soft-cream text-antique-gold"
-                                      : "bg-silver-mist text-steel-gray"
-                                  }`}
-                                >
-                                  {model.status}
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="mt-4 flex flex-wrap gap-2">
-                              {model.requiresBattery && (
-                                <span className="rounded-full border border-champagne-gold/40 bg-soft-cream px-3 py-1 text-[10px] font-semibold text-antique-gold">
-                                  Battery
-                                </span>
-                              )}
-
-                              {model.requiresActivation && (
-                                <span className="rounded-full border border-champagne-gold/40 bg-soft-cream px-3 py-1 text-[10px] font-semibold text-antique-gold">
-                                  Activation
-                                </span>
-                              )}
-
-                              {model.requiresSubscription && (
-                                <span className="rounded-full border border-champagne-gold/40 bg-soft-cream px-3 py-1 text-[10px] font-semibold text-antique-gold">
-                                  Subscription
-                                </span>
-                              )}
-                            </div>
-
-                            {selected && (
-                              <div className="mt-5 rounded-xl border border-champagne-gold/30 bg-soft-white p-4">
-                                <label className="mb-2.5 block text-[8px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                                  Extra Price
-                                </label>
-
-                                <div className="relative">
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    value={extraPrice}
-                                    onChange={(event) =>
-                                      handleExtraPriceChange(
-                                        model._id,
-                                        event.target.value,
-                                      )
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-col justify-between gap-3 sm:flex-row">
+                                <div>
+                                  <h3 className="font-semibold text-midnight-navy">
+                                    {
+                                      model.modelName
                                     }
-                                    className="w-full rounded-xl border border-light-champagne bg-soft-white px-4 py-3 pr-14 text-sm outline-none focus:border-classic-gold focus:ring-4 focus:ring-classic-gold/10"
-                                  />
+                                  </h3>
 
-                                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-antique-gold">
-                                    EGP
-                                  </span>
+                                  {model.modelCode && (
+                                    <p className="mt-1 font-mono text-[8px] uppercase tracking-wider text-antique-gold">
+                                      {
+                                        model.modelCode
+                                      }
+                                    </p>
+                                  )}
+
+                                  {model
+                                    .technology
+                                    ?.name && (
+                                    <p className="mt-2 text-[8px] text-steel-gray">
+                                      Technology:{" "}
+                                      {
+                                        model
+                                          .technology
+                                          .name
+                                      }
+                                    </p>
+                                  )}
                                 </div>
 
-                                <div className="mt-4 rounded-xl bg-soft-cream/75 p-4">
-                                  <div className="flex justify-between text-[8px] text-steel-gray">
-                                    <span>Product Price</span>
-
-                                    <span>
-                                      {Number(formData.price || 0).toFixed(2)}{" "}
-                                      EGP
-                                    </span>
-                                  </div>
-
-                                  <div className="mt-2 flex justify-between text-[8px] text-steel-gray">
-                                    <span>Extra Price</span>
-
-                                    <span>
-                                      {Number(extraPrice || 0).toFixed(2)} EGP
-                                    </span>
-                                  </div>
-
-                                  <div className="mt-3 flex justify-between border-t border-light-champagne pt-3 text-[10px] font-semibold text-midnight-navy">
-                                    <span>Final Price</span>
-
-                                    <span className="text-antique-gold">
-                                      {(
-                                        Number(formData.price || 0) +
-                                        Number(extraPrice || 0)
-                                      ).toFixed(2)}{" "}
-                                      EGP
-                                    </span>
-                                  </div>
-                                </div>
+                                <span className="h-fit rounded-full bg-soft-cream px-3 py-1 text-[7px] uppercase text-antique-gold">
+                                  {model.status ||
+                                    "active"}
+                                </span>
                               </div>
-                            )}
+
+                              <div className="mt-4 flex flex-wrap gap-2">
+                                {model.requiresBattery && (
+                                  <span className="rounded-full border border-champagne-gold/40 bg-soft-cream px-3 py-1 text-[8px] text-antique-gold">
+                                    Battery
+                                  </span>
+                                )}
+
+                                {model.requiresActivation && (
+                                  <span className="rounded-full border border-champagne-gold/40 bg-soft-cream px-3 py-1 text-[8px] text-antique-gold">
+                                    Activation
+                                  </span>
+                                )}
+
+                                {model.requiresSubscription && (
+                                  <span className="rounded-full border border-champagne-gold/40 bg-soft-cream px-3 py-1 text-[8px] text-antique-gold">
+                                    Subscription
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="mt-4 rounded-[14px] border border-dashed border-champagne-gold/35 bg-warm-ivory/75 p-4">
+                                <p className="text-[7px] font-semibold uppercase tracking-[0.17em] text-antique-gold">
+                                  Smart Unit Cost
+                                  Reference
+                                </p>
+
+                                {smartUnitInfo.min !==
+                                null ? (
+                                  <>
+                                    <p className="mt-2 font-serif text-[1.1rem] text-midnight-navy">
+                                      {smartUnitInfo.min ===
+                                      smartUnitInfo.max
+                                        ? `${formatMoney(
+                                            smartUnitInfo.min,
+                                          )} EGP`
+                                        : `${formatMoney(
+                                            smartUnitInfo.min,
+                                          )} – ${formatMoney(
+                                            smartUnitInfo.max,
+                                          )} EGP`}
+                                    </p>
+
+                                    <p className="mt-1 text-[8px] leading-5 text-steel-gray">
+                                      {
+                                        smartUnitInfo.count
+                                      }{" "}
+                                      Smart Unit
+                                      type(s) ·{" "}
+                                      {
+                                        smartUnitInfo.availableStock
+                                      }{" "}
+                                      available
+                                      physical
+                                      unit(s)
+                                    </p>
+                                  </>
+                                ) : (
+                                  <p className="mt-2 text-[9px] text-steel-gray">
+                                    No Smart Unit
+                                    cost registered
+                                    for this
+                                    technology
+                                    model.
+                                  </p>
+                                )}
+                              </div>
+
+                              {selected && (
+                                <div className="mt-5 rounded-xl border border-champagne-gold/30 bg-soft-white p-4">
+                                  <label className="mb-2.5 block text-[8px] font-semibold uppercase">
+                                    Extra Price
+                                  </label>
+
+                                  <p className="mb-3 text-[8px] text-steel-gray">
+                                    Type or paste
+                                    the complete
+                                    price directly.
+                                  </p>
+
+                                  <div className="relative">
+                                    <input
+                                      type="text"
+                                      inputMode="decimal"
+                                      value={
+                                        extraPrice
+                                      }
+                                      onChange={(
+                                        event,
+                                      ) =>
+                                        handleExtraPriceChange(
+                                          model._id,
+                                          event
+                                            .target
+                                            .value,
+                                        )
+                                      }
+                                      placeholder="e.g. 1500"
+                                      className="w-full rounded-xl border border-light-champagne bg-soft-white px-4 py-3 pr-14 text-sm outline-none focus:border-classic-gold"
+                                    />
+
+                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-antique-gold">
+                                      EGP
+                                    </span>
+                                  </div>
+
+                                  <div className="mt-4 rounded-xl bg-soft-cream/75 p-4">
+                                    <div className="flex justify-between text-[8px] text-steel-gray">
+                                      <span>
+                                        Product
+                                        Price
+                                      </span>
+
+                                      <span>
+                                        {formatMoney(
+                                          formData.price,
+                                        )}{" "}
+                                        EGP
+                                      </span>
+                                    </div>
+
+                                    <div className="mt-2 flex justify-between text-[8px] text-steel-gray">
+                                      <span>
+                                        Extra Price
+                                      </span>
+
+                                      <span>
+                                        {formatMoney(
+                                          extraPrice,
+                                        )}{" "}
+                                        EGP
+                                      </span>
+                                    </div>
+
+                                    <div className="mt-3 flex justify-between border-t border-light-champagne pt-3 text-[10px] font-semibold">
+                                      <span>
+                                        Final Price
+                                      </span>
+
+                                      <span className="text-antique-gold">
+                                        {formatMoney(
+                                          Number(
+                                            formData.price ||
+                                              0,
+                                          ) +
+                                            Number(
+                                              extraPrice ||
+                                                0,
+                                            ),
+                                        )}{" "}
+                                        EGP
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })
+                      );
+                    },
+                  )
                 )}
               </div>
             </section>
 
-            <section className="overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85 shadow-[0_16px_46px_rgba(7,19,31,0.05)] backdrop-blur-sm">
+            <section className="overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85">
               <div className="border-b border-light-champagne/80 bg-warm-ivory/50 px-7 py-6 sm:px-9">
-                <div className="flex items-center gap-3">
-                  <span className="text-antique-gold">05</span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-steel-gray">
+                  05 · Media
+                </span>
 
-                  <span className="h-px w-8 bg-antique-gold" />
-
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-steel-gray">
-                    Media
-                  </span>
-                </div>
-
-                <h2 className="mt-3 font-serif text-[1.55rem] font-normal tracking-[-0.02em] text-midnight-navy">
+                <h2 className="mt-3 font-serif text-[1.55rem]">
                   Product Images
                 </h2>
-
-                <p className="mt-2 text-[10px] text-slate-gray">
-                  Select the primary image or upload additional product images.
-                </p>
               </div>
 
               <div className="p-7 sm:p-9">
-                {existingImages.length > 0 && (
+                {existingImages.length >
+                  0 && (
                   <div>
-                    <div className="mb-4 flex items-center gap-3">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-steel-gray">
-                        Current Images
-                      </span>
-
-                      <span className="h-px flex-1 bg-light-champagne" />
-                    </div>
+                    <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.25em] text-steel-gray">
+                      Current Images
+                    </p>
 
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                      {existingImages.map((image, index) => {
-                        const imageUrl =
-                          image.imageUrl || image.url || image.image || "";
+                      {existingImages.map(
+                        (
+                          image,
+                          index,
+                        ) => {
+                          const imageUrl =
+                            image.imageUrl ||
+                            image.url ||
+                            image.image ||
+                            "";
 
-                        const isPrimary = primaryImage === imageUrl;
+                          const isPrimary =
+                            primaryImage ===
+                            imageUrl;
 
-                        return (
-                          <button
-                            type="button"
-                            key={image._id || index}
-                            onClick={() =>
-                              handleSelectExistingPrimary(imageUrl)
-                            }
-                            className={`group overflow-hidden rounded-2xl border text-left transition-all ${
-                              isPrimary
-                                ? "border-antique-gold bg-soft-cream/75 ring-2 ring-classic-gold/20"
-                                : "border-light-champagne bg-soft-white hover:border-classic-gold"
-                            }`}
-                          >
-                            <div className="relative aspect-square overflow-hidden">
-                              {imageUrl ? (
-                                <img
-                                  src={imageUrl}
-                                  alt={formData.name}
-                                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                                />
-                              ) : (
-                                <div className="flex h-full items-center justify-center text-[8px] text-steel-gray">
-                                  No Image
-                                </div>
-                              )}
+                          return (
+                            <button
+                              type="button"
+                              key={
+                                image._id ||
+                                index
+                              }
+                              onClick={() =>
+                                handleSelectExistingPrimary(
+                                  imageUrl,
+                                )
+                              }
+                              className={`overflow-hidden rounded-2xl border ${
+                                isPrimary
+                                  ? "border-antique-gold ring-2 ring-classic-gold/20"
+                                  : "border-light-champagne"
+                              }`}
+                            >
+                              <div className="relative aspect-square">
+                                {imageUrl ? (
+                                  <img
+                                    src={
+                                      imageUrl
+                                    }
+                                    alt={
+                                      formData.name
+                                    }
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="flex h-full items-center justify-center">
+                                    No
+                                    Image
+                                  </div>
+                                )}
 
-                              {isPrimary && (
-                                <div className="absolute left-3 top-3 rounded-full bg-midnight-navy px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-champagne-gold">
-                                  Primary
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="flex items-center justify-between px-3 py-3">
-                              <span className="text-[8px] text-steel-gray">
-                                Image {index + 1}
-                              </span>
-
-                              {isPrimary && (
-                                <span className="text-[9px] font-semibold uppercase tracking-wider text-antique-gold">
-                                  Selected
-                                </span>
-                              )}
-                            </div>
-                          </button>
-                        );
-                      })}
+                                {isPrimary && (
+                                  <span className="absolute left-3 top-3 rounded-full bg-midnight-navy px-3 py-1 text-[8px] text-champagne-gold">
+                                    Primary
+                                  </span>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        },
+                      )}
                     </div>
-
-                    <p className="mt-4 text-[8px] text-steel-gray">
-                      Click any current image to make it the primary image.
-                    </p>
                   </div>
                 )}
 
-                <div className={existingImages.length > 0 ? "mt-8" : ""}>
-                  <div className="mb-4 flex items-center gap-3">
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-steel-gray">
-                      Add New Images
-                    </span>
-
-                    <span className="h-px flex-1 bg-light-champagne" />
-                  </div>
-
-                  <label className="group flex cursor-pointer flex-col items-center justify-center rounded-[18px] border border-dashed border-champagne-gold/40 bg-warm-ivory/55 px-6 py-12 text-center transition-all duration-300 hover:border-champagne-gold/70 hover:bg-soft-white">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full border border-champagne-gold/25 bg-soft-white text-[18px] text-classic-gold shadow-[0_7px_18px_rgba(7,19,31,0.035)] transition-all duration-300 group-hover:-translate-y-1">
+                <div
+                  className={
+                    existingImages.length
+                      ? "mt-8"
+                      : ""
+                  }
+                >
+                  <label className="flex cursor-pointer flex-col items-center justify-center rounded-[18px] border border-dashed border-champagne-gold/40 bg-warm-ivory/55 px-6 py-12">
+                    <div className="text-2xl text-classic-gold">
                       +
                     </div>
 
-                    <p className="mt-5 text-[10px] font-semibold">
-                      Upload Product Images
-                    </p>
-
-                    <p className="mt-2 text-[8px] text-steel-gray">
-                      PNG, JPG or WEBP
+                    <p className="mt-4 text-[10px] font-semibold">
+                      Upload Product
+                      Images
                     </p>
 
                     <input
                       type="file"
                       multiple
                       accept="image/*"
-                      onChange={handleImageChange}
+                      onChange={
+                        handleImageChange
+                      }
                       className="hidden"
                     />
                   </label>
                 </div>
 
-                {previewNewImages.length > 0 && (
-                  <div className="mt-7">
-                    <div className="mb-4 flex items-center gap-3">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-steel-gray">
-                        New Images
-                      </span>
-
-                      <span className="h-px flex-1 bg-light-champagne" />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                      {previewNewImages.map((image, index) => (
+                {previewNewImages.length >
+                  0 && (
+                  <div className="mt-7 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                    {previewNewImages.map(
+                      (
+                        image,
+                        index,
+                      ) => (
                         <div
                           key={`${image}-${index}`}
-                          className="group overflow-hidden rounded-2xl border border-light-champagne bg-soft-white"
+                          className="overflow-hidden rounded-2xl border border-light-champagne"
                         >
-                          <div className="relative aspect-square overflow-hidden">
+                          <div className="relative aspect-square">
                             <img
-                              src={image}
+                              src={
+                                image
+                              }
                               alt=""
-                              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                              className="h-full w-full object-cover"
                             />
 
                             <button
                               type="button"
-                              onClick={() => handleRemoveNewImage(index)}
-                              className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-midnight-navy/90 text-soft-white transition hover:bg-antique-gold"
+                              onClick={() =>
+                                handleRemoveNewImage(
+                                  index,
+                                )
+                              }
+                              className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-midnight-navy text-white"
                             >
                               ×
                             </button>
                           </div>
-
-                          <div className="px-3 py-2.5 text-[8px] text-steel-gray">
-                            New Image {index + 1}
-                          </div>
                         </div>
-                      ))}
-                    </div>
+                      ),
+                    )}
                   </div>
                 )}
-
-                <div className="mt-6 rounded-2xl border border-champagne-gold/30 bg-soft-cream/75 p-4">
-                  <div className="flex gap-3">
-                    <span className="text-antique-gold">✦</span>
-
-                    <p className="text-[9px] leading-6 text-slate-gray">
-                      Existing images cannot be deleted with the currently
-                      available API. You can select an existing image as primary
-                      or upload additional images.
-                    </p>
-                  </div>
-                </div>
               </div>
             </section>
 
-            <section className="overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85 shadow-[0_16px_46px_rgba(7,19,31,0.05)] backdrop-blur-sm">
+            <section className="overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85">
               <div className="border-b border-light-champagne/80 bg-warm-ivory/50 px-7 py-6 sm:px-9">
-                <div className="flex items-center gap-3">
-                  <span className="text-antique-gold">06</span>
-
-                  <span className="h-px w-8 bg-antique-gold" />
-
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-steel-gray">
-                    SEO
-                  </span>
-                </div>
-
-                <h2 className="mt-3 font-serif text-[1.55rem] font-normal tracking-[-0.02em] text-midnight-navy">
-                  Search optimization
-                </h2>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-steel-gray">
+                  06 · SEO
+                </span>
               </div>
 
               <div className="space-y-5 p-7 sm:p-9">
-                <div>
-                  <label className="mb-2.5 block text-[8px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                    SEO Title
-                  </label>
+                <input
+                  type="text"
+                  name="seoTitle"
+                  value={
+                    formData.seoTitle
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  placeholder="SEO Title"
+                  className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5"
+                />
 
-                  <input
-                    type="text"
-                    name="seoTitle"
-                    value={formData.seoTitle}
-                    onChange={handleChange}
-                    placeholder="Elegant gold jewelry..."
-                    className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5 text-[11px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
-                  />
-                </div>
+                <input
+                  type="text"
+                  name="seoSlug"
+                  value={
+                    formData.seoSlug
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  placeholder="SEO Slug"
+                  className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5"
+                />
 
-                <div>
-                  <label className="mb-2.5 block text-[8px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                    SEO Slug
-                  </label>
-
-                  <input
-                    type="text"
-                    name="seoSlug"
-                    value={formData.seoSlug}
-                    onChange={handleChange}
-                    placeholder="elegant-gold-ring"
-                    className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5 text-[11px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2.5 block text-[8px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                    SEO Description
-                  </label>
-
-                  <textarea
-                    rows={4}
-                    name="seoDescription"
-                    value={formData.seoDescription}
-                    onChange={handleChange}
-                    placeholder="Write a short search engine description..."
-                    className="w-full resize-none rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5 text-[11px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
-                  />
-                </div>
+                <textarea
+                  rows={4}
+                  name="seoDescription"
+                  value={
+                    formData.seoDescription
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  placeholder="SEO Description"
+                  className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5"
+                />
               </div>
             </section>
           </div>
 
           <aside className="space-y-6 xl:sticky xl:top-28 xl:self-start">
-            <div className="overflow-hidden rounded-[26px] border border-champagne-gold/15 bg-midnight-navy text-soft-white shadow-[0_22px_55px_rgba(7,19,31,0.18)]">
-              <div className="relative overflow-hidden px-7 py-8">
-                <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full border border-champagne-gold/15" />
+            <div className="rounded-[26px] bg-midnight-navy p-7 text-soft-white">
+              <p className="text-[9px] uppercase tracking-[0.3em] text-champagne-gold">
+                Product Status
+              </p>
 
-                <div className="pointer-events-none absolute -bottom-20 -left-16 h-44 w-44 rounded-full border border-champagne-gold/10" />
+              <select
+                name="status"
+                value={
+                  formData.status
+                }
+                onChange={
+                  handleChange
+                }
+                className="mt-5 w-full rounded-xl border border-champagne-gold/20 bg-rich-navy px-4 py-3"
+              >
+                <option value="active">
+                  Active
+                </option>
 
-                <div className="relative">
-                  <div className="mb-5 flex items-center gap-3">
-                    <span className="h-px w-8 bg-antique-gold" />
+                <option value="inactive">
+                  Inactive
+                </option>
+              </select>
+            </div>
 
-                    <span className="text-[9px] font-semibold uppercase tracking-[0.3em] text-champagne-gold">
-                      Product Status
-                    </span>
-                  </div>
+            <div className="rounded-[22px] border border-light-champagne bg-soft-white p-6">
+              <h3 className="font-semibold">
+                Marketing
+              </h3>
 
-                  <h2 className="font-serif text-[1.55rem] font-normal tracking-[-0.02em] text-soft-white">
-                    Update your
-                    <span className="mt-1 block font-serif italic text-champagne-gold">
-                      beautiful piece.
-                    </span>
-                  </h2>
+              <div className="mt-5 space-y-3">
+                {[
+                  [
+                    "featured",
+                    "Featured",
+                  ],
 
-                  <p className="mt-4 text-sm leading-6 text-premium-silver/70">
-                    Update the product information and save your changes to the
-                    collection.
-                  </p>
-                </div>
-              </div>
+                  [
+                    "bestSeller",
+                    "Best Seller",
+                  ],
 
-              <div className="border-t border-soft-white/10 p-6">
-                <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.2em] text-premium-silver/70">
-                  Status
-                </label>
+                  [
+                    "newArrival",
+                    "New Arrival",
+                  ],
+                ].map(
+                  ([
+                    name,
+                    label,
+                  ]) => (
+                    <label
+                      key={name}
+                      className="flex items-center justify-between rounded-xl border border-light-champagne p-4"
+                    >
+                      <span>
+                        {label}
+                      </span>
 
-                <select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleChange}
-                  className="h-[48px] w-full rounded-[12px] border border-champagne-gold/20 bg-rich-navy px-4 text-[10px] text-soft-white outline-none transition focus:border-champagne-gold"
-                >
-                  <option value="active">Active</option>
-
-                  <option value="inactive">Inactive</option>
-                </select>
+                      <input
+                        type="checkbox"
+                        name={
+                          name
+                        }
+                        checked={
+                          formData[
+                            name
+                          ]
+                        }
+                        onChange={
+                          handleChange
+                        }
+                        className="h-4 w-4 accent-classic-gold"
+                      />
+                    </label>
+                  ),
+                )}
               </div>
             </div>
 
-            <div className="rounded-[22px] border border-light-champagne/90 bg-soft-white/85 p-6 shadow-[0_12px_35px_rgba(7,19,31,0.045)] backdrop-blur-sm">
-              <div className="mb-5 flex items-center gap-3">
-                <span className="text-antique-gold">✦</span>
+            <div className="rounded-[22px] border border-light-champagne bg-soft-white p-6">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-steel-gray">
+                Pricing Summary
+              </p>
 
-                <div>
-                  <h3 className="font-semibold">Marketing</h3>
+              <div className="mt-5 space-y-4">
+                <div className="flex justify-between border-b border-light-champagne pb-4">
+                  <span className="text-[10px] text-slate-gray">
+                    Selling Price
+                  </span>
 
-                  <p className="mt-1 text-[8px] text-steel-gray">
-                    Highlight this product in your store.
-                  </p>
+                  <span className="font-semibold text-antique-gold">
+                    {formData.price
+                      ? `${formData.price} EGP`
+                      : "—"}
+                  </span>
                 </div>
-              </div>
 
-              <div className="space-y-3">
-                <label className="flex cursor-pointer items-center justify-between rounded-xl border border-light-champagne bg-soft-white p-4 transition hover:border-classic-gold/50">
-                  <span className="text-[10px] font-medium">Featured</span>
+                <div className="flex justify-between border-b border-light-champagne pb-4">
+                  <span className="text-[10px] text-slate-gray">
+                    Product Cost
+                  </span>
 
-                  <input
-                    type="checkbox"
-                    name="featured"
-                    checked={formData.featured}
-                    onChange={handleChange}
-                    className="h-4 w-4 accent-classic-gold"
-                  />
-                </label>
+                  <span className="font-semibold text-midnight-navy">
+                    {formData.costPrice !==
+                    ""
+                      ? `${formData.costPrice} EGP`
+                      : "—"}
+                  </span>
+                </div>
 
-                <label className="flex cursor-pointer items-center justify-between rounded-xl border border-light-champagne bg-soft-white p-4 transition hover:border-classic-gold/50">
-                  <span className="text-[10px] font-medium">Best Seller</span>
-
-                  <input
-                    type="checkbox"
-                    name="bestSeller"
-                    checked={formData.bestSeller}
-                    onChange={handleChange}
-                    className="h-4 w-4 accent-classic-gold"
-                  />
-                </label>
-
-                <label className="flex cursor-pointer items-center justify-between rounded-xl border border-light-champagne bg-soft-white p-4 transition hover:border-classic-gold/50">
-                  <span className="text-[10px] font-medium">New Arrival</span>
-
-                  <input
-                    type="checkbox"
-                    name="newArrival"
-                    checked={formData.newArrival}
-                    onChange={handleChange}
-                    className="h-4 w-4 accent-classic-gold"
-                  />
-                </label>
-              </div>
-            </div>
-
-            <div className="rounded-[22px] border border-light-champagne/90 bg-soft-white/85 p-6 shadow-[0_12px_35px_rgba(7,19,31,0.045)] backdrop-blur-sm">
-              <div className="mb-5 flex items-center gap-3">
-                <span className="h-px w-8 bg-antique-gold" />
-
-                <span className="text-[9px] font-semibold uppercase tracking-[0.3em] text-steel-gray">
-                  Summary
-                </span>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between border-b border-light-champagne/70 pb-4">
+                <div className="flex justify-between border-b border-light-champagne pb-4">
                   <span className="text-[10px] text-slate-gray">
                     Technology Models
                   </span>
 
-                  <span className="font-semibold text-midnight-navy">
-                    {selectedTechnologyModels.length}
+                  <span className="font-semibold">
+                    {
+                      selectedTechnologyModels.length
+                    }
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between border-b border-light-champagne/70 pb-4">
+                <div className="flex justify-between border-b border-light-champagne pb-4">
                   <span className="text-[10px] text-slate-gray">
                     Current Images
                   </span>
 
-                  <span className="font-semibold text-midnight-navy">
-                    {existingImages.length}
+                  <span className="font-semibold">
+                    {
+                      existingImages.length
+                    }
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between border-b border-light-champagne/70 pb-4">
+                <div className="flex justify-between">
                   <span className="text-[10px] text-slate-gray">
                     New Images
                   </span>
 
-                  <span className="font-semibold text-midnight-navy">
-                    {newImages.length}
+                  <span className="font-semibold">
+                    {
+                      newImages.length
+                    }
                   </span>
                 </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-slate-gray">
-                    Product Price
-                  </span>
-
-                  <span className="font-semibold text-antique-gold">
-                    {formData.price ? `${formData.price} EGP` : "—"}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-[22px] border border-champagne-gold/20 bg-soft-cream/75 p-6">
-              <div className="flex gap-3">
-                <span className="text-antique-gold">✦</span>
-
-                <p className="text-[9px] leading-6 text-slate-gray">
-                  The selected image will be saved as the primary product image
-                  when you update the product.
-                </p>
               </div>
             </div>
           </aside>
 
           <div className="xl:col-span-2">
-            <div className="rounded-[22px] border border-light-champagne/90 bg-soft-white/85 p-6 shadow-[0_12px_35px_rgba(7,19,31,0.045)] backdrop-blur-sm sm:p-8">
-              <div className="mb-6 flex items-center gap-3">
-                <span className="h-px w-8 bg-antique-gold" />
-
-                <span className="text-[9px] font-semibold uppercase tracking-[0.3em] text-steel-gray">
-                  Save Changes
-                </span>
-              </div>
-
-              <div className="flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-end">
+            <div className="rounded-[22px] border border-light-champagne bg-soft-white p-6 sm:p-8">
+              <div className="flex flex-col-reverse gap-4 sm:flex-row sm:justify-end">
                 <Link
                   to="/admin/products"
-                  className="inline-flex min-h-[48px] items-center justify-center rounded-[13px] border border-light-champagne bg-soft-white px-7 text-[8px] font-semibold uppercase tracking-[0.11em] text-slate-gray transition-all duration-300 hover:-translate-y-0.5 hover:border-champagne-gold hover:bg-warm-ivory hover:text-midnight-navy"
+                  className="inline-flex min-h-[48px] items-center justify-center rounded-[13px] border border-light-champagne bg-soft-white px-7 text-[8px] font-semibold uppercase"
                 >
                   Cancel
                 </Link>
 
                 <button
                   type="submit"
-                  disabled={isSaving}
-                  className="group inline-flex min-h-[48px] min-w-[210px] items-center justify-center gap-3 rounded-[13px] bg-midnight-navy px-8 text-[8px] font-semibold uppercase tracking-[0.11em] text-soft-white shadow-[0_11px_26px_rgba(18,38,58,0.14)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-rich-navy hover:shadow-[0_15px_32px_rgba(18,38,58,0.2)] disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={
+                    isSaving
+                  }
+                  className="inline-flex min-h-[48px] min-w-[210px] items-center justify-center rounded-[13px] bg-midnight-navy px-8 text-[8px] font-semibold uppercase text-soft-white disabled:opacity-50"
                 >
-                  {isSaving ? (
-                    <>
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-soft-white/30 border-t-soft-white" />
-                      Updating Product...
-                    </>
-                  ) : (
-                    <>
-                      Update Product
-                      <span className="text-champagne-gold transition-transform duration-300 group-hover:translate-x-1">
-                        →
-                      </span>
-                    </>
-                  )}
+                  {isSaving
+                    ? "Updating Product..."
+                    : "Update Product"}
                 </button>
               </div>
             </div>
