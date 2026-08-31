@@ -174,6 +174,12 @@ const orderItemSchema = new mongoose.Schema(
       min: 0,
     },
 
+    productCostSnapshot: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
     image: {
       type: String,
       default: "",
@@ -312,8 +318,12 @@ const orderSchema = new mongoose.Schema(
       required: true,
 
       validate: {
-        validator: (items) => Array.isArray(items) && items.length > 0,
-        message: "Order must contain at least one item",
+        validator: (items) =>
+          Array.isArray(items) &&
+          items.length > 0,
+
+        message:
+          "Order must contain at least one item",
       },
     },
 
@@ -342,13 +352,20 @@ const orderSchema = new mongoose.Schema(
 
     paymentMethod: {
       type: String,
-      enum: ["cash_on_delivery", "card"],
+      enum: [
+        "cash_on_delivery",
+        "card",
+      ],
       default: "cash_on_delivery",
     },
 
     paymentStatus: {
       type: String,
-      enum: ["pending", "paid", "failed"],
+      enum: [
+        "pending",
+        "paid",
+        "failed",
+      ],
       default: "pending",
     },
 
@@ -386,6 +403,9 @@ const orderSchema = new mongoose.Schema(
 
 const Order =
   mongoose.models.Order ||
-  mongoose.model("Order", orderSchema);
+  mongoose.model(
+    "Order",
+    orderSchema,
+  );
 
 export default Order;

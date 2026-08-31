@@ -4,20 +4,29 @@ import Order from "../models/Order.js";
 import Cart from "../../cart/models/Cart.js";
 import ShippingArea from "../../shipping/models/ShippingArea.js";
 
-const createError = (message, statusCode = 400) => {
-  const error = new Error(message);
+const createError = (
+  message,
+  statusCode = 400,
+) => {
+  const error =
+    new Error(message);
 
-  error.statusCode = statusCode;
+  error.statusCode =
+    statusCode;
 
   return error;
 };
 
 const generateOrderNumber = () => {
-  const timestamp = Date.now();
+  const timestamp =
+    Date.now();
 
-  const random = Math.floor(
-    1000 + Math.random() * 9000,
-  );
+  const random =
+    Math.floor(
+      1000 +
+        Math.random() *
+          9000,
+    );
 
   return `SJ-${timestamp}-${random}`;
 };
@@ -30,8 +39,14 @@ export const createOrder = async (
     paymentMethod = "cash_on_delivery",
   },
 ) => {
-  if (!mongoose.Types.ObjectId.isValid(userId)) {
-    throw createError("Invalid user ID");
+  if (
+    !mongoose.Types.ObjectId.isValid(
+      userId,
+    )
+  ) {
+    throw createError(
+      "Invalid user ID",
+    );
   }
 
   if (!shippingAreaId) {
@@ -63,28 +78,33 @@ export const createOrder = async (
     );
   }
 
-  const cart = await Cart.findOne({
-    user: userId,
-  })
-    .populate({
-      path: "items.product",
-      select:
-        "name price images primaryImage image",
+  const cart =
+    await Cart.findOne({
+      user: userId,
     })
-    .populate({
-      path: "items.variant",
-    })
-    .populate({
-      path: "items.productTechnology",
+      .populate({
+        path: "items.product",
 
-      populate: {
-        path: "technologyModel",
+        select:
+          "name price costPrice images primaryImage image",
+      })
+      .populate({
+        path: "items.variant",
+      })
+      .populate({
+        path:
+          "items.productTechnology",
 
         populate: {
-          path: "technology",
+          path:
+            "technologyModel",
+
+          populate: {
+            path:
+              "technology",
+          },
         },
-      },
-    });
+      });
 
   if (
     !cart ||
@@ -124,244 +144,273 @@ export const createOrder = async (
   }
 
   const orderItems =
-    cart.items.map((item) => {
-      const product =
-        item.product;
+    cart.items.map(
+      (item) => {
+        const product =
+          item.product;
 
-      if (!product) {
-        throw createError(
-          "One of the products in your cart no longer exists",
-        );
-      }
+        if (!product) {
+          throw createError(
+            "One of the products in your cart no longer exists",
+          );
+        }
 
-      const productPrice =
-        Number(
-          product.price || 0,
-        );
+        const productPrice =
+          Number(
+            product.price ||
+              0,
+          );
 
-      const variant =
-        item.variant || null;
+        const productCostSnapshot =
+          Number(
+            product.costPrice ||
+              0,
+          );
 
-      const variantPrice =
-        Number(
-          variant?.price || 0,
-        );
+        const variant =
+          item.variant ||
+          null;
 
-      const productTechnology =
-        item.productTechnology ||
-        null;
+        const variantPrice =
+          Number(
+            variant?.price ||
+              0,
+          );
 
-      const technologyModel =
-        productTechnology
-          ?.technologyModel ||
-        null;
+        const productTechnology =
+          item.productTechnology ||
+          null;
 
-      const technologyPrice =
-        Number(
+        const technologyModel =
           productTechnology
-            ?.extraPrice || 0,
-        );
+            ?.technologyModel ||
+          null;
 
-      const basePrice =
-        variantPrice > 0
-          ? variantPrice
-          : productPrice;
+        const technologyPrice =
+          Number(
+            productTechnology
+              ?.extraPrice ||
+              0,
+          );
 
-      const unitPrice =
-        basePrice +
-        technologyPrice;
+        const basePrice =
+          variantPrice > 0
+            ? variantPrice
+            : productPrice;
 
-      const quantity =
-        Number(
-          item.quantity || 1,
-        );
+        const unitPrice =
+          basePrice +
+          technologyPrice;
 
-      const itemTotal =
-        unitPrice * quantity;
+        const quantity =
+          Number(
+            item.quantity ||
+              1,
+          );
 
-      const variantSnapshot =
-        variant
-          ? {
-              _id:
-                variant._id ||
-                null,
+        const itemTotal =
+          unitPrice *
+          quantity;
 
-              name:
-                variant.name ||
-                "",
+        const variantSnapshot =
+          variant
+            ? {
+                _id:
+                  variant._id ||
+                  null,
 
-              color:
-                variant.color ||
-                "",
+                name:
+                  variant.name ||
+                  "",
 
-              size:
-                variant.size ||
-                "",
+                color:
+                  variant.color ||
+                  "",
 
-              material:
-                variant.material ||
-                "",
+                size:
+                  variant.size ||
+                  "",
 
-              finish:
-                variant.finish ||
-                "",
+                material:
+                  variant.material ||
+                  "",
 
-              sku:
-                variant.sku ||
-                "",
+                finish:
+                  variant.finish ||
+                  "",
 
-              price:
-                variantPrice,
+                sku:
+                  variant.sku ||
+                  "",
 
-              image:
-                variant.image ||
-                "",
-            }
-          : null;
+                price:
+                  variantPrice,
 
-      const technologySnapshot =
-        productTechnology
-          ? {
-              _id:
-                productTechnology._id ||
-                null,
+                image:
+                  variant.image ||
+                  "",
+              }
+            : null;
 
-              name:
-                technologyModel
-                  ?.name || "",
+        const technologySnapshot =
+          productTechnology
+            ? {
+                _id:
+                  productTechnology._id ||
+                  null,
 
-              modelName:
-                technologyModel
-                  ?.modelName ||
-                "",
-
-              modelCode:
-                technologyModel
-                  ?.modelCode ||
-                "",
-
-              description:
-                technologyModel
-                  ?.description ||
-                "",
-
-              manufacturer:
-                technologyModel
-                  ?.manufacturer ||
-                "",
-
-              image:
-                technologyModel
-                  ?.image || "",
-
-              requiresBattery:
-                Boolean(
+                name:
                   technologyModel
-                    ?.requiresBattery,
-                ),
+                    ?.name ||
+                  "",
 
-              requiresActivation:
-                Boolean(
+                modelName:
                   technologyModel
-                    ?.requiresActivation,
-                ),
+                    ?.modelName ||
+                  "",
 
-              requiresSubscription:
-                Boolean(
+                modelCode:
                   technologyModel
-                    ?.requiresSubscription,
-                ),
+                    ?.modelCode ||
+                  "",
 
-              status:
-                technologyModel
-                  ?.status ||
-                "active",
+                description:
+                  technologyModel
+                    ?.description ||
+                  "",
 
-              extraPrice:
-                technologyPrice,
+                manufacturer:
+                  technologyModel
+                    ?.manufacturer ||
+                  "",
 
-              technology:
-                technologyModel
-                  ?.technology
-                  ? {
-                      _id:
-                        technologyModel
-                          .technology
-                          ._id ||
-                        null,
+                image:
+                  technologyModel
+                    ?.image ||
+                  "",
 
-                      name:
-                        technologyModel
-                          .technology
-                          .name ||
-                        "",
+                requiresBattery:
+                  Boolean(
+                    technologyModel
+                      ?.requiresBattery,
+                  ),
 
-                      code:
-                        technologyModel
-                          .technology
-                          .code ||
-                        "",
-                    }
-                  : {
-                      _id: null,
-                      name: "",
-                      code: "",
-                    },
-            }
-          : null;
+                requiresActivation:
+                  Boolean(
+                    technologyModel
+                      ?.requiresActivation,
+                  ),
 
-      const productImage =
-        product.images?.[0] ||
-        product.primaryImage ||
-        product.image ||
-        "";
+                requiresSubscription:
+                  Boolean(
+                    technologyModel
+                      ?.requiresSubscription,
+                  ),
 
-      return {
-        product:
-          product._id,
+                status:
+                  technologyModel
+                    ?.status ||
+                  "active",
 
-        name:
-          product.name,
+                extraPrice:
+                  technologyPrice,
 
-        price:
-          productPrice,
+                technology:
+                  technologyModel
+                    ?.technology
+                    ? {
+                        _id:
+                          technologyModel
+                            .technology
+                            ._id ||
+                          null,
 
-        image:
-          productImage,
+                        name:
+                          technologyModel
+                            .technology
+                            .name ||
+                          "",
 
-        variant:
-          variantSnapshot,
+                        code:
+                          technologyModel
+                            .technology
+                            .code ||
+                          "",
+                      }
+                    : {
+                        _id:
+                          null,
 
-        technologyModel:
-          technologySnapshot,
+                        name:
+                          "",
 
-        variantPrice,
+                        code:
+                          "",
+                      },
+              }
+            : null;
 
-        technologyPrice,
+        const productImage =
+          product.images?.[0] ||
+          product.primaryImage ||
+          product.image ||
+          "";
 
-        unitPrice,
+        return {
+          product:
+            product._id,
 
-        quantity,
+          name:
+            product.name,
 
-        itemTotal,
+          price:
+            productPrice,
 
-        smartUnit: null,
+          productCostSnapshot,
 
-        experience: null,
+          image:
+            productImage,
 
-        manufacturingStatus:
-          technologyModel
-            ? "pending"
-            : "not_required",
-      };
-    });
+          variant:
+            variantSnapshot,
+
+          technologyModel:
+            technologySnapshot,
+
+          variantPrice,
+
+          technologyPrice,
+
+          unitPrice,
+
+          quantity,
+
+          itemTotal,
+
+          smartUnit:
+            null,
+
+          experience:
+            null,
+
+          manufacturingStatus:
+            technologyModel
+              ? "pending"
+              : "not_required",
+        };
+      },
+    );
 
   const subtotal =
     orderItems.reduce(
-      (total, item) =>
+      (
+        total,
+        item,
+      ) =>
         total +
         Number(
-          item.itemTotal || 0,
+          item.itemTotal ||
+            0,
         ),
       0,
     );
@@ -457,7 +506,7 @@ export const createOrder = async (
       )
       .populate(
         "items.product",
-        "name price images primaryImage image",
+        "name price costPrice images primaryImage image",
       )
       .populate(
         "items.smartUnit",
@@ -469,20 +518,22 @@ export const createOrder = async (
   return populatedOrder;
 };
 
-export const getUserOrders = async (
-  userId,
-) => {
-  return Order.find({
-    user: userId,
-  })
-    .populate(
-      "items.product",
-      "name price images primaryImage image",
-    )
-    .sort({
-      createdAt: -1,
-    });
-};
+export const getUserOrders =
+  async (
+    userId,
+  ) => {
+    return Order.find({
+      user: userId,
+    })
+      .populate(
+        "items.product",
+        "name price costPrice images primaryImage image",
+      )
+      .sort({
+        createdAt:
+          -1,
+      });
+  };
 
 export const getUserOrderById =
   async (
@@ -505,7 +556,7 @@ export const getUserOrderById =
         user: userId,
       }).populate(
         "items.product",
-        "name price images primaryImage image",
+        "name price costPrice images primaryImage image",
       );
 
     if (!order) {
@@ -527,15 +578,18 @@ export const getAllOrders =
       )
       .populate(
         "items.product",
-        "name price images primaryImage image",
+        "name price costPrice images primaryImage image",
       )
       .sort({
-        createdAt: -1,
+        createdAt:
+          -1,
       });
   };
 
 export const getOrderById =
-  async (orderId) => {
+  async (
+    orderId,
+  ) => {
     if (
       !mongoose.Types.ObjectId.isValid(
         orderId,
@@ -556,7 +610,7 @@ export const getOrderById =
         )
         .populate(
           "items.product",
-          "name price images primaryImage image",
+          "name price costPrice images primaryImage image",
         );
 
     if (!order) {
@@ -603,15 +657,32 @@ export const updateOrderStatus =
       );
     }
 
+    const updateData = {
+      orderStatus,
+    };
+
+    /*
+      Once the order is delivered,
+      it is considered paid.
+    */
+    if (
+      orderStatus ===
+      "delivered"
+    ) {
+      updateData.paymentStatus =
+        "paid";
+    }
+
     const order =
       await Order.findByIdAndUpdate(
         orderId,
+        updateData,
         {
-          orderStatus,
-        },
-        {
-          new: true,
-          runValidators: true,
+          new:
+            true,
+
+          runValidators:
+            true,
         },
       )
         .populate(
@@ -620,7 +691,7 @@ export const updateOrderStatus =
         )
         .populate(
           "items.product",
-          "name price images primaryImage image",
+          "name price costPrice images primaryImage image",
         );
 
     if (!order) {
@@ -634,7 +705,9 @@ export const updateOrderStatus =
   };
 
 export const deleteOrder =
-  async (orderId) => {
+  async (
+    orderId,
+  ) => {
     if (
       !mongoose.Types.ObjectId.isValid(
         orderId,
