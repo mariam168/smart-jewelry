@@ -7,6 +7,7 @@ import {
   getAdminOrders,
   getAdminOrderById,
   updateAdminOrderStatus,
+  deleteAdminOrder,
 } from "../controllers/orderController.js";
 
 import { protect } from "../../auth/middleware/authMiddleware.js";
@@ -30,6 +31,13 @@ router.patch(
   protect,
   adminMiddleware,
   updateAdminOrderStatus,
+);
+
+router.delete(
+  "/admin/:id",
+  protect,
+  adminMiddleware,
+  deleteAdminOrder,
 );
 
 export default router;

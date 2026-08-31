@@ -13,9 +13,11 @@ import {
   startPackagingController,
   completePackagingController,
   cancelManufacturingOrderController,
+  deleteManufacturingOrderController,
 } from "../controllers/manufacturingController.js";
 
 import { protect } from "../../auth/middleware/authMiddleware.js";
+
 import adminMiddleware from "../../admin/middleware/adminMiddleware.js";
 
 const router = express.Router();
@@ -80,6 +82,11 @@ router.patch(
 router.patch(
   "/:id/cancel",
   cancelManufacturingOrderController,
+);
+
+router.delete(
+  "/:id",
+  deleteManufacturingOrderController,
 );
 
 export default router;

@@ -11,9 +11,12 @@ import {
   FaBan,
   FaBagShopping,
   FaCreditCard,
+  FaTrash,
 } from "react-icons/fa6";
 
 import { getAdminOrders } from "../../orders/services/orderApi.js";
+
+import api from "../../../lib/axios";
 
 const COLORS = {
   background: "#F8F5EF",
@@ -104,6 +107,8 @@ const AdminOrdersPage = () => {
 
   const [error, setError] = useState("");
 
+  const [deletingOrderId, setDeletingOrderId] = useState("");
+
   const fetchOrders = async () => {
     try {
       setLoading(true);
@@ -124,6 +129,41 @@ const AdminOrdersPage = () => {
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  const handleDeleteOrder = async (order) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete order #${order.orderNumber}?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingOrderId(order._id);
+
+      setError("");
+
+      await api.delete(
+        `/orders/admin/${order._id}`,
+      );
+
+      setOrders((previousOrders) =>
+        previousOrders.filter(
+          (item) => item._id !== order._id,
+        ),
+      );
+    } catch (error) {
+      console.error("Failed to delete order:", error);
+
+      setError(
+        error?.response?.data?.message ||
+          "Failed to delete order",
+      );
+    } finally {
+      setDeletingOrderId("");
+    }
+  };
 
   if (loading) {
     return (
@@ -197,6 +237,7 @@ const AdminOrdersPage = () => {
             className="group inline-flex min-h-[48px] w-fit items-center justify-center gap-3 rounded-[13px] border border-champagne-gold/20 bg-soft-white/[0.05] px-5 text-[9px] font-semibold uppercase tracking-[0.12em] text-soft-white shadow-[0_10px_24px_rgba(0,0,0,0.12)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-champagne-gold/45 hover:bg-soft-white/[0.09]"
           >
             <FaRotate className="text-[11px] text-champagne-gold transition-transform duration-500 group-hover:rotate-180" />
+
             Refresh
           </button>
         </div>
@@ -426,7 +467,9 @@ const AdminOrdersPage = () => {
                     paymentStatusConfig[order.paymentStatus] ||
                     paymentStatusConfig.pending;
 
-                  const customerEmail = order.user?.email || "Unknown customer";
+                  const customerEmail =
+                    order.user?.email ||
+                    "Unknown customer";
 
                   const customerName =
                     [
@@ -434,7 +477,12 @@ const AdminOrdersPage = () => {
                       order.shippingAddress?.lastName,
                     ]
                       .filter(Boolean)
-                      .join(" ") || "Unknown customer";
+                      .join(" ") ||
+                    "Unknown customer";
+
+                  const isDeleting =
+                    deletingOrderId ===
+                    order._id;
 
                   return (
                     <tr
@@ -456,7 +504,9 @@ const AdminOrdersPage = () => {
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-3">
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-champagne-gold/15 bg-midnight-navy text-[9px] font-semibold text-champagne-gold shadow-[0_6px_16px_rgba(18,38,58,0.12)]">
-                            {customerName.charAt(0).toUpperCase()}
+                            {customerName
+                              .charAt(0)
+                              .toUpperCase()}
                           </div>
 
                           <div className="min-w-0">
@@ -478,7 +528,9 @@ const AdminOrdersPage = () => {
                           </span>
 
                           <span className="text-[9px] text-slate-gray">
-                            {order.items?.length === 1 ? "item" : "items"}
+                            {order.items?.length === 1
+                              ? "item"
+                              : "items"}
                           </span>
                         </div>
                       </td>
@@ -495,7 +547,8 @@ const AdminOrdersPage = () => {
                             <FaCreditCard className="text-[10px] text-classic-gold" />
 
                             <span>
-                              {order.paymentMethod === "cash_on_delivery"
+                              {order.paymentMethod ===
+                              "cash_on_delivery"
                                 ? "Cash on Delivery"
                                 : "Card"}
                             </span>
@@ -513,7 +566,9 @@ const AdminOrdersPage = () => {
                         <span
                           className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.08em] ${status.className}`}
                         >
-                          <span className="text-[8px]">{status.icon}</span>
+                          <span className="text-[8px]">
+                            {status.icon}
+                          </span>
 
                           {status.label}
                         </span>
@@ -521,18 +576,40 @@ const AdminOrdersPage = () => {
 
                       <td className="px-6 py-5">
                         <p className="text-[9px] text-slate-gray">
-                          {formatDate(order.createdAt)}
+                          {formatDate(
+                            order.createdAt,
+                          )}
                         </p>
                       </td>
 
                       <td className="px-6 py-5 text-right">
-                        <Link
-                          to={`/admin/orders/${order._id}`}
-                          className="group/view inline-flex min-h-[38px] items-center justify-center gap-2.5 rounded-full bg-midnight-navy px-4 text-[7px] font-semibold uppercase tracking-[0.1em] text-soft-white shadow-[0_7px_18px_rgba(18,38,58,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-rich-navy hover:shadow-[0_10px_22px_rgba(18,38,58,0.18)]"
-                        >
-                          <FaEye className="text-[9px] text-champagne-gold transition-transform duration-300 group-hover/view:scale-110" />
-                          View
-                        </Link>
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            to={`/admin/orders/${order._id}`}
+                            className="group/view inline-flex min-h-[38px] items-center justify-center gap-2.5 rounded-full bg-midnight-navy px-4 text-[7px] font-semibold uppercase tracking-[0.1em] text-soft-white shadow-[0_7px_18px_rgba(18,38,58,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-rich-navy hover:shadow-[0_10px_22px_rgba(18,38,58,0.18)]"
+                          >
+                            <FaEye className="text-[9px] text-champagne-gold transition-transform duration-300 group-hover/view:scale-110" />
+
+                            View
+                          </Link>
+
+                          <button
+                            type="button"
+                            disabled={isDeleting}
+                            onClick={() =>
+                              handleDeleteOrder(
+                                order,
+                              )
+                            }
+                            className="group/delete inline-flex min-h-[38px] items-center justify-center gap-2.5 rounded-full border border-antique-gold/25 bg-soft-white px-4 text-[7px] font-semibold uppercase tracking-[0.1em] text-antique-gold transition-all duration-300 hover:-translate-y-0.5 hover:border-antique-gold/50 hover:bg-soft-cream hover:text-midnight-navy disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+                          >
+                            <FaTrash className="text-[9px] transition-transform duration-300 group-hover/delete:scale-110" />
+
+                            {isDeleting
+                              ? "Deleting..."
+                              : "Delete"}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -545,7 +622,9 @@ const AdminOrdersPage = () => {
         <div className="relative flex items-center justify-center gap-3 border-t border-light-champagne/70 px-6 py-4">
           <span className="h-px w-8 bg-classic-gold/30" />
 
-          <span className="text-[7px] text-classic-gold">✦</span>
+          <span className="text-[7px] text-classic-gold">
+            ✦
+          </span>
 
           <span className="h-px w-8 bg-classic-gold/30" />
         </div>
@@ -554,11 +633,15 @@ const AdminOrdersPage = () => {
       <div className="flex flex-wrap items-center justify-center gap-3 py-2 text-[7px] font-semibold uppercase tracking-[0.28em] text-steel-gray">
         <span>Elegant</span>
 
-        <span className="text-classic-gold">✦</span>
+        <span className="text-classic-gold">
+          ✦
+        </span>
 
         <span>Personal</span>
 
-        <span className="text-classic-gold">✦</span>
+        <span className="text-classic-gold">
+          ✦
+        </span>
 
         <span>Smart</span>
       </div>

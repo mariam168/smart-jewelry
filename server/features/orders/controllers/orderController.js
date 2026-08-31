@@ -5,6 +5,7 @@ import {
   getAllOrders,
   getOrderById,
   updateOrderStatus,
+  deleteOrder,
 } from "../services/orderService.js";
 
 export const createOrderController = async (req, res, next) => {
@@ -98,6 +99,20 @@ export const updateAdminOrderStatus = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: "Order status updated successfully",
+      data: order,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteAdminOrder = async (req, res, next) => {
+  try {
+    const order = await deleteOrder(req.params.id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Order deleted successfully",
       data: order,
     });
   } catch (error) {

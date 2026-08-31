@@ -140,3 +140,13 @@ export const cancelManufacturingOrder = async (
 
   return response.data;
 };
+
+export const deleteManufacturingOrder = async (
+  manufacturingOrderId,
+) => {
+  const response = await api.delete(
+    `/manufacturing/${manufacturingOrderId}`,
+  );
+
+  return response.data;
+};

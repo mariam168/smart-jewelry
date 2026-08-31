@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { getManufacturingOrders } from "../services/manufacturingApi";
+import {
+  getManufacturingOrders,
+  deleteManufacturingOrder,
+} from "../services/manufacturingApi";
 
 const statusLabels = {
   pending: "Pending",
@@ -55,6 +58,7 @@ const AdminManufacturingOrdersPage = () => {
   const [manufacturingOrders, setManufacturingOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [deletingId, setDeletingId] = useState("");
 
   const loadManufacturingOrders = async () => {
     try {
@@ -85,6 +89,44 @@ const AdminManufacturingOrdersPage = () => {
   useEffect(() => {
     loadManufacturingOrders();
   }, []);
+
+  const handleDelete = async (manufacturingOrder) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete manufacturing order #${manufacturingOrder.orderNumber}?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingId(manufacturingOrder._id);
+      setError("");
+
+      await deleteManufacturingOrder(
+        manufacturingOrder._id,
+      );
+
+      setManufacturingOrders((previous) =>
+        previous.filter(
+          (item) =>
+            item._id !== manufacturingOrder._id,
+        ),
+      );
+    } catch (error) {
+      console.error(
+        "Unable to delete manufacturing order:",
+        error,
+      );
+
+      setError(
+        error?.response?.data?.message ||
+          "Unable to delete manufacturing order",
+      );
+    } finally {
+      setDeletingId("");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -222,6 +264,9 @@ const AdminManufacturingOrdersPage = () => {
                     manufacturingOrder?.status ||
                     "pending";
 
+                  const isDeleting =
+                    deletingId === manufacturingOrder._id;
+
                   return (
                     <tr
                       key={manufacturingOrder._id}
@@ -274,13 +319,31 @@ const AdminManufacturingOrdersPage = () => {
                       </td>
 
                       <td className="px-6 py-5 text-right">
-                        <Link
-                          to={`/admin/manufacturing/${manufacturingOrder._id}`}
-                          className="inline-flex min-h-[38px] items-center justify-center gap-3 rounded-full bg-midnight-navy px-5 text-[7px] font-semibold uppercase tracking-[0.1em] text-soft-white transition hover:bg-rich-navy"
-                        >
-                          Manage
-                          <span className="text-champagne-gold">→</span>
-                        </Link>
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            to={`/admin/manufacturing/${manufacturingOrder._id}`}
+                            className="inline-flex min-h-[38px] items-center justify-center gap-3 rounded-full bg-midnight-navy px-5 text-[7px] font-semibold uppercase tracking-[0.1em] text-soft-white transition hover:bg-rich-navy"
+                          >
+                            Manage
+
+                            <span className="text-champagne-gold">
+                              →
+                            </span>
+                          </Link>
+
+                          <button
+                            type="button"
+                            disabled={isDeleting}
+                            onClick={() =>
+                              handleDelete(manufacturingOrder)
+                            }
+                            className="inline-flex min-h-[38px] items-center justify-center rounded-full border border-antique-gold/30 bg-soft-white px-5 text-[7px] font-semibold uppercase tracking-[0.1em] text-antique-gold transition-all duration-300 hover:-translate-y-0.5 hover:border-antique-gold/60 hover:bg-soft-cream hover:text-midnight-navy disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+                          >
+                            {isDeleting
+                              ? "Deleting..."
+                              : "Delete"}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -291,7 +354,11 @@ const AdminManufacturingOrdersPage = () => {
 
           <div className="flex items-center justify-center gap-3 border-t border-light-champagne px-6 py-4">
             <span className="h-px w-8 bg-classic-gold/30" />
-            <span className="text-classic-gold">✦</span>
+
+            <span className="text-classic-gold">
+              ✦
+            </span>
+
             <span className="h-px w-8 bg-classic-gold/30" />
           </div>
         </div>

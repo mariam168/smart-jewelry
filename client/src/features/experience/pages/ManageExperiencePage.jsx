@@ -359,7 +359,7 @@ const ManageExperiencePage = () => {
   const publicLink =
     serialNumber &&
     experience?.slug
-      ? `${clientUrl}/experience/${encodeURIComponent(
+      ? `${clientUrl}/experience/public/${encodeURIComponent(
           serialNumber,
         )}/${encodeURIComponent(
           experience.slug,
@@ -572,7 +572,7 @@ const ManageExperiencePage = () => {
 
                 <div className="flex flex-col overflow-hidden rounded-[14px] border border-light-champagne bg-soft-white focus-within:border-classic-gold md:flex-row">
                   <div className="flex items-center border-b border-light-champagne bg-warm-ivory/70 px-4 py-3 text-[12px] text-slate-gray md:border-b-0 md:border-r">
-                    /experience/
+                    /experience/public/
                     {serialNumber ||
                       "SERIAL"}
                     /

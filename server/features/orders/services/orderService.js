@@ -632,3 +632,30 @@ export const updateOrderStatus =
 
     return order;
   };
+
+export const deleteOrder =
+  async (orderId) => {
+    if (
+      !mongoose.Types.ObjectId.isValid(
+        orderId,
+      )
+    ) {
+      throw createError(
+        "Invalid order ID",
+      );
+    }
+
+    const order =
+      await Order.findByIdAndDelete(
+        orderId,
+      );
+
+    if (!order) {
+      throw createError(
+        "Order not found",
+        404,
+      );
+    }
+
+    return order;
+  };

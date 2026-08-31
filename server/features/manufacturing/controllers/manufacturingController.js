@@ -11,6 +11,7 @@ import {
   startPackaging,
   completePackaging,
   cancelManufacturingOrder,
+  deleteManufacturingOrder,
 } from "../services/manufacturingService.js";
 
 const getCurrentUserId = (req) => {
@@ -229,6 +230,22 @@ export const cancelManufacturingOrderController = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: "Manufacturing order cancelled successfully",
+      data: manufacturingOrder,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteManufacturingOrderController = async (req, res, next) => {
+  try {
+    const manufacturingOrder = await deleteManufacturingOrder(
+      req.params.id,
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Manufacturing order deleted successfully",
       data: manufacturingOrder,
     });
   } catch (error) {

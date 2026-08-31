@@ -32,10 +32,7 @@ const normalizeMoney = (value, label) => {
   const number = Number(value);
 
   if (!Number.isFinite(number) || number < 0) {
-    throw createError(
-      `${label} must be a valid non-negative number`,
-      400,
-    );
+    throw createError(`${label} must be a valid non-negative number`, 400);
   }
 
   return Number(number.toFixed(2));
@@ -46,26 +43,22 @@ const ensureExperienceManageToken = async (experienceId) => {
     return null;
   }
 
-  const id =
-    experienceId?._id ||
-    experienceId;
+  const id = experienceId?._id || experienceId;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return null;
   }
 
-  const experience =
-    await Experience.findById(id).select(
-      "+manageToken +publicToken",
-    );
+  const experience = await Experience.findById(id).select(
+    "+manageToken +publicToken",
+  );
 
   if (!experience) {
     return null;
   }
 
   if (!experience.manageToken) {
-    experience.manageToken =
-      generateManageToken();
+    experience.manageToken = generateManageToken();
 
     await experience.save();
   }
@@ -82,59 +75,40 @@ const ensureProductionUnitProduct = async (
   }
 
   if (!productionUnit.orderItemId) {
-    throw createError(
-      "Production unit has no order item reference",
-      400,
-    );
+    throw createError("Production unit has no order item reference", 400);
   }
 
-  const order = await Order.findById(
-    manufacturingOrder.order,
-  );
+  const order = await Order.findById(manufacturingOrder.order);
 
   if (!order) {
-    throw createError(
-      "Original order not found",
-      404,
-    );
+    throw createError("Original order not found", 404);
   }
 
   const orderItem = order.items.find(
-    (item) =>
-      item._id?.toString() ===
-      productionUnit.orderItemId?.toString(),
+    (item) => item._id?.toString() === productionUnit.orderItemId?.toString(),
   );
 
   if (!orderItem) {
-    throw createError(
-      "Order item not found for this production unit",
-      404,
-    );
+    throw createError("Order item not found for this production unit", 404);
   }
 
   if (!orderItem.product) {
-    throw createError(
-      "The original order item has no product assigned",
-      400,
-    );
+    throw createError("The original order item has no product assigned", 400);
   }
 
-  productionUnit.product =
-    orderItem.product;
+  productionUnit.product = orderItem.product;
 
   return orderItem.product;
 };
 
-const ensureProductCostSnapshot = async (
-  productionUnit,
-) => {
+const ensureProductCostSnapshot = async (productionUnit) => {
   if (!productionUnit.product) {
     return;
   }
 
-  const product = await Product.findById(
-    productionUnit.product,
-  ).select("costPrice");
+  const product = await Product.findById(productionUnit.product).select(
+    "costPrice",
+  );
 
   if (!product) {
     return;
@@ -144,8 +118,7 @@ const ensureProductCostSnapshot = async (
     productionUnit.productCostSnapshot === undefined ||
     productionUnit.productCostSnapshot === null
   ) {
-    productionUnit.productCostSnapshot =
-      Number(product.costPrice || 0);
+    productionUnit.productCostSnapshot = Number(product.costPrice || 0);
   }
 };
 
@@ -154,41 +127,24 @@ const createExperienceForProductionUnit = async (
   productionUnit,
   experienceData = {},
 ) => {
-  const order = await Order.findById(
-    manufacturingOrder.order,
-  );
+  const order = await Order.findById(manufacturingOrder.order);
 
   if (!order) {
-    throw createError(
-      "Original order not found",
-      404,
-    );
+    throw createError("Original order not found", 404);
   }
 
-  await ensureProductionUnitProduct(
-    manufacturingOrder,
-    productionUnit,
-  );
+  await ensureProductionUnitProduct(manufacturingOrder, productionUnit);
 
   if (!productionUnit.orderItemId) {
-    throw createError(
-      "Production unit has no order item reference",
-      400,
-    );
+    throw createError("Production unit has no order item reference", 400);
   }
 
   if (!productionUnit.product) {
-    throw createError(
-      "Production unit product not found",
-      400,
-    );
+    throw createError("Production unit product not found", 400);
   }
 
   if (!productionUnit.smartUnit) {
-    throw createError(
-      "Production unit smart unit not found",
-      400,
-    );
+    throw createError("Production unit smart unit not found", 400);
   }
 
   if (!productionUnit.smartUnitInstance) {
@@ -198,16 +154,12 @@ const createExperienceForProductionUnit = async (
     );
   }
 
-  const smartUnitInstance =
-    await SmartUnitInstance.findById(
-      productionUnit.smartUnitInstance,
-    );
+  const smartUnitInstance = await SmartUnitInstance.findById(
+    productionUnit.smartUnitInstance,
+  );
 
   if (!smartUnitInstance) {
-    throw createError(
-      "Assigned smart unit instance was not found",
-      404,
-    );
+    throw createError("Assigned smart unit instance was not found", 404);
   }
 
   if (
@@ -222,59 +174,39 @@ const createExperienceForProductionUnit = async (
   }
 
   if (!smartUnitInstance.serialNumber) {
-    throw createError(
-      "Smart unit instance has no serial number",
-      400,
-    );
+    throw createError("Smart unit instance has no serial number", 400);
   }
 
-  productionUnit.serialNumber =
-    smartUnitInstance.serialNumber;
+  productionUnit.serialNumber = smartUnitInstance.serialNumber;
 
-  const orderItems =
-    order.items || [];
+  const orderItems = order.items || [];
 
   let orderItem = orderItems.find(
-    (item) =>
-      item._id?.toString() ===
-      productionUnit.orderItemId?.toString(),
+    (item) => item._id?.toString() === productionUnit.orderItemId?.toString(),
   );
 
   if (!orderItem) {
     orderItem = orderItems.find(
-      (item) =>
-        item.product?.toString() ===
-        productionUnit.product?.toString(),
+      (item) => item.product?.toString() === productionUnit.product?.toString(),
     );
   }
 
   if (!orderItem) {
-    throw createError(
-      "Order item not found",
-      404,
-    );
+    throw createError("Order item not found", 404);
   }
 
-  if (
-    productionUnit.orderItemId?.toString() !==
-    orderItem._id.toString()
-  ) {
-    productionUnit.orderItemId =
-      orderItem._id;
+  if (productionUnit.orderItemId?.toString() !== orderItem._id.toString()) {
+    productionUnit.orderItemId = orderItem._id;
   }
 
   if (productionUnit.experience) {
-    const existingExperience =
-      await Experience.findById(
-        productionUnit.experience,
-      ).select(
-        "+manageToken +publicToken",
-      );
+    const existingExperience = await Experience.findById(
+      productionUnit.experience,
+    ).select("+manageToken +publicToken");
 
     if (existingExperience) {
       if (!existingExperience.manageToken) {
-        existingExperience.manageToken =
-          generateManageToken();
+        existingExperience.manageToken = generateManageToken();
 
         await existingExperience.save();
       }
@@ -286,26 +218,20 @@ const createExperienceForProductionUnit = async (
   }
 
   if (orderItem.experience) {
-    const existingExperience =
-      await Experience.findById(
-        orderItem.experience,
-      ).select(
-        "+manageToken +publicToken",
-      );
+    const existingExperience = await Experience.findById(
+      orderItem.experience,
+    ).select("+manageToken +publicToken");
 
     if (existingExperience) {
       if (!existingExperience.manageToken) {
-        existingExperience.manageToken =
-          generateManageToken();
+        existingExperience.manageToken = generateManageToken();
 
         await existingExperience.save();
       }
 
-      productionUnit.experience =
-        existingExperience._id;
+      productionUnit.experience = existingExperience._id;
 
-      productionUnit.status =
-        "experience_created";
+      productionUnit.status = "experience_created";
 
       return existingExperience;
     }
@@ -313,412 +239,279 @@ const createExperienceForProductionUnit = async (
     orderItem.experience = null;
   }
 
-  const manageToken =
-    generateManageToken();
+  const manageToken = generateManageToken();
 
-  const publicToken =
-    generatePublicToken();
+  const publicToken = generatePublicToken();
 
-  const slug =
-    experienceData?.slug ||
-    generateExperienceSlug();
+  const slug = experienceData?.slug || generateExperienceSlug();
 
-  const type =
-    experienceData?.type ||
-    "personal";
+  const type = experienceData?.type || "personal";
 
-  const serialNumber =
-    smartUnitInstance.serialNumber;
+  const serialNumber = smartUnitInstance.serialNumber;
 
-  const experience =
-    await Experience.create({
-      order: order._id,
+  const experience = await Experience.create({
+    order: order._id,
 
-      orderItem:
-        orderItem._id,
+    orderItem: orderItem._id,
 
-      product:
-        productionUnit.product,
+    product: productionUnit.product,
 
-      smartUnit:
-        productionUnit.smartUnit,
+    smartUnit: productionUnit.smartUnit,
 
-      owner:
-        order.user ||
-        order.customer ||
-        null,
+    owner: order.user || order.customer || null,
 
-      serialNumber,
+    serialNumber,
 
-      manageToken,
+    manageToken,
 
-      publicToken,
+    publicToken,
 
-      slug,
+    slug,
 
-      type,
+    type,
 
-      status: "waiting",
+    status: "waiting",
 
-      visits: 0,
+    visits: 0,
 
-      activatedAt: null,
-    });
+    activatedAt: null,
+  });
 
   if (type === "personal") {
     await ExperiencePersonal.create({
-      experience:
-        experience._id,
+      experience: experience._id,
     });
   }
 
-  orderItem.experience =
-    experience._id;
+  orderItem.experience = experience._id;
 
   await order.save();
 
-  productionUnit.experience =
-    experience._id;
+  productionUnit.experience = experience._id;
 
-  productionUnit.status =
-    "experience_created";
+  productionUnit.status = "experience_created";
 
-  productionUnit.serialNumber =
-    smartUnitInstance.serialNumber;
+  productionUnit.serialNumber = smartUnitInstance.serialNumber;
 
   return experience;
 };
 
-export const createManufacturingOrder = async (
-  orderId,
-) => {
-  validateObjectId(
-    orderId,
-    "Invalid order ID",
-  );
+export const createManufacturingOrder = async (orderId) => {
+  validateObjectId(orderId, "Invalid order ID");
 
-  const existingManufacturingOrder =
-    await ManufacturingOrder.findOne({
-      order: orderId,
-    });
+  const existingManufacturingOrder = await ManufacturingOrder.findOne({
+    order: orderId,
+  });
 
   if (existingManufacturingOrder) {
-    return getManufacturingOrderById(
-      existingManufacturingOrder._id,
-    );
+    return getManufacturingOrderById(existingManufacturingOrder._id);
   }
 
-  const order = await Order.findById(
-    orderId,
-  )
-    .populate(
-      "user",
-      "email firstName lastName",
-    )
+  const order = await Order.findById(orderId)
+    .populate("user", "email firstName lastName")
     .populate(
       "items.product",
       "name price costPrice images primaryImage image sku material color",
     );
 
   if (!order) {
-    throw createError(
-      "Order not found",
-      404,
-    );
+    throw createError("Order not found", 404);
   }
 
-  if (
-    !Array.isArray(order.items) ||
-    order.items.length === 0
-  ) {
-    throw createError(
-      "Order has no items",
-      400,
-    );
+  if (!Array.isArray(order.items) || order.items.length === 0) {
+    throw createError("Order has no items", 400);
   }
 
   const units = [];
 
   for (const item of order.items) {
-    const productId =
-      item.product?._id ||
-      item.product;
+    const productId = item.product?._id || item.product;
 
     if (!productId) {
-      throw createError(
-        `Product is missing for order item ${item._id}`,
-        400,
-      );
+      throw createError(`Product is missing for order item ${item._id}`, 400);
     }
 
-    if (
-      !mongoose.Types.ObjectId.isValid(
-        productId,
-      )
-    ) {
-      throw createError(
-        `Invalid product ID for order item ${item._id}`,
-        400,
-      );
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      throw createError(`Invalid product ID for order item ${item._id}`, 400);
     }
 
-    const quantity =
-      Number(
-        item.quantity || 1,
-      );
+    const quantity = Number(item.quantity || 1);
 
-    const productCostSnapshot =
-      Number(
-        item.product?.costPrice || 0,
-      );
+    const productCostSnapshot = Number(item.product?.costPrice || 0);
 
-    for (
-      let index = 1;
-      index <= quantity;
-      index += 1
-    ) {
+    for (let index = 1; index <= quantity; index += 1) {
       units.push({
-        orderItemId:
-          item._id,
+        orderItemId: item._id,
 
-        product:
-          productId,
+        product: productId,
 
-        unitNumber:
-          index,
+        unitNumber: index,
 
-        smartUnit:
-          null,
+        smartUnit: null,
 
-        smartUnitInstance:
-          null,
+        smartUnitInstance: null,
 
-        experience:
-          null,
+        experience: null,
 
-        serialNumber:
-          "",
+        serialNumber: "",
 
         productCostSnapshot,
 
-        smartUnitCostSnapshot:
-          0,
+        smartUnitCostSnapshot: 0,
 
-        assemblyCost:
-          0,
+        assemblyCost: 0,
 
-        packagingCost:
-          0,
+        packagingCost: 0,
 
-        packagingNotes:
-          "",
+        packagingNotes: "",
 
-        status:
-          "pending",
+        status: "pending",
 
-        notes:
-          "",
+        notes: "",
 
-        startedAt:
-          null,
+        startedAt: null,
 
-        packagingStartedAt:
-          null,
+        packagingStartedAt: null,
 
-        packagingCompletedAt:
-          null,
+        packagingCompletedAt: null,
 
-        completedAt:
-          null,
+        completedAt: null,
       });
     }
   }
 
   if (units.length === 0) {
-    throw createError(
-      "Unable to create production units",
-      400,
-    );
+    throw createError("Unable to create production units", 400);
   }
 
-  const manufacturingOrder =
-    await ManufacturingOrder.create({
-      order:
-        order._id,
+  const manufacturingOrder = await ManufacturingOrder.create({
+    order: order._id,
 
-      orderNumber:
-        order.orderNumber,
+    orderNumber: order.orderNumber,
 
-      customer:
-        order.user?._id ||
-        order.user,
+    customer: order.user?._id || order.user,
 
-      status:
-        "pending",
+    status: "pending",
 
-      units,
+    units,
 
-      notes:
-        "",
+    notes: "",
 
-      startedBy:
-        null,
+    startedBy: null,
 
-      completedBy:
-        null,
+    completedBy: null,
 
-      startedAt:
-        null,
+    startedAt: null,
 
-      completedAt:
-        null,
-    });
+    completedAt: null,
+  });
 
-  return getManufacturingOrderById(
-    manufacturingOrder._id,
-  );
+  return getManufacturingOrderById(manufacturingOrder._id);
 };
 
-export const getAllManufacturingOrders =
-  async () => {
-    const manufacturingOrders =
-      await ManufacturingOrder.find()
-        .populate(
-          "order",
-          "orderNumber orderStatus paymentStatus paymentMethod total createdAt",
-        )
-        .populate(
-          "customer",
-          "email firstName lastName",
-        )
-        .populate(
-          "units.product",
-          "name price costPrice image images primaryImage sku material color",
-        )
-        .populate(
-          "units.smartUnit",
-          "name description image technologyModel costPrice firmwareVersion manufacturer status",
-        )
-        .populate(
-          "units.smartUnitInstance",
-          "smartUnit serialNumber status firmwareVersion assignedAt activatedAt notes",
-        )
-        .populate({
-          path:
-            "units.experience",
-
-          select:
-            "serialNumber +manageToken +publicToken slug type status activatedAt visits",
-        })
-        .sort({
-          createdAt: -1,
-        });
-
-    return manufacturingOrders;
-  };
-
-export const getManufacturingOrderById = async (
-  manufacturingOrderId,
-) => {
-  validateObjectId(
-    manufacturingOrderId,
-    "Invalid manufacturing order ID",
-  );
-
-  const manufacturingOrder =
-    await ManufacturingOrder.findById(
-      manufacturingOrderId,
+export const getAllManufacturingOrders = async () => {
+  const manufacturingOrders = await ManufacturingOrder.find()
+    .populate(
+      "order",
+      "orderNumber orderStatus paymentStatus paymentMethod total createdAt",
     )
-      .populate(
-        "order",
-        "orderNumber orderStatus paymentStatus paymentMethod total subtotal shippingCost shippingAddress items createdAt updatedAt user",
-      )
-      .populate(
-        "order.items.product",
-        "name price costPrice image images primaryImage sku material color",
-      )
-      .populate(
-        "order.items.technologyModel",
-        "name modelName modelCode manufacturer description status",
-      )
-      .populate(
-        "customer",
-        "email firstName lastName",
-      )
-      .populate(
-        "units.product",
-        "name price costPrice image images primaryImage sku material color technologyModels",
-      )
-      .populate({
-        path:
-          "units.smartUnit",
+    .populate("customer", "email firstName lastName")
+    .populate(
+      "units.product",
+      "name price costPrice image images primaryImage sku material color",
+    )
+    .populate(
+      "units.smartUnit",
+      "name description image technologyModel costPrice firmwareVersion manufacturer status",
+    )
+    .populate(
+      "units.smartUnitInstance",
+      "smartUnit serialNumber status firmwareVersion assignedAt activatedAt notes",
+    )
+    .populate({
+      path: "units.experience",
+
+      select:
+        "serialNumber +manageToken +publicToken slug type status activatedAt visits",
+    })
+    .sort({
+      createdAt: -1,
+    });
+
+  return manufacturingOrders;
+};
+
+export const getManufacturingOrderById = async (manufacturingOrderId) => {
+  validateObjectId(manufacturingOrderId, "Invalid manufacturing order ID");
+
+  const manufacturingOrder = await ManufacturingOrder.findById(
+    manufacturingOrderId,
+  )
+    .populate(
+      "order",
+      "orderNumber orderStatus paymentStatus paymentMethod total subtotal shippingCost shippingAddress items createdAt updatedAt user",
+    )
+    .populate(
+      "order.items.product",
+      "name price costPrice image images primaryImage sku material color",
+    )
+    .populate(
+      "order.items.technologyModel",
+      "name modelName modelCode manufacturer description status",
+    )
+    .populate("customer", "email firstName lastName")
+    .populate(
+      "units.product",
+      "name price costPrice image images primaryImage sku material color technologyModels",
+    )
+    .populate({
+      path: "units.smartUnit",
+
+      select:
+        "name description image technologyModel costPrice firmwareVersion manufacturer status",
+
+      populate: {
+        path: "technologyModel",
+
+        select: "name modelName modelCode manufacturer description status",
+      },
+    })
+    .populate({
+      path: "units.smartUnitInstance",
+
+      select:
+        "smartUnit serialNumber status firmwareVersion assignedAt activatedAt notes",
+
+      populate: {
+        path: "smartUnit",
 
         select:
           "name description image technologyModel costPrice firmwareVersion manufacturer status",
+      },
+    })
+    .populate({
+      path: "units.experience",
 
-        populate: {
-          path:
-            "technologyModel",
-
-          select:
-            "name modelName modelCode manufacturer description status",
-        },
-      })
-      .populate({
-        path:
-          "units.smartUnitInstance",
-
-        select:
-          "smartUnit serialNumber status firmwareVersion assignedAt activatedAt notes",
-
-        populate: {
-          path:
-            "smartUnit",
-
-          select:
-            "name description image technologyModel costPrice firmwareVersion manufacturer status",
-        },
-      })
-      .populate({
-        path:
-          "units.experience",
-
-        select:
-          "order orderItem product smartUnit owner serialNumber +manageToken +publicToken slug type status activatedAt visits",
-      });
+      select:
+        "order orderItem product smartUnit owner serialNumber +manageToken +publicToken slug type status activatedAt visits",
+    });
 
   if (!manufacturingOrder) {
-    throw createError(
-      "Manufacturing order not found",
-      404,
-    );
+    throw createError("Manufacturing order not found", 404);
   }
 
-  for (
-    const unit of
-      manufacturingOrder.units || []
-  ) {
+  for (const unit of manufacturingOrder.units || []) {
     if (!unit.experience) {
       continue;
     }
 
-    const fixedExperience =
-      await ensureExperienceManageToken(
-        unit.experience,
-      );
+    const fixedExperience = await ensureExperienceManageToken(unit.experience);
 
-    if (
-      fixedExperience &&
-      unit.experience?._id
-    ) {
-      unit.experience.manageToken =
-        fixedExperience.manageToken;
+    if (fixedExperience && unit.experience?._id) {
+      unit.experience.manageToken = fixedExperience.manageToken;
 
-      if (
-        fixedExperience.publicToken
-      ) {
-        unit.experience.publicToken =
-          fixedExperience.publicToken;
+      if (fixedExperience.publicToken) {
+        unit.experience.publicToken = fixedExperience.publicToken;
       }
     }
   }
@@ -726,75 +519,39 @@ export const getManufacturingOrderById = async (
   return manufacturingOrder;
 };
 
-export const startManufacturing = async (
-  manufacturingOrderId,
-  adminUserId,
-) => {
-  validateObjectId(
-    manufacturingOrderId,
-    "Invalid manufacturing order ID",
-  );
+export const startManufacturing = async (manufacturingOrderId, adminUserId) => {
+  validateObjectId(manufacturingOrderId, "Invalid manufacturing order ID");
 
-  validateObjectId(
-    adminUserId,
-    "Invalid admin user ID",
-  );
+  validateObjectId(adminUserId, "Invalid admin user ID");
 
   const manufacturingOrder =
-    await ManufacturingOrder.findById(
-      manufacturingOrderId,
-    );
+    await ManufacturingOrder.findById(manufacturingOrderId);
 
   if (!manufacturingOrder) {
-    throw createError(
-      "Manufacturing order not found",
-      404,
-    );
+    throw createError("Manufacturing order not found", 404);
   }
 
-  if (
-    manufacturingOrder.status ===
-    "completed"
-  ) {
-    throw createError(
-      "Manufacturing order is already completed",
-      400,
-    );
+  if (manufacturingOrder.status === "completed") {
+    throw createError("Manufacturing order is already completed", 400);
   }
 
-  if (
-    manufacturingOrder.status ===
-    "cancelled"
-  ) {
-    throw createError(
-      "Manufacturing order is cancelled",
-      400,
-    );
+  if (manufacturingOrder.status === "cancelled") {
+    throw createError("Manufacturing order is cancelled", 400);
   }
 
-  manufacturingOrder.status =
-    "in_progress";
+  manufacturingOrder.status = "in_progress";
 
-  manufacturingOrder.startedBy =
-    adminUserId;
+  manufacturingOrder.startedBy = adminUserId;
 
-  manufacturingOrder.startedAt =
-    manufacturingOrder.startedAt ||
-    new Date();
+  manufacturingOrder.startedAt = manufacturingOrder.startedAt || new Date();
 
-  await Order.findByIdAndUpdate(
-    manufacturingOrder.order,
-    {
-      orderStatus:
-        "processing",
-    },
-  );
+  await Order.findByIdAndUpdate(manufacturingOrder.order, {
+    orderStatus: "processing",
+  });
 
   await manufacturingOrder.save();
 
-  return getManufacturingOrderById(
-    manufacturingOrderId,
-  );
+  return getManufacturingOrderById(manufacturingOrderId);
 };
 
 export const assignSmartUnit = async (
@@ -804,88 +561,45 @@ export const assignSmartUnit = async (
   smartUnitInstanceId,
   assemblyCost = 0,
 ) => {
-  validateObjectId(
-    manufacturingOrderId,
-    "Invalid manufacturing order ID",
-  );
+  validateObjectId(manufacturingOrderId, "Invalid manufacturing order ID");
 
-  validateObjectId(
-    unitId,
-    "Invalid production unit ID",
-  );
+  validateObjectId(unitId, "Invalid production unit ID");
 
-  validateObjectId(
-    smartUnitId,
-    "Invalid smart unit ID",
-  );
+  validateObjectId(smartUnitId, "Invalid smart unit ID");
 
-  validateObjectId(
-    smartUnitInstanceId,
-    "Invalid smart unit instance ID",
-  );
+  validateObjectId(smartUnitInstanceId, "Invalid smart unit instance ID");
 
-  const normalizedAssemblyCost =
-    normalizeMoney(
-      assemblyCost,
-      "Assembly cost",
-    );
+  const normalizedAssemblyCost = normalizeMoney(assemblyCost, "Assembly cost");
 
   const manufacturingOrder =
-    await ManufacturingOrder.findById(
-      manufacturingOrderId,
-    );
+    await ManufacturingOrder.findById(manufacturingOrderId);
 
   if (!manufacturingOrder) {
-    throw createError(
-      "Manufacturing order not found",
-      404,
-    );
+    throw createError("Manufacturing order not found", 404);
   }
 
-  if (
-    manufacturingOrder.status ===
-    "cancelled"
-  ) {
-    throw createError(
-      "Manufacturing order is cancelled",
-      400,
-    );
+  if (manufacturingOrder.status === "cancelled") {
+    throw createError("Manufacturing order is cancelled", 400);
   }
 
-  if (
-    manufacturingOrder.status ===
-    "completed"
-  ) {
-    throw createError(
-      "Manufacturing order is already completed",
-      400,
-    );
+  if (manufacturingOrder.status === "completed") {
+    throw createError("Manufacturing order is already completed", 400);
   }
 
-  const productionUnit =
-    manufacturingOrder.units.id(
-      unitId,
-    );
+  const productionUnit = manufacturingOrder.units.id(unitId);
 
   if (!productionUnit) {
-    throw createError(
-      "Production unit not found",
-      404,
-    );
+    throw createError("Production unit not found", 404);
   }
 
   if (!productionUnit.product) {
-    throw createError(
-      "This production unit has no product assigned.",
-      400,
-    );
+    throw createError("This production unit has no product assigned.", 400);
   }
 
   if (productionUnit.experience) {
-    const existingExperience =
-      await Experience.findById(
-        productionUnit.experience,
-      );
+    const existingExperience = await Experience.findById(
+      productionUnit.experience,
+    );
 
     if (existingExperience) {
       throw createError(
@@ -894,38 +608,25 @@ export const assignSmartUnit = async (
       );
     }
 
-    productionUnit.experience =
-      null;
+    productionUnit.experience = null;
   }
 
-  const smartUnit =
-    await SmartUnit.findById(
-      smartUnitId,
-    );
+  const smartUnit = await SmartUnit.findById(smartUnitId);
 
   if (!smartUnit) {
-    throw createError(
-      "Smart unit not found",
-      404,
-    );
+    throw createError("Smart unit not found", 404);
   }
 
   const smartUnitInstance =
-    await SmartUnitInstance.findById(
-      smartUnitInstanceId,
-    );
+    await SmartUnitInstance.findById(smartUnitInstanceId);
 
   if (!smartUnitInstance) {
-    throw createError(
-      "Smart unit instance not found",
-      404,
-    );
+    throw createError("Smart unit instance not found", 404);
   }
 
   if (
     !smartUnitInstance.smartUnit ||
-    smartUnitInstance.smartUnit.toString() !==
-      smartUnit._id.toString()
+    smartUnitInstance.smartUnit.toString() !== smartUnit._id.toString()
   ) {
     throw createError(
       "This smart unit instance does not belong to the selected smart unit",
@@ -934,31 +635,22 @@ export const assignSmartUnit = async (
   }
 
   if (!smartUnitInstance.serialNumber) {
-    throw createError(
-      "Smart unit instance must have a serial number",
-      400,
-    );
+    throw createError("Smart unit instance must have a serial number", 400);
   }
 
-  if (
-    smartUnitInstance.status !==
-    "available"
-  ) {
+  if (smartUnitInstance.status !== "available") {
     throw createError(
       `This smart unit instance is not available. Current status: ${smartUnitInstance.status}`,
       400,
     );
   }
 
-  const alreadyAssigned =
-    manufacturingOrder.units.some(
-      (unit) =>
-        unit.smartUnitInstance &&
-        unit.smartUnitInstance.toString() ===
-          smartUnitInstanceId.toString() &&
-        unit._id.toString() !==
-          unitId.toString(),
-    );
+  const alreadyAssigned = manufacturingOrder.units.some(
+    (unit) =>
+      unit.smartUnitInstance &&
+      unit.smartUnitInstance.toString() === smartUnitInstanceId.toString() &&
+      unit._id.toString() !== unitId.toString(),
+  );
 
   if (alreadyAssigned) {
     throw createError(
@@ -975,63 +667,42 @@ export const assignSmartUnit = async (
     await SmartUnitInstance.findByIdAndUpdate(
       productionUnit.smartUnitInstance,
       {
-        status:
-          "available",
+        status: "available",
 
-        assignedAt:
-          null,
+        assignedAt: null,
 
-        activatedAt:
-          null,
+        activatedAt: null,
       },
     );
   }
 
-  await ensureProductCostSnapshot(
-    productionUnit,
-  );
+  await ensureProductCostSnapshot(productionUnit);
 
-  productionUnit.smartUnit =
-    smartUnit._id;
+  productionUnit.smartUnit = smartUnit._id;
 
-  productionUnit.smartUnitInstance =
-    smartUnitInstance._id;
+  productionUnit.smartUnitInstance = smartUnitInstance._id;
 
-  productionUnit.serialNumber =
-    smartUnitInstance.serialNumber;
+  productionUnit.serialNumber = smartUnitInstance.serialNumber;
 
-  productionUnit.smartUnitCostSnapshot =
-    Number(
-      smartUnit.costPrice || 0,
-    );
+  productionUnit.smartUnitCostSnapshot = Number(smartUnit.costPrice || 0);
 
-  productionUnit.assemblyCost =
-    normalizedAssemblyCost;
+  productionUnit.assemblyCost = normalizedAssemblyCost;
 
-  productionUnit.status =
-    "unit_assigned";
+  productionUnit.status = "unit_assigned";
 
-  smartUnitInstance.status =
-    "reserved";
+  smartUnitInstance.status = "reserved";
 
-  smartUnitInstance.assignedAt =
-    new Date();
+  smartUnitInstance.assignedAt = new Date();
 
-  smartUnitInstance.activatedAt =
-    null;
+  smartUnitInstance.activatedAt = null;
 
   await smartUnitInstance.save();
 
-  await createExperienceForProductionUnit(
-    manufacturingOrder,
-    productionUnit,
-  );
+  await createExperienceForProductionUnit(manufacturingOrder, productionUnit);
 
   await manufacturingOrder.save();
 
-  return getManufacturingOrderById(
-    manufacturingOrderId,
-  );
+  return getManufacturingOrderById(manufacturingOrderId);
 };
 
 export const updateAssemblyCost = async (
@@ -1039,74 +710,38 @@ export const updateAssemblyCost = async (
   unitId,
   assemblyCost,
 ) => {
-  validateObjectId(
-    manufacturingOrderId,
-    "Invalid manufacturing order ID",
-  );
+  validateObjectId(manufacturingOrderId, "Invalid manufacturing order ID");
 
-  validateObjectId(
-    unitId,
-    "Invalid production unit ID",
-  );
+  validateObjectId(unitId, "Invalid production unit ID");
 
-  const normalizedAssemblyCost =
-    normalizeMoney(
-      assemblyCost,
-      "Assembly cost",
-    );
+  const normalizedAssemblyCost = normalizeMoney(assemblyCost, "Assembly cost");
 
   const manufacturingOrder =
-    await ManufacturingOrder.findById(
-      manufacturingOrderId,
-    );
+    await ManufacturingOrder.findById(manufacturingOrderId);
 
   if (!manufacturingOrder) {
-    throw createError(
-      "Manufacturing order not found",
-      404,
-    );
+    throw createError("Manufacturing order not found", 404);
   }
 
-  if (
-    manufacturingOrder.status ===
-    "cancelled"
-  ) {
-    throw createError(
-      "Manufacturing order is cancelled",
-      400,
-    );
+  if (manufacturingOrder.status === "cancelled") {
+    throw createError("Manufacturing order is cancelled", 400);
   }
 
-  const productionUnit =
-    manufacturingOrder.units.id(
-      unitId,
-    );
+  const productionUnit = manufacturingOrder.units.id(unitId);
 
   if (!productionUnit) {
-    throw createError(
-      "Production unit not found",
-      404,
-    );
+    throw createError("Production unit not found", 404);
   }
 
-  if (
-    !productionUnit.smartUnit ||
-    !productionUnit.smartUnitInstance
-  ) {
-    throw createError(
-      "Assign a Smart Unit first",
-      400,
-    );
+  if (!productionUnit.smartUnit || !productionUnit.smartUnitInstance) {
+    throw createError("Assign a Smart Unit first", 400);
   }
 
-  productionUnit.assemblyCost =
-    normalizedAssemblyCost;
+  productionUnit.assemblyCost = normalizedAssemblyCost;
 
   await manufacturingOrder.save();
 
-  return getManufacturingOrderById(
-    manufacturingOrderId,
-  );
+  return getManufacturingOrderById(manufacturingOrderId);
 };
 
 export const createExperienceForUnit = async (
@@ -1114,38 +749,21 @@ export const createExperienceForUnit = async (
   unitId,
   experienceData = {},
 ) => {
-  validateObjectId(
-    manufacturingOrderId,
-    "Invalid manufacturing order ID",
-  );
+  validateObjectId(manufacturingOrderId, "Invalid manufacturing order ID");
 
-  validateObjectId(
-    unitId,
-    "Invalid production unit ID",
-  );
+  validateObjectId(unitId, "Invalid production unit ID");
 
   const manufacturingOrder =
-    await ManufacturingOrder.findById(
-      manufacturingOrderId,
-    );
+    await ManufacturingOrder.findById(manufacturingOrderId);
 
   if (!manufacturingOrder) {
-    throw createError(
-      "Manufacturing order not found",
-      404,
-    );
+    throw createError("Manufacturing order not found", 404);
   }
 
-  const productionUnit =
-    manufacturingOrder.units.id(
-      unitId,
-    );
+  const productionUnit = manufacturingOrder.units.id(unitId);
 
   if (!productionUnit) {
-    throw createError(
-      "Production unit not found",
-      404,
-    );
+    throw createError("Production unit not found", 404);
   }
 
   await createExperienceForProductionUnit(
@@ -1156,84 +774,42 @@ export const createExperienceForUnit = async (
 
   await manufacturingOrder.save();
 
-  return getManufacturingOrderById(
-    manufacturingOrderId,
-  );
+  return getManufacturingOrderById(manufacturingOrderId);
 };
 
-export const startProductionUnit = async (
-  manufacturingOrderId,
-  unitId,
-) => {
-  validateObjectId(
-    manufacturingOrderId,
-    "Invalid manufacturing order ID",
-  );
+export const startProductionUnit = async (manufacturingOrderId, unitId) => {
+  validateObjectId(manufacturingOrderId, "Invalid manufacturing order ID");
 
-  validateObjectId(
-    unitId,
-    "Invalid production unit ID",
-  );
+  validateObjectId(unitId, "Invalid production unit ID");
 
   const manufacturingOrder =
-    await ManufacturingOrder.findById(
-      manufacturingOrderId,
-    );
+    await ManufacturingOrder.findById(manufacturingOrderId);
 
   if (!manufacturingOrder) {
-    throw createError(
-      "Manufacturing order not found",
-      404,
-    );
+    throw createError("Manufacturing order not found", 404);
   }
 
-  if (
-    manufacturingOrder.status ===
-    "cancelled"
-  ) {
-    throw createError(
-      "Manufacturing order is cancelled",
-      400,
-    );
+  if (manufacturingOrder.status === "cancelled") {
+    throw createError("Manufacturing order is cancelled", 400);
   }
 
-  if (
-    manufacturingOrder.status ===
-    "completed"
-  ) {
-    throw createError(
-      "Manufacturing order is already completed",
-      400,
-    );
+  if (manufacturingOrder.status === "completed") {
+    throw createError("Manufacturing order is already completed", 400);
   }
 
-  const productionUnit =
-    manufacturingOrder.units.id(
-      unitId,
-    );
+  const productionUnit = manufacturingOrder.units.id(unitId);
 
   if (!productionUnit) {
-    throw createError(
-      "Production unit not found",
-      404,
-    );
+    throw createError("Production unit not found", 404);
+  }
+
+  if (productionUnit.status === "completed") {
+    throw createError("Production unit is already completed", 400);
   }
 
   if (
-    productionUnit.status ===
-    "completed"
-  ) {
-    throw createError(
-      "Production unit is already completed",
-      400,
-    );
-  }
-
-  if (
-    productionUnit.status ===
-      "ready_for_packaging" ||
-    productionUnit.status ===
-      "packaging"
+    productionUnit.status === "ready_for_packaging" ||
+    productionUnit.status === "packaging"
   ) {
     throw createError(
       "Production has already been completed for this unit",
@@ -1242,17 +818,11 @@ export const startProductionUnit = async (
   }
 
   if (!productionUnit.product) {
-    throw createError(
-      "Production unit has no product assigned",
-      400,
-    );
+    throw createError("Production unit has no product assigned", 400);
   }
 
   if (!productionUnit.smartUnit) {
-    throw createError(
-      "Smart unit model must be assigned first",
-      400,
-    );
+    throw createError("Smart unit model must be assigned first", 400);
   }
 
   if (!productionUnit.smartUnitInstance) {
@@ -1263,16 +833,12 @@ export const startProductionUnit = async (
   }
 
   if (!productionUnit.experience) {
-    await createExperienceForProductionUnit(
-      manufacturingOrder,
-      productionUnit,
-    );
+    await createExperienceForProductionUnit(manufacturingOrder, productionUnit);
   }
 
-  const smartUnitInstance =
-    await SmartUnitInstance.findById(
-      productionUnit.smartUnitInstance,
-    );
+  const smartUnitInstance = await SmartUnitInstance.findById(
+    productionUnit.smartUnitInstance,
+  );
 
   if (!smartUnitInstance) {
     throw createError(
@@ -1292,10 +858,7 @@ export const startProductionUnit = async (
     );
   }
 
-  const experience =
-    await Experience.findById(
-      productionUnit.experience,
-    );
+  const experience = await Experience.findById(productionUnit.experience);
 
   if (!experience) {
     throw createError(
@@ -1305,16 +868,10 @@ export const startProductionUnit = async (
   }
 
   if (!experience.product) {
-    throw createError(
-      "Experience has no product assigned",
-      400,
-    );
+    throw createError("Experience has no product assigned", 400);
   }
 
-  if (
-    experience.product.toString() !==
-    productionUnit.product.toString()
-  ) {
+  if (experience.product.toString() !== productionUnit.product.toString()) {
     throw createError(
       "Experience product does not match production unit product",
       400,
@@ -1322,81 +879,52 @@ export const startProductionUnit = async (
   }
 
   if (!experience.smartUnit) {
-    throw createError(
-      "Experience has no smart unit assigned",
-      400,
-    );
+    throw createError("Experience has no smart unit assigned", 400);
   }
 
-  if (
-    experience.smartUnit.toString() !==
-    productionUnit.smartUnit.toString()
-  ) {
+  if (experience.smartUnit.toString() !== productionUnit.smartUnit.toString()) {
     throw createError(
       "Experience smart unit does not match production unit smart unit",
       400,
     );
   }
 
-  if (
-    experience.serialNumber !==
-    smartUnitInstance.serialNumber
-  ) {
+  if (experience.serialNumber !== smartUnitInstance.serialNumber) {
     throw createError(
       "Experience serial number does not match smart unit instance serial number",
       400,
     );
   }
 
-  productionUnit.status =
-    "in_production";
+  productionUnit.status = "in_production";
 
-  productionUnit.startedAt =
-    productionUnit.startedAt ||
-    new Date();
+  productionUnit.startedAt = productionUnit.startedAt || new Date();
 
-  productionUnit.serialNumber =
-    smartUnitInstance.serialNumber;
+  productionUnit.serialNumber = smartUnitInstance.serialNumber;
 
-  smartUnitInstance.status =
-    "activated";
+  smartUnitInstance.status = "activated";
 
-  smartUnitInstance.activatedAt =
-    smartUnitInstance.activatedAt ||
-    new Date();
+  smartUnitInstance.activatedAt = smartUnitInstance.activatedAt || new Date();
 
   await smartUnitInstance.save();
 
-  experience.status =
-    "waiting";
+  experience.status = "waiting";
 
   await experience.save();
 
-  if (
-    manufacturingOrder.status ===
-    "pending"
-  ) {
-    manufacturingOrder.status =
-      "in_progress";
+  if (manufacturingOrder.status === "pending") {
+    manufacturingOrder.status = "in_progress";
 
-    manufacturingOrder.startedAt =
-      manufacturingOrder.startedAt ||
-      new Date();
+    manufacturingOrder.startedAt = manufacturingOrder.startedAt || new Date();
   }
 
   await manufacturingOrder.save();
 
-  await Order.findByIdAndUpdate(
-    manufacturingOrder.order,
-    {
-      orderStatus:
-        "processing",
-    },
-  );
+  await Order.findByIdAndUpdate(manufacturingOrder.order, {
+    orderStatus: "processing",
+  });
 
-  return getManufacturingOrderById(
-    manufacturingOrderId,
-  );
+  return getManufacturingOrderById(manufacturingOrderId);
 };
 
 export const completeProductionUnit = async (
@@ -1404,54 +932,28 @@ export const completeProductionUnit = async (
   unitId,
   notes = "",
 ) => {
-  validateObjectId(
-    manufacturingOrderId,
-    "Invalid manufacturing order ID",
-  );
+  validateObjectId(manufacturingOrderId, "Invalid manufacturing order ID");
 
-  validateObjectId(
-    unitId,
-    "Invalid production unit ID",
-  );
+  validateObjectId(unitId, "Invalid production unit ID");
 
   const manufacturingOrder =
-    await ManufacturingOrder.findById(
-      manufacturingOrderId,
-    );
+    await ManufacturingOrder.findById(manufacturingOrderId);
 
   if (!manufacturingOrder) {
-    throw createError(
-      "Manufacturing order not found",
-      404,
-    );
+    throw createError("Manufacturing order not found", 404);
   }
 
-  if (
-    manufacturingOrder.status ===
-    "cancelled"
-  ) {
-    throw createError(
-      "Manufacturing order is cancelled",
-      400,
-    );
+  if (manufacturingOrder.status === "cancelled") {
+    throw createError("Manufacturing order is cancelled", 400);
   }
 
-  const productionUnit =
-    manufacturingOrder.units.id(
-      unitId,
-    );
+  const productionUnit = manufacturingOrder.units.id(unitId);
 
   if (!productionUnit) {
-    throw createError(
-      "Production unit not found",
-      404,
-    );
+    throw createError("Production unit not found", 404);
   }
 
-  if (
-    productionUnit.status !==
-    "in_production"
-  ) {
+  if (productionUnit.status !== "in_production") {
     throw createError(
       "Production unit must be in production before completing production",
       400,
@@ -1459,17 +961,11 @@ export const completeProductionUnit = async (
   }
 
   if (!productionUnit.product) {
-    throw createError(
-      "Production unit has no product assigned",
-      400,
-    );
+    throw createError("Production unit has no product assigned", 400);
   }
 
   if (!productionUnit.smartUnit) {
-    throw createError(
-      "Smart unit model must be assigned first",
-      400,
-    );
+    throw createError("Smart unit model must be assigned first", 400);
   }
 
   if (!productionUnit.smartUnitInstance) {
@@ -1480,40 +976,24 @@ export const completeProductionUnit = async (
   }
 
   if (!productionUnit.experience) {
-    throw createError(
-      "Experience must be created first",
-      400,
-    );
+    throw createError("Experience must be created first", 400);
   }
 
-  const smartUnitInstance =
-    await SmartUnitInstance.findById(
-      productionUnit.smartUnitInstance,
-    );
+  const smartUnitInstance = await SmartUnitInstance.findById(
+    productionUnit.smartUnitInstance,
+  );
 
   if (!smartUnitInstance) {
-    throw createError(
-      "Smart unit instance not found",
-      404,
-    );
+    throw createError("Smart unit instance not found", 404);
   }
 
-  const experience =
-    await Experience.findById(
-      productionUnit.experience,
-    );
+  const experience = await Experience.findById(productionUnit.experience);
 
   if (!experience) {
-    throw createError(
-      "Experience not found",
-      404,
-    );
+    throw createError("Experience not found", 404);
   }
 
-  if (
-    experience.product?.toString() !==
-    productionUnit.product.toString()
-  ) {
+  if (experience.product?.toString() !== productionUnit.product.toString()) {
     throw createError(
       "Experience product does not match production unit product",
       400,
@@ -1521,8 +1001,7 @@ export const completeProductionUnit = async (
   }
 
   if (
-    experience.smartUnit?.toString() !==
-    productionUnit.smartUnit.toString()
+    experience.smartUnit?.toString() !== productionUnit.smartUnit.toString()
   ) {
     throw createError(
       "Experience smart unit does not match production unit smart unit",
@@ -1530,109 +1009,67 @@ export const completeProductionUnit = async (
     );
   }
 
-  if (
-    experience.serialNumber !==
-    smartUnitInstance.serialNumber
-  ) {
+  if (experience.serialNumber !== smartUnitInstance.serialNumber) {
     throw createError(
       "Experience serial number does not match smart unit instance serial number",
       400,
     );
   }
 
-  productionUnit.status =
-    "ready_for_packaging";
+  productionUnit.status = "ready_for_packaging";
 
-  productionUnit.serialNumber =
-    smartUnitInstance.serialNumber;
+  productionUnit.serialNumber = smartUnitInstance.serialNumber;
 
   if (notes) {
-    productionUnit.notes =
-      notes;
+    productionUnit.notes = notes;
   }
 
-  experience.status =
-    "waiting";
+  experience.status = "waiting";
 
   await experience.save();
 
   await manufacturingOrder.save();
 
-  return getManufacturingOrderById(
-    manufacturingOrderId,
-  );
+  return getManufacturingOrderById(manufacturingOrderId);
 };
 
-export const startPackaging = async (
-  manufacturingOrderId,
-  unitId,
-) => {
-  validateObjectId(
-    manufacturingOrderId,
-    "Invalid manufacturing order ID",
-  );
+export const startPackaging = async (manufacturingOrderId, unitId) => {
+  validateObjectId(manufacturingOrderId, "Invalid manufacturing order ID");
 
-  validateObjectId(
-    unitId,
-    "Invalid production unit ID",
-  );
+  validateObjectId(unitId, "Invalid production unit ID");
 
   const manufacturingOrder =
-    await ManufacturingOrder.findById(
-      manufacturingOrderId,
-    );
+    await ManufacturingOrder.findById(manufacturingOrderId);
 
   if (!manufacturingOrder) {
-    throw createError(
-      "Manufacturing order not found",
-      404,
-    );
+    throw createError("Manufacturing order not found", 404);
   }
 
-  if (
-    manufacturingOrder.status ===
-    "cancelled"
-  ) {
-    throw createError(
-      "Manufacturing order is cancelled",
-      400,
-    );
+  if (manufacturingOrder.status === "cancelled") {
+    throw createError("Manufacturing order is cancelled", 400);
   }
 
-  const productionUnit =
-    manufacturingOrder.units.id(
-      unitId,
-    );
+  const productionUnit = manufacturingOrder.units.id(unitId);
 
   if (!productionUnit) {
-    throw createError(
-      "Production unit not found",
-      404,
-    );
+    throw createError("Production unit not found", 404);
   }
 
-  if (
-    productionUnit.status !==
-    "ready_for_packaging"
-  ) {
+  if (productionUnit.status !== "ready_for_packaging") {
     throw createError(
       "Production must be completed before packaging can start",
       400,
     );
   }
 
-  productionUnit.status =
-    "packaging";
+  productionUnit.status = "packaging";
 
   productionUnit.packagingStartedAt =
-    productionUnit.packagingStartedAt ||
-    new Date();
+    productionUnit.packagingStartedAt || new Date();
 
   await manufacturingOrder.save();
 
-  return getManufacturingOrderById(
-    manufacturingOrderId,
-  );
+  return getManufacturingOrderById(manufacturingOrderId);
 };
 
 export const completePackaging = async (
@@ -1642,60 +1079,33 @@ export const completePackaging = async (
   packagingNotes = "",
   adminUserId = null,
 ) => {
-  validateObjectId(
-    manufacturingOrderId,
-    "Invalid manufacturing order ID",
-  );
+  validateObjectId(manufacturingOrderId, "Invalid manufacturing order ID");
 
-  validateObjectId(
-    unitId,
-    "Invalid production unit ID",
-  );
+  validateObjectId(unitId, "Invalid production unit ID");
 
-  const normalizedPackagingCost =
-    normalizeMoney(
-      packagingCost,
-      "Packaging cost",
-    );
+  const normalizedPackagingCost = normalizeMoney(
+    packagingCost,
+    "Packaging cost",
+  );
 
   const manufacturingOrder =
-    await ManufacturingOrder.findById(
-      manufacturingOrderId,
-    );
+    await ManufacturingOrder.findById(manufacturingOrderId);
 
   if (!manufacturingOrder) {
-    throw createError(
-      "Manufacturing order not found",
-      404,
-    );
+    throw createError("Manufacturing order not found", 404);
   }
 
-  if (
-    manufacturingOrder.status ===
-    "cancelled"
-  ) {
-    throw createError(
-      "Manufacturing order is cancelled",
-      400,
-    );
+  if (manufacturingOrder.status === "cancelled") {
+    throw createError("Manufacturing order is cancelled", 400);
   }
 
-  const productionUnit =
-    manufacturingOrder.units.id(
-      unitId,
-    );
+  const productionUnit = manufacturingOrder.units.id(unitId);
 
   if (!productionUnit) {
-    throw createError(
-      "Production unit not found",
-      404,
-    );
+    throw createError("Production unit not found", 404);
   }
 
-  if (
-    productionUnit.status !==
-    "packaging"
-  ) {
+  if (productionUnit.status !== "packaging") {
     throw createError(
       "Packaging must be started before it can be completed",
       400,
@@ -1703,165 +1113,191 @@ export const completePackaging = async (
   }
 
   if (!productionUnit.experience) {
-    throw createError(
-      "Experience not found for this production unit",
-      400,
-    );
+    throw createError("Experience not found for this production unit", 400);
   }
 
-  const experience =
-    await Experience.findById(
-      productionUnit.experience,
-    );
+  const experience = await Experience.findById(productionUnit.experience);
 
   if (!experience) {
-    throw createError(
-      "Experience not found",
-      404,
-    );
+    throw createError("Experience not found", 404);
   }
 
-  productionUnit.packagingCost =
-    normalizedPackagingCost;
+  productionUnit.packagingCost = normalizedPackagingCost;
 
-  productionUnit.packagingNotes =
-    String(
-      packagingNotes || "",
-    ).trim();
+  productionUnit.packagingNotes = String(packagingNotes || "").trim();
 
-  productionUnit.packagingCompletedAt =
-    new Date();
+  productionUnit.packagingCompletedAt = new Date();
 
-  productionUnit.completedAt =
-    new Date();
+  productionUnit.completedAt = new Date();
 
-  productionUnit.status =
-    "completed";
+  productionUnit.status = "completed";
 
-  experience.status =
-    "active";
+  experience.status = "active";
 
-  experience.activatedAt =
-    experience.activatedAt ||
-    new Date();
+  experience.activatedAt = experience.activatedAt || new Date();
 
   await experience.save();
 
-  const allCompleted =
-    manufacturingOrder.units.every(
-      (unit) =>
-        unit.status ===
-        "completed",
-    );
+  const allCompleted = manufacturingOrder.units.every(
+    (unit) => unit.status === "completed",
+  );
 
   if (allCompleted) {
-    manufacturingOrder.status =
-      "completed";
+    manufacturingOrder.status = "completed";
 
-    manufacturingOrder.completedAt =
-      new Date();
+    manufacturingOrder.completedAt = new Date();
 
-    if (
-      adminUserId &&
-      mongoose.Types.ObjectId.isValid(
-        adminUserId,
-      )
-    ) {
-      manufacturingOrder.completedBy =
-        adminUserId;
+    if (adminUserId && mongoose.Types.ObjectId.isValid(adminUserId)) {
+      manufacturingOrder.completedBy = adminUserId;
     }
 
-    await Order.findByIdAndUpdate(
-      manufacturingOrder.order,
-      {
-        orderStatus:
-          "shipped",
-      },
-    );
+    await Order.findByIdAndUpdate(manufacturingOrder.order, {
+      orderStatus: "shipped",
+    });
   }
 
   await manufacturingOrder.save();
 
-  return getManufacturingOrderById(
-    manufacturingOrderId,
-  );
+  return getManufacturingOrderById(manufacturingOrderId);
 };
 
-export const cancelManufacturingOrder = async (
-  manufacturingOrderId,
-) => {
+export const cancelManufacturingOrder = async (manufacturingOrderId) => {
+  validateObjectId(manufacturingOrderId, "Invalid manufacturing order ID");
+
+  const manufacturingOrder =
+    await ManufacturingOrder.findById(manufacturingOrderId);
+
+  if (!manufacturingOrder) {
+    throw createError("Manufacturing order not found", 404);
+  }
+
+  if (manufacturingOrder.status === "completed") {
+    throw createError("Completed manufacturing order cannot be cancelled", 400);
+  }
+
+  for (const unit of manufacturingOrder.units) {
+    if (unit.smartUnitInstance) {
+      await SmartUnitInstance.findByIdAndUpdate(unit.smartUnitInstance, {
+        status: "available",
+
+        assignedAt: null,
+
+        activatedAt: null,
+      });
+    }
+
+    if (unit.experience) {
+      await Experience.findByIdAndUpdate(unit.experience, {
+        status: "cancelled",
+      });
+    }
+  }
+
+  manufacturingOrder.status = "cancelled";
+
+  await manufacturingOrder.save();
+
+  await Order.findByIdAndUpdate(manufacturingOrder.order, {
+    orderStatus: "cancelled",
+  });
+
+  return getManufacturingOrderById(manufacturingOrderId);
+};
+
+export const deleteManufacturingOrder = async (manufacturingOrderId) => {
   validateObjectId(
     manufacturingOrderId,
     "Invalid manufacturing order ID",
   );
 
   const manufacturingOrder =
-    await ManufacturingOrder.findById(
-      manufacturingOrderId,
-    );
+    await ManufacturingOrder.findById(manufacturingOrderId);
 
   if (!manufacturingOrder) {
-    throw createError(
-      "Manufacturing order not found",
-      404,
+    throw createError("Manufacturing order not found", 404);
+  }
+
+  const experienceIds = [
+    ...new Set(
+      (manufacturingOrder.units || [])
+        .map((unit) => unit.experience?.toString())
+        .filter(Boolean),
+    ),
+  ];
+
+  const smartUnitInstanceIds = [
+    ...new Set(
+      (manufacturingOrder.units || [])
+        .map((unit) => unit.smartUnitInstance?.toString())
+        .filter(Boolean),
+    ),
+  ];
+
+  if (smartUnitInstanceIds.length > 0) {
+    await SmartUnitInstance.updateMany(
+      {
+        _id: {
+          $in: smartUnitInstanceIds,
+        },
+
+        status: {
+          $in: [
+            "reserved",
+            "assigned",
+            "activated",
+          ],
+        },
+      },
+      {
+        $set: {
+          status: "available",
+
+          assignedAt: null,
+
+          activatedAt: null,
+        },
+      },
     );
   }
 
-  if (
-    manufacturingOrder.status ===
-    "completed"
-  ) {
-    throw createError(
-      "Completed manufacturing order cannot be cancelled",
-      400,
+  if (experienceIds.length > 0) {
+    await ExperiencePersonal.deleteMany({
+      experience: {
+        $in: experienceIds,
+      },
+    });
+
+    await Experience.deleteMany({
+      _id: {
+        $in: experienceIds,
+      },
+    });
+
+    const order = await Order.findById(
+      manufacturingOrder.order,
     );
-  }
 
-  for (
-    const unit of
-      manufacturingOrder.units
-  ) {
-    if (unit.smartUnitInstance) {
-      await SmartUnitInstance.findByIdAndUpdate(
-        unit.smartUnitInstance,
-        {
-          status:
-            "available",
-
-          assignedAt:
-            null,
-
-          activatedAt:
-            null,
-        },
+    if (order) {
+      const experienceIdSet = new Set(
+        experienceIds.map((id) => id.toString()),
       );
-    }
 
-    if (unit.experience) {
-      await Experience.findByIdAndUpdate(
-        unit.experience,
-        {
-          status:
-            "cancelled",
-        },
-      );
+      for (const item of order.items || []) {
+        if (
+          item.experience &&
+          experienceIdSet.has(item.experience.toString())
+        ) {
+          item.experience = null;
+        }
+      }
+
+      await order.save();
     }
   }
 
-  manufacturingOrder.status =
-    "cancelled";
-
-  await manufacturingOrder.save();
-
-  await Order.findByIdAndUpdate(
-    manufacturingOrder.order,
-    {
-      orderStatus:
-        "cancelled",
-    },
-  );
-
-  return getManufacturingOrderById(
+  await ManufacturingOrder.findByIdAndDelete(
     manufacturingOrderId,
   );
+
+  return manufacturingOrder;
 };
