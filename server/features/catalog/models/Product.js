@@ -68,6 +68,7 @@ const productSchema = new mongoose.Schema(
       type: String,
       default: "",
       trim: true,
+      uppercase: true,
     },
 
     material: {
@@ -164,7 +165,23 @@ const productSchema = new mongoose.Schema(
   },
 );
 
+productSchema.index(
+  {
+    sku: 1,
+  },
+  {
+    unique: true,
+
+    partialFilterExpression: {
+      sku: {
+        $gt: "",
+      },
+    },
+  },
+);
+
 const Product =
-  mongoose.models.Product || mongoose.model("Product", productSchema);
+  mongoose.models.Product ||
+  mongoose.model("Product", productSchema);
 
 export default Product;

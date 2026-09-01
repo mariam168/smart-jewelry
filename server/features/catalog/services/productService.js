@@ -1,6 +1,12 @@
+import mongoose from "mongoose";
+
 import Product from "../models/Product.js";
 import Category from "../models/Category.js";
 import ProductImage from "../models/ProductImage.js";
+
+const generateProductSku = (productId) => {
+  return `JEV-${productId.toString().toUpperCase()}`;
+};
 
 export const createProduct = async (productData) => {
   const category = await Category.findById(productData.category);
@@ -13,7 +19,17 @@ export const createProduct = async (productData) => {
     throw error;
   }
 
-  const product = await Product.create(productData);
+  const productId = new mongoose.Types.ObjectId();
+
+  const { sku: ignoredSku, _id: ignoredId, ...safeProductData } = productData;
+
+  const product = await Product.create({
+    ...safeProductData,
+
+    _id: productId,
+
+    sku: generateProductSku(productId),
+  });
 
   return await product.populate("category");
 };
@@ -80,10 +96,22 @@ export const updateProduct = async (productId, productData) => {
     }
   }
 
+  const existingProduct = await Product.findById(productId);
+
+  if (!existingProduct) {
+    return null;
+  }
+
+  const { sku: ignoredSku, _id: ignoredId, ...safeProductData } = productData;
+
+  if (!String(existingProduct.sku || "").trim()) {
+    safeProductData.sku = generateProductSku(existingProduct._id);
+  }
+
   return await Product.findByIdAndUpdate(
     productId,
 
-    productData,
+    safeProductData,
 
     {
       new: true,

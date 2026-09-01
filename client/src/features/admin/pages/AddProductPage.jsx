@@ -24,10 +24,7 @@ const sanitizeMoneyInput = (value) => {
   const parts = cleanValue.split(".");
 
   if (parts.length > 1) {
-    cleanValue = `${parts[0]}.${parts
-      .slice(1)
-      .join("")
-      .slice(0, 2)}`;
+    cleanValue = `${parts[0]}.${parts.slice(1).join("").slice(0, 2)}`;
   }
 
   return cleanValue;
@@ -42,8 +39,7 @@ const AddProductPage = () => {
 
   const [smartUnits, setSmartUnits] = useState([]);
 
-  const [selectedTechnologyModels, setSelectedTechnologyModels] =
-    useState([]);
+  const [selectedTechnologyModels, setSelectedTechnologyModels] = useState([]);
 
   const [images, setImages] = useState([]);
 
@@ -58,7 +54,6 @@ const AddProductPage = () => {
     costPrice: "",
     comparePrice: "",
     stock: "",
-    sku: "",
     material: "",
     color: "",
     weight: "",
@@ -82,21 +77,18 @@ const AddProductPage = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [
-          categoryResponse,
-          technologyResponse,
-          smartUnitsResponse,
-        ] = await Promise.all([
-          getCategories(),
+        const [categoryResponse, technologyResponse, smartUnitsResponse] =
+          await Promise.all([
+            getCategories(),
 
-          getTechnologyModels(),
+            getTechnologyModels(),
 
-          getSmartUnits().catch(() => ({
-            data: {
-              smartUnits: [],
-            },
-          })),
-        ]);
+            getSmartUnits().catch(() => ({
+              data: {
+                smartUnits: [],
+              },
+            })),
+          ]);
 
         let categoryData = [];
 
@@ -124,9 +116,7 @@ const AddProductPage = () => {
           [];
 
         setTechnologyModels(
-          Array.isArray(loadedTechnologyModels)
-            ? loadedTechnologyModels
-            : [],
+          Array.isArray(loadedTechnologyModels) ? loadedTechnologyModels : [],
         );
 
         const loadedSmartUnits =
@@ -134,17 +124,11 @@ const AddProductPage = () => {
           smartUnitsResponse?.smartUnits ||
           [];
 
-        setSmartUnits(
-          Array.isArray(loadedSmartUnits)
-            ? loadedSmartUnits
-            : [],
-        );
+        setSmartUnits(Array.isArray(loadedSmartUnits) ? loadedSmartUnits : []);
       } catch (error) {
         console.error(error);
 
-        setError(
-          "Failed to load categories or technology models.",
-        );
+        setError("Failed to load categories or technology models.");
       }
     };
 
@@ -152,35 +136,23 @@ const AddProductPage = () => {
   }, []);
 
   const handleChange = (event) => {
-    const {
-      name,
-      value,
-      type,
-      checked,
-    } = event.target;
+    const { name, value, type, checked } = event.target;
 
     setFormData((previous) => ({
       ...previous,
 
-      [name]:
-        type === "checkbox"
-          ? checked
-          : value,
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
   const handleTechnologyModelChange = (modelId) => {
     setSelectedTechnologyModels((previous) => {
       const alreadySelected = previous.find(
-        (item) =>
-          item.technologyModel === modelId,
+        (item) => item.technologyModel === modelId,
       );
 
       if (alreadySelected) {
-        return previous.filter(
-          (item) =>
-            item.technologyModel !== modelId,
-        );
+        return previous.filter((item) => item.technologyModel !== modelId);
       }
 
       return [
@@ -195,12 +167,8 @@ const AddProductPage = () => {
     });
   };
 
-  const handleTechnologyPriceChange = (
-    modelId,
-    value,
-  ) => {
-    const cleanValue =
-      sanitizeMoneyInput(value);
+  const handleTechnologyPriceChange = (modelId, value) => {
+    const cleanValue = sanitizeMoneyInput(value);
 
     setSelectedTechnologyModels((previous) =>
       previous.map((item) =>
@@ -216,53 +184,33 @@ const AddProductPage = () => {
   };
 
   const isTechnologySelected = (modelId) =>
-    selectedTechnologyModels.some(
-      (item) =>
-        item.technologyModel === modelId,
-    );
+    selectedTechnologyModels.some((item) => item.technologyModel === modelId);
 
   const getTechnologyPrice = (modelId) => {
-    const item =
-      selectedTechnologyModels.find(
-        (item) =>
-          item.technologyModel === modelId,
-      );
+    const item = selectedTechnologyModels.find(
+      (item) => item.technologyModel === modelId,
+    );
 
     return item?.extraPrice ?? "";
   };
 
   const getSmartUnitPriceInfo = (modelId) => {
-    const relatedSmartUnits =
-      smartUnits.filter((smartUnit) => {
-        const technologyModelId =
-          smartUnit?.technologyModel?._id ||
-          smartUnit?.technologyModel;
+    const relatedSmartUnits = smartUnits.filter((smartUnit) => {
+      const technologyModelId =
+        smartUnit?.technologyModel?._id || smartUnit?.technologyModel;
 
-        return (
-          String(technologyModelId || "") ===
-          String(modelId)
-        );
-      });
+      return String(technologyModelId || "") === String(modelId);
+    });
 
     const costs = relatedSmartUnits
-      .map((smartUnit) =>
-        Number(smartUnit.costPrice),
-      )
-      .filter((price) =>
-        Number.isFinite(price),
-      );
+      .map((smartUnit) => Number(smartUnit.costPrice))
+      .filter((price) => Number.isFinite(price));
 
-    const availableStock =
-      relatedSmartUnits.reduce(
-        (total, smartUnit) =>
-          total +
-          Number(
-            smartUnit.availableStock ??
-              smartUnit.stock ??
-              0,
-          ),
-        0,
-      );
+    const availableStock = relatedSmartUnits.reduce(
+      (total, smartUnit) =>
+        total + Number(smartUnit.availableStock ?? smartUnit.stock ?? 0),
+      0,
+    );
 
     if (costs.length === 0) {
       return {
@@ -288,26 +236,17 @@ const AddProductPage = () => {
   };
 
   const formatMoney = (value) => {
-    return Number(value || 0).toLocaleString(
-      "en-EG",
-      {
-        maximumFractionDigits: 2,
-      },
-    );
+    return Number(value || 0).toLocaleString("en-EG", {
+      maximumFractionDigits: 2,
+    });
   };
 
   const handleImageChange = (event) => {
-    const files = Array.from(
-      event.target.files || [],
-    );
+    const files = Array.from(event.target.files || []);
 
     setImages(files);
 
-    setPreviewImages(
-      files.map((file) =>
-        URL.createObjectURL(file),
-      ),
-    );
+    setPreviewImages(files.map((file) => URL.createObjectURL(file)));
   };
 
   const handleSubmit = async (event) => {
@@ -318,181 +257,116 @@ const AddProductPage = () => {
     setIsLoading(true);
 
     try {
-      const productResponse =
-        await createProduct({
-          name:
-            formData.name,
+      const productResponse = await createProduct({
+        name: formData.name,
 
-          shortDescription:
-            formData.shortDescription,
+        shortDescription: formData.shortDescription,
 
-          description:
-            formData.description,
+        description: formData.description,
 
-          category:
-            formData.category,
+        category: formData.category,
 
-          price:
-            Number(formData.price),
+        price: Number(formData.price),
 
-          costPrice:
-            Number(formData.costPrice),
+        costPrice: Number(formData.costPrice),
 
-          comparePrice:
-            Number(formData.comparePrice) || 0,
+        comparePrice: Number(formData.comparePrice) || 0,
 
-          stock:
-            Number(formData.stock),
+        stock: Number(formData.stock),
 
-          sku:
-            formData.sku,
+        material: formData.material,
 
-          material:
-            formData.material,
+        color: formData.color,
 
-          color:
-            formData.color,
+        weight: Number(formData.weight) || 0,
 
-          weight:
-            Number(formData.weight) || 0,
+        featured: formData.featured,
 
-          featured:
-            formData.featured,
+        bestSeller: formData.bestSeller,
 
-          bestSeller:
-            formData.bestSeller,
+        newArrival: formData.newArrival,
 
-          newArrival:
-            formData.newArrival,
+        tags: formData.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
 
-          tags: formData.tags
-            .split(",")
-            .map((tag) => tag.trim())
-            .filter(Boolean),
+        seoTitle: formData.seoTitle,
 
-          seoTitle:
-            formData.seoTitle,
+        seoDescription: formData.seoDescription,
 
-          seoDescription:
-            formData.seoDescription,
+        seoSlug: formData.seoSlug,
 
-          seoSlug:
-            formData.seoSlug,
+        preparationDays: Number(formData.preparationDays) || 0,
 
-          preparationDays:
-            Number(
-              formData.preparationDays,
-            ) || 0,
+        careInstructions: formData.careInstructions,
 
-          careInstructions:
-            formData.careInstructions,
+        isCustomizable: formData.isCustomizable,
 
-          isCustomizable:
-            formData.isCustomizable,
+        status: formData.status,
 
-          status:
-            formData.status,
+        technologyModels: selectedTechnologyModels.map(
+          (item) => item.technologyModel,
+        ),
+      });
 
-          technologyModels:
-            selectedTechnologyModels.map(
-              (item) =>
-                item.technologyModel,
-            ),
-        });
+      const product = productResponse.data.product;
 
-      const product =
-        productResponse.data.product;
-
-      for (
-        let index = 0;
-        index <
-        selectedTechnologyModels.length;
-        index += 1
-      ) {
-        const item =
-          selectedTechnologyModels[index];
+      for (let index = 0; index < selectedTechnologyModels.length; index += 1) {
+        const item = selectedTechnologyModels[index];
 
         await createProductTechnology({
-          product:
-            product._id,
+          product: product._id,
 
-          technologyModel:
-            item.technologyModel,
+          technologyModel: item.technologyModel,
 
-          extraPrice:
-            Number(item.extraPrice || 0),
+          extraPrice: Number(item.extraPrice || 0),
 
-          isDefault:
-            false,
+          isDefault: false,
 
-          isSelectable:
-            true,
+          isSelectable: true,
 
-          displayOrder:
-            index,
+          displayOrder: index,
 
-          status:
-            "active",
+          status: "active",
         });
       }
 
       let primaryImage = "";
 
-      for (
-        let i = 0;
-        i < images.length;
-        i += 1
-      ) {
-        const form =
-          new FormData();
+      for (let i = 0; i < images.length; i += 1) {
+        const form = new FormData();
 
-        form.append(
-          "image",
-          images[i],
-        );
+        form.append("image", images[i]);
 
-        const upload =
-          await uploadImage(form);
+        const upload = await uploadImage(form);
 
         if (i === 0) {
-          primaryImage =
-            upload.image;
+          primaryImage = upload.image;
         }
 
         await createProductImage({
-          product:
-            product._id,
+          product: product._id,
 
-          imageUrl:
-            upload.image,
+          imageUrl: upload.image,
 
-          isPrimary:
-            i === 0,
+          isPrimary: i === 0,
 
-          sortOrder:
-            i,
+          sortOrder: i,
         });
       }
 
       if (primaryImage) {
-        await updateProduct(
-          product._id,
-          {
-            primaryImage,
-          },
-        );
+        await updateProduct(product._id, {
+          primaryImage,
+        });
       }
 
-      navigate(
-        "/admin/products",
-      );
+      navigate("/admin/products");
     } catch (error) {
       console.error(error);
 
-      setError(
-        error?.response?.data?.message ||
-          "Failed to create product.",
-      );
+      setError(error?.response?.data?.message || "Failed to create product.");
     } finally {
       setIsLoading(false);
     }
@@ -534,15 +408,11 @@ const AddProductPage = () => {
       <main className="relative mx-auto max-w-[1500px] px-6 py-10 lg:px-10 lg:py-12">
         {error && (
           <div className="mb-8 flex items-center justify-between rounded-[18px] border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
-            <span>
-              {error}
-            </span>
+            <span>{error}</span>
 
             <button
               type="button"
-              onClick={() =>
-                setError("")
-              }
+              onClick={() => setError("")}
               className="font-semibold text-red-500"
             >
               ×
@@ -556,9 +426,7 @@ const AddProductPage = () => {
               <section className="overflow-hidden rounded-[28px] border border-light-champagne/90 bg-soft-white/90 shadow-[0_18px_48px_rgba(7,19,31,0.05)]">
                 <div className="border-b border-light-champagne/80 bg-warm-ivory/50 px-7 py-6 sm:px-9">
                   <div className="flex items-center gap-3">
-                    <span className="text-antique-gold">
-                      01
-                    </span>
+                    <span className="text-antique-gold">01</span>
 
                     <span className="h-px w-8 bg-antique-gold" />
 
@@ -597,9 +465,7 @@ const AddProductPage = () => {
                     <input
                       type="text"
                       name="shortDescription"
-                      value={
-                        formData.shortDescription
-                      }
+                      value={formData.shortDescription}
                       onChange={handleChange}
                       className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5 text-[12px] outline-none focus:border-classic-gold"
                     />
@@ -613,9 +479,7 @@ const AddProductPage = () => {
                     <textarea
                       rows={6}
                       name="description"
-                      value={
-                        formData.description
-                      }
+                      value={formData.description}
                       onChange={handleChange}
                       required
                       className="w-full resize-none rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5 text-[12px] outline-none focus:border-classic-gold"
@@ -630,35 +494,18 @@ const AddProductPage = () => {
 
                       <select
                         name="category"
-                        value={
-                          formData.category
-                        }
-                        onChange={
-                          handleChange
-                        }
+                        value={formData.category}
+                        onChange={handleChange}
                         required
                         className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5 text-[12px]"
                       >
-                        <option value="">
-                          Select Category
-                        </option>
+                        <option value="">Select Category</option>
 
-                        {categories.map(
-                          (category) => (
-                            <option
-                              key={
-                                category._id
-                              }
-                              value={
-                                category._id
-                              }
-                            >
-                              {
-                                category.name
-                              }
-                            </option>
-                          ),
-                        )}
+                        {categories.map((category) => (
+                          <option key={category._id} value={category._id}>
+                            {category.name}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
@@ -667,15 +514,18 @@ const AddProductPage = () => {
                         SKU
                       </label>
 
-                      <input
-                        type="text"
-                        name="sku"
-                        value={formData.sku}
-                        onChange={
-                          handleChange
-                        }
-                        className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5 text-[12px]"
-                      />
+                      <div className="flex min-h-[49px] items-center rounded-[14px] border border-dashed border-champagne-gold/40 bg-soft-cream px-5">
+                        <div>
+                          <p className="text-[10px] font-semibold text-midnight-navy">
+                            Generated Automatically
+                          </p>
+
+                          <p className="mt-1 text-[8px] text-steel-gray">
+                            A unique SKU will be created when the product is
+                            saved.
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -684,9 +534,7 @@ const AddProductPage = () => {
               <section className="overflow-hidden rounded-[28px] border border-light-champagne/90 bg-soft-white/90 shadow-[0_18px_48px_rgba(7,19,31,0.05)]">
                 <div className="border-b border-light-champagne/80 bg-warm-ivory/50 px-7 py-6 sm:px-9">
                   <div className="flex items-center gap-3">
-                    <span className="text-antique-gold">
-                      02
-                    </span>
+                    <span className="text-antique-gold">02</span>
 
                     <span className="h-px w-8 bg-antique-gold" />
 
@@ -700,12 +548,9 @@ const AddProductPage = () => {
                   </h2>
 
                   <p className="mt-2 text-[10px] leading-6 text-slate-gray">
-                    Selling Price is what the
-                    customer pays. Product Cost
-                    is the original cost of the
-                    jewelry piece before Smart
-                    Unit, installation and
-                    packaging.
+                    Selling Price is what the customer pays. Product Cost is the
+                    original cost of the jewelry piece before Smart Unit,
+                    installation and packaging.
                   </p>
                 </div>
 
@@ -721,12 +566,8 @@ const AddProductPage = () => {
                         min="0"
                         step="0.01"
                         name="price"
-                        value={
-                          formData.price
-                        }
-                        onChange={
-                          handleChange
-                        }
+                        value={formData.price}
+                        onChange={handleChange}
                         required
                         className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5 pr-14 text-[12px] outline-none focus:border-classic-gold"
                       />
@@ -748,12 +589,8 @@ const AddProductPage = () => {
                         min="0"
                         step="0.01"
                         name="costPrice"
-                        value={
-                          formData.costPrice
-                        }
-                        onChange={
-                          handleChange
-                        }
+                        value={formData.costPrice}
+                        onChange={handleChange}
                         required
                         placeholder="Original cost"
                         className="w-full rounded-[14px] border border-champagne-gold/35 bg-soft-cream px-5 py-3.5 pr-14 text-[12px] outline-none focus:border-classic-gold focus:ring-4 focus:ring-classic-gold/10"
@@ -780,12 +617,8 @@ const AddProductPage = () => {
                         min="0"
                         step="0.01"
                         name="comparePrice"
-                        value={
-                          formData.comparePrice
-                        }
-                        onChange={
-                          handleChange
-                        }
+                        value={formData.comparePrice}
+                        onChange={handleChange}
                         className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5 pr-14 text-[12px]"
                       />
 
@@ -804,12 +637,8 @@ const AddProductPage = () => {
                       type="number"
                       min="0"
                       name="stock"
-                      value={
-                        formData.stock
-                      }
-                      onChange={
-                        handleChange
-                      }
+                      value={formData.stock}
+                      onChange={handleChange}
                       required
                       className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5 text-[12px]"
                     />
@@ -826,12 +655,8 @@ const AddProductPage = () => {
                         min="0"
                         step="0.01"
                         name="weight"
-                        value={
-                          formData.weight
-                        }
-                        onChange={
-                          handleChange
-                        }
+                        value={formData.weight}
+                        onChange={handleChange}
                         className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5 pr-10 text-[12px]"
                       />
 
@@ -855,12 +680,8 @@ const AddProductPage = () => {
                     <input
                       type="text"
                       name="material"
-                      value={
-                        formData.material
-                      }
-                      onChange={
-                        handleChange
-                      }
+                      value={formData.material}
+                      onChange={handleChange}
                       placeholder="Material"
                       className="rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
                     />
@@ -868,12 +689,8 @@ const AddProductPage = () => {
                     <input
                       type="text"
                       name="color"
-                      value={
-                        formData.color
-                      }
-                      onChange={
-                        handleChange
-                      }
+                      value={formData.color}
+                      onChange={handleChange}
                       placeholder="Color"
                       className="rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
                     />
@@ -882,12 +699,8 @@ const AddProductPage = () => {
                       type="number"
                       min="0"
                       name="preparationDays"
-                      value={
-                        formData.preparationDays
-                      }
-                      onChange={
-                        handleChange
-                      }
+                      value={formData.preparationDays}
+                      onChange={handleChange}
                       placeholder="Preparation Days"
                       className="rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
                     />
@@ -897,9 +710,7 @@ const AddProductPage = () => {
                     type="text"
                     name="tags"
                     value={formData.tags}
-                    onChange={
-                      handleChange
-                    }
+                    onChange={handleChange}
                     placeholder="gold, ring, gift"
                     className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
                   />
@@ -907,30 +718,20 @@ const AddProductPage = () => {
                   <textarea
                     rows={4}
                     name="careInstructions"
-                    value={
-                      formData.careInstructions
-                    }
-                    onChange={
-                      handleChange
-                    }
+                    value={formData.careInstructions}
+                    onChange={handleChange}
                     placeholder="Care instructions"
                     className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
                   />
 
                   <label className="flex items-center justify-between rounded-[18px] border border-light-champagne bg-warm-ivory/55 p-5">
-                    <span>
-                      Customizable Product
-                    </span>
+                    <span>Customizable Product</span>
 
                     <input
                       type="checkbox"
                       name="isCustomizable"
-                      checked={
-                        formData.isCustomizable
-                      }
-                      onChange={
-                        handleChange
-                      }
+                      checked={formData.isCustomizable}
+                      onChange={handleChange}
                       className="h-5 w-5 accent-classic-gold"
                     />
                   </label>
@@ -944,268 +745,191 @@ const AddProductPage = () => {
                   </span>
 
                   <p className="mt-3 max-w-2xl text-[10px] leading-6 text-slate-gray">
-                    Smart Unit costs are shown
-                    as a reference when setting
-                    the customer-facing Extra
-                    Price.
+                    Smart Unit costs are shown as a reference when setting the
+                    customer-facing Extra Price.
                   </p>
                 </div>
 
                 <div className="space-y-4 p-7 sm:p-9">
-                  {technologyModels.length ===
-                  0 ? (
+                  {technologyModels.length === 0 ? (
                     <div className="rounded-[18px] border border-dashed border-light-champagne p-8 text-center text-[10px] text-steel-gray">
-                      No technology models
-                      available.
+                      No technology models available.
                     </div>
                   ) : (
-                    technologyModels.map(
-                      (model) => {
-                        const selected =
-                          isTechnologySelected(
-                            model._id,
-                          );
+                    technologyModels.map((model) => {
+                      const selected = isTechnologySelected(model._id);
 
-                        const smartUnitInfo =
-                          getSmartUnitPriceInfo(
-                            model._id,
-                          );
+                      const smartUnitInfo = getSmartUnitPriceInfo(model._id);
 
-                        const extraPrice =
-                          getTechnologyPrice(
-                            model._id,
-                          );
+                      const extraPrice = getTechnologyPrice(model._id);
 
-                        return (
-                          <div
-                            key={
-                              model._id
-                            }
-                            className={`rounded-[18px] border p-5 ${
-                              selected
-                                ? "border-classic-gold bg-soft-cream"
-                                : "border-light-champagne bg-soft-white"
-                            }`}
-                          >
-                            <div className="flex gap-4">
-                              <input
-                                type="checkbox"
-                                checked={
-                                  selected
-                                }
-                                onChange={() =>
-                                  handleTechnologyModelChange(
-                                    model._id,
-                                  )
-                                }
-                                className="mt-1 h-5 w-5 accent-classic-gold"
-                              />
+                      return (
+                        <div
+                          key={model._id}
+                          className={`rounded-[18px] border p-5 ${
+                            selected
+                              ? "border-classic-gold bg-soft-cream"
+                              : "border-light-champagne bg-soft-white"
+                          }`}
+                        >
+                          <div className="flex gap-4">
+                            <input
+                              type="checkbox"
+                              checked={selected}
+                              onChange={() =>
+                                handleTechnologyModelChange(model._id)
+                              }
+                              className="mt-1 h-5 w-5 accent-classic-gold"
+                            />
 
-                              <div className="min-w-0 flex-1">
-                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                  <div>
-                                    <h3 className="font-semibold text-midnight-navy">
-                                      {
-                                        model.modelName
-                                      }
-                                    </h3>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                  <h3 className="font-semibold text-midnight-navy">
+                                    {model.modelName}
+                                  </h3>
 
-                                    {model.modelCode && (
-                                      <p className="mt-1 font-mono text-[8px] uppercase tracking-[0.1em] text-antique-gold">
-                                        {
-                                          model.modelCode
-                                        }
-                                      </p>
-                                    )}
+                                  {model.modelCode && (
+                                    <p className="mt-1 font-mono text-[8px] uppercase tracking-[0.1em] text-antique-gold">
+                                      {model.modelCode}
+                                    </p>
+                                  )}
 
-                                    {model
-                                      .technology
-                                      ?.name && (
-                                      <p className="mt-2 text-[8px] text-steel-gray">
-                                        Technology:{" "}
-                                        {
-                                          model
-                                            .technology
-                                            .name
-                                        }
-                                      </p>
-                                    )}
-                                  </div>
+                                  {model.technology?.name && (
+                                    <p className="mt-2 text-[8px] text-steel-gray">
+                                      Technology: {model.technology.name}
+                                    </p>
+                                  )}
+                                </div>
 
-                                  <span
-                                    className={`inline-flex w-fit rounded-full px-3 py-1 text-[7px] font-semibold uppercase ${
-                                      model.status ===
-                                      "active"
-                                        ? "bg-soft-cream text-antique-gold"
-                                        : "bg-silver-mist text-steel-gray"
-                                    }`}
-                                  >
-                                    {model.status ||
-                                      "active"}
+                                <span
+                                  className={`inline-flex w-fit rounded-full px-3 py-1 text-[7px] font-semibold uppercase ${
+                                    model.status === "active"
+                                      ? "bg-soft-cream text-antique-gold"
+                                      : "bg-silver-mist text-steel-gray"
+                                  }`}
+                                >
+                                  {model.status || "active"}
+                                </span>
+                              </div>
+
+                              <div className="mt-4 flex flex-wrap gap-2">
+                                {model.requiresBattery && (
+                                  <span className="rounded-full border border-champagne-gold/40 bg-soft-cream px-3 py-1 text-[8px] font-semibold text-antique-gold">
+                                    Battery
                                   </span>
-                                </div>
+                                )}
 
-                                <div className="mt-4 flex flex-wrap gap-2">
-                                  {model.requiresBattery && (
-                                    <span className="rounded-full border border-champagne-gold/40 bg-soft-cream px-3 py-1 text-[8px] font-semibold text-antique-gold">
-                                      Battery
-                                    </span>
-                                  )}
+                                {model.requiresActivation && (
+                                  <span className="rounded-full border border-champagne-gold/40 bg-soft-cream px-3 py-1 text-[8px] font-semibold text-antique-gold">
+                                    Activation
+                                  </span>
+                                )}
 
-                                  {model.requiresActivation && (
-                                    <span className="rounded-full border border-champagne-gold/40 bg-soft-cream px-3 py-1 text-[8px] font-semibold text-antique-gold">
-                                      Activation
-                                    </span>
-                                  )}
+                                {model.requiresSubscription && (
+                                  <span className="rounded-full border border-champagne-gold/40 bg-soft-cream px-3 py-1 text-[8px] font-semibold text-antique-gold">
+                                    Subscription
+                                  </span>
+                                )}
+                              </div>
 
-                                  {model.requiresSubscription && (
-                                    <span className="rounded-full border border-champagne-gold/40 bg-soft-cream px-3 py-1 text-[8px] font-semibold text-antique-gold">
-                                      Subscription
-                                    </span>
-                                  )}
-                                </div>
+                              <div className="mt-4 rounded-[14px] border border-dashed border-champagne-gold/35 bg-warm-ivory/70 p-4">
+                                <p className="text-[7px] font-semibold uppercase tracking-[0.17em] text-antique-gold">
+                                  Smart Unit Cost Reference
+                                </p>
 
-                                <div className="mt-4 rounded-[14px] border border-dashed border-champagne-gold/35 bg-warm-ivory/70 p-4">
-                                  <p className="text-[7px] font-semibold uppercase tracking-[0.17em] text-antique-gold">
-                                    Smart Unit Cost
-                                    Reference
+                                {smartUnitInfo.min !== null ? (
+                                  <>
+                                    <p className="mt-2 font-serif text-[1.1rem] text-midnight-navy">
+                                      {smartUnitInfo.min === smartUnitInfo.max
+                                        ? `${formatMoney(
+                                            smartUnitInfo.min,
+                                          )} EGP`
+                                        : `${formatMoney(
+                                            smartUnitInfo.min,
+                                          )} – ${formatMoney(
+                                            smartUnitInfo.max,
+                                          )} EGP`}
+                                    </p>
+
+                                    <p className="mt-1 text-[8px] leading-5 text-steel-gray">
+                                      {smartUnitInfo.count} Smart Unit type(s) ·{" "}
+                                      {smartUnitInfo.availableStock} available
+                                      physical unit(s)
+                                    </p>
+                                  </>
+                                ) : (
+                                  <p className="mt-2 text-[9px] text-steel-gray">
+                                    No Smart Unit cost has been registered for
+                                    this technology model yet.
+                                  </p>
+                                )}
+                              </div>
+
+                              {selected && (
+                                <div className="mt-5 rounded-[16px] border border-champagne-gold/30 bg-soft-white p-4">
+                                  <label className="mb-2.5 block text-[8px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+                                    Extra Price
+                                  </label>
+
+                                  <p className="mb-3 text-[8px] leading-5 text-steel-gray">
+                                    Type or paste the complete price directly.
                                   </p>
 
-                                  {smartUnitInfo.min !==
-                                  null ? (
-                                    <>
-                                      <p className="mt-2 font-serif text-[1.1rem] text-midnight-navy">
-                                        {smartUnitInfo.min ===
-                                        smartUnitInfo.max
-                                          ? `${formatMoney(
-                                              smartUnitInfo.min,
-                                            )} EGP`
-                                          : `${formatMoney(
-                                              smartUnitInfo.min,
-                                            )} – ${formatMoney(
-                                              smartUnitInfo.max,
-                                            )} EGP`}
-                                      </p>
+                                  <div className="relative">
+                                    <input
+                                      type="text"
+                                      inputMode="decimal"
+                                      value={extraPrice}
+                                      onChange={(event) =>
+                                        handleTechnologyPriceChange(
+                                          model._id,
+                                          event.target.value,
+                                        )
+                                      }
+                                      placeholder="e.g. 1500"
+                                      className="w-full rounded-xl border border-light-champagne bg-soft-white px-4 py-3 pr-14 text-sm outline-none focus:border-classic-gold focus:ring-4 focus:ring-classic-gold/10"
+                                    />
 
-                                      <p className="mt-1 text-[8px] leading-5 text-steel-gray">
-                                        {
-                                          smartUnitInfo.count
-                                        }{" "}
-                                        Smart Unit
-                                        type(s) ·{" "}
-                                        {
-                                          smartUnitInfo.availableStock
-                                        }{" "}
-                                        available
-                                        physical
-                                        unit(s)
-                                      </p>
-                                    </>
-                                  ) : (
-                                    <p className="mt-2 text-[9px] text-steel-gray">
-                                      No Smart Unit
-                                      cost has been
-                                      registered for
-                                      this technology
-                                      model yet.
-                                    </p>
-                                  )}
-                                </div>
+                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-antique-gold">
+                                      EGP
+                                    </span>
+                                  </div>
 
-                                {selected && (
-                                  <div className="mt-5 rounded-[16px] border border-champagne-gold/30 bg-soft-white p-4">
-                                    <label className="mb-2.5 block text-[8px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                                      Extra Price
-                                    </label>
+                                  <div className="mt-4 rounded-xl bg-soft-cream/75 p-4">
+                                    <div className="flex justify-between text-[8px] text-steel-gray">
+                                      <span>Product Price</span>
 
-                                    <p className="mb-3 text-[8px] leading-5 text-steel-gray">
-                                      Type or paste
-                                      the complete
-                                      price directly.
-                                    </p>
-
-                                    <div className="relative">
-                                      <input
-                                        type="text"
-                                        inputMode="decimal"
-                                        value={
-                                          extraPrice
-                                        }
-                                        onChange={(
-                                          event,
-                                        ) =>
-                                          handleTechnologyPriceChange(
-                                            model._id,
-                                            event
-                                              .target
-                                              .value,
-                                          )
-                                        }
-                                        placeholder="e.g. 1500"
-                                        className="w-full rounded-xl border border-light-champagne bg-soft-white px-4 py-3 pr-14 text-sm outline-none focus:border-classic-gold focus:ring-4 focus:ring-classic-gold/10"
-                                      />
-
-                                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-antique-gold">
-                                        EGP
+                                      <span>
+                                        {formatMoney(formData.price)} EGP
                                       </span>
                                     </div>
 
-                                    <div className="mt-4 rounded-xl bg-soft-cream/75 p-4">
-                                      <div className="flex justify-between text-[8px] text-steel-gray">
-                                        <span>
-                                          Product
-                                          Price
-                                        </span>
+                                    <div className="mt-2 flex justify-between text-[8px] text-steel-gray">
+                                      <span>Extra Price</span>
 
-                                        <span>
-                                          {formatMoney(
-                                            formData.price,
-                                          )}{" "}
-                                          EGP
-                                        </span>
-                                      </div>
+                                      <span>{formatMoney(extraPrice)} EGP</span>
+                                    </div>
 
-                                      <div className="mt-2 flex justify-between text-[8px] text-steel-gray">
-                                        <span>
-                                          Extra Price
-                                        </span>
+                                    <div className="mt-3 flex justify-between border-t border-light-champagne pt-3 text-[10px] font-semibold text-midnight-navy">
+                                      <span>Final Price</span>
 
-                                        <span>
-                                          {formatMoney(
-                                            extraPrice,
-                                          )}{" "}
-                                          EGP
-                                        </span>
-                                      </div>
-
-                                      <div className="mt-3 flex justify-between border-t border-light-champagne pt-3 text-[10px] font-semibold text-midnight-navy">
-                                        <span>
-                                          Final Price
-                                        </span>
-
-                                        <span className="text-antique-gold">
-                                          {formatMoney(
-                                            Number(
-                                              formData.price ||
-                                                0,
-                                            ) +
-                                              Number(
-                                                extraPrice ||
-                                                  0,
-                                              ),
-                                          )}{" "}
-                                          EGP
-                                        </span>
-                                      </div>
+                                      <span className="text-antique-gold">
+                                        {formatMoney(
+                                          Number(formData.price || 0) +
+                                            Number(extraPrice || 0),
+                                        )}{" "}
+                                        EGP
+                                      </span>
                                     </div>
                                   </div>
-                                )}
-                              </div>
+                                </div>
+                              )}
                             </div>
                           </div>
-                        );
-                      },
-                    )
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               </section>
@@ -1219,57 +943,41 @@ const AddProductPage = () => {
 
                 <div className="p-7 sm:p-9">
                   <label className="flex cursor-pointer flex-col items-center justify-center rounded-[18px] border border-dashed border-classic-gold/50 bg-warm-ivory/55 px-6 py-12">
-                    <div className="text-2xl text-antique-gold">
-                      +
-                    </div>
+                    <div className="text-2xl text-antique-gold">+</div>
 
                     <p className="mt-4 text-sm font-semibold">
-                      Upload Product
-                      Images
+                      Upload Product Images
                     </p>
 
                     <input
                       type="file"
                       multiple
                       accept="image/*"
-                      onChange={
-                        handleImageChange
-                      }
+                      onChange={handleImageChange}
                       className="hidden"
                     />
                   </label>
 
-                  {previewImages.length >
-                    0 && (
+                  {previewImages.length > 0 && (
                     <div className="mt-7 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                      {previewImages.map(
-                        (
-                          image,
-                          index,
-                        ) => (
-                          <div
-                            key={
-                              index
-                            }
-                            className="overflow-hidden rounded-[18px] border border-light-champagne"
-                          >
-                            <img
-                              src={
-                                image
-                              }
-                              alt=""
-                              className="aspect-square h-full w-full object-cover"
-                            />
+                      {previewImages.map((image, index) => (
+                        <div
+                          key={index}
+                          className="overflow-hidden rounded-[18px] border border-light-champagne"
+                        >
+                          <img
+                            src={image}
+                            alt=""
+                            className="aspect-square h-full w-full object-cover"
+                          />
 
-                            {index ===
-                              0 && (
-                              <div className="px-3 py-2 text-[8px] text-antique-gold">
-                                Primary
-                              </div>
-                            )}
-                          </div>
-                        ),
-                      )}
+                          {index === 0 && (
+                            <div className="px-3 py-2 text-[8px] text-antique-gold">
+                              Primary
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -1286,12 +994,8 @@ const AddProductPage = () => {
                   <input
                     type="text"
                     name="seoTitle"
-                    value={
-                      formData.seoTitle
-                    }
-                    onChange={
-                      handleChange
-                    }
+                    value={formData.seoTitle}
+                    onChange={handleChange}
                     placeholder="SEO Title"
                     className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
                   />
@@ -1299,12 +1003,8 @@ const AddProductPage = () => {
                   <input
                     type="text"
                     name="seoSlug"
-                    value={
-                      formData.seoSlug
-                    }
-                    onChange={
-                      handleChange
-                    }
+                    value={formData.seoSlug}
+                    onChange={handleChange}
                     placeholder="SEO Slug"
                     className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
                   />
@@ -1312,12 +1012,8 @@ const AddProductPage = () => {
                   <textarea
                     rows={4}
                     name="seoDescription"
-                    value={
-                      formData.seoDescription
-                    }
-                    onChange={
-                      handleChange
-                    }
+                    value={formData.seoDescription}
+                    onChange={handleChange}
                     placeholder="SEO Description"
                     className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
                   />
@@ -1333,76 +1029,42 @@ const AddProductPage = () => {
 
                 <select
                   name="status"
-                  value={
-                    formData.status
-                  }
-                  onChange={
-                    handleChange
-                  }
+                  value={formData.status}
+                  onChange={handleChange}
                   className="mt-5 w-full rounded-xl border border-champagne-gold/20 bg-rich-navy px-4 py-3"
                 >
-                  <option value="active">
-                    Active
-                  </option>
+                  <option value="active">Active</option>
 
-                  <option value="inactive">
-                    Inactive
-                  </option>
+                  <option value="inactive">Inactive</option>
                 </select>
               </div>
 
               <div className="rounded-[24px] border border-light-champagne bg-soft-white p-6">
-                <h3 className="font-semibold">
-                  Marketing
-                </h3>
+                <h3 className="font-semibold">Marketing</h3>
 
                 <div className="mt-5 space-y-3">
                   {[
-                    [
-                      "featured",
-                      "Featured",
-                    ],
+                    ["featured", "Featured"],
 
-                    [
-                      "bestSeller",
-                      "Best Seller",
-                    ],
+                    ["bestSeller", "Best Seller"],
 
-                    [
-                      "newArrival",
-                      "New Arrival",
-                    ],
-                  ].map(
-                    ([
-                      name,
-                      label,
-                    ]) => (
-                      <label
-                        key={name}
-                        className="flex items-center justify-between rounded-xl border border-light-champagne bg-warm-ivory/55 p-4"
-                      >
-                        <span>
-                          {label}
-                        </span>
+                    ["newArrival", "New Arrival"],
+                  ].map(([name, label]) => (
+                    <label
+                      key={name}
+                      className="flex items-center justify-between rounded-xl border border-light-champagne bg-warm-ivory/55 p-4"
+                    >
+                      <span>{label}</span>
 
-                        <input
-                          type="checkbox"
-                          name={
-                            name
-                          }
-                          checked={
-                            formData[
-                              name
-                            ]
-                          }
-                          onChange={
-                            handleChange
-                          }
-                          className="h-5 w-5 accent-classic-gold"
-                        />
-                      </label>
-                    ),
-                  )}
+                      <input
+                        type="checkbox"
+                        name={name}
+                        checked={formData[name]}
+                        onChange={handleChange}
+                        className="h-5 w-5 accent-classic-gold"
+                      />
+                    </label>
+                  ))}
                 </div>
               </div>
 
@@ -1418,9 +1080,7 @@ const AddProductPage = () => {
                     </span>
 
                     <span className="font-semibold text-antique-gold">
-                      {formData.price
-                        ? `${formData.price} EGP`
-                        : "—"}
+                      {formData.price ? `${formData.price} EGP` : "—"}
                     </span>
                   </div>
 
@@ -1430,9 +1090,7 @@ const AddProductPage = () => {
                     </span>
 
                     <span className="font-semibold text-midnight-navy">
-                      {formData.costPrice
-                        ? `${formData.costPrice} EGP`
-                        : "—"}
+                      {formData.costPrice ? `${formData.costPrice} EGP` : "—"}
                     </span>
                   </div>
 
@@ -1442,15 +1100,9 @@ const AddProductPage = () => {
                     </span>
 
                     <span className="font-semibold text-antique-gold">
-                      {formData.price &&
-                      formData.costPrice !== ""
+                      {formData.price && formData.costPrice !== ""
                         ? `${formatMoney(
-                            Number(
-                              formData.price,
-                            ) -
-                              Number(
-                                formData.costPrice,
-                              ),
+                            Number(formData.price) - Number(formData.costPrice),
                           )} EGP`
                         : "—"}
                     </span>
@@ -1473,9 +1125,7 @@ const AddProductPage = () => {
               disabled={isLoading}
               className="inline-flex items-center justify-center rounded-[13px] bg-midnight-navy px-8 py-3.5 text-[8px] font-semibold uppercase text-soft-white disabled:opacity-50"
             >
-              {isLoading
-                ? "Creating Product..."
-                : "Create Product"}
+              {isLoading ? "Creating Product..." : "Create Product"}
             </button>
           </div>
         </form>

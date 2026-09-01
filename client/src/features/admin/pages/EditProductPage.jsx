@@ -109,8 +109,6 @@ const EditProductPage = () => {
 
       stock: "",
 
-      sku: "",
-
       material: "",
 
       color: "",
@@ -348,9 +346,6 @@ const EditProductPage = () => {
 
           stock:
             product.stock ?? "",
-
-          sku:
-            product.sku || "",
 
           material:
             product.material || "",
@@ -846,9 +841,6 @@ const EditProductPage = () => {
               formData.stock,
             ),
 
-          sku:
-            formData.sku,
-
           material:
             formData.material,
 
@@ -1283,17 +1275,17 @@ const EditProductPage = () => {
                       SKU
                     </label>
 
-                    <input
-                      type="text"
-                      name="sku"
-                      value={
-                        formData.sku
-                      }
-                      onChange={
-                        handleChange
-                      }
-                      className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5 text-[11px]"
-                    />
+                    <div className="flex min-h-[49px] items-center rounded-[13px] border border-dashed border-champagne-gold/40 bg-soft-cream px-4">
+                      <div>
+                        <p className="text-[10px] font-semibold text-midnight-navy">
+                          Generated Automatically
+                        </p>
+
+                        <p className="mt-1 text-[8px] text-steel-gray">
+                          SKU is managed automatically by the system and cannot be edited here.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
