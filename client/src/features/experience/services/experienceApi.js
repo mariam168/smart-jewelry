@@ -155,3 +155,24 @@ export const getCustomerExperience = async (
 
   return data;
 };
+
+export const getExperienceMediaLimits =
+  async () => {
+    const { data } =
+      await api.get(
+        "/experience/media-limits",
+      );
+
+    return data.data;
+  };
+
+export const updateExperienceMediaLimits =
+  async (limits) => {
+    const { data } =
+      await api.put(
+        "/experience/admin/media-limits",
+        limits,
+      );
+
+    return data.data;
+  };

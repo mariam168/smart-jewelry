@@ -7,15 +7,18 @@ import SmartUnitInstance from "../../catalog/models/SmartUnitInstance.js";
 import Experience from "../models/Experience.js";
 import ExperiencePersonal from "../models/ExperiencePersonal.js";
 import ExperienceMedia from "../models/ExperienceMedia.js";
+import ExperienceMediaSettings from "../models/ExperienceMediaSettings.js";
 
-import {
-  generateManageToken,
-} from "../utils/tokenGenerator.js";
+import { generateManageToken } from "../utils/tokenGenerator.js";
 
-const createError = (
-  message,
-  statusCode = 400,
-) => {
+const DEFAULT_MEDIA_LIMITS = {
+  imageLimit: 5,
+  videoLimit: 5,
+  audioLimit: 5,
+  fileLimit: 5,
+};
+
+const createError = (message, statusCode = 400) => {
   const error = new Error(message);
 
   error.statusCode = statusCode;
@@ -23,13 +26,8 @@ const createError = (
   return error;
 };
 
-const formatSlug = (
-  slug,
-) => {
-  if (
-    typeof slug !== "string" ||
-    !slug.trim()
-  ) {
+const formatSlug = (slug) => {
+  if (typeof slug !== "string" || !slug.trim()) {
     return null;
   }
 
@@ -37,46 +35,28 @@ const formatSlug = (
     .trim()
     .toLowerCase()
     .replace(/\s+/g, "-")
-    .replace(
-      /[^a-z0-9\u0600-\u06FF-]/g,
-      "",
-    )
+    .replace(/[^a-z0-9\u0600-\u06FF-]/g, "")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
 };
 
-const normalizeAccessDate = (
-  value,
-) => {
-  if (
-    typeof value !== "string" ||
-    !value.trim()
-  ) {
+const normalizeAccessDate = (value) => {
+  if (typeof value !== "string" || !value.trim()) {
     return "";
   }
 
-  const normalized =
-    value.trim();
+  const normalized = value.trim();
 
-  if (
-    !/^\d{4}-\d{2}-\d{2}$/.test(
-      normalized,
-    )
-  ) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
     throw createError(
       "Date must use YYYY-MM-DD format",
       400,
     );
   }
 
-  const [
-    year,
-    month,
-    day,
-  ] =
-    normalized
-      .split("-")
-      .map(Number);
+  const [year, month, day] = normalized
+    .split("-")
+    .map(Number);
 
   const date = new Date(
     Date.UTC(
@@ -87,12 +67,9 @@ const normalizeAccessDate = (
   );
 
   if (
-    date.getUTCFullYear() !==
-      year ||
-    date.getUTCMonth() !==
-      month - 1 ||
-    date.getUTCDate() !==
-      day
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
   ) {
     throw createError(
       "Invalid access date",
@@ -103,14 +80,194 @@ const normalizeAccessDate = (
   return normalized;
 };
 
-let slugIndexesPromise =
-  null;
+const normalizeMediaLimit = (
+  value,
+  fallback = 5,
+) => {
+  if (
+    value === undefined ||
+    value === null ||
+    value === ""
+  ) {
+    return fallback;
+  }
+
+  const number = Number(value);
+
+  if (
+    !Number.isInteger(number) ||
+    number < 0 ||
+    number > 100
+  ) {
+    throw createError(
+      "Media limits must be whole numbers between 0 and 100.",
+      400,
+    );
+  }
+
+  return number;
+};
+
+const getFileMediaType = (file) => {
+  const mimetype =
+    String(file?.mimetype || "").toLowerCase();
+
+  if (mimetype.startsWith("image/")) {
+    return "image";
+  }
+
+  if (mimetype.startsWith("video/")) {
+    return "video";
+  }
+
+  if (mimetype.startsWith("audio/")) {
+    return "audio";
+  }
+
+  return "file";
+};
+
+const getLimitKey = (type) => {
+  switch (type) {
+    case "image":
+      return "imageLimit";
+
+    case "video":
+      return "videoLimit";
+
+    case "audio":
+      return "audioLimit";
+
+    default:
+      return "fileLimit";
+  }
+};
+
+const getMediaTypeLabel = (type) => {
+  switch (type) {
+    case "image":
+      return "Image";
+
+    case "video":
+      return "Video";
+
+    case "audio":
+      return "Audio";
+
+    default:
+      return "File";
+  }
+};
+
+export const getExperienceMediaLimits =
+  async () => {
+    const settings =
+      await ExperienceMediaSettings.findOneAndUpdate(
+        {
+          key: "global",
+        },
+        {
+          $setOnInsert: {
+            key: "global",
+            ...DEFAULT_MEDIA_LIMITS,
+          },
+        },
+        {
+          new: true,
+          upsert: true,
+          setDefaultsOnInsert: true,
+        },
+      ).lean();
+
+    return {
+      imageLimit:
+        Number(
+          settings?.imageLimit,
+        ) || 0,
+
+      videoLimit:
+        Number(
+          settings?.videoLimit,
+        ) || 0,
+
+      audioLimit:
+        Number(
+          settings?.audioLimit,
+        ) || 0,
+
+      fileLimit:
+        Number(
+          settings?.fileLimit,
+        ) || 0,
+    };
+  };
+
+export const updateExperienceMediaLimits =
+  async (data = {}) => {
+    const current =
+      await getExperienceMediaLimits();
+
+    const values = {
+      imageLimit:
+        normalizeMediaLimit(
+          data.imageLimit,
+          current.imageLimit,
+        ),
+
+      videoLimit:
+        normalizeMediaLimit(
+          data.videoLimit,
+          current.videoLimit,
+        ),
+
+      audioLimit:
+        normalizeMediaLimit(
+          data.audioLimit,
+          current.audioLimit,
+        ),
+
+      fileLimit:
+        normalizeMediaLimit(
+          data.fileLimit,
+          current.fileLimit,
+        ),
+    };
+
+    const settings =
+      await ExperienceMediaSettings.findOneAndUpdate(
+        {
+          key: "global",
+        },
+        {
+          $set: values,
+        },
+        {
+          new: true,
+          upsert: true,
+          runValidators: true,
+        },
+      ).lean();
+
+    return {
+      imageLimit:
+        settings.imageLimit,
+
+      videoLimit:
+        settings.videoLimit,
+
+      audioLimit:
+        settings.audioLimit,
+
+      fileLimit:
+        settings.fileLimit,
+    };
+  };
+
+let slugIndexesPromise = null;
 
 const ensureExperienceSlugIndexes =
   async () => {
-    if (
-      slugIndexesPromise
-    ) {
+    if (slugIndexesPromise) {
       return slugIndexesPromise;
     }
 
@@ -131,9 +288,7 @@ const ensureExperienceSlugIndexes =
           }
         }
 
-        for (
-          const index of indexes
-        ) {
+        for (const index of indexes) {
           const keys =
             Object.keys(
               index.key || {},
@@ -143,9 +298,7 @@ const ensureExperienceSlugIndexes =
             keys.length === 1 &&
             keys[0] === "slug";
 
-          if (
-            isStandaloneSlugIndex
-          ) {
+          if (isStandaloneSlugIndex) {
             try {
               await Experience.collection.dropIndex(
                 index.name,
@@ -182,17 +335,14 @@ const ensureExperienceSlugIndexes =
             (index) => {
               const keys =
                 Object.keys(
-                  index.key ||
-                    {},
+                  index.key || {},
                 );
 
               return (
-                keys.length ===
-                  2 &&
+                keys.length === 2 &&
                 keys[0] ===
                   "serialNumber" &&
-                keys[1] ===
-                  "slug" &&
+                keys[1] === "slug" &&
                 Number(
                   index.key
                     .serialNumber,
@@ -251,6 +401,14 @@ const ensureExperienceSlugIndexes =
     return slugIndexesPromise;
   };
 
+const getClientUrl = () => {
+  return String(
+    process.env.CLIENT_URL ||
+      process.env.FRONTEND_URL ||
+      "http://localhost:5173",
+  ).replace(/\/+$/, "");
+};
+
 const buildExperienceUrl = (
   experience,
 ) => {
@@ -262,13 +420,7 @@ const buildExperienceUrl = (
   }
 
   const clientUrl =
-    (
-      process.env.CLIENT_URL ||
-      "http://localhost:5173"
-    ).replace(
-      /\/+$/,
-      "",
-    );
+    getClientUrl();
 
   const serialNumber =
     String(
@@ -335,9 +487,7 @@ const loadPublicExperienceDocument =
         .toUpperCase();
 
     const formattedSlug =
-      formatSlug(
-        slug,
-      );
+      formatSlug(slug);
 
     if (!formattedSlug) {
       throw createError(
@@ -356,9 +506,7 @@ const loadPublicExperienceDocument =
 
         ...extraQuery,
       })
-        .select(
-          "+accessDate",
-        )
+        .select("+accessDate")
         .populate(
           "product",
           "name description price primaryImage image images",
@@ -389,13 +537,10 @@ const loadPublicExperienceDocument =
   };
 
 const buildPublicExperiencePayload =
-  async (
-    experience,
-  ) => {
+  async (experience) => {
     experience.visits =
       Number(
-        experience.visits ||
-          0,
+        experience.visits || 0,
       ) + 1;
 
     await experience.save();
@@ -481,8 +626,7 @@ export const createExperience =
       );
     }
 
-    let smartUnitInstance =
-      null;
+    let smartUnitInstance = null;
 
     if (
       typeof data.serialNumber ===
@@ -505,9 +649,7 @@ export const createExperience =
           },
         );
 
-      if (
-        !smartUnitInstance
-      ) {
+      if (!smartUnitInstance) {
         throw createError(
           "Smart Unit physical instance not found for this serial number",
           404,
@@ -527,9 +669,7 @@ export const createExperience =
           },
         );
 
-      if (
-        !smartUnitInstance
-      ) {
+      if (!smartUnitInstance) {
         throw createError(
           "Smart Unit physical instance not found",
           404,
@@ -549,9 +689,7 @@ export const createExperience =
           createdAt: 1,
         });
 
-      if (
-        !smartUnitInstance
-      ) {
+      if (!smartUnitInstance) {
         throw createError(
           "No available physical Smart Unit instance found",
           400,
@@ -569,9 +707,7 @@ export const createExperience =
         serialNumber,
       });
 
-    if (
-      existingExperience
-    ) {
+    if (existingExperience) {
       throw createError(
         "This physical Smart Unit already has an Experience",
         400,
@@ -600,8 +736,7 @@ export const createExperience =
         data.smartUnit,
 
       owner:
-        data.owner ||
-        null,
+        data.owner || null,
 
       serialNumber,
 
@@ -610,17 +745,14 @@ export const createExperience =
       publicToken,
 
       type:
-        data.type ||
-        "personal",
+        data.type || "personal",
 
       status:
-        data.status ||
-        "waiting",
+        data.status || "waiting",
 
       visits: 0,
 
-      activatedAt:
-        null,
+      activatedAt: null,
     };
 
     if (
@@ -633,9 +765,7 @@ export const createExperience =
           data.slug,
         );
 
-      if (
-        !formattedSlug
-      ) {
+      if (!formattedSlug) {
         throw createError(
           "Invalid URL name",
           400,
@@ -698,26 +828,18 @@ export const createExperience =
   };
 
 export const getExperienceById =
-  async (
-    experienceId,
-  ) => {
+  async (experienceId) => {
     const experience =
       await Experience.findById(
         experienceId,
       )
-        .populate(
-          "product",
-        )
-        .populate(
-          "smartUnit",
-        )
+        .populate("product")
+        .populate("smartUnit")
         .populate(
           "owner",
           "email",
         )
-        .populate(
-          "order",
-        );
+        .populate("order");
 
     if (!experience) {
       throw createError(
@@ -730,30 +852,19 @@ export const getExperienceById =
   };
 
 export const getExperienceByManageToken =
-  async (
-    token,
-  ) => {
+  async (token) => {
     const experience =
       await Experience.findOne({
-        manageToken:
-          token,
+        manageToken: token,
       })
-        .select(
-          "+accessDate",
-        )
-        .populate(
-          "product",
-        )
-        .populate(
-          "smartUnit",
-        )
+        .select("+accessDate")
+        .populate("product")
+        .populate("smartUnit")
         .populate(
           "owner",
           "email",
         )
-        .populate(
-          "order",
-        );
+        .populate("order");
 
     if (!experience) {
       throw createError(
@@ -762,9 +873,7 @@ export const getExperienceByManageToken =
       );
     }
 
-    if (
-      !experience.publicToken
-    ) {
+    if (!experience.publicToken) {
       experience.publicToken =
         crypto
           .randomBytes(32)
@@ -786,6 +895,9 @@ export const getExperienceByManageToken =
         experience._id,
       );
 
+    const mediaLimits =
+      await getExperienceMediaLimits();
+
     const publicUrl =
       buildExperienceUrl(
         experience,
@@ -795,6 +907,7 @@ export const getExperienceByManageToken =
       experience,
       personal,
       media,
+      mediaLimits,
       publicUrl,
     };
   };
@@ -816,11 +929,8 @@ export const getPublicExperienceAccess =
       experience.accessDate
     ) {
       return {
-        requiresDate:
-          true,
-
-        data:
-          null,
+        requiresDate: true,
+        data: null,
       };
     }
 
@@ -830,9 +940,7 @@ export const getPublicExperienceAccess =
       );
 
     return {
-      requiresDate:
-        false,
-
+      requiresDate: false,
       data,
     };
   };
@@ -880,17 +988,12 @@ export const unlockPublicExperience =
   };
 
 export const getExperienceByPublicToken =
-  async (
-    token,
-  ) => {
+  async (token) => {
     const experience =
       await Experience.findOne({
-        publicToken:
-          token,
+        publicToken: token,
       })
-        .select(
-          "+accessDate",
-        )
+        .select("+accessDate")
         .populate(
           "product",
           "name description price primaryImage image images",
@@ -955,9 +1058,7 @@ export const getExperienceBySerialAndSlug =
   };
 
 export const getExperienceBySlug =
-  async (
-    slug,
-  ) => {
+  async (slug) => {
     if (
       typeof slug !==
         "string" ||
@@ -970,18 +1071,14 @@ export const getExperienceBySlug =
     }
 
     const formattedSlug =
-      formatSlug(
-        slug,
-      );
+      formatSlug(slug);
 
     const experience =
       await Experience.findOne({
         slug:
           formattedSlug,
       })
-        .select(
-          "+accessDate",
-        )
+        .select("+accessDate")
         .populate(
           "product",
           "name description price primaryImage image images",
@@ -1029,8 +1126,7 @@ export const updatePersonalExperience =
   ) => {
     const experience =
       await Experience.findOne({
-        manageToken:
-          token,
+        manageToken: token,
       });
 
     if (!experience) {
@@ -1107,8 +1203,7 @@ export const updateExperienceSlug =
 
     const experience =
       await Experience.findOne({
-        manageToken:
-          token,
+        manageToken: token,
       });
 
     if (!experience) {
@@ -1119,13 +1214,9 @@ export const updateExperienceSlug =
     }
 
     const formattedSlug =
-      formatSlug(
-        slug,
-      );
+      formatSlug(slug);
 
-    if (
-      !formattedSlug
-    ) {
+    if (!formattedSlug) {
       throw createError(
         "Invalid URL name",
         400,
@@ -1139,8 +1230,7 @@ export const updateExperienceSlug =
       await experience.save();
     } catch (error) {
       if (
-        error?.code ===
-        11000
+        error?.code === 11000
       ) {
         throw createError(
           "Unable to save this custom link. Please try again.",
@@ -1161,11 +1251,8 @@ export const updateExperienceAccessDate =
   ) => {
     const experience =
       await Experience.findOne({
-        manageToken:
-          token,
-      }).select(
-        "+accessDate",
-      );
+        manageToken: token,
+      }).select("+accessDate");
 
     if (!experience) {
       throw createError(
@@ -1196,9 +1283,7 @@ export const updateExperienceAccessDate =
   };
 
 export const checkSlugAvailability =
-  async (
-    slug,
-  ) => {
+  async (slug) => {
     await ensureExperienceSlugIndexes();
 
     if (
@@ -1210,9 +1295,7 @@ export const checkSlugAvailability =
     }
 
     const formattedSlug =
-      formatSlug(
-        slug,
-      );
+      formatSlug(slug);
 
     return Boolean(
       formattedSlug,
@@ -1247,8 +1330,7 @@ export const uploadExperienceMedia =
 
     const experience =
       await Experience.findOne({
-        manageToken:
-          token,
+        manageToken: token,
       });
 
     if (!experience) {
@@ -1258,65 +1340,149 @@ export const uploadExperienceMedia =
       );
     }
 
-    const media = [];
+    const limits =
+      await getExperienceMediaLimits();
 
-    for (
-      const file of files
-    ) {
-      let type =
-        "file";
-
-      if (
-        file.mimetype?.startsWith(
-          "image/",
-        )
-      ) {
-        type =
-          "image";
-      } else if (
-        file.mimetype?.startsWith(
-          "video/",
-        )
-      ) {
-        type =
-          "video";
-      } else if (
-        file.mimetype?.startsWith(
-          "audio/",
-        )
-      ) {
-        type =
-          "audio";
-      }
-
-      const item =
-        await ExperienceMedia.create(
-          {
+    const countRows =
+      await ExperienceMedia.aggregate([
+        {
+          $match: {
             experience:
               experience._id,
-
-            type,
-
-            url:
-              `/uploads/experience/${file.filename}`,
-
-            fileName:
-              file.originalname,
-
-            fileSize:
-              file.size,
-
-            sortOrder:
-              0,
           },
+        },
+        {
+          $group: {
+            _id: "$type",
+            count: {
+              $sum: 1,
+            },
+          },
+        },
+      ]);
+
+    const existingCounts = {
+      image: 0,
+      video: 0,
+      audio: 0,
+      file: 0,
+    };
+
+    countRows.forEach(
+      (row) => {
+        if (
+          Object.prototype.hasOwnProperty.call(
+            existingCounts,
+            row._id,
+          )
+        ) {
+          existingCounts[
+            row._id
+          ] = Number(
+            row.count || 0,
+          );
+        }
+      },
+    );
+
+    const incomingCounts = {
+      image: 0,
+      video: 0,
+      audio: 0,
+      file: 0,
+    };
+
+    files.forEach((file) => {
+      const type =
+        getFileMediaType(file);
+
+      incomingCounts[type] += 1;
+    });
+
+    for (const type of [
+      "image",
+      "video",
+      "audio",
+      "file",
+    ]) {
+      const limitKey =
+        getLimitKey(type);
+
+      const limit =
+        Number(
+          limits[limitKey] || 0,
         );
 
-      media.push(
-        item,
-      );
+      const current =
+        Number(
+          existingCounts[type] || 0,
+        );
+
+      const incoming =
+        Number(
+          incomingCounts[type] || 0,
+        );
+
+      if (
+        current + incoming >
+        limit
+      ) {
+        throw createError(
+          `${getMediaTypeLabel(
+            type,
+          )} limit is ${limit}. This experience already has ${current} and you selected ${incoming}.`,
+          400,
+        );
+      }
     }
 
-    return media;
+    const totalCurrentMedia =
+      Object.values(
+        existingCounts,
+      ).reduce(
+        (
+          total,
+          count,
+        ) =>
+          total +
+          Number(
+            count || 0,
+          ),
+        0,
+      );
+
+    const documents =
+      files.map(
+        (
+          file,
+          index,
+        ) => ({
+          experience:
+            experience._id,
+
+          type:
+            getFileMediaType(
+              file,
+            ),
+
+          url:
+            `/uploads/experience/${file.filename}`,
+
+          fileName:
+            file.originalname,
+
+          fileSize:
+            file.size,
+
+          sortOrder:
+            totalCurrentMedia +
+            index,
+        }),
+      );
+
+    return ExperienceMedia.insertMany(
+      documents,
+    );
   };
 
 export const getExperienceMedia =
@@ -1333,9 +1499,7 @@ export const getExperienceMedia =
   };
 
 export const deleteExperienceMedia =
-  async (
-    mediaId,
-  ) => {
+  async (mediaId) => {
     const media =
       await ExperienceMedia.findByIdAndDelete(
         mediaId,

@@ -14,6 +14,8 @@ import {
   checkSlugController,
   uploadMediaController,
   unlockPublicExperienceController,
+  getMediaLimitsController,
+  updateMediaLimitsController,
 } from "../controllers/experienceController.js";
 
 const router = express.Router();
@@ -21,6 +23,37 @@ const router = express.Router();
 router.post(
   "/",
   createExperienceController,
+);
+
+router.get(
+  "/media-limits",
+  getMediaLimitsController,
+);
+
+/*
+IMPORTANT:
+
+Your admin media-limits route MUST use the same
+protect + adminMiddleware that you already use
+for the other admin routes.
+
+Example:
+
+router.put(
+  "/admin/media-limits",
+  protect,
+  adminMiddleware,
+  updateMediaLimitsController,
+);
+
+For now this route is written below.
+Add your existing protect/adminMiddleware before
+updateMediaLimitsController.
+*/
+
+router.put(
+  "/admin/media-limits",
+  updateMediaLimitsController,
 );
 
 router.get(
@@ -45,7 +78,10 @@ router.put(
 
 router.post(
   "/manage/:token/media",
-  upload.array("files", 20),
+  upload.array(
+    "files",
+    20,
+  ),
   uploadMediaController,
 );
 

@@ -42,6 +42,10 @@ const AdminSidebar = () => {
       label: "Orders",
       path: "/admin/orders",
     },
+    {
+      label: "Experience Media Settings",
+      path: "/admin/experience-media-settings",
+    },
   ];
 
   return (
@@ -59,9 +63,7 @@ const AdminSidebar = () => {
           <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-champagne-gold/25 bg-soft-white/[0.05] text-[15px] text-champagne-gold shadow-[0_10px_24px_rgba(0,0,0,0.16)] backdrop-blur-sm">
             <span className="absolute inset-1 rounded-full border border-champagne-gold/10" />
 
-            <span className="relative">
-              ✦
-            </span>
+            <span className="relative">✦</span>
           </div>
 
           <div>
@@ -78,9 +80,7 @@ const AdminSidebar = () => {
         <div className="mt-7 flex items-center gap-3">
           <span className="h-px flex-1 bg-gradient-to-r from-transparent to-champagne-gold/25" />
 
-          <span className="text-[7px] text-classic-gold">
-            ✦
-          </span>
+          <span className="text-[7px] text-classic-gold">✦</span>
 
           <span className="h-px flex-1 bg-gradient-to-l from-transparent to-champagne-gold/25" />
         </div>
@@ -211,25 +211,15 @@ const AdminSidebar = () => {
 
         <div className="relative mx-6 border-t border-soft-white/[0.08] py-5">
           <div className="flex items-center justify-center gap-2 text-[6px] font-semibold uppercase tracking-[0.23em] text-premium-silver/30">
-            <span>
-              Elegant
-            </span>
+            <span>Elegant</span>
 
-            <span className="text-classic-gold/65">
-              ✦
-            </span>
+            <span className="text-classic-gold/65">✦</span>
 
-            <span>
-              Personal
-            </span>
+            <span>Personal</span>
 
-            <span className="text-classic-gold/65">
-              ✦
-            </span>
+            <span className="text-classic-gold/65">✦</span>
 
-            <span>
-              Smart
-            </span>
+            <span>Smart</span>
           </div>
         </div>
       </div>

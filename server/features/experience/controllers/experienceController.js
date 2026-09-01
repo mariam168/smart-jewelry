@@ -9,6 +9,8 @@ import {
   uploadExperienceMedia,
   getPublicExperienceAccess,
   unlockPublicExperience,
+  getExperienceMediaLimits,
+  updateExperienceMediaLimits,
 } from "../services/experienceService.js";
 
 export const createExperienceController = async (
@@ -174,9 +176,12 @@ export const getExperienceBySlugController =
 
       return res.json({
         success: true,
+
         requiresDate:
           result.requiresDate,
-        data: result.data,
+
+        data:
+          result.data,
       });
     } catch (error) {
       next(error);
@@ -298,6 +303,48 @@ export const uploadMediaController = async (
     return res.status(200).json({
       success: true,
       data: media,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getMediaLimitsController = async (
+  req,
+  res,
+  next,
+) => {
+  try {
+    const limits =
+      await getExperienceMediaLimits();
+
+    return res.status(200).json({
+      success: true,
+      data: limits,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateMediaLimitsController = async (
+  req,
+  res,
+  next,
+) => {
+  try {
+    const limits =
+      await updateExperienceMediaLimits(
+        req.body,
+      );
+
+    return res.status(200).json({
+      success: true,
+
+      message:
+        "Experience media limits updated successfully.",
+
+      data: limits,
     });
   } catch (error) {
     next(error);

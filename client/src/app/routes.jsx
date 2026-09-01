@@ -67,6 +67,8 @@ import AdminOrderDetailsPage from "../features/admin/pages/AdminOrderDetailsPage
 import AdminManufacturingOrdersPage from "../features/admin/pages/AdminManufacturingOrdersPage";
 import AdminManufacturingOrderDetailsPage from "../features/admin/pages/AdminManufacturingOrderDetailsPage";
 
+import AdminExperienceMediaSettingsPage from "../features/admin/pages/AdminExperienceMediaSettingsPage";
+
 import AdminFinancePage from "../features/finance/pages/AdminFinancePage";
 
 import AdminShippingAreasPage from "../features/shipping/pages/AdminShippingAreasPage";
@@ -200,6 +202,11 @@ const router = createBrowserRouter([
               {
                 path: "products/new",
                 element: <AddProductPage />,
+              },
+
+              {
+                path: "experience-media-settings",
+                element: <AdminExperienceMediaSettingsPage />,
               },
 
               {
