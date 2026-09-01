@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { FaHeart, FaArrowRight, FaPlus } from "react-icons/fa6";
 
 const ProductCard = ({ product, index = 0 }) => {
-  const isOutOfStock = product.stock <= 0;
+  const isOutOfStock = Number(product.stock || 0) <= 0;
 
   const backendUrl = (
     import.meta.env.VITE_BACKEND_URL ||
@@ -41,11 +41,18 @@ const ProductCard = ({ product, index = 0 }) => {
     return `${backendUrl}${imagePath}`;
   };
 
+  const formatMoney = (value) => {
+    return Number(value || 0).toLocaleString("en-EG", {
+      maximumFractionDigits: 2,
+    });
+  };
+
   const imageUrl = getImageUrl(product.image);
 
   const number = String(index + 1).padStart(2, "0");
 
   const price = Number(product.price || 0);
+
   const comparePrice = Number(product.comparePrice || 0);
 
   const hasDiscount =
@@ -53,8 +60,14 @@ const ProductCard = ({ product, index = 0 }) => {
     price > 0 &&
     comparePrice > price;
 
+  const saving = hasDiscount
+    ? comparePrice - price
+    : 0;
+
   const discountPercentage = hasDiscount
-    ? Math.round(((comparePrice - price) / comparePrice) * 100)
+    ? Math.round(
+        ((comparePrice - price) / comparePrice) * 100,
+      )
     : 0;
 
   const badge = hasDiscount
@@ -127,12 +140,12 @@ const ProductCard = ({ product, index = 0 }) => {
                 </span>
 
                 <span className="mt-1 block font-serif text-[1.45rem] font-normal text-soft-white">
-                  ${product.price}
+                  {formatMoney(price)} EGP
                 </span>
 
                 {hasDiscount && (
                   <span className="mt-1 block text-[9px] text-soft-white/60 line-through">
-                    ${product.comparePrice}
+                    {formatMoney(comparePrice)} EGP
                   </span>
                 )}
               </div>
@@ -203,13 +216,13 @@ const ProductCard = ({ product, index = 0 }) => {
               )}
 
               <span className="font-serif text-[1.2rem] font-normal text-midnight-navy">
-                ${product.price}
+                {formatMoney(price)} EGP
               </span>
 
               {hasDiscount && (
                 <>
                   <span className="mt-1 block text-[9px] text-steel-gray line-through">
-                    ${product.comparePrice}
+                    {formatMoney(comparePrice)} EGP
                   </span>
 
                   <span className="mt-1.5 inline-flex rounded-full bg-soft-cream px-2.5 py-1 text-[7px] font-semibold uppercase tracking-[0.08em] text-antique-gold">
@@ -219,6 +232,18 @@ const ProductCard = ({ product, index = 0 }) => {
               )}
             </div>
           </div>
+
+          {hasDiscount && (
+            <div className="mt-4 flex items-center justify-between rounded-[13px] border border-champagne-gold/25 bg-soft-cream/70 px-3.5 py-2.5">
+              <span className="text-[7px] font-semibold uppercase tracking-[0.13em] text-steel-gray">
+                You Save
+              </span>
+
+              <span className="text-[9px] font-semibold text-antique-gold">
+                {formatMoney(saving)} EGP
+              </span>
+            </div>
+          )}
 
           {(product.shortDescription || product.description) && (
             <p className="mt-4 line-clamp-2 max-w-[88%] text-[11px] leading-[1.8] text-slate-gray sm:text-[12px]">
