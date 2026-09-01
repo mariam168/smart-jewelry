@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 import User from "../models/User.js";
 import Customer from "../models/Customer.js";
 import Role from "../models/Role.js";
@@ -9,6 +11,14 @@ import { hashPassword, comparePassword } from "../utils/password.js";
 import { generateRandomToken, hashToken } from "../utils/token.js";
 
 import { generateAccessToken } from "../utils/jwt.js";
+
+const createError = (message, statusCode = 400) => {
+  const error = new Error(message);
+
+  error.statusCode = statusCode;
+
+  return error;
+};
 
 export const registerCustomer = async ({
   firstName,
@@ -26,11 +36,7 @@ export const registerCustomer = async ({
   });
 
   if (existingUser) {
-    const error = new Error("An account with this email already exists");
-
-    error.statusCode = 409;
-
-    throw error;
+    throw createError("An account with this email already exists", 409);
   }
 
   const customerRole = await Role.findOne({
@@ -38,11 +44,7 @@ export const registerCustomer = async ({
   });
 
   if (!customerRole) {
-    const error = new Error("Customer role was not found");
-
-    error.statusCode = 500;
-
-    throw error;
+    throw createError("Customer role was not found", 500);
   }
 
   const passwordHash = await hashPassword(password);
@@ -55,24 +57,34 @@ export const registerCustomer = async ({
 
   const user = await User.create({
     email: normalizedEmail,
+
     passwordHash,
+
     role: customerRole._id,
+
     emailVerificationTokenHash: verificationTokenHash,
+
     emailVerificationExpiresAt: verificationExpiresAt,
   });
 
   try {
     const customer = await Customer.create({
       user: user._id,
+
       firstName: firstName.trim(),
+
       lastName: lastName.trim(),
+
       phone: phone?.trim() || "",
+
       privacyConsent,
+
       marketingConsent: marketingConsent || false,
     });
 
     return {
       user,
+
       customer,
 
       verificationToken,
@@ -86,28 +98,21 @@ export const registerCustomer = async ({
 
 export const verifyEmail = async (token) => {
   if (!token) {
-    const error = new Error("Verification token is required");
-
-    error.statusCode = 400;
-
-    throw error;
+    throw createError("Verification token is required", 400);
   }
 
   const tokenHash = hashToken(token);
 
   const user = await User.findOne({
     emailVerificationTokenHash: tokenHash,
+
     emailVerificationExpiresAt: {
       $gt: new Date(),
     },
   });
 
   if (!user) {
-    const error = new Error("Invalid or expired verification token");
-
-    error.statusCode = 400;
-
-    throw error;
+    throw createError("Invalid or expired verification token", 400);
   }
 
   user.emailVerifiedAt = new Date();
@@ -128,36 +133,26 @@ export const loginUser = async ({ email, password }) => {
     email: normalizedEmail,
   }).populate({
     path: "role",
+
     populate: {
       path: "permissions",
+
       model: "Permission",
     },
   });
 
   if (!user) {
-    const error = new Error("Invalid email or password");
-
-    error.statusCode = 401;
-
-    throw error;
+    throw createError("Invalid email or password", 401);
   }
 
   if (!user.isActive) {
-    const error = new Error("Your account has been deactivated");
-
-    error.statusCode = 403;
-
-    throw error;
+    throw createError("Your account has been deactivated", 403);
   }
 
   const isPasswordValid = await comparePassword(password, user.passwordHash);
 
   if (!isPasswordValid) {
-    const error = new Error("Invalid email or password");
-
-    error.statusCode = 401;
-
-    throw error;
+    throw createError("Invalid email or password", 401);
   }
 
   user.lastLoginAt = new Date();
@@ -166,11 +161,13 @@ export const loginUser = async ({ email, password }) => {
 
   const accessToken = generateAccessToken({
     userId: user._id.toString(),
+
     role: user.role.name,
   });
 
   return {
     user,
+
     accessToken,
   };
 };
@@ -179,8 +176,10 @@ export const getCurrentUser = async (userId) => {
   const user = await User.findById(userId)
     .populate({
       path: "role",
+
       populate: {
         path: "permissions",
+
         model: "Permission",
       },
     })
@@ -189,11 +188,7 @@ export const getCurrentUser = async (userId) => {
     );
 
   if (!user) {
-    const error = new Error("User not found");
-
-    error.statusCode = 404;
-
-    throw error;
+    throw createError("User not found", 404);
   }
 
   const customer = await Customer.findOne({
@@ -202,6 +197,145 @@ export const getCurrentUser = async (userId) => {
 
   return {
     user,
+
     customer,
   };
+};
+
+export const getUsersForAdmin = async () => {
+  const users = await User.find()
+    .populate("role", "name description")
+    .select(
+      "-passwordHash -emailVerificationTokenHash -emailVerificationExpiresAt",
+    )
+    .sort({
+      createdAt: -1,
+    })
+    .lean();
+
+  const userIds = users.map((user) => user._id);
+
+  const customers = await Customer.find({
+    user: {
+      $in: userIds,
+    },
+  })
+    .select(
+      "user firstName lastName phone status privacyConsent marketingConsent createdAt",
+    )
+    .lean();
+
+  const customerMap = new Map();
+
+  customers.forEach((customer) => {
+    customerMap.set(
+      String(customer.user),
+
+      customer,
+    );
+  });
+
+  return users.map((user) => {
+    const customer = customerMap.get(String(user._id));
+
+    return {
+      _id: user._id,
+
+      email: user.email,
+
+      role: user.role || null,
+
+      isActive: user.isActive,
+
+      emailVerifiedAt: user.emailVerifiedAt,
+
+      lastLoginAt: user.lastLoginAt,
+
+      createdAt: user.createdAt,
+
+      updatedAt: user.updatedAt,
+
+      customer: customer || null,
+    };
+  });
+};
+
+export const changeUserRole = async ({ userId, roleName, adminUserId }) => {
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    throw createError("Invalid user ID", 400);
+  }
+
+  const normalizedRole = String(roleName || "")
+    .trim()
+    .toLowerCase();
+
+  if (!normalizedRole) {
+    throw createError("Role is required", 400);
+  }
+
+  const allowedRoles = ["admin", "customer"];
+
+  if (!allowedRoles.includes(normalizedRole)) {
+    throw createError("Invalid role", 400);
+  }
+
+  const targetRole = await Role.findOne({
+    name: normalizedRole,
+  });
+
+  if (!targetRole) {
+    throw createError("Role not found", 404);
+  }
+
+  const user = await User.findById(userId).populate("role", "name");
+
+  if (!user) {
+    throw createError("User not found", 404);
+  }
+
+  const currentRole = user.role?.name;
+
+  if (
+    String(user._id) === String(adminUserId) &&
+    currentRole !== normalizedRole
+  ) {
+    throw createError("You cannot change your own role.", 400);
+  }
+
+  if (currentRole === "admin" && normalizedRole !== "admin") {
+    const adminRole = await Role.findOne({
+      name: "admin",
+    });
+
+    if (!adminRole) {
+      throw createError("Admin role not found", 500);
+    }
+
+    const activeAdminCount = await User.countDocuments({
+      role: adminRole._id,
+
+      isActive: true,
+    });
+
+    if (activeAdminCount <= 1) {
+      throw createError(
+        "You cannot remove the last active administrator.",
+        400,
+      );
+    }
+  }
+
+  if (currentRole === normalizedRole) {
+    return user;
+  }
+
+  user.role = targetRole._id;
+
+  await user.save();
+
+  return User.findById(user._id)
+    .populate("role", "name description")
+    .select(
+      "-passwordHash -emailVerificationTokenHash -emailVerificationExpiresAt",
+    );
 };

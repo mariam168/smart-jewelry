@@ -39,6 +39,10 @@ const AdminSidebar = () => {
       path: "/admin/categories",
     },
     {
+  label: "Users",
+  path: "/admin/users",
+},
+    {
       label: "Orders",
       path: "/admin/orders",
     },

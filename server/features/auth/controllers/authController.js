@@ -3,6 +3,8 @@ import {
   verifyEmail,
   loginUser,
   getCurrentUser,
+  getUsersForAdmin,
+  changeUserRole,
 } from "../services/authService.js";
 
 import {
@@ -12,15 +14,22 @@ import {
 
 const getCookieOptions = () => {
   const isProduction =
-    process.env.NODE_ENV === "production";
+    process.env.NODE_ENV ===
+    "production";
 
   return {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction
-      ? "none"
-      : "lax",
+
+    secure:
+      isProduction,
+
+    sameSite:
+      isProduction
+        ? "none"
+        : "lax",
+
     path: "/",
+
     maxAge:
       7 *
       24 *
@@ -42,15 +51,19 @@ export const register = async (
       );
 
     if (
-      Object.keys(errors)
-        .length > 0
+      Object.keys(
+        errors,
+      ).length > 0
     ) {
       return res
         .status(400)
         .json({
-          success: false,
+          success:
+            false,
+
           message:
             "Please fix the validation errors",
+
           errors,
         });
     }
@@ -79,23 +92,32 @@ export const register = async (
     return res
       .status(201)
       .json({
-        success: true,
+        success:
+          true,
+
         message:
           "Account created successfully",
+
         data: {
           user: {
-            id: result.user._id,
+            id:
+              result.user
+                ._id,
+
             email:
-              result.user.email,
+              result.user
+                .email,
           },
 
           customer: {
             id:
               result.customer
                 ._id,
+
             firstName:
               result.customer
                 .firstName,
+
             lastName:
               result.customer
                 .lastName,
@@ -125,7 +147,9 @@ export const verifyEmailController =
       return res
         .status(200)
         .json({
-          success: true,
+          success:
+            true,
+
           message:
             "Email verified successfully",
 
@@ -154,15 +178,19 @@ export const login = async (
       );
 
     if (
-      Object.keys(errors)
-        .length > 0
+      Object.keys(
+        errors,
+      ).length > 0
     ) {
       return res
         .status(400)
         .json({
-          success: false,
+          success:
+            false,
+
           message:
             "Please fix the validation errors",
+
           errors,
         });
     }
@@ -187,14 +215,17 @@ export const login = async (
     return res
       .status(200)
       .json({
-        success: true,
+        success:
+          true,
+
         message:
           "Logged in successfully",
 
         data: {
           user: {
             id:
-              result.user._id,
+              result.user
+                ._id,
 
             email:
               result.user
@@ -231,7 +262,8 @@ export const getMe = async (
     return res
       .status(200)
       .json({
-        success: true,
+        success:
+          true,
 
         data: {
           user: {
@@ -274,12 +306,15 @@ export const logout = (
     "accessToken",
     {
       httpOnly: true,
+
       secure:
         isProduction,
+
       sameSite:
         isProduction
           ? "none"
           : "lax",
+
       path: "/",
     },
   );
@@ -288,7 +323,76 @@ export const logout = (
     .status(200)
     .json({
       success: true,
+
       message:
         "Logged out successfully",
     });
 };
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN USERS
+|--------------------------------------------------------------------------
+*/
+
+export const getAdminUsersController =
+  async (
+    req,
+    res,
+    next,
+  ) => {
+    try {
+      const users =
+        await getUsersForAdmin();
+
+      return res
+        .status(200)
+        .json({
+          success:
+            true,
+
+          data: {
+            users,
+          },
+        });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+export const updateUserRoleController =
+  async (
+    req,
+    res,
+    next,
+  ) => {
+    try {
+      const user =
+        await changeUserRole({
+          userId:
+            req.params.userId,
+
+          roleName:
+            req.body.role,
+
+          adminUserId:
+            req.user.userId,
+        });
+
+      return res
+        .status(200)
+        .json({
+          success:
+            true,
+
+          message:
+            "User role updated successfully.",
+
+          data: {
+            user,
+          },
+        });
+    } catch (error) {
+      next(error);
+    }
+  };

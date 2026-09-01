@@ -20,7 +20,7 @@ import VerifyEmailPage from "../features/auth/pages/VerifyEmailPage";
 
 import ProtectedRoute from "../features/auth/components/ProtectedRoute";
 import AdminProtectedRoute from "../features/auth/components/AdminProtectedRoute";
-
+import AdminUsersPage from "../features/admin/pages/AdminUsersPage";
 import AccountPage from "../features/account/pages/AccountPage";
 
 import MyOrdersPage from "../features/orders/pages/MyOrdersPage";
@@ -313,6 +313,10 @@ const router = createBrowserRouter([
                 path: "manufacturing/:id",
                 element: <AdminManufacturingOrderDetailsPage />,
               },
+              {
+  path: "users",
+  element: <AdminUsersPage />,
+},
 
               {
                 path: "shipping",
