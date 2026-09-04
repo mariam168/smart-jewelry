@@ -5,44 +5,69 @@ import TechnologyModel from "../models/TechnologyModel.js";
 import {
   generateSerialNumber,
 } from "../../experience/utils/tokenGenerator.js";
-
 const createSmartUnitInstances = async (
   smartUnit,
   quantity
 ) => {
-  const count = Number(quantity);
 
-  if (
-    !Number.isInteger(count) ||
-    count <= 0
-  ) {
-    return [];
-  }
 
-  const instances = [];
+const count = Number(quantity);
 
-  for (
-    let index = 0;
-    index < count;
-    index += 1
-  ) {
-    instances.push({
-      smartUnit: smartUnit._id,
 
-      serialNumber:
-        generateSerialNumber(),
 
-      status: "available",
+if(
+!Number.isInteger(count) ||
+count <= 0
+){
 
-      firmwareVersion:
-        smartUnit.firmwareVersion ||
-        "",
-    });
-  }
+return [];
 
-  return SmartUnitInstance.insertMany(
-    instances
-  );
+}
+
+
+
+const instances=[];
+
+
+
+for(
+let index=0;
+index<count;
+index++
+){
+
+
+instances.push({
+
+smartUnit:smartUnit._id,
+
+
+serialNumber:
+generateSerialNumber(),
+
+
+status:"available",
+
+
+firmwareVersion:
+smartUnit.firmwareVersion || "",
+
+
+// NEW
+addedAt:new Date(),
+
+});
+
+
+}
+
+
+
+return SmartUnitInstance.insertMany(
+instances
+);
+
+
 };
 
 export const createSmartUnit = async (

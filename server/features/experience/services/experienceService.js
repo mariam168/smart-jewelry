@@ -8,26 +8,38 @@ import Experience from "../models/Experience.js";
 import ExperiencePersonal from "../models/ExperiencePersonal.js";
 import ExperienceMedia from "../models/ExperienceMedia.js";
 import ExperienceMediaSettings from "../models/ExperienceMediaSettings.js";
+import VideoUploadRequest from "../models/VideoUploadRequest.js";
 
-import { generateManageToken } from "../utils/tokenGenerator.js";
+import {
+  generateManageToken,
+} from "../utils/tokenGenerator.js";
 
 const DEFAULT_MEDIA_LIMITS = {
   imageLimit: 5,
   videoLimit: 5,
   audioLimit: 5,
-  fileLimit: 5,
 };
 
-const createError = (message, statusCode = 400) => {
-  const error = new Error(message);
+const createError = (
+  message,
+  statusCode = 400,
+) => {
+  const error =
+    new Error(message);
 
-  error.statusCode = statusCode;
+  error.statusCode =
+    statusCode;
 
   return error;
 };
 
-const formatSlug = (slug) => {
-  if (typeof slug !== "string" || !slug.trim()) {
+const formatSlug = (
+  slug,
+) => {
+  if (
+    typeof slug !== "string" ||
+    !slug.trim()
+  ) {
     return null;
   }
 
@@ -35,41 +47,62 @@ const formatSlug = (slug) => {
     .trim()
     .toLowerCase()
     .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9\u0600-\u06FF-]/g, "")
+    .replace(
+      /[^a-z0-9\u0600-\u06FF-]/g,
+      "",
+    )
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
 };
 
-const normalizeAccessDate = (value) => {
-  if (typeof value !== "string" || !value.trim()) {
+const normalizeAccessDate = (
+  value,
+) => {
+  if (
+    typeof value !== "string" ||
+    !value.trim()
+  ) {
     return "";
   }
 
-  const normalized = value.trim();
+  const normalized =
+    value.trim();
 
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(
+      normalized,
+    )
+  ) {
     throw createError(
       "Date must use YYYY-MM-DD format",
       400,
     );
   }
 
-  const [year, month, day] = normalized
+  const [
+    year,
+    month,
+    day,
+  ] = normalized
     .split("-")
     .map(Number);
 
-  const date = new Date(
-    Date.UTC(
-      year,
-      month - 1,
-      day,
-    ),
-  );
+  const date =
+    new Date(
+      Date.UTC(
+        year,
+        month - 1,
+        day,
+      ),
+    );
 
   if (
-    date.getUTCFullYear() !== year ||
-    date.getUTCMonth() !== month - 1 ||
-    date.getUTCDate() !== day
+    date.getUTCFullYear() !==
+      year ||
+    date.getUTCMonth() !==
+      month - 1 ||
+    date.getUTCDate() !==
+      day
   ) {
     throw createError(
       "Invalid access date",
@@ -92,10 +125,13 @@ const normalizeMediaLimit = (
     return fallback;
   }
 
-  const number = Number(value);
+  const number =
+    Number(value);
 
   if (
-    !Number.isInteger(number) ||
+    !Number.isInteger(
+      number,
+    ) ||
     number < 0 ||
     number > 100
   ) {
@@ -108,26 +144,98 @@ const normalizeMediaLimit = (
   return number;
 };
 
-const getFileMediaType = (file) => {
-  const mimetype =
-    String(file?.mimetype || "").toLowerCase();
+const normalizeVideoApprovalLimit = (
+  value,
+) => {
+  const number =
+    Number(value);
 
-  if (mimetype.startsWith("image/")) {
+  if (
+    !Number.isInteger(
+      number,
+    ) ||
+    number < 1 ||
+    number > 100
+  ) {
+    throw createError(
+      "Approved video limit must be a whole number between 1 and 100.",
+      400,
+    );
+  }
+
+  return number;
+};
+
+const normalizeRequestText = (
+  value,
+  label,
+  maxLength,
+  required = false,
+) => {
+  const text = String(
+    value ?? "",
+  ).trim();
+
+  if (
+    required &&
+    !text
+  ) {
+    throw createError(
+      `${label} is required`,
+      400,
+    );
+  }
+
+  if (
+    text.length >
+    maxLength
+  ) {
+    throw createError(
+      `${label} is too long`,
+      400,
+    );
+  }
+
+  return text;
+};
+
+const getFileMediaType = (
+  file,
+) => {
+  const mimetype = String(
+    file?.mimetype || "",
+  ).toLowerCase();
+
+  if (
+    mimetype.startsWith(
+      "image/",
+    )
+  ) {
     return "image";
   }
 
-  if (mimetype.startsWith("video/")) {
+  if (
+    mimetype.startsWith(
+      "video/",
+    )
+  ) {
     return "video";
   }
 
-  if (mimetype.startsWith("audio/")) {
+  if (
+    mimetype.startsWith(
+      "audio/",
+    )
+  ) {
     return "audio";
   }
 
-  return "file";
+  return null;
 };
 
-const getLimitKey = (type) => {
+const getLimitKey = (
+  type,
+) => {
   switch (type) {
     case "image":
       return "imageLimit";
@@ -139,11 +247,13 @@ const getLimitKey = (type) => {
       return "audioLimit";
 
     default:
-      return "fileLimit";
+      return null;
   }
 };
 
-const getMediaTypeLabel = (type) => {
+const getMediaTypeLabel = (
+  type,
+) => {
   switch (type) {
     case "image":
       return "Image";
@@ -155,7 +265,7 @@ const getMediaTypeLabel = (type) => {
       return "Audio";
 
     default:
-      return "File";
+      return "Media";
   }
 };
 
@@ -175,35 +285,33 @@ export const getExperienceMediaLimits =
         {
           new: true,
           upsert: true,
-          setDefaultsOnInsert: true,
+          setDefaultsOnInsert:
+            true,
         },
       ).lean();
 
     return {
-      imageLimit:
-        Number(
-          settings?.imageLimit,
-        ) || 0,
+      imageLimit: Number(
+        settings?.imageLimit ??
+          DEFAULT_MEDIA_LIMITS.imageLimit,
+      ),
 
-      videoLimit:
-        Number(
-          settings?.videoLimit,
-        ) || 0,
+      videoLimit: Number(
+        settings?.videoLimit ??
+          DEFAULT_MEDIA_LIMITS.videoLimit,
+      ),
 
-      audioLimit:
-        Number(
-          settings?.audioLimit,
-        ) || 0,
-
-      fileLimit:
-        Number(
-          settings?.fileLimit,
-        ) || 0,
+      audioLimit: Number(
+        settings?.audioLimit ??
+          DEFAULT_MEDIA_LIMITS.audioLimit,
+      ),
     };
   };
 
 export const updateExperienceMediaLimits =
-  async (data = {}) => {
+  async (
+    data = {},
+  ) => {
     const current =
       await getExperienceMediaLimits();
 
@@ -224,12 +332,6 @@ export const updateExperienceMediaLimits =
         normalizeMediaLimit(
           data.audioLimit,
           current.audioLimit,
-        ),
-
-      fileLimit:
-        normalizeMediaLimit(
-          data.fileLimit,
-          current.fileLimit,
         ),
     };
 
@@ -257,17 +359,17 @@ export const updateExperienceMediaLimits =
 
       audioLimit:
         settings.audioLimit,
-
-      fileLimit:
-        settings.fileLimit,
     };
   };
 
-let slugIndexesPromise = null;
+let slugIndexesPromise =
+  null;
 
 const ensureExperienceSlugIndexes =
   async () => {
-    if (slugIndexesPromise) {
+    if (
+      slugIndexesPromise
+    ) {
       return slugIndexesPromise;
     }
 
@@ -280,7 +382,8 @@ const ensureExperienceSlugIndexes =
             await Experience.collection.indexes();
         } catch (error) {
           if (
-            error?.code !== 26 &&
+            error?.code !==
+              26 &&
             error?.codeName !==
               "NamespaceNotFound"
           ) {
@@ -288,24 +391,35 @@ const ensureExperienceSlugIndexes =
           }
         }
 
-        for (const index of indexes) {
+        for (
+          const index of
+          indexes
+        ) {
           const keys =
             Object.keys(
-              index.key || {},
+              index.key ||
+                {},
             );
 
           const isStandaloneSlugIndex =
-            keys.length === 1 &&
-            keys[0] === "slug";
+            keys.length ===
+              1 &&
+            keys[0] ===
+              "slug";
 
-          if (isStandaloneSlugIndex) {
+          if (
+            isStandaloneSlugIndex
+          ) {
             try {
               await Experience.collection.dropIndex(
                 index.name,
               );
-            } catch (error) {
+            } catch (
+              error
+            ) {
               if (
-                error?.code !== 27 &&
+                error?.code !==
+                  27 &&
                 error?.codeName !==
                   "IndexNotFound"
               ) {
@@ -320,7 +434,8 @@ const ensureExperienceSlugIndexes =
             await Experience.collection.indexes();
         } catch (error) {
           if (
-            error?.code !== 26 &&
+            error?.code !==
+              26 &&
             error?.codeName !==
               "NamespaceNotFound"
           ) {
@@ -332,23 +447,29 @@ const ensureExperienceSlugIndexes =
 
         const compoundIndex =
           indexes.find(
-            (index) => {
+            (
+              index,
+            ) => {
               const keys =
                 Object.keys(
-                  index.key || {},
+                  index.key ||
+                    {},
                 );
 
               return (
-                keys.length === 2 &&
+                keys.length ===
+                  2 &&
                 keys[0] ===
                   "serialNumber" &&
-                keys[1] === "slug" &&
+                keys[1] ===
+                  "slug" &&
                 Number(
                   index.key
                     .serialNumber,
                 ) === 1 &&
                 Number(
-                  index.key.slug,
+                  index.key
+                    .slug,
                 ) === 1
               );
             },
@@ -362,9 +483,12 @@ const ensureExperienceSlugIndexes =
             await Experience.collection.dropIndex(
               compoundIndex.name,
             );
-          } catch (error) {
+          } catch (
+            error
+          ) {
             if (
-              error?.code !== 27 &&
+              error?.code !==
+                27 &&
               error?.codeName !==
                 "IndexNotFound"
             ) {
@@ -384,13 +508,16 @@ const ensureExperienceSlugIndexes =
             },
             {
               unique: true,
+
               name:
                 "serialNumber_1_slug_1",
             },
           );
         }
       })().catch(
-        (error) => {
+        (
+          error,
+        ) => {
           slugIndexesPromise =
             null;
 
@@ -403,17 +530,23 @@ const ensureExperienceSlugIndexes =
 
 const getClientUrl = () => {
   return String(
-    process.env.CLIENT_URL ||
-      process.env.FRONTEND_URL ||
+    process.env
+      .CLIENT_URL ||
+      process.env
+        .FRONTEND_URL ||
       "http://localhost:5173",
-  ).replace(/\/+$/, "");
+  ).replace(
+    /\/+$/,
+    "",
+  );
 };
 
 const buildExperienceUrl = (
   experience,
 ) => {
   if (
-    !experience?.serialNumber ||
+    !experience
+      ?.serialNumber ||
     !experience?.slug
   ) {
     return null;
@@ -461,8 +594,92 @@ const sanitizePublicExperience = (
   delete data.order;
   delete data.orderItem;
 
+  // Do not expose product/smart-unit details
+  // on the public Experience page.
+  delete data.product;
+  delete data.smartUnit;
+
   return data;
 };
+
+const getVideoAccessForExperience =
+  async (
+    experienceId,
+  ) => {
+    const request =
+      await VideoUploadRequest.findOne(
+        {
+          experience:
+            experienceId,
+        },
+      ).lean();
+
+    if (!request) {
+      return {
+        status:
+          "not_requested",
+
+        approvedVideoLimit:
+          0,
+
+        requesterName:
+          "",
+
+        requesterPhone:
+          "",
+
+        message: "",
+
+        adminNote:
+          "",
+
+        requestedAt:
+          null,
+
+        reviewedAt:
+          null,
+      };
+    }
+
+    return {
+      requestId:
+        request._id,
+
+      status:
+        request.status,
+
+      approvedVideoLimit:
+        Number(
+          request.approvedVideoLimit ||
+            0,
+        ),
+
+      requesterName:
+        request.requesterName ||
+        "",
+
+      requesterPhone:
+        request.requesterPhone ||
+        "",
+
+      message:
+        request.message ||
+        "",
+
+      adminNote:
+        request.adminNote ||
+        "",
+
+      requestedAt:
+        request.requestedAt ||
+        request.createdAt ||
+        null,
+
+      reviewedAt:
+        request.reviewedAt ||
+        null,
+    };
+  };
 
 const loadPublicExperienceDocument =
   async (
@@ -489,7 +706,9 @@ const loadPublicExperienceDocument =
     const formattedSlug =
       formatSlug(slug);
 
-    if (!formattedSlug) {
+    if (
+      !formattedSlug
+    ) {
       throw createError(
         "Invalid URL name",
         400,
@@ -497,16 +716,20 @@ const loadPublicExperienceDocument =
     }
 
     const experience =
-      await Experience.findOne({
-        serialNumber:
-          formattedSerial,
+      await Experience.findOne(
+        {
+          serialNumber:
+            formattedSerial,
 
-        slug:
-          formattedSlug,
+          slug:
+            formattedSlug,
 
-        ...extraQuery,
-      })
-        .select("+accessDate")
+          ...extraQuery,
+        },
+      )
+        .select(
+          "+accessDate",
+        )
         .populate(
           "product",
           "name description price primaryImage image images",
@@ -525,10 +748,12 @@ const loadPublicExperienceDocument =
 
     if (
       experience.status ===
-      "expired"
+        "expired" ||
+      experience.status ===
+        "disabled"
     ) {
       throw createError(
-        "This experience has expired",
+        "This experience is no longer available",
         404,
       );
     }
@@ -537,10 +762,13 @@ const loadPublicExperienceDocument =
   };
 
 const buildPublicExperiencePayload =
-  async (experience) => {
+  async (
+    experience,
+  ) => {
     experience.visits =
       Number(
-        experience.visits || 0,
+        experience.visits ||
+          0,
       ) + 1;
 
     await experience.save();
@@ -571,7 +799,9 @@ const buildPublicExperiencePayload =
   };
 
 export const createExperience =
-  async (data) => {
+  async (
+    data,
+  ) => {
     await ensureExperienceSlugIndexes();
 
     if (!data.order) {
@@ -581,7 +811,9 @@ export const createExperience =
       );
     }
 
-    if (!data.orderItem) {
+    if (
+      !data.orderItem
+    ) {
       throw createError(
         "Order item is required to create Experience",
         400,
@@ -595,7 +827,9 @@ export const createExperience =
       );
     }
 
-    if (!data.smartUnit) {
+    if (
+      !data.smartUnit
+    ) {
       throw createError(
         "Smart Unit is required to create Experience",
         400,
@@ -626,7 +860,8 @@ export const createExperience =
       );
     }
 
-    let smartUnitInstance = null;
+    let smartUnitInstance =
+      null;
 
     if (
       typeof data.serialNumber ===
@@ -649,7 +884,9 @@ export const createExperience =
           },
         );
 
-      if (!smartUnitInstance) {
+      if (
+        !smartUnitInstance
+      ) {
         throw createError(
           "Smart Unit physical instance not found for this serial number",
           404,
@@ -669,7 +906,9 @@ export const createExperience =
           },
         );
 
-      if (!smartUnitInstance) {
+      if (
+        !smartUnitInstance
+      ) {
         throw createError(
           "Smart Unit physical instance not found",
           404,
@@ -689,7 +928,9 @@ export const createExperience =
           createdAt: 1,
         });
 
-      if (!smartUnitInstance) {
+      if (
+        !smartUnitInstance
+      ) {
         throw createError(
           "No available physical Smart Unit instance found",
           400,
@@ -703,11 +944,15 @@ export const createExperience =
         .toUpperCase();
 
     const existingExperience =
-      await Experience.findOne({
-        serialNumber,
-      });
+      await Experience.findOne(
+        {
+          serialNumber,
+        },
+      );
 
-    if (existingExperience) {
+    if (
+      existingExperience
+    ) {
       throw createError(
         "This physical Smart Unit already has an Experience",
         400,
@@ -736,7 +981,8 @@ export const createExperience =
         data.smartUnit,
 
       owner:
-        data.owner || null,
+        data.owner ||
+        null,
 
       serialNumber,
 
@@ -745,14 +991,17 @@ export const createExperience =
       publicToken,
 
       type:
-        data.type || "personal",
+        data.type ||
+        "personal",
 
       status:
-        data.status || "waiting",
+        data.status ||
+        "waiting",
 
       visits: 0,
 
-      activatedAt: null,
+      activatedAt:
+        null,
     };
 
     if (
@@ -765,7 +1014,9 @@ export const createExperience =
           data.slug,
         );
 
-      if (!formattedSlug) {
+      if (
+        !formattedSlug
+      ) {
         throw createError(
           "Invalid URL name",
           400,
@@ -801,7 +1052,9 @@ export const createExperience =
             experience._id,
         },
       );
-    } catch (error) {
+    } catch (
+      error
+    ) {
       await Experience.findByIdAndDelete(
         experience._id,
       );
@@ -828,18 +1081,26 @@ export const createExperience =
   };
 
 export const getExperienceById =
-  async (experienceId) => {
+  async (
+    experienceId,
+  ) => {
     const experience =
       await Experience.findById(
         experienceId,
       )
-        .populate("product")
-        .populate("smartUnit")
+        .populate(
+          "product",
+        )
+        .populate(
+          "smartUnit",
+        )
         .populate(
           "owner",
-          "email",
+          "email phone firstName lastName",
         )
-        .populate("order");
+        .populate(
+          "order",
+        );
 
     if (!experience) {
       throw createError(
@@ -852,19 +1113,32 @@ export const getExperienceById =
   };
 
 export const getExperienceByManageToken =
-  async (token) => {
+  async (
+    token,
+  ) => {
     const experience =
-      await Experience.findOne({
-        manageToken: token,
-      })
-        .select("+accessDate")
-        .populate("product")
-        .populate("smartUnit")
+      await Experience.findOne(
+        {
+          manageToken:
+            token,
+        },
+      )
+        .select(
+          "+accessDate",
+        )
+        .populate(
+          "product",
+        )
+        .populate(
+          "smartUnit",
+        )
         .populate(
           "owner",
-          "email",
+          "email phone firstName lastName",
         )
-        .populate("order");
+        .populate(
+          "order",
+        );
 
     if (!experience) {
       throw createError(
@@ -873,11 +1147,15 @@ export const getExperienceByManageToken =
       );
     }
 
-    if (!experience.publicToken) {
+    if (
+      !experience.publicToken
+    ) {
       experience.publicToken =
         crypto
           .randomBytes(32)
-          .toString("hex");
+          .toString(
+            "hex",
+          );
 
       await experience.save();
     }
@@ -903,12 +1181,23 @@ export const getExperienceByManageToken =
         experience,
       );
 
+    const videoAccess =
+      await getVideoAccessForExperience(
+        experience._id,
+      );
+
     return {
       experience,
+
       personal,
+
       media,
+
       mediaLimits,
+
       publicUrl,
+
+      videoAccess,
     };
   };
 
@@ -929,8 +1218,11 @@ export const getPublicExperienceAccess =
       experience.accessDate
     ) {
       return {
-        requiresDate: true,
-        data: null,
+        requiresDate:
+          true,
+
+        data:
+          null,
       };
     }
 
@@ -940,7 +1232,9 @@ export const getPublicExperienceAccess =
       );
 
     return {
-      requiresDate: false,
+      requiresDate:
+        false,
+
       data,
     };
   };
@@ -988,12 +1282,19 @@ export const unlockPublicExperience =
   };
 
 export const getExperienceByPublicToken =
-  async (token) => {
+  async (
+    token,
+  ) => {
     const experience =
-      await Experience.findOne({
-        publicToken: token,
-      })
-        .select("+accessDate")
+      await Experience.findOne(
+        {
+          publicToken:
+            token,
+        },
+      )
+        .select(
+          "+accessDate",
+        )
         .populate(
           "product",
           "name description price primaryImage image images",
@@ -1012,7 +1313,9 @@ export const getExperienceByPublicToken =
 
     if (
       experience.status ===
-      "expired"
+        "expired" ||
+      experience.status ===
+        "disabled"
     ) {
       throw createError(
         "This experience is no longer available",
@@ -1058,7 +1361,9 @@ export const getExperienceBySerialAndSlug =
   };
 
 export const getExperienceBySlug =
-  async (slug) => {
+  async (
+    slug,
+  ) => {
     if (
       typeof slug !==
         "string" ||
@@ -1071,14 +1376,20 @@ export const getExperienceBySlug =
     }
 
     const formattedSlug =
-      formatSlug(slug);
+      formatSlug(
+        slug,
+      );
 
     const experience =
-      await Experience.findOne({
-        slug:
-          formattedSlug,
-      })
-        .select("+accessDate")
+      await Experience.findOne(
+        {
+          slug:
+            formattedSlug,
+        },
+      )
+        .select(
+          "+accessDate",
+        )
         .populate(
           "product",
           "name description price primaryImage image images",
@@ -1097,10 +1408,12 @@ export const getExperienceBySlug =
 
     if (
       experience.status ===
-      "expired"
+        "expired" ||
+      experience.status ===
+        "disabled"
     ) {
       throw createError(
-        "This experience has expired",
+        "This experience is no longer available",
         404,
       );
     }
@@ -1125,9 +1438,12 @@ export const updatePersonalExperience =
     body,
   ) => {
     const experience =
-      await Experience.findOne({
-        manageToken: token,
-      });
+      await Experience.findOne(
+        {
+          manageToken:
+            token,
+        },
+      );
 
     if (!experience) {
       throw createError(
@@ -1202,9 +1518,12 @@ export const updateExperienceSlug =
     }
 
     const experience =
-      await Experience.findOne({
-        manageToken: token,
-      });
+      await Experience.findOne(
+        {
+          manageToken:
+            token,
+        },
+      );
 
     if (!experience) {
       throw createError(
@@ -1214,9 +1533,13 @@ export const updateExperienceSlug =
     }
 
     const formattedSlug =
-      formatSlug(slug);
+      formatSlug(
+        slug,
+      );
 
-    if (!formattedSlug) {
+    if (
+      !formattedSlug
+    ) {
       throw createError(
         "Invalid URL name",
         400,
@@ -1228,9 +1551,12 @@ export const updateExperienceSlug =
 
     try {
       await experience.save();
-    } catch (error) {
+    } catch (
+      error
+    ) {
       if (
-        error?.code === 11000
+        error?.code ===
+        11000
       ) {
         throw createError(
           "Unable to save this custom link. Please try again.",
@@ -1250,9 +1576,14 @@ export const updateExperienceAccessDate =
     accessDate,
   ) => {
     const experience =
-      await Experience.findOne({
-        manageToken: token,
-      }).select("+accessDate");
+      await Experience.findOne(
+        {
+          manageToken:
+            token,
+        },
+      ).select(
+        "+accessDate",
+      );
 
     if (!experience) {
       throw createError(
@@ -1283,7 +1614,9 @@ export const updateExperienceAccessDate =
   };
 
 export const checkSlugAvailability =
-  async (slug) => {
+  async (
+    slug,
+  ) => {
     await ensureExperienceSlugIndexes();
 
     if (
@@ -1294,11 +1627,10 @@ export const checkSlugAvailability =
       return false;
     }
 
-    const formattedSlug =
-      formatSlug(slug);
-
     return Boolean(
-      formattedSlug,
+      formatSlug(
+        slug,
+      ),
     );
   };
 
@@ -1313,6 +1645,280 @@ export const updatePersonalInfo =
     );
   };
 
+export const requestVideoUploadAccess =
+  async (
+    token,
+    data = {},
+  ) => {
+    const experience =
+      await Experience.findOne(
+        {
+          manageToken:
+            token,
+        },
+      );
+
+    if (!experience) {
+      throw createError(
+        "Experience not found",
+        404,
+      );
+    }
+
+    const requesterName =
+      normalizeRequestText(
+        data.requesterName,
+        "Name",
+        120,
+        true,
+      );
+
+    const requesterPhone =
+      normalizeRequestText(
+        data.requesterPhone,
+        "Phone number",
+        40,
+        true,
+      );
+
+    const message =
+      normalizeRequestText(
+        data.message,
+        "Message",
+        1000,
+        false,
+      );
+
+    const request =
+      await VideoUploadRequest.findOneAndUpdate(
+        {
+          experience:
+            experience._id,
+        },
+        {
+          $set: {
+            requesterName,
+
+            requesterPhone,
+
+            message,
+
+            status:
+              "pending",
+
+            approvedVideoLimit:
+              0,
+
+            adminNote:
+              "",
+
+            reviewedBy:
+              null,
+
+            reviewedAt:
+              null,
+
+            requestedAt:
+              new Date(),
+          },
+        },
+        {
+          new: true,
+          upsert: true,
+          runValidators: true,
+          setDefaultsOnInsert:
+            true,
+        },
+      );
+
+    return {
+      requestId:
+        request._id,
+
+      status:
+        request.status,
+
+      approvedVideoLimit:
+        request.approvedVideoLimit,
+
+      requesterName:
+        request.requesterName,
+
+      requesterPhone:
+        request.requesterPhone,
+
+      message:
+        request.message,
+
+      requestedAt:
+        request.requestedAt,
+    };
+  };
+
+export const getAllVideoUploadRequests =
+  async () => {
+    return VideoUploadRequest.find()
+      .populate({
+        path:
+          "experience",
+
+        select:
+          "serialNumber slug status owner order",
+
+        populate: [
+          {
+            path:
+              "owner",
+
+            select:
+              "email phone firstName lastName",
+          },
+
+          {
+            path:
+              "order",
+
+            select:
+              "orderNumber shippingAddress",
+          },
+        ],
+      })
+      .populate(
+        "reviewedBy",
+        "email phone firstName lastName",
+      )
+      .sort({
+        status: 1,
+        requestedAt:
+          -1,
+        createdAt:
+          -1,
+      });
+  };
+
+export const updateVideoUploadRequest =
+  async (
+    requestId,
+    data = {},
+    adminUserId = null,
+  ) => {
+    const request =
+      await VideoUploadRequest.findById(
+        requestId,
+      );
+
+    if (!request) {
+      throw createError(
+        "Video upload request not found",
+        404,
+      );
+    }
+
+    const status =
+      String(
+        data.status ||
+          "",
+      )
+        .trim()
+        .toLowerCase();
+
+    if (
+      ![
+        "approved",
+        "rejected",
+        "pending",
+      ].includes(
+        status,
+      )
+    ) {
+      throw createError(
+        "Invalid video request status",
+        400,
+      );
+    }
+
+    request.status =
+      status;
+
+    request.adminNote =
+      normalizeRequestText(
+        data.adminNote,
+        "Admin note",
+        1000,
+        false,
+      );
+
+    if (
+      status ===
+      "approved"
+    ) {
+      request.approvedVideoLimit =
+        normalizeVideoApprovalLimit(
+          data.approvedVideoLimit,
+        );
+
+      request.reviewedAt =
+        new Date();
+    } else if (
+      status ===
+      "rejected"
+    ) {
+      request.approvedVideoLimit =
+        0;
+
+      request.reviewedAt =
+        new Date();
+    } else {
+      request.approvedVideoLimit =
+        0;
+
+      request.reviewedAt =
+        null;
+    }
+
+    if (
+      adminUserId
+    ) {
+      request.reviewedBy =
+        adminUserId;
+    }
+
+    await request.save();
+
+    return VideoUploadRequest.findById(
+      request._id,
+    )
+      .populate({
+        path:
+          "experience",
+
+        select:
+          "serialNumber slug status owner order",
+
+        populate: [
+          {
+            path:
+              "owner",
+
+            select:
+              "email phone firstName lastName",
+          },
+
+          {
+            path:
+              "order",
+
+            select:
+              "orderNumber shippingAddress",
+          },
+        ],
+      })
+      .populate(
+        "reviewedBy",
+        "email phone firstName lastName",
+      );
+  };
+
 export const uploadExperienceMedia =
   async (
     token,
@@ -1323,15 +1929,18 @@ export const uploadExperienceMedia =
       files.length === 0
     ) {
       throw createError(
-        "No files uploaded",
+        "No media uploaded",
         400,
       );
     }
 
     const experience =
-      await Experience.findOne({
-        manageToken: token,
-      });
+      await Experience.findOne(
+        {
+          manageToken:
+            token,
+        },
+      );
 
     if (!experience) {
       throw createError(
@@ -1340,36 +1949,73 @@ export const uploadExperienceMedia =
       );
     }
 
+    const typedFiles =
+      files.map(
+        (
+          file,
+        ) => ({
+          file,
+
+          type:
+            getFileMediaType(
+              file,
+            ),
+        }),
+      );
+
+    const unsupported =
+      typedFiles.find(
+        (
+          item,
+        ) =>
+          !item.type,
+      );
+
+    if (
+      unsupported
+    ) {
+      throw createError(
+        "Only images, recorded audio, and approved video uploads are supported.",
+        400,
+      );
+    }
+
     const limits =
       await getExperienceMediaLimits();
 
     const countRows =
-      await ExperienceMedia.aggregate([
-        {
-          $match: {
-            experience:
-              experience._id,
-          },
-        },
-        {
-          $group: {
-            _id: "$type",
-            count: {
-              $sum: 1,
+      await ExperienceMedia.aggregate(
+        [
+          {
+            $match: {
+              experience:
+                experience._id,
             },
           },
-        },
-      ]);
+
+          {
+            $group: {
+              _id:
+                "$type",
+
+              count: {
+                $sum: 1,
+              },
+            },
+          },
+        ],
+      );
 
     const existingCounts = {
       image: 0,
       video: 0,
       audio: 0,
-      file: 0,
     };
 
     countRows.forEach(
-      (row) => {
+      (
+        row,
+      ) => {
         if (
           Object.prototype.hasOwnProperty.call(
             existingCounts,
@@ -1379,7 +2025,8 @@ export const uploadExperienceMedia =
           existingCounts[
             row._id
           ] = Number(
-            row.count || 0,
+            row.count ||
+              0,
           );
         }
       },
@@ -1389,48 +2036,124 @@ export const uploadExperienceMedia =
       image: 0,
       video: 0,
       audio: 0,
-      file: 0,
     };
 
-    files.forEach((file) => {
-      const type =
-        getFileMediaType(file);
+    typedFiles.forEach(
+      ({
+        type,
+      }) => {
+        incomingCounts[
+          type
+        ] += 1;
+      },
+    );
 
-      incomingCounts[type] += 1;
-    });
+    let approvedVideoLimit =
+      0;
 
-    for (const type of [
-      "image",
-      "video",
-      "audio",
-      "file",
-    ]) {
-      const limitKey =
-        getLimitKey(type);
+    if (
+      incomingCounts.video >
+      0
+    ) {
+      const videoRequest =
+        await VideoUploadRequest.findOne(
+          {
+            experience:
+              experience._id,
+          },
+        );
 
-      const limit =
+      if (
+        !videoRequest ||
+        videoRequest.status !==
+          "approved"
+      ) {
+        throw createError(
+          "Video upload is not enabled for this experience. Please request approval first.",
+          403,
+        );
+      }
+
+      approvedVideoLimit =
         Number(
-          limits[limitKey] || 0,
+          videoRequest.approvedVideoLimit ||
+            0,
+        );
+
+      if (
+        approvedVideoLimit <
+        1
+      ) {
+        throw createError(
+          "Video upload approval does not include a valid video limit.",
+          403,
+        );
+      }
+    }
+
+    for (
+      const type of
+      [
+        "image",
+        "audio",
+        "video",
+      ]
+    ) {
+      const incoming =
+        Number(
+          incomingCounts[
+            type
+          ] || 0,
+        );
+
+      if (
+        incoming === 0
+      ) {
+        continue;
+      }
+
+      const limitKey =
+        getLimitKey(
+          type,
+        );
+
+      const globalLimit =
+        Number(
+          limits[
+            limitKey
+          ] || 0,
         );
 
       const current =
         Number(
-          existingCounts[type] || 0,
+          existingCounts[
+            type
+          ] || 0,
         );
 
-      const incoming =
-        Number(
-          incomingCounts[type] || 0,
-        );
+      let effectiveLimit =
+        globalLimit;
 
       if (
-        current + incoming >
-        limit
+        type ===
+        "video"
+      ) {
+        effectiveLimit =
+          Math.min(
+            globalLimit,
+            approvedVideoLimit,
+          );
+      }
+
+      if (
+        current +
+          incoming >
+        effectiveLimit
       ) {
         throw createError(
           `${getMediaTypeLabel(
             type,
-          )} limit is ${limit}. This experience already has ${current} and you selected ${incoming}.`,
+          )} limit is ${effectiveLimit}. This experience already has ${current} and you selected ${incoming}.`,
           400,
         );
       }
@@ -1446,24 +2169,25 @@ export const uploadExperienceMedia =
         ) =>
           total +
           Number(
-            count || 0,
+            count ||
+              0,
           ),
         0,
       );
 
     const documents =
-      files.map(
+      typedFiles.map(
         (
-          file,
+          {
+            file,
+            type,
+          },
           index,
         ) => ({
           experience:
             experience._id,
 
-          type:
-            getFileMediaType(
-              file,
-            ),
+          type,
 
           url:
             `/uploads/experience/${file.filename}`,
@@ -1489,17 +2213,29 @@ export const getExperienceMedia =
   async (
     experienceId,
   ) => {
-    return ExperienceMedia.find({
-      experience:
-        experienceId,
-    }).sort({
+    return ExperienceMedia.find(
+      {
+        experience:
+          experienceId,
+
+        type: {
+          $in: [
+            "image",
+            "video",
+            "audio",
+          ],
+        },
+      },
+    ).sort({
       sortOrder: 1,
       createdAt: 1,
     });
   };
 
 export const deleteExperienceMedia =
-  async (mediaId) => {
+  async (
+    mediaId,
+  ) => {
     const media =
       await ExperienceMedia.findByIdAndDelete(
         mediaId,

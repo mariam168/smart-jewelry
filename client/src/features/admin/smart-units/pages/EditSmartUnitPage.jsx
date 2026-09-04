@@ -1,62 +1,35 @@
-import {
-  useEffect,
-  useState,
-} from "react";
+import { useEffect, useState } from "react";
 
-import {
-  Link,
-  useNavigate,
-  useParams,
-} from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
-import {
-  getSmartUnit,
-  updateSmartUnit,
-} from "../services/smartUnitApi";
+import { getSmartUnit, updateSmartUnit } from "../services/smartUnitApi";
 
-import {
-  getTechnologyModels,
-} from "../../services/technologyModelApi";
+import { getTechnologyModels } from "../../services/technologyModelApi";
 
 const EditSmartUnitPage = () => {
   const { id } = useParams();
 
   const navigate = useNavigate();
 
-  const [
-    technologyModels,
-    setTechnologyModels,
-  ] = useState([]);
+  const [technologyModels, setTechnologyModels] = useState([]);
 
-  const [
-    formData,
-    setFormData,
-  ] = useState({
+  const [formData, setFormData] = useState({
     name: "",
     description: "",
     technologyModel: "",
     costPrice: "",
     stock: "",
-    firmwareVersion: "",
+    productionDate: "",
     manufacturer: "",
     notes: "",
     status: "available",
   });
 
-  const [
-    isLoading,
-    setIsLoading,
-  ] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [
-    isSaving,
-    setIsSaving,
-  ] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const [
-    error,
-    setError,
-  ] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const loadData = async () => {
@@ -64,81 +37,47 @@ const EditSmartUnitPage = () => {
         setIsLoading(true);
         setError("");
 
-        const [
-          smartUnitResponse,
-          technologyResponse,
-        ] = await Promise.all([
+        const [smartUnitResponse, technologyResponse] = await Promise.all([
           getSmartUnit(id),
           getTechnologyModels(),
         ]);
 
         const smartUnit =
-          smartUnitResponse
-            ?.data?.smartUnit ||
-          smartUnitResponse
-            ?.smartUnit;
+          smartUnitResponse?.data?.smartUnit || smartUnitResponse?.smartUnit;
 
         const models =
-          technologyResponse
-            ?.data
-            ?.technologyModels ||
-          technologyResponse
-            ?.technologyModels ||
+          technologyResponse?.data?.technologyModels ||
+          technologyResponse?.technologyModels ||
           [];
 
-        setTechnologyModels(
-          Array.isArray(models)
-            ? models
-            : []
-        );
+        setTechnologyModels(Array.isArray(models) ? models : []);
 
         setFormData({
-          name:
-            smartUnit?.name ||
-            "",
+          name: smartUnit?.name || "",
 
-          description:
-            smartUnit?.description ||
-            "",
+          description: smartUnit?.description || "",
 
-          technologyModel:
-            smartUnit
-              ?.technologyModel
-              ?._id || "",
+          technologyModel: smartUnit?.technologyModel?._id || "",
 
-          costPrice:
-            smartUnit?.costPrice ??
-            "",
+          costPrice: smartUnit?.costPrice ?? "",
 
-          stock:
-            smartUnit?.stock ??
-            "",
+          stock: smartUnit?.stock ?? "",
 
-          firmwareVersion:
-            smartUnit
-              ?.firmwareVersion ||
-            "",
+         productionDate: smartUnit?.productionDate
+  ? smartUnit.productionDate.substring(0,10)
+  : "",
 
-          manufacturer:
-            smartUnit
-              ?.manufacturer ||
-            "",
+          manufacturer: smartUnit?.manufacturer || "",
 
-          notes:
-            smartUnit?.notes ||
-            "",
+          notes: smartUnit?.notes || "",
 
-          status:
-            smartUnit?.status ||
-            "available",
+          status: smartUnit?.status || "available",
         });
       } catch (error) {
         console.error(error);
 
         setError(
-          error?.response?.data
-            ?.message ||
-            "Failed to load Smart Unit."
+          error?.response?.data?.message || "Failed to load Smart Unit.",
         );
       } finally {
         setIsLoading(false);
@@ -148,56 +87,36 @@ const EditSmartUnitPage = () => {
     loadData();
   }, [id]);
 
-  const handleChange = (
-    event
-  ) => {
-    const {
-      name,
-      value,
-    } = event.target;
+  const handleChange = (event) => {
+    const { name, value } = event.target;
 
-    setFormData(
-      (previous) => ({
-        ...previous,
-        [name]: value,
-      })
-    );
+    setFormData((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
   };
 
-  const handleSubmit = async (
-    event
-  ) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     setError("");
     setIsSaving(true);
 
     try {
-      await updateSmartUnit(
-        id,
-        {
-          ...formData,
+      await updateSmartUnit(id, {
+        ...formData,
 
-          costPrice: Number(
-            formData.costPrice
-          ),
+        costPrice: Number(formData.costPrice),
 
-          stock: Number(
-            formData.stock
-          ),
-        }
-      );
+        stock: Number(formData.stock),
+      });
 
-      navigate(
-        "/admin/smart-units"
-      );
+      navigate("/admin/smart-units");
     } catch (error) {
       console.error(error);
 
       setError(
-        error?.response?.data
-          ?.message ||
-          "Failed to update Smart Unit."
+        error?.response?.data?.message || "Failed to update Smart Unit.",
       );
     } finally {
       setIsSaving(false);
@@ -221,8 +140,7 @@ const EditSmartUnitPage = () => {
   const inputClass =
     "w-full rounded-[14px] border border-light-champagne bg-warm-ivory/50 px-4 py-3.5 text-[13px] text-midnight-navy outline-none transition placeholder:text-steel-gray focus:border-classic-gold focus:ring-4 focus:ring-classic-gold/10";
 
-  const labelClass =
-    "mb-2 block text-[11px] font-semibold text-slate-gray";
+  const labelClass = "mb-2 block text-[11px] font-semibold text-slate-gray";
 
   return (
     <div className="min-h-screen bg-warm-ivory text-midnight-navy">
@@ -230,9 +148,7 @@ const EditSmartUnitPage = () => {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
           <div>
             <div className="flex items-center gap-2 text-[12px] text-slate-gray">
-              <Link to="/admin/smart-units">
-                Smart Units
-              </Link>
+              <Link to="/admin/smart-units">Smart Units</Link>
 
               <span>/</span>
 
@@ -264,11 +180,7 @@ const EditSmartUnitPage = () => {
           </div>
         )}
 
-        <form
-          onSubmit={
-            handleSubmit
-          }
-        >
+        <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="space-y-6 lg:col-span-2">
               <section className="rounded-[24px] border border-light-champagne bg-soft-white">
@@ -280,84 +192,47 @@ const EditSmartUnitPage = () => {
 
                 <div className="space-y-6 p-6">
                   <div>
-                    <label className={labelClass}>
-                      Name
-                    </label>
+                    <label className={labelClass}>Name</label>
 
                     <input
                       type="text"
                       name="name"
-                      value={
-                        formData.name
-                      }
-                      onChange={
-                        handleChange
-                      }
+                      value={formData.name}
+                      onChange={handleChange}
                       required
-                      className={
-                        inputClass
-                      }
+                      className={inputClass}
                     />
                   </div>
 
                   <div>
-                    <label className={labelClass}>
-                      Description
-                    </label>
+                    <label className={labelClass}>Description</label>
 
                     <textarea
                       rows={4}
                       name="description"
-                      value={
-                        formData.description
-                      }
-                      onChange={
-                        handleChange
-                      }
+                      value={formData.description}
+                      onChange={handleChange}
                       className={`${inputClass} resize-none`}
                     />
                   </div>
 
                   <div>
-                    <label className={labelClass}>
-                      Technology Model
-                    </label>
+                    <label className={labelClass}>Technology Model</label>
 
                     <select
                       name="technologyModel"
-                      value={
-                        formData.technologyModel
-                      }
-                      onChange={
-                        handleChange
-                      }
+                      value={formData.technologyModel}
+                      onChange={handleChange}
                       required
-                      className={
-                        inputClass
-                      }
+                      className={inputClass}
                     >
-                      <option value="">
-                        Select Technology Model
-                      </option>
+                      <option value="">Select Technology Model</option>
 
-                      {technologyModels.map(
-                        (
-                          technology
-                        ) => (
-                          <option
-                            key={
-                              technology._id
-                            }
-                            value={
-                              technology._id
-                            }
-                          >
-                            {
-                              technology.modelName
-                            }
-                          </option>
-                        )
-                      )}
+                      {technologyModels.map((technology) => (
+                        <option key={technology._id} value={technology._id}>
+                          {technology.modelName}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -372,66 +247,44 @@ const EditSmartUnitPage = () => {
 
                 <div className="grid grid-cols-1 gap-6 p-6 md:grid-cols-2">
                   <div>
-                    <label className={labelClass}>
-                      Cost Price
-                    </label>
+                    <label className={labelClass}>Cost Price</label>
 
                     <input
                       type="number"
                       min="0"
                       name="costPrice"
-                      value={
-                        formData.costPrice
-                      }
-                      onChange={
-                        handleChange
-                      }
-                      className={
-                        inputClass
-                      }
+                      value={formData.costPrice}
+                      onChange={handleChange}
+                      className={inputClass}
                     />
                   </div>
 
                   <div>
-                    <label className={labelClass}>
-                      Stock
-                    </label>
+                    <label className={labelClass}>Stock</label>
 
                     <input
                       type="number"
                       min="0"
                       step="1"
                       name="stock"
-                      value={
-                        formData.stock
-                      }
-                      onChange={
-                        handleChange
-                      }
-                      className={
-                        inputClass
-                      }
+                      value={formData.stock}
+                      onChange={handleChange}
+                      className={inputClass}
                     />
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className={labelClass}>
-                      Firmware Version
-                    </label>
+                   <label className={labelClass}>
+Production Date
+</label>
 
-                    <input
-                      type="text"
-                      name="firmwareVersion"
-                      value={
-                        formData.firmwareVersion
-                      }
-                      onChange={
-                        handleChange
-                      }
-                      className={
-                        inputClass
-                      }
-                    />
+<input
+type="date"
+name="productionDate"
+value={formData.productionDate}
+onChange={handleChange}
+className={inputClass}
+/>
                   </div>
                 </div>
               </section>
@@ -439,39 +292,25 @@ const EditSmartUnitPage = () => {
               <section className="rounded-[24px] border border-light-champagne bg-soft-white">
                 <div className="space-y-6 p-6">
                   <div>
-                    <label className={labelClass}>
-                      Manufacturer
-                    </label>
+                    <label className={labelClass}>Manufacturer</label>
 
                     <input
                       type="text"
                       name="manufacturer"
-                      value={
-                        formData.manufacturer
-                      }
-                      onChange={
-                        handleChange
-                      }
-                      className={
-                        inputClass
-                      }
+                      value={formData.manufacturer}
+                      onChange={handleChange}
+                      className={inputClass}
                     />
                   </div>
 
                   <div>
-                    <label className={labelClass}>
-                      Notes
-                    </label>
+                    <label className={labelClass}>Notes</label>
 
                     <textarea
                       rows={4}
                       name="notes"
-                      value={
-                        formData.notes
-                      }
-                      onChange={
-                        handleChange
-                      }
+                      value={formData.notes}
+                      onChange={handleChange}
                       className={`${inputClass} resize-none`}
                     />
                   </div>
@@ -480,45 +319,25 @@ const EditSmartUnitPage = () => {
             </div>
 
             <section className="h-fit rounded-[24px] border border-light-champagne bg-soft-white p-6">
-              <label className={labelClass}>
-                Status
-              </label>
+              <label className={labelClass}>Status</label>
 
               <select
                 name="status"
-                value={
-                  formData.status
-                }
-                onChange={
-                  handleChange
-                }
-                className={
-                  inputClass
-                }
+                value={formData.status}
+                onChange={handleChange}
+                className={inputClass}
               >
-                <option value="available">
-                  Available
-                </option>
+                <option value="available">Available</option>
 
-                <option value="reserved">
-                  Reserved
-                </option>
+                <option value="reserved">Reserved</option>
 
-                <option value="assigned">
-                  Assigned
-                </option>
+                <option value="assigned">Assigned</option>
 
-                <option value="activated">
-                  Activated
-                </option>
+                <option value="activated">Activated</option>
 
-                <option value="inactive">
-                  Inactive
-                </option>
+                <option value="inactive">Inactive</option>
 
-                <option value="damaged">
-                  Damaged
-                </option>
+                <option value="damaged">Damaged</option>
               </select>
             </section>
           </div>
@@ -533,14 +352,10 @@ const EditSmartUnitPage = () => {
 
             <button
               type="submit"
-              disabled={
-                isSaving
-              }
+              disabled={isSaving}
               className="rounded-[12px] bg-midnight-navy px-7 py-3 text-[11px] font-semibold text-soft-white disabled:opacity-50"
             >
-              {isSaving
-                ? "Updating..."
-                : "Update Smart Unit"}
+              {isSaving ? "Updating..." : "Update Smart Unit"}
             </button>
           </div>
         </form>

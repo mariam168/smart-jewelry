@@ -3,7 +3,9 @@ import {
   useState,
 } from "react";
 
-import { useParams } from "react-router-dom";
+import {
+  useParams,
+} from "react-router-dom";
 
 import ProductInfoCard from "../components/ProductInfoCard";
 import PersonalInfoForm from "../components/PersonalInfoForm";
@@ -15,7 +17,6 @@ import {
   getExperience,
   updatePersonal,
   uploadMedia,
-  updatePublicSlug,
   updateAccessDate,
 } from "../services/experienceApi";
 
@@ -23,12 +24,31 @@ const DEFAULT_MEDIA_LIMITS = {
   imageLimit: 5,
   videoLimit: 5,
   audioLimit: 5,
-  fileLimit: 5,
+};
+
+const DEFAULT_VIDEO_ACCESS = {
+  status:
+    "not_requested",
+
+  approvedVideoLimit:
+    0,
+
+  requesterName:
+    "",
+
+  requesterPhone:
+    "",
+
+  message: "",
+
+  adminNote:
+    "",
 };
 
 const ManageExperiencePage = () => {
-  const { token } =
-    useParams();
+  const {
+    token,
+  } = useParams();
 
   const [
     loading,
@@ -63,9 +83,11 @@ const ManageExperiencePage = () => {
   );
 
   const [
-    slug,
-    setSlug,
-  ] = useState("");
+    videoAccess,
+    setVideoAccess,
+  ] = useState(
+    DEFAULT_VIDEO_ACCESS,
+  );
 
   const [
     accessDate,
@@ -84,108 +106,133 @@ const ManageExperiencePage = () => {
     profileImage: "",
   });
 
-  useEffect(() => {
-    loadExperience();
-  }, [token]);
-
-  const loadExperience =
-    async () => {
-      try {
+  const loadExperience = async ({
+    showLoader = false,
+  } = {}) => {
+    try {
+      if (
+        showLoader
+      ) {
         setLoading(true);
+      }
 
-        const data =
-          await getExperience(
-            token,
-          );
-
-        setExperience(
-          data.experience,
+      const data =
+        await getExperience(
+          token,
         );
 
-        setMedia(
-          Array.isArray(
-            data.media,
-          )
-            ? data.media
-            : [],
-        );
+      setExperience(
+        data.experience ||
+          null,
+      );
 
-        setMediaLimits({
-          ...DEFAULT_MEDIA_LIMITS,
-          ...(data.mediaLimits ||
-            {}),
+      setMedia(
+        Array.isArray(
+          data.media,
+        )
+          ? data.media
+          : [],
+      );
+
+      setMediaLimits({
+        ...DEFAULT_MEDIA_LIMITS,
+        ...(data.mediaLimits ||
+          {}),
+      });
+
+      setVideoAccess({
+        ...DEFAULT_VIDEO_ACCESS,
+        ...(data.videoAccess ||
+          {}),
+      });
+
+      setAccessDate(
+        data.experience
+          ?.accessDate ||
+          "",
+      );
+
+      if (
+        data.personal
+      ) {
+        setForm({
+          ownerName:
+            data.personal
+              .ownerName ||
+            "",
+
+          receiverName:
+            data.personal
+              .receiverName ||
+            "",
+
+          receiverEmail:
+            data.personal
+              .receiverEmail ||
+            "",
+
+          title:
+            data.personal
+              .title ||
+            "",
+
+          message:
+            data.personal
+              .message ||
+            "",
+
+          profileImage:
+            data.personal
+              .profileImage ||
+            "",
         });
+      }
+    } catch (
+      error
+    ) {
+      console.error(
+        "Failed to load experience:",
+        error,
+      );
 
-        setSlug(
-          data.experience
-            ?.slug || "",
-        );
-
-        setAccessDate(
-          data.experience
-            ?.accessDate || "",
-        );
-
-        if (
-          data.personal
-        ) {
-          setForm({
-            ownerName:
-              data.personal
-                .ownerName ||
-              "",
-
-            receiverName:
-              data.personal
-                .receiverName ||
-              "",
-
-            receiverEmail:
-              data.personal
-                .receiverEmail ||
-              "",
-
-            title:
-              data.personal
-                .title ||
-              "",
-
-            message:
-              data.personal
-                .message ||
-              "",
-
-            profileImage:
-              data.personal
-                .profileImage ||
-              "",
-          });
-        }
-      } catch (error) {
-        console.error(
-          "Failed to load experience:",
-          error,
-        );
-
+      if (
+        showLoader
+      ) {
         alert(
           error?.response?.data
             ?.message ||
             "Failed To Load Experience",
         );
-      } finally {
+      }
+    } finally {
+      if (
+        showLoader
+      ) {
         setLoading(false);
       }
-    };
+    }
+  };
+
+  useEffect(() => {
+    loadExperience({
+      showLoader:
+        true,
+    });
+  }, [token]);
 
   const handleChange = (
     event,
   ) => {
     setForm(
-      (previous) => ({
+      (
+        previous,
+      ) => ({
         ...previous,
 
-        [event.target.name]:
-          event.target.value,
+        [event.target
+          .name]:
+          event.target
+            .value,
       }),
     );
   };
@@ -205,7 +252,9 @@ const ManageExperiencePage = () => {
         );
 
         await loadExperience();
-      } catch (error) {
+      } catch (
+        error
+      ) {
         console.error(
           error,
         );
@@ -221,74 +270,20 @@ const ManageExperiencePage = () => {
     };
 
   const handleUpload =
-    async (files) => {
-      try {
-        await uploadMedia(
-          token,
-          files,
-        );
-
-        alert(
-          "Files Uploaded Successfully",
-        );
-
-        await loadExperience();
-      } catch (error) {
-        console.error(
-          "UPLOAD ERROR:",
-          error,
-        );
-
-        throw error;
-      }
-    };
-
-  const handleSaveSlug =
-    async () => {
-      const cleanSlug =
-        slug
-          .trim()
-          .toLowerCase()
-          .replace(
-            /\s+/g,
-            "-",
-          );
-
-      if (!cleanSlug) {
-        alert(
-          "Please enter a link name",
-        );
-
-        return;
-      }
-
-      try {
-        await updatePublicSlug(
-          token,
-          cleanSlug,
-        );
-
-        setSlug(
-          cleanSlug,
-        );
-
-        alert(
-          "Public Link Updated",
-        );
-
-        await loadExperience();
-      } catch (error) {
-        alert(
-          error?.response?.data
-            ?.message ||
-            "Failed To Update Public Link",
-        );
-      }
+    async (
+      files,
+    ) => {
+      return uploadMedia(
+        token,
+        files,
+      );
     };
 
   const handleSaveAccessDate =
     async () => {
-      if (!accessDate) {
+      if (
+        !accessDate
+      ) {
         alert(
           "Please choose a date",
         );
@@ -311,7 +306,9 @@ const ManageExperiencePage = () => {
         );
 
         await loadExperience();
-      } catch (error) {
+      } catch (
+        error
+      ) {
         alert(
           error?.response?.data
             ?.message ||
@@ -339,6 +336,14 @@ const ManageExperiencePage = () => {
         setAccessDate("");
 
         await loadExperience();
+      } catch (
+        error
+      ) {
+        alert(
+          error?.response?.data
+            ?.message ||
+            "Failed To Remove Access Date",
+        );
       } finally {
         setSavingAccessDate(
           false,
@@ -347,56 +352,9 @@ const ManageExperiencePage = () => {
     };
 
   const serialNumber =
-    experience?.serialNumber ||
+    experience
+      ?.serialNumber ||
     "";
-
-  const clientUrl =
-    typeof window !==
-    "undefined"
-      ? window.location.origin
-      : "";
-
-  const publicLink =
-    serialNumber &&
-    experience?.slug
-      ? `${clientUrl}/experience/public/${encodeURIComponent(
-          serialNumber,
-        )}/${encodeURIComponent(
-          experience.slug,
-        )}`
-      : "";
-
-  const copyLink =
-    async () => {
-      if (!publicLink) {
-        alert(
-          "Please save a custom link first",
-        );
-
-        return;
-      }
-
-      await navigator.clipboard.writeText(
-        publicLink,
-      );
-
-      alert(
-        "Copied Successfully",
-      );
-    };
-
-  const openPublicProfile =
-    () => {
-      if (!publicLink) {
-        return;
-      }
-
-      window.open(
-        publicLink,
-        "_blank",
-        "noopener,noreferrer",
-      );
-    };
 
   if (loading) {
     return (
@@ -412,7 +370,9 @@ const ManageExperiencePage = () => {
     );
   }
 
-  if (!experience) {
+  if (
+    !experience
+  ) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-warm-ivory">
         <h2 className="font-serif text-[2rem]">
@@ -471,102 +431,6 @@ const ManageExperiencePage = () => {
           }
         />
 
-        <section className="overflow-hidden rounded-[28px] border border-light-champagne bg-soft-white">
-          <div className="border-b border-light-champagne bg-warm-ivory/50 px-6 py-7 sm:px-8">
-            <h2 className="font-serif text-[1.65rem]">
-              Public Profile
-            </h2>
-          </div>
-
-          <div className="space-y-7 px-6 py-7 sm:px-8">
-            <div>
-              <label className="mb-2 block text-[10px] uppercase text-slate-gray">
-                Jewelry Serial Number
-              </label>
-
-              <div className="rounded-[14px] border border-light-champagne bg-silver-mist/60 px-5 py-4 font-mono text-[12px]">
-                {serialNumber}
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-2 block text-[10px] uppercase text-slate-gray">
-                Custom Link Name
-              </label>
-
-              <div className="flex overflow-hidden rounded-[14px] border border-light-champagne">
-                <div className="hidden items-center bg-warm-ivory/70 px-4 text-[11px] text-slate-gray md:flex">
-                  /experience/public/
-                  {serialNumber}/
-                </div>
-
-                <input
-                  type="text"
-                  value={slug}
-                  onChange={(
-                    event,
-                  ) =>
-                    setSlug(
-                      event.target.value
-                        .toLowerCase()
-                        .replace(
-                          /\s+/g,
-                          "-",
-                        ),
-                    )
-                  }
-                  className="min-w-0 flex-1 px-4 py-3.5 outline-none"
-                  placeholder="special-memory"
-                />
-              </div>
-            </div>
-
-            {publicLink && (
-              <div className="break-all rounded-[16px] bg-warm-ivory p-4 text-[12px]">
-                {publicLink}
-              </div>
-            )}
-
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={
-                  handleSaveSlug
-                }
-                className="rounded-[13px] bg-deep-navy px-6 py-3 text-[11px] font-semibold text-white"
-              >
-                Save Link
-              </button>
-
-              <button
-                type="button"
-                onClick={
-                  copyLink
-                }
-                disabled={
-                  !publicLink
-                }
-                className="rounded-[13px] border border-light-champagne px-6 py-3 text-[11px] disabled:opacity-40"
-              >
-                Copy Link
-              </button>
-
-              <button
-                type="button"
-                onClick={
-                  openPublicProfile
-                }
-                disabled={
-                  !publicLink
-                }
-                className="rounded-[13px] bg-classic-gold px-6 py-3 text-[11px] disabled:opacity-40"
-              >
-                Open Profile
-              </button>
-            </div>
-          </div>
-        </section>
-
         <PersonalInfoForm
           form={form}
           handleChange={
@@ -575,10 +439,13 @@ const ManageExperiencePage = () => {
           handleSave={
             handleSave
           }
-          saving={saving}
+          saving={
+            saving
+          }
         />
 
         <MediaUploader
+          token={token}
           uploadFiles={
             handleUpload
           }
@@ -588,6 +455,15 @@ const ManageExperiencePage = () => {
           currentMedia={
             media
           }
+          videoAccess={
+            videoAccess
+          }
+          serialNumber={
+            serialNumber
+          }
+          onRefresh={
+            loadExperience
+          }
         />
 
         <section className="rounded-[28px] border border-light-champagne bg-soft-white p-6 sm:p-8">
@@ -596,7 +472,9 @@ const ManageExperiencePage = () => {
           </h2>
 
           <MediaGallery
-            media={media}
+            media={
+              media
+            }
           />
         </section>
       </main>

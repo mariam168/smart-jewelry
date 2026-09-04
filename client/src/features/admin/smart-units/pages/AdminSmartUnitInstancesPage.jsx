@@ -1,428 +1,903 @@
 import {
   useEffect,
-  useMemo,
   useState,
 } from "react";
+
 
 import {
   Link,
   useParams,
 } from "react-router-dom";
 
+
 import {
-  getSmartUnit,
-  getSmartUnitInstances,
-} from "../services/smartUnitApi";
+
+getSmartUnit,
+
+getSmartUnitInstances,
+
+updateSmartUnitInstance,
+
+deleteSmartUnitInstance,
+
+}
+from "../services/smartUnitApi";
+
+
+
+
 
 const AdminSmartUnitInstancesPage =
-  () => {
-    const { smartUnitId } =
-      useParams();
+()=>{
 
-    const [
-      smartUnit,
-      setSmartUnit,
-    ] = useState(null);
 
-    const [
-      instances,
-      setInstances,
-    ] = useState([]);
+const {
+smartUnitId
+}
+=
+useParams();
 
-    const [
-      isLoading,
-      setIsLoading,
-    ] = useState(true);
 
-    const [
-      error,
-      setError,
-    ] = useState("");
 
-    useEffect(() => {
-      const loadData =
-        async () => {
-          try {
-            setIsLoading(true);
-            setError("");
 
-            const [
-              smartUnitResponse,
-              instancesResponse,
-            ] =
-              await Promise.all([
-                getSmartUnit(
-                  smartUnitId
-                ),
+const [
+smartUnit,
+setSmartUnit
+]
+=
+useState(null);
 
-                getSmartUnitInstances(
-                  smartUnitId
-                ),
-              ]);
 
-            const loadedSmartUnit =
-              smartUnitResponse
-                ?.data
-                ?.smartUnit ||
-              smartUnitResponse
-                ?.smartUnit ||
-              null;
 
-            const loadedInstances =
-              instancesResponse
-                ?.data
-                ?.instances ||
-              instancesResponse
-                ?.instances ||
-              [];
+const [
+instances,
+setInstances
+]
+=
+useState([]);
 
-            setSmartUnit(
-              loadedSmartUnit
-            );
 
-            setInstances(
-              Array.isArray(
-                loadedInstances
-              )
-                ? loadedInstances
-                : []
-            );
-          } catch (error) {
-            console.error(
-              error
-            );
 
-            setError(
-              error?.response
-                ?.data
-                ?.message ||
-                "Failed to load Smart Unit instances."
-            );
-          } finally {
-            setIsLoading(
-              false
-            );
-          }
-        };
 
-      if (smartUnitId) {
-        loadData();
-      }
-    }, [smartUnitId]);
+const [
+loading,
+setLoading
+]
+=
+useState(true);
 
-    const counts =
-      useMemo(() => {
-        return {
-          total:
-            instances.length,
 
-          available:
-            instances.filter(
-              (item) =>
-                item.status ===
-                "available"
-            ).length,
 
-          reserved:
-            instances.filter(
-              (item) =>
-                item.status ===
-                "reserved"
-            ).length,
+const [
+error,
+setError
+]
+=
+useState("");
 
-          assigned:
-            instances.filter(
-              (item) =>
-                item.status ===
-                "assigned"
-            ).length,
 
-          activated:
-            instances.filter(
-              (item) =>
-                item.status ===
-                "activated"
-            ).length,
 
-          inactive:
-            instances.filter(
-              (item) =>
-                item.status ===
-                "inactive"
-            ).length,
 
-          damaged:
-            instances.filter(
-              (item) =>
-                item.status ===
-                "damaged"
-            ).length,
-        };
-      }, [instances]);
+const [
+savingId,
+setSavingId
+]
+=
+useState(null);
 
-    const getStatusStyle = (
-      status
-    ) => {
-      switch (status) {
-        case "available":
-          return "border-[#B8D8C0] bg-[#EEF8F0] text-[#467454]";
 
-        case "reserved":
-          return "border-[#E5D3A7] bg-[#FBF6E9] text-[#8A6A2F]";
 
-        case "assigned":
-          return "border-[#BFD1E8] bg-[#EEF4FB] text-[#4D6F99]";
 
-        case "activated":
-          return "border-[#D8C7E8] bg-[#F6F0FA] text-[#79538F]";
+useEffect(()=>{
 
-        case "inactive":
-          return "border-[#D9D5D0] bg-[#F4F2F0] text-[#77716A]";
 
-        case "damaged":
-          return "border-[#E7C1C1] bg-[#FCF0F0] text-[#A65353]";
+loadData();
 
-        default:
-          return "border-light-champagne bg-warm-ivory text-slate-gray";
-      }
-    };
 
-    return (
-      <div className="min-h-screen bg-warm-ivory text-midnight-navy">
-        <header className="border-b border-light-champagne bg-soft-white/80">
-          <div className="mx-auto max-w-7xl px-6 py-7">
-            <Link
-              to="/admin/smart-units"
-              className="mb-6 inline-flex text-[12px] font-semibold text-antique-gold"
-            >
-              ← Back to Smart Units
-            </Link>
+},[smartUnitId]);
 
-            <div className="flex items-end justify-between">
-              <div>
-                <h1 className="font-serif text-[2.7rem] tracking-[-0.04em]">
-                  Physical Units
-                </h1>
 
-                <p className="mt-2 text-[13px] text-slate-gray">
-                  {smartUnit?.name ||
-                    "Smart Unit"}{" "}
-                  — Serial Numbers
-                </p>
-              </div>
 
-              {!isLoading && (
-                <div className="rounded-full border border-light-champagne px-5 py-2 text-[12px]">
-                  {counts.total}{" "}
-                  {counts.total ===
-                  1
-                    ? "Unit"
-                    : "Units"}
-                </div>
-              )}
-            </div>
-          </div>
-        </header>
 
-        <main className="mx-auto max-w-7xl px-6 py-10">
-          {error && (
-            <div className="mb-6 rounded-[16px] border border-red-200 bg-red-50 px-5 py-4 text-[13px] text-red-600">
-              {error}
-            </div>
-          )}
 
-          {isLoading ? (
-            <div className="rounded-[28px] border border-light-champagne bg-soft-white py-24 text-center">
-              <div className="mx-auto h-7 w-7 animate-spin rounded-full border-2 border-light-champagne border-t-classic-gold" />
 
-              <p className="mt-4 text-[13px] text-slate-gray">
-                Loading physical units...
-              </p>
-            </div>
-          ) : (
-            <>
-              <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
-                <div className="rounded-[20px] border border-light-champagne bg-soft-white p-5">
-                  <p className="text-[11px] text-slate-gray">
-                    Total
-                  </p>
 
-                  <p className="mt-2 font-serif text-[2rem]">
-                    {counts.total}
-                  </p>
-                </div>
+const loadData =
+async()=>{
 
-                <div className="rounded-[20px] border border-[#B8D8C0] bg-[#EEF8F0] p-5">
-                  <p className="text-[11px] text-[#467454]">
-                    Available
-                  </p>
 
-                  <p className="mt-2 text-[2rem] text-[#467454]">
-                    {
-                      counts.available
-                    }
-                  </p>
-                </div>
+try{
 
-                <div className="rounded-[20px] border border-[#BFD1E8] bg-[#EEF4FB] p-5">
-                  <p className="text-[11px] text-[#4D6F99]">
-                    Assigned
-                  </p>
 
-                  <p className="mt-2 text-[2rem] text-[#4D6F99]">
-                    {
-                      counts.assigned
-                    }
-                  </p>
-                </div>
+setLoading(true);
 
-                <div className="rounded-[20px] border border-[#D8C7E8] bg-[#F6F0FA] p-5">
-                  <p className="text-[11px] text-[#79538F]">
-                    Activated
-                  </p>
 
-                  <p className="mt-2 text-[2rem] text-[#79538F]">
-                    {
-                      counts.activated
-                    }
-                  </p>
-                </div>
-              </div>
+const [
+unitResponse,
+instancesResponse
+]
+=
+await Promise.all([
 
-              <div className="overflow-hidden rounded-[28px] border border-light-champagne bg-soft-white">
-                <div className="border-b border-light-champagne px-7 py-6">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-antique-gold">
-                    Inventory
-                  </p>
+getSmartUnit(
+smartUnitId
+),
 
-                  <h2 className="mt-1 font-serif text-[1.6rem]">
-                    Serial Numbers
-                  </h2>
+getSmartUnitInstances(
+smartUnitId
+)
 
-                  {smartUnit
-                    ?.technologyModel
-                    ?.modelName && (
-                    <p className="mt-2 text-[12px] text-slate-gray">
-                      Technology:{" "}
-                      {
-                        smartUnit
-                          .technologyModel
-                          .modelName
-                      }
-                    </p>
-                  )}
-                </div>
+]);
 
-                {instances.length ===
-                0 ? (
-                  <div className="py-16 text-center">
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-champagne-gold/25 bg-soft-cream text-antique-gold">
-                      ✦
-                    </div>
 
-                    <h3 className="mt-5 font-serif text-[1.5rem]">
-                      No Physical Units
-                    </h3>
 
-                    <p className="mt-2 text-[13px] text-slate-gray">
-                      No serial numbers have been generated for this Smart Unit.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[900px]">
-                      <thead>
-                        <tr className="border-b border-light-champagne bg-warm-ivory/40">
-                          <th className="px-7 py-4 text-left text-[10px] uppercase text-steel-gray">
-                            #
-                          </th>
+setSmartUnit(
 
-                          <th className="px-7 py-4 text-left text-[10px] uppercase text-steel-gray">
-                            Serial Number
-                          </th>
+unitResponse
+?.data
+?.smartUnit ||
+unitResponse
+?.smartUnit
 
-                          <th className="px-7 py-4 text-left text-[10px] uppercase text-steel-gray">
-                            Status
-                          </th>
+);
 
-                          <th className="px-7 py-4 text-left text-[10px] uppercase text-steel-gray">
-                            Firmware
-                          </th>
 
-                          <th className="px-7 py-4 text-left text-[10px] uppercase text-steel-gray">
-                            Created
-                          </th>
-                        </tr>
-                      </thead>
 
-                      <tbody>
-                        {instances.map(
-                          (
-                            instance,
-                            index
-                          ) => (
-                            <tr
-                              key={
-                                instance._id
-                              }
-                              className="border-b border-light-champagne/70 last:border-0"
-                            >
-                              <td className="px-7 py-5 text-[12px] text-slate-gray">
-                                {String(
-                                  index +
-                                    1
-                                ).padStart(
-                                  2,
-                                  "0"
-                                )}
-                              </td>
+setInstances(
 
-                              <td className="px-7 py-5">
-                                <span className="rounded-[10px] border border-light-champagne bg-warm-ivory px-3 py-2 font-mono text-[13px] font-semibold">
-                                  {
-                                    instance.serialNumber
-                                  }
-                                </span>
-                              </td>
+instancesResponse
+?.data
+?.instances ||
+instancesResponse
+?.instances ||
+[]
 
-                              <td className="px-7 py-5">
-                                <span
-                                  className={`rounded-full border px-3 py-1.5 text-[10px] font-semibold capitalize ${getStatusStyle(
-                                    instance.status
-                                  )}`}
-                                >
-                                  {
-                                    instance.status
-                                  }
-                                </span>
-                              </td>
+);
 
-                              <td className="px-7 py-5 font-mono text-[12px] text-slate-gray">
-                                {instance.firmwareVersion
-                                  ? `v${instance.firmwareVersion}`
-                                  : "—"}
-                              </td>
 
-                              <td className="px-7 py-5 text-[12px] text-slate-gray">
-                                {instance.createdAt
-                                  ? new Date(
-                                      instance.createdAt
-                                    ).toLocaleDateString()
-                                  : "—"}
-                              </td>
-                            </tr>
-                          )
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </main>
-      </div>
-    );
-  };
+
+}
+
+catch(err){
+
+
+console.log(err);
+
+
+setError(
+err?.response?.data?.message ||
+"Failed to load instances"
+);
+
+
+}
+
+finally{
+
+setLoading(false);
+
+}
+
+};
+
+
+
+
+
+
+
+
+
+const changeStatus =
+async(
+instance,
+status
+)=>{
+
+
+try{
+
+
+setSavingId(
+instance._id
+);
+
+
+
+let payload={
+status
+};
+
+
+
+if(
+status==="damaged"
+){
+
+const reason =
+window.prompt(
+"Enter damage reason"
+);
+
+
+payload.damagedReason =
+reason || "";
+
+}
+
+
+
+const response =
+await updateSmartUnitInstance(
+instance._id,
+payload
+);
+
+
+
+setInstances(
+previous=>
+
+previous.map(item=>
+
+item._id===instance._id
+
+?
+
+response.data.instance
+
+:
+
+item
+
+)
+
+);
+
+
+
+}
+
+catch(error){
+
+alert(
+error?.response?.data?.message ||
+"Failed to update"
+);
+
+}
+
+finally{
+
+setSavingId(null);
+
+}
+
+};
+
+
+
+
+
+
+
+
+
+const removeInstance =
+async(
+id
+)=>{
+
+
+const confirmed =
+window.confirm(
+"Delete this physical unit?"
+);
+
+
+
+if(!confirmed)
+return;
+
+
+
+try{
+
+
+await deleteSmartUnitInstance(
+id
+);
+
+
+
+setInstances(
+previous=>
+
+previous.filter(
+item=>item._id!==id
+)
+
+);
+
+
+
+}
+
+catch(error){
+
+alert(
+error?.response?.data?.message ||
+"Delete failed"
+);
+
+}
+
+
+};
+
+
+
+
+
+
+
+const formatDate =
+(date)=>{
+
+
+if(!date)
+return "-";
+
+
+return new Date(date)
+.toLocaleDateString();
+
+};
+
+
+
+
+
+
+
+
+
+if(loading){
+
+
+return (
+
+<div className="
+min-h-screen
+flex
+items-center
+justify-center
+bg-warm-ivory
+">
+
+Loading...
+
+</div>
+
+);
+
+
+}
+
+
+
+
+
+
+
+
+
+return (
+
+<div className="
+min-h-screen
+bg-warm-ivory
+text-midnight-navy
+">
+
+
+<header className="
+border-b
+border-light-champagne
+bg-soft-white
+">
+
+
+<div className="
+max-w-7xl
+mx-auto
+px-6
+py-7
+">
+
+
+<Link
+
+to="/admin/smart-units"
+
+className="
+text-sm
+text-antique-gold
+"
+
+>
+
+← Back
+
+</Link>
+
+
+
+<h1 className="
+mt-4
+font-serif
+text-4xl
+">
+
+Physical Units
+
+</h1>
+
+
+
+<p className="
+mt-2
+text-sm
+text-slate-gray
+">
+
+{
+smartUnit?.name
+}
+
+</p>
+
+
+</div>
+
+
+</header>
+
+
+
+
+
+
+
+<main className="
+max-w-7xl
+mx-auto
+px-6
+py-10
+">
+
+
+
+
+
+{
+error &&
+
+<div className="
+mb-5
+rounded-xl
+bg-red-50
+p-4
+text-red-600
+">
+
+{error}
+
+</div>
+
+}
+
+
+
+
+
+
+
+<div className="
+overflow-x-auto
+rounded-3xl
+border
+border-light-champagne
+bg-soft-white
+">
+
+
+<table className="
+w-full
+min-w-[1300px]
+">
+
+
+<thead>
+
+<tr className="
+border-b
+bg-warm-ivory
+">
+
+
+<th className="p-5 text-left">
+#
+</th>
+
+
+<th className="p-5 text-left">
+Serial
+</th>
+
+
+<th className="p-5 text-left">
+Code
+</th>
+
+
+<th className="p-5 text-left">
+Status
+</th>
+
+
+<th className="p-5 text-left">
+Firmware
+</th>
+
+
+<th className="p-5 text-left">
+Purchase
+</th>
+
+
+<th className="p-5 text-left">
+Activated
+</th>
+
+
+<th className="p-5 text-left">
+Warranty
+</th>
+
+
+<th className="p-5">
+Actions
+</th>
+
+
+</tr>
+
+</thead>
+
+
+
+
+
+
+<tbody>
+
+
+{
+instances.map(
+(instance,index)=>(
+
+
+<tr
+
+key={
+instance._id
+}
+
+className="
+border-b
+hover:bg-warm-ivory/50
+"
+
+>
+
+
+<td className="p-5">
+
+{
+index+1
+}
+
+</td>
+
+
+
+
+
+<td className="p-5">
+
+<div className="
+font-mono
+font-semibold
+">
+
+{
+instance.serialNumber
+}
+
+</div>
+
+
+</td>
+
+
+
+
+
+<td className="p-5">
+
+
+<span className="
+rounded-lg
+bg-warm-ivory
+px-3
+py-2
+font-mono
+text-xs
+">
+
+{
+instance.uniqueCode
+}
+
+</span>
+
+
+</td>
+
+
+
+
+
+
+
+
+<td className="p-5">
+
+
+<select
+
+disabled={
+savingId===instance._id
+}
+
+value={
+instance.status
+}
+
+onChange={
+(e)=>
+changeStatus(
+instance,
+e.target.value
+)
+}
+
+
+className="
+rounded-lg
+border
+px-3
+py-2
+text-xs
+"
+
+
+>
+
+
+<option value="available">
+Available
+</option>
+
+
+<option value="reserved">
+Reserved
+</option>
+
+
+<option value="assigned">
+Assigned
+</option>
+
+
+<option value="activated">
+Activated
+</option>
+
+
+<option value="inactive">
+Inactive
+</option>
+
+
+<option value="damaged">
+Damaged
+</option>
+
+
+</select>
+
+
+
+{
+instance.status==="damaged"
+&&
+
+<p className="
+mt-2
+max-w-[150px]
+text-xs
+text-red-600
+">
+
+{
+instance.damagedReason ||
+"No reason"
+}
+
+</p>
+
+}
+
+
+
+</td>
+
+
+
+
+
+
+
+
+<td className="p-5">
+
+{
+instance.firmwareVersion ||
+"-"
+}
+
+</td>
+
+
+
+
+
+
+
+
+<td className="p-5">
+
+{
+formatDate(
+instance.purchaseDate
+)
+}
+
+</td>
+
+
+
+
+
+
+
+<td className="p-5">
+
+{
+formatDate(
+instance.activationDate
+)
+}
+
+</td>
+
+
+
+
+
+
+
+<td className="p-5">
+
+{
+formatDate(
+instance.warrantyExpiry
+)
+}
+
+</td>
+
+
+
+
+
+
+
+
+
+<td className="p-5">
+
+
+<button
+
+onClick={()=>
+removeInstance(
+instance._id
+)
+}
+
+className="
+rounded-lg
+bg-red-50
+px-4
+py-2
+text-xs
+font-semibold
+text-red-600
+hover:bg-red-100
+"
+
+>
+
+Delete
+
+</button>
+
+
+</td>
+
+
+
+
+
+
+</tr>
+
+
+)
+
+)
+
+}
+
+
+
+</tbody>
+
+
+
+</table>
+
+
+</div>
+
+
+
+
+
+
+</main>
+
+
+</div>
+
+
+);
+
+
+};
+
 
 export default AdminSmartUnitInstancesPage;

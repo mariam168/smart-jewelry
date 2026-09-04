@@ -2,7 +2,11 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
-const uploadPath = path.join(process.cwd(), "uploads", "experience");
+const uploadPath = path.join(
+  process.cwd(),
+  "uploads",
+  "experience",
+);
 
 if (!fs.existsSync(uploadPath)) {
   fs.mkdirSync(uploadPath, {
@@ -16,41 +20,57 @@ const storage = multer.diskStorage({
   },
 
   filename(req, file, cb) {
-    const uniqueName = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const uniqueName = `${Date.now()}-${Math.round(
+      Math.random() * 1e9,
+    )}`;
 
-    cb(null, uniqueName + path.extname(file.originalname));
+    const extension = path
+      .extname(file.originalname || "")
+      .toLowerCase();
+
+    cb(
+      null,
+      `${uniqueName}${extension}`,
+    );
   },
 });
 
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = ["image/", "video/", "audio/"];
+const fileFilter = (
+  req,
+  file,
+  cb,
+) => {
+  const mimetype = String(
+    file?.mimetype || "",
+  ).toLowerCase();
 
-  const isAllowedMedia = allowedTypes.some((type) =>
-    file.mimetype.startsWith(type),
-  );
+  const isAllowed =
+    mimetype.startsWith("image/") ||
+    mimetype.startsWith("audio/") ||
+    mimetype.startsWith("video/");
 
-  if (isAllowedMedia) {
-    cb(null, true);
+  if (!isAllowed) {
+    cb(
+      new Error(
+        "Only images, recorded audio, and approved video uploads are supported.",
+      ),
+    );
+
     return;
   }
 
-  const allowedExtensions = [".pdf", ".doc", ".docx", ".txt", ".zip", ".rar"];
-
-  const extension = path.extname(file.originalname).toLowerCase();
-
-  if (allowedExtensions.includes(extension)) {
-    cb(null, true);
-    return;
-  }
-
-  cb(new Error("This file type is not supported."));
+  cb(null, true);
 };
 
 const upload = multer({
   storage,
   fileFilter,
+
   limits: {
-    fileSize: 100 * 1024 * 1024,
+    fileSize:
+      100 * 1024 * 1024,
+
+    files: 20,
   },
 });
 

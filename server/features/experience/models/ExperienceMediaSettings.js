@@ -29,13 +29,6 @@ const experienceMediaSettingsSchema = new mongoose.Schema(
       min: 0,
       max: 100,
     },
-
-    fileLimit: {
-      type: Number,
-      default: 5,
-      min: 0,
-      max: 100,
-    },
   },
   {
     timestamps: true,

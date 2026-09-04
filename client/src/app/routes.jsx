@@ -22,7 +22,7 @@ import ProtectedRoute from "../features/auth/components/ProtectedRoute";
 import AdminProtectedRoute from "../features/auth/components/AdminProtectedRoute";
 import AdminUsersPage from "../features/admin/pages/AdminUsersPage";
 import AccountPage from "../features/account/pages/AccountPage";
-
+import AdminEditSmartUnitInstancePage from "../features/admin/smart-units/pages/AdminEditSmartUnitInstancePage";
 import MyOrdersPage from "../features/orders/pages/MyOrdersPage";
 import OrderDetailsPage from "../features/orders/pages/OrderDetailsPage";
 import OrderSuccessPage from "../features/orders/pages/OrderSuccessPage";
@@ -225,6 +225,11 @@ const router = createBrowserRouter([
               },
 
               {
+                path: "products/:id/variants/new",
+                element: <AddVariantPage />,
+              },
+
+              {
                 path: "variants/:id/edit",
                 element: <EditVariantPage />,
               },
@@ -278,6 +283,10 @@ const router = createBrowserRouter([
                 path: "smart-units",
                 element: <AdminSmartUnitsPage />,
               },
+              {
+  path: "smart-units/instance/:id/edit",
+  element: <AdminEditSmartUnitInstancePage />,
+},
 
               {
                 path: "smart-units/new",

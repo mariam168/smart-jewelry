@@ -16,6 +16,9 @@ import {
   unlockPublicExperienceController,
   getMediaLimitsController,
   updateMediaLimitsController,
+  requestVideoUploadController,
+  getAdminVideoUploadRequestsController,
+  updateAdminVideoUploadRequestController,
 } from "../controllers/experienceController.js";
 
 import {
@@ -24,7 +27,8 @@ import {
 
 import adminMiddleware from "../../admin/middleware/adminMiddleware.js";
 
-const router = express.Router();
+const router =
+  express.Router();
 
 router.post(
   "/",
@@ -36,14 +40,25 @@ router.get(
   getMediaLimitsController,
 );
 
-/*
- * Admin-only media settings.
- */
 router.put(
   "/admin/media-limits",
   protect,
   adminMiddleware,
   updateMediaLimitsController,
+);
+
+router.get(
+  "/admin/video-requests",
+  protect,
+  adminMiddleware,
+  getAdminVideoUploadRequestsController,
+);
+
+router.patch(
+  "/admin/video-requests/:requestId",
+  protect,
+  adminMiddleware,
+  updateAdminVideoUploadRequestController,
 );
 
 router.get(
@@ -57,12 +72,11 @@ router.put(
 );
 
 /*
- * IMPORTANT:
- * The public URL slug can now only be changed by an admin.
+ * The customer Manage Experience page
+ * no longer exposes custom-link editing.
  *
- * The route still uses the Experience manage token to identify
- * the Experience, but protect + adminMiddleware prevent customers
- * or anyone holding only the token from changing the slug.
+ * This endpoint is retained for
+ * the admin/manufacturing workflow.
  */
 router.put(
   "/manage/:token/slug",
@@ -74,6 +88,11 @@ router.put(
 router.put(
   "/manage/:token/access-date",
   updateAccessDateController,
+);
+
+router.post(
+  "/manage/:token/video-request",
+  requestVideoUploadController,
 );
 
 router.post(

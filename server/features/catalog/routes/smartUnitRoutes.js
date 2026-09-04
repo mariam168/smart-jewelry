@@ -1,47 +1,139 @@
 import express from "express";
 
-import {
-  createSmartUnitController,
-  getSmartUnitsController,
-  getSmartUnitController,
-  updateSmartUnitController,
-  deleteSmartUnitController,
-} from "../controllers/smartUnitController.js";
 
 import {
-  getSmartUnitInstancesController,
-} from "../controllers/smartUnitInstanceController.js";
 
-const router = express.Router();
+createSmartUnitController,
+getSmartUnitsController,
+getSmartUnitController,
+updateSmartUnitController,
+deleteSmartUnitController
 
-router.post(
-  "/",
-  createSmartUnitController
-);
+}
+from "../controllers/smartUnitController.js";
+
+
+
+import {
+
+getSmartUnitInstancesController,
+getSmartUnitInstanceController,
+updateSmartUnitInstanceController,
+deleteSmartUnitInstanceController
+
+}
+from "../controllers/smartUnitInstanceController.js";
+
+
+
+const router =
+express.Router();
+
+
+
+
+
+// ============================
+// Physical Units
+// ============================
+
 
 router.get(
-  "/",
-  getSmartUnitsController
+
+"/instances/:id",
+
+getSmartUnitInstanceController
+
 );
 
-router.get(
-  "/:smartUnitId/instances",
-  getSmartUnitInstancesController
-);
 
-router.get(
-  "/:id",
-  getSmartUnitController
-);
 
 router.put(
-  "/:id",
-  updateSmartUnitController
+
+"/instances/:id",
+
+updateSmartUnitInstanceController
+
 );
 
+
+
 router.delete(
-  "/:id",
-  deleteSmartUnitController
+
+"/instances/:id",
+
+deleteSmartUnitInstanceController
+
 );
+
+
+
+router.get(
+
+"/:smartUnitId/instances",
+
+getSmartUnitInstancesController
+
+);
+
+
+
+
+
+
+// ============================
+// Smart Units CRUD
+// ============================
+
+
+router.post(
+
+"/",
+
+createSmartUnitController
+
+);
+
+
+
+router.get(
+
+"/",
+
+getSmartUnitsController
+
+);
+
+
+
+router.get(
+
+"/:id",
+
+getSmartUnitController
+
+);
+
+
+
+router.put(
+
+"/:id",
+
+updateSmartUnitController
+
+);
+
+
+
+router.delete(
+
+"/:id",
+
+deleteSmartUnitController
+
+);
+
+
 
 export default router;

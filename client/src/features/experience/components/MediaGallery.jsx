@@ -27,7 +27,27 @@ const formatFileSize = (
 const MediaGallery = ({
   media = [],
 }) => {
-  if (!media.length) {
+  const visibleMedia =
+    Array.isArray(
+      media,
+    )
+      ? media.filter(
+          (
+            item,
+          ) =>
+            [
+              "image",
+              "video",
+              "audio",
+            ].includes(
+              item?.type,
+            ),
+        )
+      : [];
+
+  if (
+    !visibleMedia.length
+  ) {
     return (
       <div className="relative flex flex-col items-center justify-center overflow-hidden rounded-[28px] border border-light-champagne/80 bg-soft-white/70 px-6 py-16 text-center shadow-[0_16px_45px_rgba(7,19,31,0.045)]">
         <div className="relative flex h-16 w-16 items-center justify-center rounded-full border border-champagne-gold/25 bg-warm-ivory">
@@ -41,38 +61,37 @@ const MediaGallery = ({
         </p>
 
         <p className="mt-2 max-w-sm text-[13px] leading-6 text-slate-gray">
-          Photos, videos, voice messages and files will appear here once they are added.
+          Photos, voice messages and approved videos will appear here.
         </p>
       </div>
     );
   }
 
   const images =
-    media.filter(
-      (item) =>
+    visibleMedia.filter(
+      (
+        item,
+      ) =>
         item.type ===
         "image",
     );
 
   const videos =
-    media.filter(
-      (item) =>
+    visibleMedia.filter(
+      (
+        item,
+      ) =>
         item.type ===
         "video",
     );
 
   const audios =
-    media.filter(
-      (item) =>
+    visibleMedia.filter(
+      (
+        item,
+      ) =>
         item.type ===
         "audio",
-    );
-
-  const files =
-    media.filter(
-      (item) =>
-        item.type ===
-        "file",
     );
 
   return (
@@ -92,7 +111,9 @@ const MediaGallery = ({
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {images.map(
-              (item) => (
+              (
+                item,
+              ) => (
                 <div
                   key={
                     item._id
@@ -135,21 +156,91 @@ const MediaGallery = ({
         </section>
       )}
 
-      {videos.length >
+      {audios.length >
         0 && (
         <section>
-          <h3 className="mb-7 font-serif text-[2.25rem] text-deep-navy">
-            Videos
-          </h3>
+          <div className="mb-7">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-antique-gold">
+              Voice Memories
+            </p>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            {videos.map(
-              (item) => (
+            <h3 className="mt-3 font-serif text-[2.25rem] text-deep-navy">
+              Voice Messages
+            </h3>
+          </div>
+
+          <div className="space-y-4">
+            {audios.map(
+              (
+                item,
+                index,
+              ) => (
                 <div
                   key={
                     item._id
                   }
-                  className="overflow-hidden rounded-[24px] border border-rich-navy bg-deep-navy"
+                  className="rounded-[24px] border border-light-champagne bg-soft-white p-5 shadow-[0_10px_30px_rgba(13,34,53,0.04)]"
+                >
+                  <div className="mb-4 flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-midnight-navy text-champagne-gold">
+                      ♫
+                    </div>
+
+                    <div>
+                      <p className="text-[13px] font-semibold text-deep-navy">
+                        Voice Message{" "}
+                        {index +
+                          1}
+                      </p>
+
+                      {item.fileSize ? (
+                        <p className="mt-1 text-[10px] text-slate-gray">
+                          {formatFileSize(
+                            item.fileSize,
+                          )}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <audio
+                    src={getMediaUrl(
+                      item.url,
+                    )}
+                    controls
+                    preload="metadata"
+                    className="w-full"
+                  />
+                </div>
+              ),
+            )}
+          </div>
+        </section>
+      )}
+
+      {videos.length >
+        0 && (
+        <section>
+          <div className="mb-7">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-antique-gold">
+              Approved Video Memories
+            </p>
+
+            <h3 className="mt-3 font-serif text-[2.25rem] text-deep-navy">
+              Videos
+            </h3>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            {videos.map(
+              (
+                item,
+              ) => (
+                <div
+                  key={
+                    item._id
+                  }
+                  className="overflow-hidden rounded-[24px] border border-rich-navy bg-deep-navy shadow-[0_14px_35px_rgba(7,19,31,0.12)]"
                 >
                   <video
                     src={getMediaUrl(
@@ -170,89 +261,6 @@ const MediaGallery = ({
                     </div>
                   )}
                 </div>
-              ),
-            )}
-          </div>
-        </section>
-      )}
-
-      {audios.length >
-        0 && (
-        <section>
-          <h3 className="mb-7 font-serif text-[2.25rem] text-deep-navy">
-            Voice Messages
-          </h3>
-
-          <div className="space-y-4">
-            {audios.map(
-              (item) => (
-                <div
-                  key={
-                    item._id
-                  }
-                  className="rounded-[24px] border border-light-champagne bg-soft-white p-5"
-                >
-                  <p className="mb-4 text-[13px] font-semibold text-deep-navy">
-                    {item.fileName ||
-                      "Voice Message"}
-                  </p>
-
-                  <audio
-                    src={getMediaUrl(
-                      item.url,
-                    )}
-                    controls
-                    className="w-full"
-                  />
-                </div>
-              ),
-            )}
-          </div>
-        </section>
-      )}
-
-      {files.length >
-        0 && (
-        <section>
-          <h3 className="mb-7 font-serif text-[2.25rem] text-deep-navy">
-            Attachments
-          </h3>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            {files.map(
-              (item) => (
-                <a
-                  key={
-                    item._id
-                  }
-                  href={getMediaUrl(
-                    item.url,
-                  )}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-4 rounded-[22px] border border-light-champagne bg-soft-white p-5"
-                >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-[15px] bg-silver-mist">
-                    📎
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-semibold text-deep-navy">
-                      {item.fileName ||
-                        "Attachment"}
-                    </p>
-
-                    <p className="mt-1 text-[11px] text-slate-gray">
-                      {formatFileSize(
-                        item.fileSize,
-                      )}
-                    </p>
-                  </div>
-
-                  <span className="text-[9px] font-semibold uppercase text-antique-gold">
-                    Open
-                  </span>
-                </a>
               ),
             )}
           </div>
