@@ -6,29 +6,116 @@ import ProductGrid from "../components/ProductGrid";
 
 import { getShopProducts } from "../services/shopApi";
 
+import { getProductTechnologies } from "../../admin/services/productTechnologyApi";
+
+const getTechnologyList = (response) => {
+  const technologies =
+    response?.data?.productTechnologies ||
+    response?.data?.technologies ||
+    response?.productTechnologies ||
+    response?.technologies ||
+    response?.data ||
+    response ||
+    [];
+
+  return Array.isArray(technologies)
+    ? technologies
+    : [];
+};
+
 const ShopPage = () => {
   const [products, setProducts] = useState([]);
+
   const [search, setSearch] = useState("");
+
   const [category, setCategory] = useState("all");
+
   const [isLoading, setIsLoading] = useState(true);
+
   const [error, setError] = useState("");
 
   useEffect(() => {
     const loadProducts = async () => {
       try {
         setIsLoading(true);
+
         setError("");
 
         const response = await getShopProducts();
 
-        console.log("Products:", response);
+        const loadedProducts =
+          response?.products ||
+          response?.data?.products ||
+          response ||
+          [];
 
-        setProducts(response?.products || []);
+        const safeProducts = Array.isArray(
+          loadedProducts,
+        )
+          ? loadedProducts
+          : [];
+
+        /*
+         * IMPORTANT
+         *
+         * Product list itself does not currently contain
+         * the ProductTechnology records.
+         *
+         * We load them here so ProductCard can calculate:
+         *
+         * product price + technology extraPrice
+         */
+        const productsWithTechnologies =
+          await Promise.all(
+            safeProducts.map(async (product) => {
+              try {
+                const technologyResponse =
+                  await getProductTechnologies(
+                    product._id,
+                  );
+
+                const productTechnologies =
+                  getTechnologyList(
+                    technologyResponse,
+                  );
+
+                return {
+                  ...product,
+
+                  productTechnologies,
+                };
+              } catch (technologyError) {
+                console.error(
+                  `Failed to load technologies for product ${product._id}:`,
+                  technologyError,
+                );
+
+                return {
+                  ...product,
+
+                  productTechnologies: [],
+                };
+              }
+            }),
+          );
+
+        console.log(
+          "Products With Technologies:",
+          productsWithTechnologies,
+        );
+
+        setProducts(
+          productsWithTechnologies,
+        );
       } catch (error) {
-        console.error("Shop Products Error:", error);
+        console.error(
+          "Shop Products Error:",
+          error,
+        );
 
         setError(
-          error?.response?.data?.message || "Failed to load products.",
+          error?.response?.data?.message ||
+            "Failed to load products.",
         );
       } finally {
         setIsLoading(false);
@@ -41,28 +128,48 @@ const ShopPage = () => {
   const categories = useMemo(() => {
     return [
       "all",
+
       ...new Set(
         products
-          .map((product) => product.category?.name)
+          .map(
+            (product) =>
+              product.category?.name,
+          )
           .filter(Boolean),
       ),
     ];
   }, [products]);
 
   const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
-      const searchValue = search.toLowerCase();
+    const normalizedSearch =
+      search.trim().toLowerCase();
 
+    return products.filter((product) => {
       const matchesSearch =
-        product.name?.toLowerCase().includes(searchValue) ||
-        product.description?.toLowerCase().includes(searchValue);
+        !normalizedSearch ||
+        product.name
+          ?.toLowerCase()
+          .includes(normalizedSearch) ||
+        product.shortDescription
+          ?.toLowerCase()
+          .includes(normalizedSearch) ||
+        product.description
+          ?.toLowerCase()
+          .includes(normalizedSearch);
 
       const matchesCategory =
         category === "all" ||
-        product.category?.name === category ||
-        product.category?._id === category;
+        product.category?.name ===
+          category ||
+        product.category?._id ===
+          category ||
+        product.category?.slug ===
+          category;
 
-      return matchesSearch && matchesCategory;
+      return (
+        matchesSearch &&
+        matchesCategory
+      );
     });
   }, [products, search, category]);
 
@@ -77,7 +184,11 @@ const ShopPage = () => {
 
         <div className="pointer-events-none absolute -right-32 top-20 h-[350px] w-[350px] rounded-full bg-champagne-gold/[0.05] blur-[90px]" />
 
-        <ShopHeader productsCount={filteredProducts.length} />
+        <ShopHeader
+          productsCount={
+            filteredProducts.length
+          }
+        />
       </div>
 
       <main className="relative mx-auto max-w-[1440px] px-6 pb-24 pt-10 sm:px-8 sm:pt-12 lg:px-12 lg:pb-28 lg:pt-14">
@@ -93,17 +204,22 @@ const ShopPage = () => {
                   Collection
                 </span>
 
-                <span className="text-[8px] text-classic-gold">✦</span>
+                <span className="text-[8px] text-classic-gold">
+                  ✦
+                </span>
               </div>
 
               <p className="max-w-[460px] text-[13px] leading-7 text-slate-gray sm:text-[14px]">
-                Discover pieces created to become part of your story.
+                Discover pieces created to
+                become part of your story.
               </p>
             </div>
 
             <div className="inline-flex w-fit items-center gap-3 rounded-full border border-light-champagne bg-soft-white/75 px-4 py-2.5 shadow-[0_6px_18px_rgba(7,19,31,0.035)] backdrop-blur-sm">
               <span className="font-serif text-[1.35rem] italic leading-none text-midnight-navy">
-                {filteredProducts.length}
+                {
+                  filteredProducts.length
+                }
               </span>
 
               <span className="text-[8px] font-semibold uppercase tracking-[0.24em] text-steel-gray">
@@ -138,29 +254,34 @@ const ShopPage = () => {
         {isLoading ? (
           <section className="mt-14 sm:mt-16">
             <div className="grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {[1, 2, 3, 4, 5, 6].map((item) => (
-                <div
-                  key={item}
-                  className="overflow-hidden rounded-[26px] border border-light-champagne/80 bg-soft-white shadow-[0_10px_35px_rgba(7,19,31,0.04)]"
-                >
-                  <div className="aspect-[3/4] animate-pulse bg-soft-cream" />
+              {[1, 2, 3, 4, 5, 6].map(
+                (item) => (
+                  <div
+                    key={item}
+                    className="overflow-hidden rounded-[28px] border border-light-champagne/80 bg-soft-white shadow-[0_10px_35px_rgba(7,19,31,0.04)]"
+                  >
+                    <div className="aspect-[3/4] animate-pulse bg-soft-cream" />
 
-                  <div className="px-5 pb-6 pt-6 sm:px-6">
-                    <div className="h-px w-10 bg-classic-gold/40" />
+                    <div className="px-5 pb-6 pt-6 sm:px-6">
+                      <div className="h-px w-10 bg-classic-gold/40" />
 
-                    <div className="mt-5 h-6 w-2/3 animate-pulse rounded-full bg-light-champagne" />
+                      <div className="mt-5 h-6 w-2/3 animate-pulse rounded-full bg-light-champagne" />
 
-                    <div className="mt-4 h-3 w-4/5 animate-pulse rounded-full bg-soft-cream" />
+                      <div className="mt-5 h-20 w-full animate-pulse rounded-[18px] bg-soft-cream" />
 
-                    <div className="mt-3 h-3 w-3/5 animate-pulse rounded-full bg-soft-cream" />
+                      <div className="mt-4 h-3 w-4/5 animate-pulse rounded-full bg-soft-cream" />
 
-                    <div className="mt-6 h-px w-full bg-light-champagne" />
+                      <div className="mt-3 h-3 w-3/5 animate-pulse rounded-full bg-soft-cream" />
+
+                      <div className="mt-6 h-px w-full bg-light-champagne" />
+                    </div>
                   </div>
-                </div>
-              ))}
+                ),
+              )}
             </div>
           </section>
-        ) : filteredProducts.length === 0 ? (
+        ) : filteredProducts.length ===
+          0 ? (
           <section className="py-24 text-center sm:py-28">
             <div className="relative mx-auto max-w-[520px] overflow-hidden rounded-[28px] border border-light-champagne/85 bg-soft-white/75 px-7 py-14 shadow-[0_16px_45px_rgba(7,19,31,0.045)] backdrop-blur-sm sm:px-10 sm:py-16">
               <div className="pointer-events-none absolute left-1/2 top-[-120px] h-[250px] w-[400px] -translate-x-1/2 rounded-full bg-soft-cream blur-[80px]" />
@@ -184,7 +305,8 @@ const ShopPage = () => {
                 </h3>
 
                 <p className="mx-auto mt-4 max-w-[360px] text-[12px] leading-7 text-slate-gray sm:text-[13px]">
-                  Try another search or explore another collection.
+                  Try another search or
+                  explore another collection.
                 </p>
 
                 <button
@@ -193,7 +315,7 @@ const ShopPage = () => {
                     setSearch("");
                     setCategory("all");
                   }}
-                  className="mt-8 inline-flex min-h-[48px] items-center justify-center rounded-[12px] border border-midnight-navy bg-midnight-navy px-7 text-[9px] font-semibold uppercase tracking-[0.18em] text-soft-white shadow-[0_10px_25px_rgba(18,38,58,0.14)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-rich-navy hover:shadow-[0_14px_30px_rgba(18,38,58,0.20)] focus:outline-none focus-visible:ring-2 focus-visible:ring-classic-gold/40"
+                  className="mt-8 inline-flex min-h-[48px] items-center justify-center rounded-[12px] border border-midnight-navy bg-midnight-navy px-7 text-[9px] font-semibold uppercase tracking-[0.18em] text-soft-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-rich-navy"
                 >
                   View All Pieces
                 </button>
@@ -202,7 +324,11 @@ const ShopPage = () => {
           </section>
         ) : (
           <section className="mt-14 sm:mt-16">
-            <ProductGrid products={filteredProducts} />
+            <ProductGrid
+              products={
+                filteredProducts
+              }
+            />
           </section>
         )}
       </main>

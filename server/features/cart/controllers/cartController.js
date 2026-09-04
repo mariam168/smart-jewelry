@@ -6,9 +6,13 @@ import {
   clearUserCart,
 } from "../services/cartService.js";
 
+const getAuthenticatedUserId = (req) => {
+  return req.user?.userId || null;
+};
+
 export const getCart = async (req, res, next) => {
   try {
-    const userId = req.user?.userId;
+    const userId = getAuthenticatedUserId(req);
 
     if (!userId) {
       return res.status(401).json({
@@ -30,7 +34,7 @@ export const getCart = async (req, res, next) => {
 
 export const addToCart = async (req, res, next) => {
   try {
-    const userId = req.user?.userId;
+    const userId = getAuthenticatedUserId(req);
 
     if (!userId) {
       return res.status(401).json({
@@ -41,11 +45,8 @@ export const addToCart = async (req, res, next) => {
 
     const {
       productId,
-
       variantId = null,
-
       productTechnologyId = null,
-
       quantity = 1,
     } = req.body;
 
@@ -58,7 +59,10 @@ export const addToCart = async (req, res, next) => {
 
     const parsedQuantity = Number(quantity);
 
-    if (!Number.isInteger(parsedQuantity) || parsedQuantity < 1) {
+    if (
+      !Number.isInteger(parsedQuantity) ||
+      parsedQuantity < 1
+    ) {
       return res.status(400).json({
         success: false,
         message: "Quantity must be at least 1",
@@ -67,21 +71,15 @@ export const addToCart = async (req, res, next) => {
 
     const cart = await addProductToCart(
       userId,
-
       productId,
-
       parsedQuantity,
-
       variantId,
-
       productTechnologyId,
     );
 
     return res.status(200).json({
       success: true,
-
       message: "Product added to cart successfully",
-
       data: cart,
     });
   } catch (error) {
@@ -89,9 +87,13 @@ export const addToCart = async (req, res, next) => {
   }
 };
 
-export const updateCartItem = async (req, res, next) => {
+export const updateCartItem = async (
+  req,
+  res,
+  next,
+) => {
   try {
-    const userId = req.user?.userId;
+    const userId = getAuthenticatedUserId(req);
 
     if (!userId) {
       return res.status(401).json({
@@ -101,19 +103,32 @@ export const updateCartItem = async (req, res, next) => {
     }
 
     const { itemId } = req.params;
-
     const { quantity } = req.body;
+
+    if (!itemId) {
+      return res.status(400).json({
+        success: false,
+        message: "Cart item ID is required",
+      });
+    }
 
     const parsedQuantity = Number(quantity);
 
-    if (!Number.isInteger(parsedQuantity) || parsedQuantity < 1) {
+    if (
+      !Number.isInteger(parsedQuantity) ||
+      parsedQuantity < 1
+    ) {
       return res.status(400).json({
         success: false,
         message: "Quantity must be at least 1",
       });
     }
 
-    const cart = await updateProductInCart(userId, itemId, parsedQuantity);
+    const cart = await updateProductInCart(
+      userId,
+      itemId,
+      parsedQuantity,
+    );
 
     return res.status(200).json({
       success: true,
@@ -125,9 +140,13 @@ export const updateCartItem = async (req, res, next) => {
   }
 };
 
-export const removeCartItem = async (req, res, next) => {
+export const removeCartItem = async (
+  req,
+  res,
+  next,
+) => {
   try {
-    const userId = req.user?.userId;
+    const userId = getAuthenticatedUserId(req);
 
     if (!userId) {
       return res.status(401).json({
@@ -138,7 +157,17 @@ export const removeCartItem = async (req, res, next) => {
 
     const { itemId } = req.params;
 
-    const cart = await removeProductFromCart(userId, itemId);
+    if (!itemId) {
+      return res.status(400).json({
+        success: false,
+        message: "Cart item ID is required",
+      });
+    }
+
+    const cart = await removeProductFromCart(
+      userId,
+      itemId,
+    );
 
     return res.status(200).json({
       success: true,
@@ -152,7 +181,7 @@ export const removeCartItem = async (req, res, next) => {
 
 export const clearCart = async (req, res, next) => {
   try {
-    const userId = req.user?.userId;
+    const userId = getAuthenticatedUserId(req);
 
     if (!userId) {
       return res.status(401).json({

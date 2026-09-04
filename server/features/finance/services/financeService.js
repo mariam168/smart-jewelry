@@ -8,32 +8,21 @@ const createError = (
   message,
   statusCode = 400,
 ) => {
-  const error =
-    new Error(message);
+  const error = new Error(message);
 
-  error.statusCode =
-    statusCode;
+  error.statusCode = statusCode;
 
   return error;
 };
 
-const roundMoney = (
-  value,
-) => {
+const roundMoney = (value) => {
   return Number(
-    Number(
-      value ||
-        0,
-    ).toFixed(2),
+    Number(value || 0).toFixed(2),
   );
 };
 
-const getNumber = (
-  ...values
-) => {
-  for (
-    const value of values
-  ) {
+const getNumber = (...values) => {
+  for (const value of values) {
     if (
       value === undefined ||
       value === null ||
@@ -42,14 +31,9 @@ const getNumber = (
       continue;
     }
 
-    const number =
-      Number(value);
+    const number = Number(value);
 
-    if (
-      Number.isFinite(
-        number,
-      )
-    ) {
+    if (Number.isFinite(number)) {
       return number;
     }
   }
@@ -57,26 +41,19 @@ const getNumber = (
   return 0;
 };
 
-const getId = (
-  value,
-) => {
+const getId = (value) => {
   if (!value) {
     return "";
   }
 
   if (
-    typeof value ===
-      "object" &&
+    typeof value === "object" &&
     value._id
   ) {
-    return String(
-      value._id,
-    );
+    return String(value._id);
   }
 
-  return String(
-    value,
-  );
+  return String(value);
 };
 
 const normalizeDate = (
@@ -88,41 +65,30 @@ const normalizeDate = (
   }
 
   if (
-    typeof value !==
-      "string" ||
-    !/^\d{4}-\d{2}-\d{2}$/.test(
-      value,
-    )
+    typeof value !== "string" ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(value)
   ) {
     throw createError(
       "Date must use YYYY-MM-DD format",
     );
   }
 
-  const [
-    year,
-    month,
-    day,
-  ] = value
+  const [year, month, day] = value
     .split("-")
     .map(Number);
 
-  const date =
-    new Date(
-      Date.UTC(
-        year,
-        month - 1,
-        day,
-      ),
-    );
+  const date = new Date(
+    Date.UTC(
+      year,
+      month - 1,
+      day,
+    ),
+  );
 
   if (
-    date.getUTCFullYear() !==
-      year ||
-    date.getUTCMonth() !==
-      month - 1 ||
-    date.getUTCDate() !==
-      day
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
   ) {
     throw createError(
       "Invalid date",
@@ -131,8 +97,7 @@ const normalizeDate = (
 
   if (endOfDay) {
     date.setUTCDate(
-      date.getUTCDate() +
-        1,
+      date.getUTCDate() + 1,
     );
   }
 
@@ -145,9 +110,7 @@ const buildDateRange = (
   fieldName,
 ) => {
   const fromDate =
-    normalizeDate(
-      from,
-    );
+    normalizeDate(from);
 
   const toDate =
     normalizeDate(
@@ -167,23 +130,16 @@ const buildDateRange = (
 
   const match = {};
 
-  if (
-    fromDate ||
-    toDate
-  ) {
+  if (fromDate || toDate) {
     match[fieldName] = {};
 
     if (fromDate) {
-      match[
-        fieldName
-      ].$gte =
+      match[fieldName].$gte =
         fromDate;
     }
 
     if (toDate) {
-      match[
-        fieldName
-      ].$lt =
+      match[fieldName].$lt =
         toDate;
     }
   }
@@ -191,19 +147,13 @@ const buildDateRange = (
   return match;
 };
 
-const getQuantity = (
-  item,
-) => {
-  const quantity =
-    Number(
-      item?.quantity ||
-        1,
-    );
+const getQuantity = (item) => {
+  const quantity = Number(
+    item?.quantity || 1,
+  );
 
   if (
-    !Number.isFinite(
-      quantity,
-    ) ||
+    !Number.isFinite(quantity) ||
     quantity <= 0
   ) {
     return 1;
@@ -212,13 +162,9 @@ const getQuantity = (
   return quantity;
 };
 
-const getItemRevenue = (
-  item,
-) => {
+const getItemRevenue = (item) => {
   const quantity =
-    getQuantity(
-      item,
-    );
+    getQuantity(item);
 
   const itemTotal =
     getNumber(
@@ -228,9 +174,7 @@ const getItemRevenue = (
       item?.subtotal,
     );
 
-  if (
-    itemTotal > 0
-  ) {
+  if (itemTotal > 0) {
     return roundMoney(
       itemTotal,
     );
@@ -241,54 +185,39 @@ const getItemRevenue = (
       item?.unitPrice,
       item?.price,
       item?.variantPrice,
-      item?.product
-        ?.price,
+      item?.product?.price,
     );
 
   return roundMoney(
-    unitPrice *
-      quantity,
+    unitPrice * quantity,
   );
 };
 
-const getProductCost = (
-  item,
-) => {
+const getProductCost = (item) => {
   const quantity =
-    getQuantity(
-      item,
-    );
+    getQuantity(item);
 
   /*
-    New orders use the snapshot stored
-    when the customer places the order.
+    New orders use the historical product-cost
+    snapshot stored when the customer places the order.
 
-    product.costPrice is only a fallback
-    for older orders created before
-    productCostSnapshot existed.
+    product.costPrice is only a fallback for older
+    orders created before productCostSnapshot existed.
   */
   const unitCost =
     getNumber(
-      item
-        ?.productCostSnapshot,
-
-      item?.product
-        ?.costPrice,
+      item?.productCostSnapshot,
+      item?.product?.costPrice,
     );
 
   return roundMoney(
-    unitCost *
-      quantity,
+    unitCost * quantity,
   );
 };
 
-const getCustomerName = (
-  order,
-) => {
+const getCustomerName = (order) => {
   const address =
-    order
-      ?.shippingAddress ||
-    {};
+    order?.shippingAddress || {};
 
   const name = [
     address.firstName,
@@ -299,11 +228,33 @@ const getCustomerName = (
 
   return (
     name ||
-    order?.user
-      ?.email ||
+    order?.user?.email ||
     "Unknown Customer"
   );
 };
+
+/*
+ * FINANCE RECOGNITION RULE
+ *
+ * Revenue becomes visible in Finance as soon as
+ * the order reaches "confirmed".
+ *
+ * It remains recognized while the order progresses:
+ * confirmed -> processing -> shipped -> delivered
+ *
+ * It is excluded when the order is:
+ * pending or cancelled.
+ *
+ * Therefore, if an admin moves an order backwards
+ * from confirmed/processing/etc. to pending, it
+ * disappears from Finance again.
+ */
+const FINANCE_RECOGNIZED_ORDER_STATUSES = [
+  "confirmed",
+  "processing",
+  "shipped",
+  "delivered",
+];
 
 export const getFinanceDashboard =
   async ({
@@ -325,15 +276,20 @@ export const getFinanceDashboard =
       );
 
     /*
-      FINANCE RULE:
-      only delivered orders count as sales.
-    */
-    const deliveredOrders =
+     * FINANCE RULE:
+     * Orders count as recognized sales from
+     * "confirmed" status onward.
+     *
+     * Pending and cancelled orders do not count.
+     */
+    const recognizedOrders =
       await Order.find({
         ...orderDateMatch,
 
-        orderStatus:
-          "delivered",
+        orderStatus: {
+          $in:
+            FINANCE_RECOGNIZED_ORDER_STATUSES,
+        },
       })
         .populate(
           "user",
@@ -344,22 +300,18 @@ export const getFinanceDashboard =
           "name sku price costPrice",
         )
         .sort({
-          createdAt:
-            -1,
+          createdAt: -1,
         })
         .lean();
 
     const orderIds =
-      deliveredOrders.map(
-        (
-          order,
-        ) =>
+      recognizedOrders.map(
+        (order) =>
           order._id,
       );
 
     const manufacturingOrders =
-      orderIds.length >
-      0
+      orderIds.length > 0
         ? await ManufacturingOrder.find({
             order: {
               $in: orderIds,
@@ -376,7 +328,8 @@ export const getFinanceDashboard =
       new Map();
 
     for (
-      const manufacturing of manufacturingOrders
+      const manufacturing of
+        manufacturingOrders
     ) {
       manufacturingByOrder.set(
         getId(
@@ -386,34 +339,25 @@ export const getFinanceDashboard =
       );
     }
 
-    const soldItems =
-      [];
+    const soldItems = [];
 
-    let deliveredSales =
-      0;
+    let recognizedSales = 0;
 
-    let totalProductCost =
-      0;
+    let totalProductCost = 0;
 
-    let totalSmartUnitCost =
-      0;
+    let totalSmartUnitCost = 0;
 
-    let totalInstallationCost =
-      0;
+    let totalInstallationCost = 0;
 
-    let totalPackagingCost =
-      0;
+    let totalPackagingCost = 0;
 
-    let totalUnitsSold =
-      0;
+    let totalUnitsSold = 0;
 
     for (
-      const order of deliveredOrders
+      const order of recognizedOrders
     ) {
       const orderId =
-        getId(
-          order._id,
-        );
+        getId(order._id);
 
       const manufacturing =
         manufacturingByOrder.get(
@@ -421,16 +365,12 @@ export const getFinanceDashboard =
         );
 
       const units =
-        manufacturing
-          ?.units ||
-        [];
+        manufacturing?.units || [];
 
       const unitsByItem =
         new Map();
 
-      for (
-        const unit of units
-      ) {
+      for (const unit of units) {
         const itemId =
           getId(
             unit.orderItemId,
@@ -458,66 +398,49 @@ export const getFinanceDashboard =
 
       for (
         const item of
-          order.items ||
-        []
+          order.items || []
       ) {
         const itemId =
-          getId(
-            item._id,
-          );
+          getId(item._id);
 
         const quantity =
-          getQuantity(
-            item,
-          );
+          getQuantity(item);
 
         const revenue =
-          getItemRevenue(
-            item,
-          );
+          getItemRevenue(item);
 
         const productCost =
-          getProductCost(
-            item,
-          );
+          getProductCost(item);
 
         const productionUnits =
           unitsByItem.get(
             itemId,
           ) || [];
 
-        let smartUnitCost =
-          0;
+        let smartUnitCost = 0;
 
-        let installationCost =
-          0;
+        let installationCost = 0;
 
-        let packagingCost =
-          0;
+        let packagingCost = 0;
 
         for (
-          const unit of productionUnits
+          const unit of
+            productionUnits
         ) {
           smartUnitCost +=
             getNumber(
-              unit
-                ?.smartUnitCostSnapshot,
-
-              unit
-                ?.smartUnit
-                ?.costPrice,
+              unit?.smartUnitCostSnapshot,
+              unit?.smartUnit?.costPrice,
             );
 
           installationCost +=
             getNumber(
-              unit
-                ?.assemblyCost,
+              unit?.assemblyCost,
             );
 
           packagingCost +=
             getNumber(
-              unit
-                ?.packagingCost,
+              unit?.packagingCost,
             );
         }
 
@@ -559,7 +482,7 @@ export const getFinanceDashboard =
               )
             : 0;
 
-        deliveredSales +=
+        recognizedSales +=
           revenue;
 
         totalProductCost +=
@@ -587,14 +510,16 @@ export const getFinanceDashboard =
           orderDate:
             order.createdAt,
 
+          orderStatus:
+            order.orderStatus,
+
           customer:
             getCustomerName(
               order,
             ),
 
           customerEmail:
-            order.user
-              ?.email ||
+            order.user?.email ||
             "",
 
           productId:
@@ -604,15 +529,12 @@ export const getFinanceDashboard =
 
           productName:
             item.name ||
-            item.product
-              ?.name ||
+            item.product?.name ||
             "Unknown Product",
 
           sku:
-            item.variant
-              ?.sku ||
-            item.product
-              ?.sku ||
+            item.variant?.sku ||
+            item.product?.sku ||
             "",
 
           quantity,
@@ -642,16 +564,15 @@ export const getFinanceDashboard =
           margin,
 
           manufacturingStatus:
-            manufacturing
-              ?.status ||
+            manufacturing?.status ||
             "not_started",
         });
       }
     }
 
-    deliveredSales =
+    recognizedSales =
       roundMoney(
-        deliveredSales,
+        recognizedSales,
       );
 
     totalProductCost =
@@ -684,15 +605,15 @@ export const getFinanceDashboard =
 
     const profit =
       roundMoney(
-        deliveredSales -
+        recognizedSales -
           totalDirectCost,
       );
 
     const profitMargin =
-      deliveredSales > 0
+      recognizedSales > 0
         ? roundMoney(
             (profit /
-              deliveredSales) *
+              recognizedSales) *
               100,
           )
         : 0;
@@ -710,8 +631,7 @@ export const getFinanceDashboard =
 
           {
             $group: {
-              _id:
-                null,
+              _id: null,
 
               total: {
                 $sum:
@@ -719,8 +639,7 @@ export const getFinanceDashboard =
               },
 
               count: {
-                $sum:
-                  1,
+                $sum: 1,
               },
             },
           },
@@ -734,11 +653,9 @@ export const getFinanceDashboard =
             "email",
           )
           .sort({
-            expenseDate:
-              -1,
+            expenseDate: -1,
 
-            createdAt:
-              -1,
+            createdAt: -1,
           })
           .limit(20)
           .lean(),
@@ -751,17 +668,29 @@ export const getFinanceDashboard =
         "EGP",
 
       filters: {
-        from:
-          from ||
-          null,
+        from: from || null,
 
-        to:
-          to ||
-          null,
+        to: to || null,
+      },
+
+      financeRecognition: {
+        startsAt:
+          "confirmed",
+
+        includedStatuses:
+          FINANCE_RECOGNIZED_ORDER_STATUSES,
+
+        excludedStatuses: [
+          "pending",
+          "cancelled",
+        ],
       },
 
       overview: {
-        deliveredSales,
+        recognizedSales,
+
+        recognizedOrders:
+          recognizedOrders.length,
 
         totalDirectCost,
 
@@ -769,10 +698,20 @@ export const getFinanceDashboard =
 
         profitMargin,
 
-        deliveredOrders:
-          deliveredOrders.length,
-
         totalUnitsSold,
+
+        /*
+         * Backward-compatible aliases.
+         *
+         * Keep these temporarily so any older
+         * frontend code using deliveredSales /
+         * deliveredOrders does not break.
+         */
+        deliveredSales:
+          recognizedSales,
+
+        deliveredOrders:
+          recognizedOrders.length,
       },
 
       costBreakdown: {
@@ -811,9 +750,7 @@ export const getFinanceDashboard =
 
       recentExpenses:
         recentExpenses.map(
-          (
-            expense,
-          ) => ({
+          (expense) => ({
             _id:
               expense._id,
 
@@ -865,9 +802,7 @@ export const createFinanceExpense =
     }
 
     const numericAmount =
-      Number(
-        amount,
-      );
+      Number(amount);
 
     if (
       !Number.isFinite(
@@ -883,9 +818,7 @@ export const createFinanceExpense =
     let parsedDate =
       new Date();
 
-    if (
-      expenseDate
-    ) {
+    if (expenseDate) {
       parsedDate =
         normalizeDate(
           expenseDate,
@@ -1074,19 +1007,14 @@ export const getFinanceExpenses =
 
     const safePage =
       Math.max(
-        Number(
-          page,
-        ) ||
-          1,
+        Number(page) || 1,
         1,
       );
 
     const safeLimit =
       Math.min(
         Math.max(
-          Number(
-            limit,
-          ) ||
+          Number(limit) ||
             20,
           1,
         ),
@@ -1106,15 +1034,12 @@ export const getFinanceExpenses =
             "email",
           )
           .sort({
-            expenseDate:
-              -1,
+            expenseDate: -1,
 
-            createdAt:
-              -1,
+            createdAt: -1,
           })
           .skip(
-            (safePage -
-              1) *
+            (safePage - 1) *
               safeLimit,
           )
           .limit(

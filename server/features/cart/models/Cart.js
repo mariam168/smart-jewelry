@@ -39,6 +39,7 @@ const cartSchema = new mongoose.Schema(
       ref: "User",
       required: true,
       unique: true,
+      index: true,
     },
 
     items: {
@@ -51,6 +52,9 @@ const cartSchema = new mongoose.Schema(
   },
 );
 
-const Cart = mongoose.model("Cart", cartSchema);
+const Cart = mongoose.model(
+  "Cart",
+  cartSchema,
+);
 
 export default Cart;

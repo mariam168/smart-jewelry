@@ -18,6 +18,12 @@ import {
   updateMediaLimitsController,
 } from "../controllers/experienceController.js";
 
+import {
+  protect,
+} from "../../auth/middleware/authMiddleware.js";
+
+import adminMiddleware from "../../admin/middleware/adminMiddleware.js";
+
 const router = express.Router();
 
 router.post(
@@ -31,28 +37,12 @@ router.get(
 );
 
 /*
-IMPORTANT:
-
-Your admin media-limits route MUST use the same
-protect + adminMiddleware that you already use
-for the other admin routes.
-
-Example:
-
+ * Admin-only media settings.
+ */
 router.put(
   "/admin/media-limits",
   protect,
   adminMiddleware,
-  updateMediaLimitsController,
-);
-
-For now this route is written below.
-Add your existing protect/adminMiddleware before
-updateMediaLimitsController.
-*/
-
-router.put(
-  "/admin/media-limits",
   updateMediaLimitsController,
 );
 
@@ -66,8 +56,18 @@ router.put(
   updatePersonalController,
 );
 
+/*
+ * IMPORTANT:
+ * The public URL slug can now only be changed by an admin.
+ *
+ * The route still uses the Experience manage token to identify
+ * the Experience, but protect + adminMiddleware prevent customers
+ * or anyone holding only the token from changing the slug.
+ */
 router.put(
   "/manage/:token/slug",
+  protect,
+  adminMiddleware,
   updateSlugController,
 );
 

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
+import api from "../../../lib/axios";
+
 import {
   getManufacturingOrderById,
   assignSmartUnit,
@@ -112,6 +114,41 @@ const getProductImage = (product) => {
   );
 };
 
+const getFrontendOrigin = () => {
+  if (
+    typeof window !== "undefined" &&
+    window.location?.origin
+  ) {
+    return window.location.origin.replace(/\/+$/, "");
+  }
+
+  return String(
+    import.meta.env.VITE_FRONTEND_URL ||
+      "https://jevorya.com",
+  ).replace(/\/+$/, "");
+};
+
+const FRONTEND_ORIGIN =
+  getFrontendOrigin();
+
+/*
+ * WhatsApp needs the Egyptian number in
+ * international format without + or spaces.
+ * 01223358023 -> 201223358023
+ */
+const WHATSAPP_NUMBER =
+  "201223358023";
+
+const formatSlugInput = (value) => {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9\u0600-\u06FF-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+};
+
 const getManageExperienceUrl = (
   experience,
 ) => {
@@ -119,7 +156,7 @@ const getManageExperienceUrl = (
     return "";
   }
 
-  return `/experience/manage/${encodeURIComponent(
+  return `${FRONTEND_ORIGIN}/experience/manage/${encodeURIComponent(
     experience.manageToken,
   )}`;
 };
@@ -134,10 +171,32 @@ const getPublicExperienceUrl = (
     return "";
   }
 
-  return `/experience/public/${encodeURIComponent(
+  return `${FRONTEND_ORIGIN}/experience/public/${encodeURIComponent(
     experience.serialNumber,
   )}/${encodeURIComponent(
     experience.slug,
+  )}`;
+};
+
+const getWhatsAppShareUrl = (
+  publicUrl,
+  requestedName = "",
+) => {
+  if (!publicUrl) {
+    return "";
+  }
+
+  const lines = [
+    "JEVORYA",
+    requestedName
+      ? `Name: ${requestedName}`
+      : "",
+    "Your smart jewelry experience is ready:",
+    publicUrl,
+  ].filter(Boolean);
+
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+    lines.join("\n"),
   )}`;
 };
 
@@ -169,6 +228,11 @@ const AdminManufacturingOrderDetailsPage =
     const [
       manufacturingOrder,
       setManufacturingOrder,
+    ] = useState(null);
+
+    const [
+      customerOrder,
+      setCustomerOrder,
     ] = useState(null);
 
     const [
@@ -235,6 +299,10 @@ const AdminManufacturingOrderDetailsPage =
 
           productionNotes:
             unit.notes || "",
+
+          experienceSlug:
+            unit.experience?.slug ||
+            "",
         };
       }
 
@@ -267,6 +335,29 @@ const AdminManufacturingOrderDetailsPage =
         );
 
         syncForms(data);
+
+        const orderId =
+          data?.order?._id ||
+          data?.order ||
+          null;
+
+        if (orderId) {
+          const orderResponse =
+            await api.get(
+              `/orders/admin/${orderId}`,
+            );
+
+          const fullOrder =
+            orderResponse?.data?.data ??
+            orderResponse?.data ??
+            null;
+
+          setCustomerOrder(
+            fullOrder,
+          );
+        } else {
+          setCustomerOrder(null);
+        }
       } catch (error) {
         console.error(
           "LOAD MANUFACTURING ORDER ERROR:",
@@ -557,6 +648,111 @@ const AdminManufacturingOrderDetailsPage =
         );
       };
 
+    const handleUseCustomerName = (
+      unitId,
+    ) => {
+      const requestedName =
+        customerOrder?.manufacturingName ||
+        "";
+
+      const slug =
+        formatSlugInput(
+          requestedName,
+        );
+
+      if (!slug) {
+        setError(
+          "The customer manufacturing name is missing or cannot be used as a URL name.",
+        );
+
+        return;
+      }
+
+      setError("");
+
+      updateUnitForm(
+        unitId,
+        "experienceSlug",
+        slug,
+      );
+    };
+
+    const handleSaveExperienceSlug =
+      async (unit) => {
+        const experience =
+          unit?.experience ||
+          null;
+
+        if (
+          !experience?.manageToken
+        ) {
+          setError(
+            "Experience management token is missing.",
+          );
+
+          return;
+        }
+
+        const form =
+          unitForms[
+            unit._id
+          ] || {};
+
+        const slug =
+          formatSlugInput(
+            form.experienceSlug,
+          );
+
+        if (!slug) {
+          setError(
+            "Please enter a valid public URL name.",
+          );
+
+          return;
+        }
+
+        await runAction(
+          `slug-${unit._id}`,
+          async () => {
+            await api.put(
+              `/experience/manage/${encodeURIComponent(
+                experience.manageToken,
+              )}/slug`,
+              {
+                slug,
+              },
+            );
+
+            return getManufacturingOrderById(
+              id,
+            );
+          },
+        );
+      };
+
+    const handleCopyPublicLink =
+      async (publicUrl) => {
+        if (!publicUrl) {
+          return;
+        }
+
+        try {
+          await navigator.clipboard.writeText(
+            publicUrl,
+          );
+        } catch (error) {
+          console.error(
+            "COPY PUBLIC LINK ERROR:",
+            error,
+          );
+
+          window.prompt(
+            "Copy this public link:",
+            publicUrl,
+          );
+        }
+      };
+
     const handleStartProduction =
       async (unit) => {
         await runAction(
@@ -839,6 +1035,20 @@ const AdminManufacturingOrderDetailsPage =
               const publicExperienceUrl =
                 getPublicExperienceUrl(
                   experience,
+                );
+
+              const requestedName =
+                customerOrder?.manufacturingName ||
+                "";
+
+              const manufacturingNotes =
+                customerOrder?.manufacturingNotes ||
+                "";
+
+              const whatsappShareUrl =
+                getWhatsAppShareUrl(
+                  publicExperienceUrl,
+                  requestedName,
                 );
 
               const selectedInstances =
@@ -1269,6 +1479,30 @@ const AdminManufacturingOrderDetailsPage =
                           </span>
                         </div>
 
+                        <div className="mb-5 grid gap-4 md:grid-cols-2">
+                          <div className="rounded-[16px] border border-champagne-gold/25 bg-soft-white p-4">
+                            <p className="text-[7px] font-semibold uppercase tracking-[0.18em] text-antique-gold">
+                              Customer Requested Name
+                            </p>
+
+                            <p className="mt-2 font-serif text-[1.15rem] text-midnight-navy">
+                              {requestedName ||
+                                "Not provided"}
+                            </p>
+                          </div>
+
+                          <div className="rounded-[16px] border border-light-champagne bg-soft-white p-4">
+                            <p className="text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
+                              Customer Notes
+                            </p>
+
+                            <p className="mt-2 whitespace-pre-wrap text-[10px] leading-5 text-slate-gray">
+                              {manufacturingNotes ||
+                                "No manufacturing notes"}
+                            </p>
+                          </div>
+                        </div>
+
                         {experience ? (
                           <div>
                             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -1280,7 +1514,7 @@ const AdminManufacturingOrderDetailsPage =
                               />
 
                               <InfoRow
-                                label="Slug"
+                                label="Current Slug"
                                 value={
                                   experience.slug
                                 }
@@ -1301,39 +1535,158 @@ const AdminManufacturingOrderDetailsPage =
                               />
                             </div>
 
+                            <div className="mt-5 rounded-[18px] border border-champagne-gold/25 bg-soft-white p-5">
+                              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                  <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-antique-gold">
+                                    Admin Public URL Name
+                                  </p>
+
+                                  <p className="mt-1 text-[9px] leading-5 text-steel-gray">
+                                    Only the admin can change this URL name. You can use the name the customer entered at checkout or type another one.
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="mt-4 flex flex-col gap-3 xl:flex-row">
+                                <input
+                                  type="text"
+                                  value={
+                                    form.experienceSlug ||
+                                    ""
+                                  }
+                                  onChange={(
+                                    event,
+                                  ) =>
+                                    updateUnitForm(
+                                      unit._id,
+                                      "experienceSlug",
+                                      event.target.value,
+                                    )
+                                  }
+                                  placeholder="e.g. mariam"
+                                  className="min-h-[44px] flex-1 rounded-[13px] border border-light-champagne bg-warm-ivory px-4 text-[11px] text-midnight-navy outline-none focus:border-classic-gold"
+                                />
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleUseCustomerName(
+                                      unit._id,
+                                    )
+                                  }
+                                  disabled={
+                                    !requestedName
+                                  }
+                                  className="min-h-[44px] rounded-[13px] border border-champagne-gold/35 bg-soft-cream px-5 text-[8px] font-semibold uppercase tracking-[0.08em] text-antique-gold transition hover:border-classic-gold disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                  Use Customer Name
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleSaveExperienceSlug(
+                                      unit,
+                                    )
+                                  }
+                                  disabled={
+                                    workingKey ===
+                                    `slug-${unit._id}`
+                                  }
+                                  className="min-h-[44px] rounded-[13px] bg-midnight-navy px-5 text-[8px] font-semibold uppercase tracking-[0.08em] text-soft-white transition hover:bg-rich-navy disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                  {workingKey ===
+                                  `slug-${unit._id}`
+                                    ? "Saving..."
+                                    : "Save URL"}
+                                </button>
+                              </div>
+                            </div>
+
+                            {publicExperienceUrl && (
+                              <div className="mt-5 rounded-[18px] border border-classic-gold/25 bg-midnight-navy p-5 text-soft-white">
+                                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-[7px] font-semibold uppercase tracking-[0.2em] text-champagne-gold">
+                                      Full Public Experience Link
+                                    </p>
+
+                                    <a
+                                      href={
+                                        publicExperienceUrl
+                                      }
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="mt-2 block break-all font-mono text-[10px] leading-5 text-soft-white underline decoration-champagne-gold/40 underline-offset-4 transition hover:text-champagne-gold"
+                                    >
+                                      {publicExperienceUrl}
+                                    </a>
+                                  </div>
+
+                                  <div className="flex shrink-0 flex-wrap gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleCopyPublicLink(
+                                          publicExperienceUrl,
+                                        )
+                                      }
+                                      className="inline-flex min-h-[40px] items-center justify-center rounded-full border border-soft-white/15 bg-soft-white/[0.06] px-4 text-[8px] font-semibold uppercase tracking-[0.08em] text-soft-white transition hover:border-champagne-gold/50 hover:text-champagne-gold"
+                                    >
+                                      Copy Link
+                                    </button>
+
+                                    {whatsappShareUrl && (
+                                      <a
+                                        href={
+                                          whatsappShareUrl
+                                        }
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex min-h-[40px] items-center justify-center rounded-full bg-[#25D366] px-4 text-[8px] font-semibold uppercase tracking-[0.08em] text-white transition hover:opacity-90"
+                                      >
+                                        Send WhatsApp
+                                      </a>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
                             <div className="mt-5 flex flex-wrap gap-3">
                               {manageExperienceUrl && (
-                                <Link
-                                  to={
+                                <a
+                                  href={
                                     manageExperienceUrl
                                   }
+                                  target="_blank"
+                                  rel="noopener noreferrer"
                                   className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-full bg-midnight-navy px-5 text-[8px] font-semibold uppercase tracking-[0.1em] text-soft-white transition hover:bg-rich-navy"
                                 >
-                                  Manage
-                                  Experience
+                                  Manage Experience
 
                                   <span className="text-champagne-gold">
                                     →
                                   </span>
-                                </Link>
+                                </a>
                               )}
 
                               {publicExperienceUrl && (
-                                <Link
-                                  to={
+                                <a
+                                  href={
                                     publicExperienceUrl
                                   }
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-full border border-champagne-gold/40 bg-soft-white px-5 text-[8px] font-semibold uppercase tracking-[0.1em] text-antique-gold transition hover:border-classic-gold"
                                 >
-                                  Public
-                                  Experience
+                                  Open Public Experience
 
                                   <span>
                                     ↗
                                   </span>
-                                </Link>
+                                </a>
                               )}
                             </div>
                           </div>
@@ -1358,9 +1711,7 @@ const AdminManufacturingOrderDetailsPage =
                           </button>
                         ) : (
                           <p className="text-[11px] text-steel-gray">
-                            Assign a
-                            Smart Unit
-                            first.
+                            Assign a Smart Unit first.
                           </p>
                         )}
                       </div>

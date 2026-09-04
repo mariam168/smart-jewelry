@@ -1,24 +1,19 @@
-import { useContext } from "react";
-
+import { useContext, useState } from "react";
 import { Link } from "react-router-dom";
+import { FaTrashCan } from "react-icons/fa6";
 
 import { CartContext } from "../../context/CartContext";
 
 const getBackendOrigin = () => {
-  const explicitBackend =
-    import.meta.env.VITE_BACKEND_URL;
+  const explicitBackend = import.meta.env.VITE_BACKEND_URL;
 
   if (explicitBackend) {
     return String(explicitBackend).replace(/\/+$/, "");
   }
 
-  const apiUrl =
-    import.meta.env.VITE_API_URL;
+  const apiUrl = import.meta.env.VITE_API_URL;
 
-  if (
-    apiUrl &&
-    /^https?:\/\//i.test(apiUrl)
-  ) {
+  if (apiUrl && /^https?:\/\//i.test(apiUrl)) {
     return String(apiUrl)
       .replace(/\/api\/?$/i, "")
       .replace(/\/+$/, "");
@@ -38,9 +33,7 @@ const getBackendOrigin = () => {
 const API_URL = getBackendOrigin();
 
 const getFilePath = (value) => {
-  if (!value) {
-    return "";
-  }
+  if (!value) return "";
 
   if (typeof value === "string") {
     return value.trim();
@@ -82,8 +75,7 @@ const getImageUrl = (value) => {
   }
 
   if (
-    image.startsWith("http://") ||
-    image.startsWith("https://") ||
+    /^https?:\/\//i.test(image) ||
     image.startsWith("blob:") ||
     image.startsWith("data:")
   ) {
@@ -114,53 +106,27 @@ const getImageUrl = (value) => {
 };
 
 const getCartItemImage = (item) => {
-  const product =
-    item?.product || {};
-
-  const variant =
-    item?.variant || {};
-
-  const productSnapshot =
-    item?.productSnapshot || {};
-
-  const variantSnapshot =
-    item?.variantSnapshot || {};
+  const product = item?.product || {};
+  const variant = item?.variant || {};
 
   const candidates = [
     item?.image,
     item?.imageUrl,
-    item?.productImage,
-    item?.productImageUrl,
     item?.primaryImage,
 
     variant?.image,
     variant?.imageUrl,
     variant?.primaryImage,
     variant?.images?.[0],
-    variant?.images,
 
     product?.primaryImage,
     product?.image,
     product?.imageUrl,
     product?.images?.[0],
-    product?.images,
-
-    variantSnapshot?.image,
-    variantSnapshot?.imageUrl,
-    variantSnapshot?.primaryImage,
-    variantSnapshot?.images?.[0],
-    variantSnapshot?.images,
-
-    productSnapshot?.primaryImage,
-    productSnapshot?.image,
-    productSnapshot?.imageUrl,
-    productSnapshot?.images?.[0],
-    productSnapshot?.images,
   ];
 
   for (const candidate of candidates) {
-    const path =
-      getFilePath(candidate);
+    const path = getFilePath(candidate);
 
     if (path) {
       return path;
@@ -171,11 +137,8 @@ const getCartItemImage = (item) => {
 };
 
 const getCartItemPricing = (item) => {
-  const product =
-    item?.product || null;
-
-  const variant =
-    item?.variant || null;
+  const product = item?.product || null;
+  const variant = item?.variant || null;
 
   const productTechnology =
     item?.productTechnology || null;
@@ -185,32 +148,23 @@ const getCartItemPricing = (item) => {
     item?.technologyModel ||
     null;
 
-  const productPrice =
-    Number(
-      product?.price || 0,
-    );
+  const productPrice = Number(product?.price || 0);
 
-  const productComparePrice =
-    Number(
-      product?.comparePrice || 0,
-    );
+  const productComparePrice = Number(
+    product?.comparePrice || 0,
+  );
 
-  const variantPrice =
-    Number(
-      variant?.price || 0,
-    );
+  const variantPrice = Number(variant?.price || 0);
 
-  const variantComparePrice =
-    Number(
-      variant?.compareAtPrice || 0,
-    );
+  const variantComparePrice = Number(
+    variant?.compareAtPrice || 0,
+  );
 
-  const technologyPrice =
-    Number(
-      productTechnology?.extraPrice ??
-        technologyModel?.extraPrice ??
-        0,
-    );
+  const technologyPrice = Number(
+    productTechnology?.extraPrice ??
+      technologyModel?.extraPrice ??
+      0,
+  );
 
   const basePrice =
     variantPrice > 0
@@ -229,82 +183,53 @@ const getCartItemPricing = (item) => {
     basePrice > 0 &&
     baseComparePrice > basePrice;
 
-  const itemUnitPrice =
-    basePrice +
-    technologyPrice;
+  const unitPrice =
+    basePrice + technologyPrice;
 
   const compareUnitPrice =
     hasDiscount
-      ? baseComparePrice +
-        technologyPrice
+      ? baseComparePrice + technologyPrice
       : 0;
 
-  const unitSaving =
+  const quantity = Number(item?.quantity || 1);
+
+  const itemTotal = unitPrice * quantity;
+
+  const originalItemTotal =
     hasDiscount
-      ? compareUnitPrice -
-        itemUnitPrice
-      : 0;
+      ? compareUnitPrice * quantity
+      : itemTotal;
+
+  const itemSaving =
+    originalItemTotal - itemTotal;
 
   const discountPercentage =
-    hasDiscount &&
-    compareUnitPrice > 0
+    hasDiscount && compareUnitPrice > 0
       ? Math.round(
-          (unitSaving /
+          ((compareUnitPrice - unitPrice) /
             compareUnitPrice) *
             100,
         )
       : 0;
 
-  const itemQuantity =
-    Number(
-      item?.quantity || 1,
-    );
-
-  const itemTotal =
-    itemUnitPrice *
-    itemQuantity;
-
-  const originalItemTotal =
-    hasDiscount
-      ? compareUnitPrice *
-        itemQuantity
-      : itemTotal;
-
-  const itemSaving =
-    hasDiscount
-      ? originalItemTotal -
-        itemTotal
-      : 0;
-
   return {
     product,
-    variant,
     productTechnology,
     technologyModel,
 
-    productPrice,
-    productComparePrice,
-
-    variantPrice,
-    variantComparePrice,
-
     basePrice,
-    baseComparePrice,
-
     technologyPrice,
 
-    itemUnitPrice,
+    unitPrice,
     compareUnitPrice,
-
-    unitSaving,
-    itemSaving,
 
     hasDiscount,
     discountPercentage,
 
-    itemQuantity,
+    quantity,
     itemTotal,
     originalItemTotal,
+    itemSaving,
   };
 };
 
@@ -318,32 +243,39 @@ const CartDrawer = () => {
     removeFromCart,
   } = useContext(CartContext);
 
+  const [removingItemId, setRemovingItemId] =
+    useState(null);
+
+  const handleRemoveItem = async (itemId) => {
+    if (!itemId || removingItemId) {
+      return;
+    }
+
+    try {
+      setRemovingItemId(itemId);
+
+      await removeFromCart(itemId);
+    } catch (error) {
+      console.error(
+        "Remove Cart Item Error:",
+        error,
+      );
+    } finally {
+      setRemovingItemId(null);
+    }
+  };
+
   if (!isCartOpen) {
     return null;
   }
 
-  const totalSavings =
-    cartItems.reduce(
-      (total, item) => {
-        const pricing =
-          getCartItemPricing(
-            item,
-          );
+  const totalSavings = cartItems.reduce(
+    (total, item) =>
+      total + getCartItemPricing(item).itemSaving,
+    0,
+  );
 
-        return (
-          total +
-          pricing.itemSaving
-        );
-      },
-      0,
-    );
-
-  const currentCartTotal =
-    Number(cartTotal || 0);
-
-  const originalCartTotal =
-    currentCartTotal +
-    totalSavings;
+  const currentCartTotal = Number(cartTotal || 0);
 
   return (
     <div className="fixed inset-0 z-[100]">
@@ -355,38 +287,30 @@ const CartDrawer = () => {
       />
 
       <aside className="absolute right-0 top-0 flex h-full w-full max-w-[540px] flex-col overflow-hidden border-l border-light-champagne/20 bg-warm-ivory shadow-[-25px_0_70px_rgba(7,19,31,0.20)]">
-        <div className="relative overflow-hidden border-b border-champagne-gold/15 bg-midnight-navy px-6 py-6 text-soft-white sm:px-7 sm:py-7">
+        {/* HEADER */}
+        <header className="relative overflow-hidden bg-midnight-navy px-6 py-7 text-soft-white">
           <div className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-champagne-gold/10 blur-[70px]" />
 
-          <div className="pointer-events-none absolute -bottom-28 -left-24 h-56 w-56 rounded-full border border-champagne-gold/10" />
-
-          <div className="pointer-events-none absolute right-10 top-0 h-px w-24 bg-gradient-to-r from-transparent via-champagne-gold/50 to-transparent" />
-
-          <div className="relative flex items-center justify-between gap-5">
+          <div className="relative flex items-center justify-between">
             <div>
-              <div className="mb-2.5 flex items-center gap-3">
+              <div className="flex items-center gap-3">
                 <span className="h-px w-8 bg-classic-gold/70" />
 
                 <span className="text-[8px] font-semibold uppercase tracking-[0.32em] text-champagne-gold">
                   Your Selection
                 </span>
-
-                <span className="text-[7px] text-classic-gold">
-                  ✦
-                </span>
               </div>
 
-              <h2 className="font-serif text-[1.8rem] font-normal leading-none tracking-[-0.025em] text-soft-white">
+              <h2 className="mt-3 font-serif text-[1.9rem]">
                 Your Cart
               </h2>
 
               {cartItems.length > 0 && (
-                <p className="mt-2 text-[10px] tracking-[0.03em] text-premium-silver/65">
+                <p className="mt-2 text-[10px] text-premium-silver/60">
                   {cartItems.length}{" "}
                   {cartItems.length === 1
                     ? "piece"
-                    : "pieces"}{" "}
-                  selected
+                    : "pieces"}
                 </p>
               )}
             </div>
@@ -394,409 +318,164 @@ const CartDrawer = () => {
             <button
               type="button"
               onClick={closeCart}
-              className="group flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-soft-white/15 bg-soft-white/[0.05] text-[22px] font-light text-premium-silver transition-all duration-300 hover:border-champagne-gold/50 hover:bg-soft-white/10 hover:text-champagne-gold"
-              aria-label="Close cart"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-soft-white/15 bg-soft-white/[0.05] text-[22px] text-premium-silver transition hover:border-champagne-gold/50 hover:text-champagne-gold"
             >
-              <span className="transition-transform duration-300 group-hover:rotate-90">
-                ×
-              </span>
+              ×
             </button>
           </div>
-        </div>
+        </header>
 
-        <div className="relative flex-1 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
-          <div className="pointer-events-none fixed right-0 top-32 h-72 w-72 rounded-full bg-light-champagne/45 blur-[100px]" />
-
+        {/* CONTENT */}
+        <div className="flex-1 overflow-y-auto px-5 py-6">
           {cartItems.length === 0 ? (
-            <div className="relative flex h-full flex-col items-center justify-center px-6 py-12 text-center">
-              <div className="relative">
-                <div className="pointer-events-none absolute inset-0 rounded-full bg-champagne-gold/15 blur-2xl" />
-
-                <div className="relative flex h-20 w-20 items-center justify-center rounded-full border border-champagne-gold/25 bg-midnight-navy text-xl text-champagne-gold shadow-[0_16px_35px_rgba(18,38,58,0.18)]">
-                  ✦
-                </div>
+            <div className="flex h-full flex-col items-center justify-center text-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-midnight-navy text-xl text-champagne-gold">
+                ✦
               </div>
 
-              <div className="mt-7 flex items-center gap-3">
-                <span className="h-px w-7 bg-classic-gold/45" />
-
-                <span className="text-[8px] font-semibold uppercase tracking-[0.32em] text-antique-gold">
-                  Empty
-                </span>
-
-                <span className="h-px w-7 bg-classic-gold/45" />
-              </div>
-
-              <h3 className="mt-4 font-serif text-[2rem] font-normal tracking-[-0.03em] text-midnight-navy">
+              <h3 className="mt-6 font-serif text-[2rem] text-midnight-navy">
                 Your cart is waiting.
               </h3>
-
-              <p className="mt-3 max-w-[300px] text-[12px] leading-7 text-slate-gray">
-                Discover something beautiful and find the piece that feels like
-                you.
-              </p>
 
               <Link
                 to="/shop"
                 onClick={closeCart}
-                className="group mt-7 inline-flex min-h-[50px] items-center justify-center gap-7 rounded-[13px] bg-midnight-navy px-7 text-[9px] font-semibold uppercase tracking-[0.12em] text-soft-white shadow-[0_12px_28px_rgba(18,38,58,0.16)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-rich-navy hover:shadow-[0_16px_34px_rgba(18,38,58,0.22)]"
+                className="mt-7 rounded-[13px] bg-midnight-navy px-7 py-4 text-[9px] font-semibold uppercase tracking-[0.15em] text-soft-white"
               >
                 Start Shopping
-
-                <span className="text-[15px] text-champagne-gold transition-transform duration-300 group-hover:translate-x-1">
-                  →
-                </span>
               </Link>
             </div>
           ) : (
-            <div className="relative space-y-4">
-              {cartItems.map(
-                (item) => {
-                  const pricing =
-                    getCartItemPricing(
-                      item,
-                    );
+            <div className="space-y-5">
+              {cartItems.map((item) => {
+                const pricing =
+                  getCartItemPricing(item);
 
-                  const {
-                    product,
-                    variant,
-                    productTechnology,
-                    technologyModel,
+                const {
+                  product,
+                  productTechnology,
+                  technologyModel,
 
-                    basePrice,
-                    baseComparePrice,
+                  basePrice,
+                  technologyPrice,
 
-                    technologyPrice,
+                  unitPrice,
+                  compareUnitPrice,
 
-                    itemUnitPrice,
-                    compareUnitPrice,
+                  hasDiscount,
+                  discountPercentage,
 
-                    itemSaving,
+                  quantity,
+                  itemTotal,
+                  originalItemTotal,
+                  itemSaving,
+                } = pricing;
 
-                    hasDiscount,
-                    discountPercentage,
+                const imageUrl =
+                  getImageUrl(
+                    getCartItemImage(item),
+                  );
 
-                    itemQuantity,
-                    itemTotal,
-                    originalItemTotal,
-                  } = pricing;
+                const technologyName =
+                  technologyModel?.modelName ||
+                  technologyModel?.name ||
+                  "";
 
-                  const technology =
-                    technologyModel?.technology ||
-                    null;
-
-                  const image =
-                    getCartItemImage(
-                      item,
-                    );
-
-                  const imageUrl =
-                    getImageUrl(
-                      image,
-                    );
-
-                  const variantName =
-                    variant?.name ||
-                    [
-                      variant?.color,
-                      variant?.size,
-                    ]
-                      .filter(Boolean)
-                      .join(" / ");
-
-                  const technologyName =
-                    technologyModel?.modelName ||
-                    technologyModel?.name ||
-                    "";
-
-                  const technologyType =
-                    technology?.name ||
-                    "";
-
-                  return (
-                    <div
-                      key={item._id}
-                      className="group relative overflow-hidden rounded-[22px] border border-light-champagne/90 bg-soft-white/90 p-4 shadow-[0_8px_25px_rgba(7,19,31,0.04)] transition-all duration-300 hover:border-champagne-gold/50 hover:shadow-[0_16px_38px_rgba(7,19,31,0.08)] sm:p-5"
-                    >
-                      <div className="pointer-events-none absolute -right-16 -top-16 h-36 w-36 rounded-full bg-soft-cream blur-[55px]" />
-
-                      {hasDiscount && (
-                        <div className="absolute right-4 top-4 z-20">
-                          <span className="inline-flex items-center rounded-full border border-champagne-gold/35 bg-midnight-navy px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.11em] text-champagne-gold shadow-[0_6px_18px_rgba(18,38,58,0.15)]">
-                            {discountPercentage}% OFF
-                          </span>
-                        </div>
-                      )}
-
-                      <div className="relative flex gap-4">
-                        <Link
-                          to={`/shop/products/${product?._id}`}
-                          onClick={closeCart}
-                          className="group/image relative h-[106px] w-[92px] shrink-0 overflow-hidden rounded-[14px] border border-light-champagne/80 bg-soft-cream sm:h-[116px] sm:w-[104px]"
-                        >
-                          {imageUrl ? (
-                            <img
-                              src={imageUrl}
-                              alt={
-                                product?.name ||
-                                "Product"
-                              }
-                              className="h-full w-full object-cover transition-transform duration-700 group-hover/image:scale-105"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-[8px] uppercase tracking-[0.15em] text-steel-gray">
-                              No Image
-                            </div>
-                          )}
-
-                          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-luxury-black/10 to-transparent" />
-                        </Link>
-
-                        <div className="flex min-w-0 flex-1 flex-col">
-                          <div className="flex justify-between gap-3">
-                            <div className="min-w-0 pr-16">
-                              <Link
-                                to={`/shop/products/${product?._id}`}
-                                onClick={closeCart}
-                                className="block truncate font-serif text-[1.15rem] font-normal leading-tight tracking-[-0.02em] text-midnight-navy transition-colors duration-300 hover:text-antique-gold"
-                              >
-                                {product?.name}
-                              </Link>
-
-                              {variantName && (
-                                <p className="mt-1.5 truncate text-[10px] text-slate-gray">
-                                  {variantName}
-                                </p>
-                              )}
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                removeFromCart(
-                                  item._id,
-                                )
-                              }
-                              className="shrink-0 self-start text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray transition-colors duration-300 hover:text-antique-gold"
-                            >
-                              Remove
-                            </button>
-                          </div>
-
-                          <div className="mt-auto pt-3">
-                            {hasDiscount && (
-                              <p className="mb-1 text-[9px] text-steel-gray line-through">
-                                {compareUnitPrice.toLocaleString(
-                                  "en-EG",
-                                )}{" "}
-                                EGP
-                              </p>
+                return (
+                  <article
+                    key={item._id}
+                    className="overflow-hidden rounded-[22px] border border-light-champagne/90 bg-soft-white shadow-[0_10px_30px_rgba(7,19,31,0.05)]"
+                  >
+                    <div className="p-4 sm:p-5">
+                      <div className="flex gap-4">
+                        {/* IMAGE */}
+                        <div className="relative">
+                          <Link
+                            to={`/shop/products/${product?._id}`}
+                            onClick={closeCart}
+                            className="block h-[110px] w-[100px] overflow-hidden rounded-[15px] bg-soft-cream"
+                          >
+                            {imageUrl ? (
+                              <img
+                                src={imageUrl}
+                                alt={
+                                  product?.name ||
+                                  "Product"
+                                }
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full items-center justify-center text-[8px] text-steel-gray">
+                                No Image
+                              </div>
                             )}
+                          </Link>
 
-                            <div className="flex flex-wrap items-center gap-2">
-                              <p className="font-serif text-[1.05rem] font-normal text-midnight-navy">
-                                {itemUnitPrice.toLocaleString(
-                                  "en-EG",
-                                )}{" "}
-                                <span className="font-sans text-[8px] font-semibold uppercase tracking-[0.1em] text-slate-gray">
-                                  EGP
-                                </span>
-                              </p>
-
-                              {hasDiscount && (
-                                <span className="rounded-full bg-soft-cream px-2.5 py-1 text-[7px] font-semibold uppercase tracking-[0.08em] text-antique-gold">
-                                  Save{" "}
-                                  {discountPercentage}%
-                                </span>
-                              )}
-                            </div>
-
-                            {technologyPrice > 0 && (
-                              <p className="mt-1 text-[8px] leading-4 text-steel-gray">
-                                {basePrice.toLocaleString(
-                                  "en-EG",
-                                )}{" "}
-                                EGP
-                                {" + "}
-                                {technologyPrice.toLocaleString(
-                                  "en-EG",
-                                )}{" "}
-                                EGP technology
-                              </p>
-                            )}
-
-                            {hasDiscount && (
-                              <p className="mt-1.5 text-[8px] font-semibold text-antique-gold">
-                                You save{" "}
-                                {(
-                                  compareUnitPrice -
-                                  itemUnitPrice
-                                ).toLocaleString(
-                                  "en-EG",
-                                )}{" "}
-                                EGP per unit
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {variant && (
-                        <div className="relative mt-4 rounded-[16px] border border-light-champagne/80 bg-warm-ivory/70 p-4">
-                          <div className="mb-3 flex items-center gap-2.5">
-                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-midnight-navy text-[7px] text-champagne-gold">
-                              ✦
+                          {hasDiscount && (
+                            <span className="absolute -bottom-2 left-2 rounded-full bg-midnight-navy px-2.5 py-1 text-[6px] font-semibold text-champagne-gold shadow">
+                              -{discountPercentage}%
                             </span>
+                          )}
+                        </div>
 
-                            <p className="text-[8px] font-semibold uppercase tracking-[0.2em] text-midnight-navy">
-                              Variant
-                            </p>
-                          </div>
+                        {/* INFO */}
+                        <div className="min-w-0 flex-1">
+                          <Link
+                            to={`/shop/products/${product?._id}`}
+                            onClick={closeCart}
+                            className="block truncate font-serif text-[1.2rem] text-midnight-navy"
+                          >
+                            {product?.name}
+                          </Link>
 
-                          <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
-                            {variant.color && (
-                              <p className="text-[10px] text-slate-gray">
-                                <span className="font-semibold text-midnight-navy">
-                                  Color:
-                                </span>{" "}
-                                {variant.color}
-                              </p>
-                            )}
-
-                            {variant.size && (
-                              <p className="text-[10px] text-slate-gray">
-                                <span className="font-semibold text-midnight-navy">
-                                  Size:
-                                </span>{" "}
-                                {variant.size}
-                              </p>
-                            )}
-
-                            {variant.material && (
-                              <p className="text-[10px] text-slate-gray">
-                                <span className="font-semibold text-midnight-navy">
-                                  Material:
-                                </span>{" "}
-                                {variant.material}
-                              </p>
-                            )}
-
-                            {variant.finish && (
-                              <p className="text-[10px] text-slate-gray">
-                                <span className="font-semibold text-midnight-navy">
-                                  Finish:
-                                </span>{" "}
-                                {variant.finish}
-                              </p>
-                            )}
-                          </div>
-
-                          {variant.sku && (
-                            <p className="mt-3 border-t border-light-champagne/80 pt-3 text-[8px] uppercase tracking-[0.08em] text-steel-gray">
-                              SKU: {variant.sku}
+                          {hasDiscount && (
+                            <p className="mt-3 text-[9px] text-steel-gray line-through">
+                              {compareUnitPrice.toLocaleString(
+                                "en-EG",
+                              )}{" "}
+                              EGP
                             </p>
                           )}
 
-                          <div className="mt-3 flex flex-wrap items-center gap-2">
-                            <p className="text-[10px] font-semibold text-antique-gold">
-                              Price:{" "}
+                          <p className="mt-1 font-serif text-[1.2rem] text-midnight-navy">
+                            {unitPrice.toLocaleString(
+                              "en-EG",
+                            )}{" "}
+                            EGP
+                          </p>
+
+                          {technologyPrice > 0 && (
+                            <p className="mt-1 text-[8px] text-steel-gray">
+                              Jewelry{" "}
                               {basePrice.toLocaleString(
                                 "en-EG",
                               )}{" "}
-                              EGP
-                            </p>
-
-                            {hasDiscount &&
-                              baseComparePrice >
-                                basePrice && (
-                                <p className="text-[9px] text-steel-gray line-through">
-                                  {baseComparePrice.toLocaleString(
-                                    "en-EG",
-                                  )}{" "}
-                                  EGP
-                                </p>
-                              )}
-                          </div>
-                        </div>
-                      )}
-
-                      {productTechnology && (
-                        <div className="relative mt-3 overflow-hidden rounded-[16px] border border-champagne-gold/25 bg-soft-cream/75 p-4">
-                          <div className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-champagne-gold/10 blur-[35px]" />
-
-                          <div className="relative mb-3 flex items-center gap-2.5">
-                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-midnight-navy text-[7px] text-champagne-gold">
-                              ✦
-                            </span>
-
-                            <p className="text-[8px] font-semibold uppercase tracking-[0.2em] text-midnight-navy">
-                              Technology
-                            </p>
-                          </div>
-
-                          {technologyType && (
-                            <p className="relative text-[10px] text-slate-gray">
-                              <span className="font-semibold text-midnight-navy">
-                                Type:
-                              </span>{" "}
-                              {technologyType}
-                            </p>
-                          )}
-
-                          {technologyName && (
-                            <p className="relative mt-1.5 text-[10px] text-slate-gray">
-                              <span className="font-semibold text-midnight-navy">
-                                Model:
-                              </span>{" "}
-                              {technologyName}
-                            </p>
-                          )}
-
-                          {technologyPrice > 0 ? (
-                            <p className="relative mt-2.5 text-[10px] font-semibold text-antique-gold">
-                              +{" "}
+                              + Technology{" "}
                               {technologyPrice.toLocaleString(
                                 "en-EG",
-                              )}{" "}
-                              EGP
-                            </p>
-                          ) : (
-                            <p className="relative mt-2.5 text-[10px] text-slate-gray">
-                              Included
+                              )}
                             </p>
                           )}
-
-                          <div className="relative mt-3 flex flex-wrap gap-1.5">
-                            {technologyModel?.requiresBattery && (
-                              <span className="rounded-full border border-champagne-gold/20 bg-champagne-gold/15 px-2.5 py-1 text-[7px] font-semibold uppercase tracking-[0.08em] text-antique-gold">
-                                Battery
-                              </span>
-                            )}
-
-                            {technologyModel?.requiresActivation && (
-                              <span className="rounded-full border border-light-champagne bg-soft-white/70 px-2.5 py-1 text-[7px] font-semibold uppercase tracking-[0.08em] text-slate-gray">
-                                Activation
-                              </span>
-                            )}
-
-                            {technologyModel?.requiresSubscription && (
-                              <span className="rounded-full border border-light-champagne bg-soft-white/70 px-2.5 py-1 text-[7px] font-semibold uppercase tracking-[0.08em] text-slate-gray">
-                                Subscription
-                              </span>
-                            )}
-                          </div>
                         </div>
-                      )}
+                      </div>
 
-                      {hasDiscount && (
-                        <div className="relative mt-3 flex items-center justify-between rounded-[13px] border border-champagne-gold/25 bg-soft-cream/70 px-4 py-3">
-                          <span className="text-[7px] font-semibold uppercase tracking-[0.14em] text-antique-gold">
-                            Discount
-                          </span>
+                      {/* TECHNOLOGY */}
+                      {productTechnology && (
+                        <div className="mt-4 flex items-center justify-between rounded-[14px] bg-midnight-navy px-4 py-3 text-soft-white">
+                          <div>
+                            <p className="text-[6px] font-semibold uppercase tracking-[0.2em] text-champagne-gold">
+                              Smart Technology
+                            </p>
 
-                          <span className="text-[9px] font-semibold text-antique-gold">
-                            Save{" "}
-                            {itemSaving.toLocaleString(
+                            <p className="mt-1 text-[10px]">
+                              {technologyName ||
+                                "Included"}
+                            </p>
+                          </div>
+
+                          <span className="text-[9px] font-semibold text-champagne-gold">
+                            +
+                            {technologyPrice.toLocaleString(
                               "en-EG",
                             )}{" "}
                             EGP
@@ -804,60 +483,25 @@ const CartDrawer = () => {
                         </div>
                       )}
 
-                      <div className="relative mt-4 flex items-end justify-between border-t border-light-champagne/80 pt-4">
-                        <div>
-                          {itemQuantity > 1 && (
-                            <p className="mb-1 text-[8px] text-steel-gray">
-                              {itemQuantity} ×{" "}
-                              {itemUnitPrice.toLocaleString(
-                                "en-EG",
-                              )}{" "}
-                              EGP
-                            </p>
-                          )}
-
-                          <p className="text-[7px] font-semibold uppercase tracking-[0.2em] text-steel-gray">
-                            Total
-                          </p>
-
-                          {hasDiscount && (
-                            <p className="mt-1 text-[9px] text-steel-gray line-through">
-                              {originalItemTotal.toLocaleString(
-                                "en-EG",
-                              )}{" "}
-                              EGP
-                            </p>
-                          )}
-
-                          <p className="mt-1 font-serif text-[1.25rem] font-normal text-midnight-navy">
-                            {itemTotal.toLocaleString(
-                              "en-EG",
-                            )}{" "}
-                            <span className="font-sans text-[8px] font-semibold uppercase tracking-[0.08em] text-slate-gray">
-                              EGP
-                            </span>
-                          </p>
-                        </div>
-
-                        <div className="flex items-center overflow-hidden rounded-full border border-light-champagne bg-soft-white shadow-[0_5px_16px_rgba(7,19,31,0.035)]">
+                      {/* QUANTITY + TOTAL */}
+                      <div className="mt-4 flex items-end justify-between border-t border-light-champagne pt-4">
+                        <div className="flex overflow-hidden rounded-full border border-light-champagne">
                           <button
                             type="button"
-                            disabled={
-                              itemQuantity <= 1
-                            }
+                            disabled={quantity <= 1}
                             onClick={() =>
                               updateQuantity(
                                 item._id,
-                                itemQuantity - 1,
+                                quantity - 1,
                               )
                             }
-                            className="flex h-9 w-9 items-center justify-center text-[15px] text-midnight-navy transition-all duration-300 hover:bg-midnight-navy hover:text-soft-white disabled:cursor-not-allowed disabled:opacity-30"
+                            className="h-9 w-9 transition hover:bg-midnight-navy hover:text-soft-white disabled:opacity-30"
                           >
                             −
                           </button>
 
-                          <span className="flex h-9 min-w-10 items-center justify-center border-x border-light-champagne px-2 text-[10px] font-semibold text-midnight-navy">
-                            {itemQuantity}
+                          <span className="flex h-9 min-w-10 items-center justify-center border-x border-light-champagne text-[10px] font-semibold">
+                            {quantity}
                           </span>
 
                           <button
@@ -865,121 +509,112 @@ const CartDrawer = () => {
                             onClick={() =>
                               updateQuantity(
                                 item._id,
-                                itemQuantity + 1,
+                                quantity + 1,
                               )
                             }
-                            className="flex h-9 w-9 items-center justify-center text-[15px] text-midnight-navy transition-all duration-300 hover:bg-midnight-navy hover:text-soft-white"
+                            className="h-9 w-9 transition hover:bg-midnight-navy hover:text-soft-white"
                           >
                             +
                           </button>
                         </div>
+
+                        <div className="text-right">
+                          {hasDiscount && (
+                            <p className="text-[8px] text-steel-gray line-through">
+                              {originalItemTotal.toLocaleString(
+                                "en-EG",
+                              )}{" "}
+                              EGP
+                            </p>
+                          )}
+
+                          <p className="font-serif text-[1.3rem] text-midnight-navy">
+                            {itemTotal.toLocaleString(
+                              "en-EG",
+                            )}{" "}
+                            EGP
+                          </p>
+                        </div>
                       </div>
+
+                      {hasDiscount && (
+                        <div className="mt-3 flex justify-between rounded-[12px] bg-soft-cream px-4 py-2.5 text-[8px] text-antique-gold">
+                          <span>You Save</span>
+
+                          <strong>
+                            {itemSaving.toLocaleString(
+                              "en-EG",
+                            )}{" "}
+                            EGP
+                          </strong>
+                        </div>
+                      )}
                     </div>
-                  );
-                },
-              )}
+
+                    {/* REMOVE — ALWAYS VISIBLE */}
+                    <button
+                      type="button"
+                      disabled={
+                        removingItemId === item._id
+                      }
+                      onClick={() =>
+                        handleRemoveItem(item._id)
+                      }
+                      className="flex min-h-[44px] w-full items-center justify-center gap-2 border-t border-light-champagne bg-soft-cream/45 text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray transition-all hover:bg-midnight-navy hover:text-soft-white disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <FaTrashCan className="text-[9px]" />
+
+                      {removingItemId === item._id
+                        ? "Removing..."
+                        : "Remove From Cart"}
+                    </button>
+                  </article>
+                );
+              })}
             </div>
           )}
         </div>
 
+        {/* SUMMARY */}
         {cartItems.length > 0 && (
-          <div className="relative overflow-hidden border-t border-champagne-gold/15 bg-midnight-navy px-6 py-6 text-soft-white shadow-[0_-14px_35px_rgba(7,19,31,0.08)] sm:px-7">
-            <div className="pointer-events-none absolute -bottom-24 -right-20 h-48 w-48 rounded-full bg-champagne-gold/10 blur-[65px]" />
+          <footer className="bg-midnight-navy px-6 py-6 text-soft-white">
+            {totalSavings > 0 && (
+              <div className="mb-3 flex justify-between">
+                <span className="text-[8px] text-premium-silver/50">
+                  Savings
+                </span>
 
-            <div className="pointer-events-none absolute -left-20 -top-20 h-40 w-40 rounded-full border border-champagne-gold/10" />
-
-            <div className="relative">
-              {totalSavings > 0 && (
-                <div className="mb-5 space-y-3 rounded-[16px] border border-soft-white/10 bg-soft-white/[0.04] p-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <span className="text-[8px] uppercase tracking-[0.13em] text-premium-silver/50">
-                      Original Value
-                    </span>
-
-                    <span className="text-[10px] text-premium-silver/50 line-through">
-                      {originalCartTotal.toLocaleString(
-                        "en-EG",
-                      )}{" "}
-                      EGP
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between gap-4">
-                    <span className="text-[8px] font-semibold uppercase tracking-[0.13em] text-champagne-gold">
-                      Discount
-                    </span>
-
-                    <span className="text-[11px] font-semibold text-champagne-gold">
-                      -
-                      {totalSavings.toLocaleString(
-                        "en-EG",
-                      )}{" "}
-                      EGP
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              <div className="mb-5 flex items-end justify-between gap-5">
-                <div>
-                  <p className="text-[7px] font-semibold uppercase tracking-[0.3em] text-premium-silver/50">
-                    Order Summary
-                  </p>
-
-                  <span className="mt-1.5 block font-serif text-[1.25rem] font-normal text-soft-white">
-                    Subtotal
-                  </span>
-                </div>
-
-                <span className="text-right font-serif text-[1.65rem] font-normal text-champagne-gold">
-                  {currentCartTotal.toLocaleString(
+                <span className="text-[10px] font-semibold text-champagne-gold">
+                  -
+                  {totalSavings.toLocaleString(
                     "en-EG",
                   )}{" "}
-                  <span className="font-sans text-[8px] font-semibold uppercase tracking-[0.1em]">
-                    EGP
-                  </span>
+                  EGP
                 </span>
               </div>
+            )}
 
-              {totalSavings > 0 && (
-                <div className="mb-5 rounded-[13px] border border-champagne-gold/20 bg-champagne-gold/[0.06] px-4 py-3 text-center">
-                  <p className="text-[8px] font-semibold uppercase tracking-[0.12em] text-champagne-gold">
-                    You saved{" "}
-                    {totalSavings.toLocaleString(
-                      "en-EG",
-                    )}{" "}
-                    EGP
-                  </p>
-                </div>
-              )}
+            <div className="flex items-end justify-between">
+              <span className="font-serif text-[1.2rem]">
+                Subtotal
+              </span>
 
-              <div className="mb-5 flex items-center gap-3">
-                <span className="h-px flex-1 bg-gradient-to-r from-transparent to-champagne-gold/20" />
-
-                <span className="text-[7px] text-classic-gold">
-                  ✦
-                </span>
-
-                <span className="h-px flex-1 bg-gradient-to-l from-transparent to-champagne-gold/20" />
-              </div>
-
-              <Link
-                to="/cart"
-                onClick={closeCart}
-                className="group flex min-h-[52px] w-full items-center justify-center gap-8 rounded-[13px] bg-soft-white px-6 text-[9px] font-semibold uppercase tracking-[0.12em] text-midnight-navy shadow-[0_12px_30px_rgba(0,0,0,0.16)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-warm-ivory hover:shadow-[0_16px_35px_rgba(0,0,0,0.22)]"
-              >
-                View Cart
-
-                <span className="text-[15px] text-classic-gold transition-transform duration-300 group-hover:translate-x-1">
-                  →
-                </span>
-              </Link>
-
-              <p className="mt-4 text-center text-[7px] font-semibold uppercase tracking-[0.28em] text-premium-silver/35">
-                Elegant · Personal · Smart
-              </p>
+              <span className="font-serif text-[1.7rem] text-champagne-gold">
+                {currentCartTotal.toLocaleString(
+                  "en-EG",
+                )}{" "}
+                EGP
+              </span>
             </div>
-          </div>
+
+            <Link
+              to="/cart"
+              onClick={closeCart}
+              className="mt-6 flex min-h-[52px] items-center justify-center rounded-[13px] bg-soft-white text-[9px] font-semibold uppercase tracking-[0.15em] text-midnight-navy"
+            >
+              View Cart →
+            </Link>
+          </footer>
         )}
       </aside>
     </div>

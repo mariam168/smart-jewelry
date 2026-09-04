@@ -6,6 +6,8 @@ import {
   useParams,
 } from "react-router-dom";
 
+import api from "../../../lib/axios";
+
 import {
   getProduct,
   updateProduct,
@@ -41,6 +43,76 @@ const sanitizeMoneyInput = (value) => {
   }
 
   return cleanValue;
+};
+
+const getBackendOrigin = () => {
+  const explicitBackend = import.meta.env.VITE_BACKEND_URL;
+
+  if (explicitBackend) {
+    return String(explicitBackend).replace(/\/+$/, "");
+  }
+
+  const apiUrl = import.meta.env.VITE_API_URL;
+
+  if (apiUrl && /^https?:\/\//i.test(apiUrl)) {
+    return String(apiUrl)
+      .replace(/\/api\/?$/i, "")
+      .replace(/\/+$/, "");
+  }
+
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname !== "localhost" &&
+    window.location.hostname !== "127.0.0.1"
+  ) {
+    return window.location.origin;
+  }
+
+  return "http://localhost:5000";
+};
+
+const BACKEND_URL = getBackendOrigin();
+
+const getImageUrl = (value) => {
+  if (!value) {
+    return "";
+  }
+
+  let image = String(value).trim();
+
+  if (!image) {
+    return "";
+  }
+
+  if (
+    /^https?:\/\//i.test(image) ||
+    image.startsWith("blob:") ||
+    image.startsWith("data:")
+  ) {
+    return image;
+  }
+
+  if (image.startsWith("//")) {
+    const protocol =
+      typeof window !== "undefined"
+        ? window.location.protocol
+        : "https:";
+
+    return `${protocol}${image}`;
+  }
+
+  if (image.startsWith("/api/uploads/")) {
+    image = image.replace(/^\/api/, "");
+  }
+
+  if (
+    image.startsWith("/assets/") ||
+    image.startsWith("/images/")
+  ) {
+    return image;
+  }
+
+  return `${BACKEND_URL}${image.startsWith("/") ? "" : "/"}${image}`;
 };
 
 const EditProductPage = () => {
@@ -79,6 +151,21 @@ const EditProductPage = () => {
   const [
     primaryImage,
     setPrimaryImage,
+  ] = useState("");
+
+  const [
+    primaryImageId,
+    setPrimaryImageId,
+  ] = useState("");
+
+  const [
+    deletingImageId,
+    setDeletingImageId,
+  ] = useState("");
+
+  const [
+    settingPrimaryImageId,
+    setSettingPrimaryImageId,
   ] = useState("");
 
   const [
@@ -134,6 +221,8 @@ const EditProductPage = () => {
       careInstructions: "",
 
       isCustomizable: false,
+
+      technologyRequired: false,
 
       status: "active",
     });
@@ -260,9 +349,14 @@ const EditProductPage = () => {
 
         const loadedImages =
           productImagesResponse?.data
+            ?.images ||
+          productImagesResponse?.data
             ?.productImages ||
+          productImagesResponse?.images ||
           productImagesResponse
             ?.productImages ||
+          productImagesResponse?.data?.data
+            ?.images ||
           (Array.isArray(
             productImagesResponse,
           )
@@ -270,34 +364,36 @@ const EditProductPage = () => {
             : []);
 
         const imagesData =
-          Array.isArray(
-            loadedImages,
-          )
+          Array.isArray(loadedImages)
             ? loadedImages
             : [];
 
-        setExistingImages(
-          imagesData,
-        );
+        setExistingImages(imagesData);
 
         const productPrimaryImage =
-          product.primaryImage ||
-          "";
+          product.primaryImage || "";
 
         const primaryFromImages =
           imagesData.find(
             (image) =>
-              image.isPrimary ===
-              true,
-          );
+              image.isPrimary === true,
+          ) ||
+          imagesData.find(
+            (image) =>
+              image.imageUrl ===
+              productPrimaryImage,
+          ) ||
+          imagesData[0] ||
+          null;
 
         setPrimaryImage(
-          productPrimaryImage ||
-            primaryFromImages
-              ?.imageUrl ||
-            imagesData[0]
-              ?.imageUrl ||
+          primaryFromImages?.imageUrl ||
+            productPrimaryImage ||
             "",
+        );
+
+        setPrimaryImageId(
+          primaryFromImages?._id || "",
         );
 
         let productTags = "";
@@ -395,6 +491,11 @@ const EditProductPage = () => {
           isCustomizable:
             Boolean(
               product.isCustomizable,
+            ),
+
+          technologyRequired:
+            Boolean(
+              product.technologyRequired,
             ),
 
           status:
@@ -786,11 +887,147 @@ const EditProductPage = () => {
     );
   };
 
+  const refreshExistingImages = async () => {
+    const response =
+      await getProductImages(id);
+
+    const loadedImages =
+      response?.data?.images ||
+      response?.data?.productImages ||
+      response?.images ||
+      response?.productImages ||
+      response?.data?.data?.images ||
+      (Array.isArray(response)
+        ? response
+        : []);
+
+    const imagesData =
+      Array.isArray(loadedImages)
+        ? loadedImages
+        : [];
+
+    setExistingImages(imagesData);
+
+    const primary =
+      imagesData.find(
+        (image) =>
+          image.isPrimary === true,
+      ) ||
+      imagesData[0] ||
+      null;
+
+    setPrimaryImage(
+      primary?.imageUrl || "",
+    );
+
+    setPrimaryImageId(
+      primary?._id || "",
+    );
+
+    return imagesData;
+  };
+
   const handleSelectExistingPrimary =
-    (imageUrl) => {
-      setPrimaryImage(
-        imageUrl,
-      );
+    async (image) => {
+      if (
+        !image?._id ||
+        settingPrimaryImageId
+      ) {
+        return;
+      }
+
+      try {
+        setSettingPrimaryImageId(
+          image._id,
+        );
+
+        setError("");
+
+        await api.put(
+          `/product-images/${image._id}/primary`,
+          {
+            productId: id,
+          },
+        );
+
+        setExistingImages(
+          (previous) =>
+            previous.map(
+              (currentImage) => ({
+                ...currentImage,
+
+                isPrimary:
+                  currentImage._id ===
+                  image._id,
+              }),
+            ),
+        );
+
+        setPrimaryImage(
+          image.imageUrl || "",
+        );
+
+        setPrimaryImageId(
+          image._id,
+        );
+      } catch (error) {
+        console.error(error);
+
+        setError(
+          error?.response?.data
+            ?.message ||
+            "Failed to set primary image.",
+        );
+      } finally {
+        setSettingPrimaryImageId(
+          "",
+        );
+      }
+    };
+
+  const handleDeleteExistingImage =
+    async (image) => {
+      if (
+        !image?._id ||
+        deletingImageId
+      ) {
+        return;
+      }
+
+      const confirmed =
+        window.confirm(
+          "Delete this product image?",
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+        setDeletingImageId(
+          image._id,
+        );
+
+        setError("");
+
+        await api.delete(
+          `/product-images/${image._id}`,
+        );
+
+        await refreshExistingImages();
+      } catch (error) {
+        console.error(error);
+
+        setError(
+          error?.response?.data
+            ?.message ||
+            "Failed to delete product image.",
+        );
+      } finally {
+        setDeletingImageId(
+          "",
+        );
+      }
     };
 
   const handleSubmit = async (
@@ -801,6 +1038,18 @@ const EditProductPage = () => {
     setError("");
 
     setSuccessMessage("");
+
+    if (
+      formData.technologyRequired &&
+      selectedTechnologyModels.length ===
+        0
+    ) {
+      setError(
+        "This product requires technology. Select at least one technology model.",
+      );
+
+      return;
+    }
 
     setIsSaving(true);
 
@@ -888,6 +1137,9 @@ const EditProductPage = () => {
           isCustomizable:
             formData.isCustomizable,
 
+          technologyRequired:
+            formData.technologyRequired,
+
           status:
             formData.status,
 
@@ -963,6 +1215,9 @@ const EditProductPage = () => {
       let uploadedPrimaryImage =
         primaryImage;
 
+      let uploadedPrimaryImageId =
+        primaryImageId;
+
       for (
         let i = 0;
         i < newImages.length;
@@ -980,28 +1235,27 @@ const EditProductPage = () => {
         );
 
         const upload =
-          await uploadImage(
-            form,
-          );
+          await uploadImage(form);
 
         const uploadedImage =
           upload?.image ||
-          upload?.data
-            ?.image ||
+          upload?.data?.image ||
+          upload?.data?.data?.image ||
           "";
 
         if (!uploadedImage) {
-          continue;
+          throw new Error(
+            "Image upload completed without returning an image path.",
+          );
         }
 
         const shouldBePrimary =
           !uploadedPrimaryImage &&
           i === 0;
 
-        await createProductImage(
-          {
-            product:
-              id,
+        const createdImageResponse =
+          await createProductImage({
+            product: id,
 
             imageUrl:
               uploadedImage,
@@ -1012,14 +1266,24 @@ const EditProductPage = () => {
             sortOrder:
               existingImages.length +
               i,
-          },
-        );
+          });
+
+        const createdImage =
+          createdImageResponse?.data
+            ?.image ||
+          createdImageResponse?.image ||
+          createdImageResponse?.data
+            ?.data?.image ||
+          null;
 
         if (
           shouldBePrimary
         ) {
           uploadedPrimaryImage =
             uploadedImage;
+
+          uploadedPrimaryImageId =
+            createdImage?._id || "";
         }
       }
 
@@ -1028,10 +1292,20 @@ const EditProductPage = () => {
       ) {
         await updateProduct(
           id,
-
           {
             primaryImage:
               uploadedPrimaryImage,
+          },
+        );
+      }
+
+      if (
+        uploadedPrimaryImageId
+      ) {
+        await api.put(
+          `/product-images/${uploadedPrimaryImageId}/primary`,
+          {
+            productId: id,
           },
         );
       }
@@ -1544,6 +1818,42 @@ const EditProductPage = () => {
                     className="h-4 w-4 accent-classic-gold"
                   />
                 </label>
+
+                <label
+                  className={`flex items-center justify-between rounded-[16px] border p-5 transition-all ${
+                    formData.technologyRequired
+                      ? "border-champagne-gold/60 bg-soft-cream"
+                      : "border-light-champagne bg-warm-ivory/60"
+                  }`}
+                >
+                  <div className="pr-5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-classic-gold">
+                        ✦
+                      </span>
+
+                      <p className="text-[10px] font-semibold text-midnight-navy">
+                        Technology Required for Order
+                      </p>
+                    </div>
+
+                    <p className="mt-1.5 max-w-xl text-[8px] leading-5 text-steel-gray">
+                      When enabled, this product is marked as a piece that must be ordered with a technology selection. We are storing this rule now so it can be enforced later in Product Details, Cart and Checkout.
+                    </p>
+                  </div>
+
+                  <input
+                    type="checkbox"
+                    name="technologyRequired"
+                    checked={
+                      formData.technologyRequired
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    className="h-5 w-5 shrink-0 accent-classic-gold"
+                  />
+                </label>
               </div>
             </section>
 
@@ -1827,15 +2137,24 @@ const EditProductPage = () => {
                 <h2 className="mt-3 font-serif text-[1.55rem]">
                   Product Images
                 </h2>
+
+                <p className="mt-2 max-w-2xl text-[9px] leading-5 text-slate-gray">
+                  Existing images are loaded from ProductImage records. You can make any current image primary, delete it, or upload additional images.
+                </p>
               </div>
 
               <div className="p-7 sm:p-9">
-                {existingImages.length >
-                  0 && (
+                {existingImages.length > 0 ? (
                   <div>
-                    <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.25em] text-steel-gray">
-                      Current Images
-                    </p>
+                    <div className="mb-4 flex items-center justify-between gap-4">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-steel-gray">
+                        Current Images
+                      </p>
+
+                      <span className="rounded-full border border-light-champagne bg-soft-cream px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.13em] text-antique-gold">
+                        {existingImages.length} image{existingImages.length === 1 ? "" : "s"}
+                      </span>
+                    </div>
 
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                       {existingImages.map(
@@ -1850,56 +2169,124 @@ const EditProductPage = () => {
                             "";
 
                           const isPrimary =
-                            primaryImage ===
-                            imageUrl;
+                            image.isPrimary ===
+                              true ||
+                            primaryImageId ===
+                              image._id ||
+                            (
+                              !primaryImageId &&
+                              primaryImage ===
+                                imageUrl
+                            );
+
+                          const displayUrl =
+                            getImageUrl(
+                              imageUrl,
+                            );
+
+                          const isDeleting =
+                            deletingImageId ===
+                            image._id;
+
+                          const isSettingPrimary =
+                            settingPrimaryImageId ===
+                            image._id;
 
                           return (
-                            <button
-                              type="button"
+                            <div
                               key={
                                 image._id ||
                                 index
                               }
-                              onClick={() =>
-                                handleSelectExistingPrimary(
-                                  imageUrl,
-                                )
-                              }
-                              className={`overflow-hidden rounded-2xl border ${
+                              className={`group overflow-hidden rounded-2xl border bg-soft-white transition-all ${
                                 isPrimary
                                   ? "border-antique-gold ring-2 ring-classic-gold/20"
                                   : "border-light-champagne"
                               }`}
                             >
-                              <div className="relative aspect-square">
-                                {imageUrl ? (
+                              <div className="relative aspect-square overflow-hidden bg-soft-cream">
+                                {displayUrl ? (
                                   <img
                                     src={
-                                      imageUrl
+                                      displayUrl
                                     }
                                     alt={
-                                      formData.name
+                                      formData.name ||
+                                      `Product image ${index + 1}`
                                     }
                                     className="h-full w-full object-cover"
                                   />
                                 ) : (
-                                  <div className="flex h-full items-center justify-center">
-                                    No
-                                    Image
+                                  <div className="flex h-full items-center justify-center text-[9px] text-steel-gray">
+                                    No Image
                                   </div>
                                 )}
 
                                 {isPrimary && (
-                                  <span className="absolute left-3 top-3 rounded-full bg-midnight-navy px-3 py-1 text-[8px] text-champagne-gold">
+                                  <span className="absolute left-3 top-3 rounded-full bg-midnight-navy px-3 py-1 text-[7px] font-semibold uppercase tracking-[0.12em] text-champagne-gold shadow">
                                     Primary
                                   </span>
                                 )}
+
+                                <button
+                                  type="button"
+                                  disabled={
+                                    isDeleting
+                                  }
+                                  onClick={() =>
+                                    handleDeleteExistingImage(
+                                      image,
+                                    )
+                                  }
+                                  className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full border border-soft-white/40 bg-midnight-navy/90 text-[14px] text-soft-white shadow backdrop-blur transition hover:bg-rich-navy disabled:cursor-not-allowed disabled:opacity-50"
+                                  aria-label="Delete image"
+                                >
+                                  {isDeleting
+                                    ? "…"
+                                    : "×"}
+                                </button>
                               </div>
-                            </button>
+
+                              <div className="p-3">
+                                <button
+                                  type="button"
+                                  disabled={
+                                    isPrimary ||
+                                    isSettingPrimary
+                                  }
+                                  onClick={() =>
+                                    handleSelectExistingPrimary(
+                                      image,
+                                    )
+                                  }
+                                  className={`flex min-h-[36px] w-full items-center justify-center rounded-xl border px-3 text-[7px] font-semibold uppercase tracking-[0.12em] transition-all ${
+                                    isPrimary
+                                      ? "border-champagne-gold/30 bg-soft-cream text-antique-gold"
+                                      : "border-light-champagne bg-soft-white text-midnight-navy hover:border-champagne-gold/50 hover:bg-warm-ivory"
+                                  } disabled:cursor-not-allowed disabled:opacity-70`}
+                                >
+                                  {isPrimary
+                                    ? "Primary Image"
+                                    : isSettingPrimary
+                                      ? "Setting..."
+                                      : "Make Primary"}
+                                </button>
+                              </div>
+                            </div>
                           );
                         },
                       )}
                     </div>
+                  </div>
+                ) : (
+                  <div className="rounded-[18px] border border-dashed border-light-champagne bg-warm-ivory/40 px-6 py-8 text-center">
+                    <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
+                      No existing ProductImage records
+                    </p>
+
+                    <p className="mt-2 text-[9px] leading-5 text-slate-gray">
+                      Upload images below. The first image will automatically become primary when the product has no primary image.
+                    </p>
                   </div>
                 )}
 
@@ -1907,17 +2294,20 @@ const EditProductPage = () => {
                   className={
                     existingImages.length
                       ? "mt-8"
-                      : ""
+                      : "mt-5"
                   }
                 >
-                  <label className="flex cursor-pointer flex-col items-center justify-center rounded-[18px] border border-dashed border-champagne-gold/40 bg-warm-ivory/55 px-6 py-12">
+                  <label className="flex cursor-pointer flex-col items-center justify-center rounded-[18px] border border-dashed border-champagne-gold/40 bg-warm-ivory/55 px-6 py-12 transition hover:border-classic-gold hover:bg-soft-cream">
                     <div className="text-2xl text-classic-gold">
                       +
                     </div>
 
                     <p className="mt-4 text-[10px] font-semibold">
-                      Upload Product
-                      Images
+                      Upload Product Images
+                    </p>
+
+                    <p className="mt-2 text-[8px] text-steel-gray">
+                      JPG, PNG, WEBP or GIF
                     </p>
 
                     <input
@@ -1932,42 +2322,55 @@ const EditProductPage = () => {
                   </label>
                 </div>
 
-                {previewNewImages.length >
-                  0 && (
-                  <div className="mt-7 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                    {previewNewImages.map(
-                      (
-                        image,
-                        index,
-                      ) => (
-                        <div
-                          key={`${image}-${index}`}
-                          className="overflow-hidden rounded-2xl border border-light-champagne"
-                        >
-                          <div className="relative aspect-square">
-                            <img
-                              src={
-                                image
-                              }
-                              alt=""
-                              className="h-full w-full object-cover"
-                            />
+                {previewNewImages.length > 0 && (
+                  <div className="mt-7">
+                    <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.25em] text-steel-gray">
+                      New Images
+                    </p>
 
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleRemoveNewImage(
-                                  index,
-                                )
-                              }
-                              className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-midnight-navy text-white"
-                            >
-                              ×
-                            </button>
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                      {previewNewImages.map(
+                        (
+                          image,
+                          index,
+                        ) => (
+                          <div
+                            key={`${image}-${index}`}
+                            className="overflow-hidden rounded-2xl border border-light-champagne bg-soft-white"
+                          >
+                            <div className="relative aspect-square">
+                              <img
+                                src={
+                                  image
+                                }
+                                alt={`New product image ${index + 1}`}
+                                className="h-full w-full object-cover"
+                              />
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleRemoveNewImage(
+                                    index,
+                                  )
+                                }
+                                className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-midnight-navy text-white shadow"
+                                aria-label="Remove new image"
+                              >
+                                ×
+                              </button>
+
+                              {!primaryImage &&
+                                index === 0 && (
+                                <span className="absolute bottom-3 left-3 rounded-full bg-midnight-navy px-3 py-1 text-[7px] font-semibold uppercase tracking-[0.12em] text-champagne-gold">
+                                  Will Become Primary
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ),
-                    )}
+                        ),
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

@@ -477,6 +477,14 @@ const AdminOrderDetailsPage = () => {
         return;
       }
 
+      if (order?.orderStatus !== "confirmed") {
+        setManufacturingError(
+          "Order status must be Confirmed before manufacturing can start.",
+        );
+
+        return;
+      }
+
       try {
         setIsStartingManufacturing(
           true,
@@ -660,6 +668,9 @@ const AdminOrderDetailsPage = () => {
     order.total || 0,
   );
 
+  const canStartManufacturing =
+    order.orderStatus === "confirmed";
+
   return (
     <div className="min-h-screen bg-warm-ivory">
       <div className="mb-8">
@@ -815,6 +826,38 @@ const AdminOrderDetailsPage = () => {
         />
       </div>
 
+      <section className="mb-8 overflow-hidden rounded-[24px] border border-champagne-gold/20 bg-soft-white/90 shadow-[0_12px_38px_rgba(7,19,31,0.04)]">
+        <div className="border-b border-light-champagne/80 bg-soft-cream/55 px-6 py-5">
+          <SectionTitle
+            eyebrow="Customer Input"
+            title="Manufacturing Brief"
+            description="Customer-provided information saved with this order for production."
+          />
+        </div>
+
+        <div className="grid gap-5 p-6 md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+          <div className="rounded-[18px] border border-champagne-gold/20 bg-warm-ivory/60 p-5">
+            <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
+              Name for Manufacturing
+            </p>
+
+            <p className="mt-3 font-serif text-[1.45rem] text-midnight-navy">
+              {order.manufacturingName || "Not provided"}
+            </p>
+          </div>
+
+          <div className="rounded-[18px] border border-light-champagne bg-warm-ivory/60 p-5">
+            <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
+              Manufacturing Notes
+            </p>
+
+            <p className="mt-3 whitespace-pre-wrap text-[11px] leading-6 text-slate-gray">
+              {order.manufacturingNotes || "No notes were added by the customer."}
+            </p>
+          </div>
+        </div>
+      </section>
+
       <section className="mb-8 rounded-[24px] border border-light-champagne/90 bg-soft-white/85 p-6 shadow-[0_12px_38px_rgba(7,19,31,0.04)]">
         <div className="flex flex-col justify-between gap-5 md:flex-row md:items-start">
           <SectionTitle
@@ -831,14 +874,15 @@ const AdminOrderDetailsPage = () => {
               }
               disabled={
                 isStartingManufacturing ||
-                order.orderStatus ===
-                  "cancelled"
+                !canStartManufacturing
               }
               className="min-h-[44px] rounded-full bg-midnight-navy px-6 text-[8px] font-semibold uppercase tracking-[0.12em] text-soft-white transition hover:bg-rich-navy disabled:cursor-not-allowed disabled:opacity-40"
             >
               {isStartingManufacturing
                 ? "Starting..."
-                : "Start Manufacturing"}
+                : canStartManufacturing
+                  ? "Start Manufacturing"
+                  : "Confirm Order First"}
             </button>
           ) : manufacturingOrder.status ===
             "pending" ? (
@@ -848,16 +892,30 @@ const AdminOrderDetailsPage = () => {
                 handleStartManufacturing
               }
               disabled={
-                isStartingManufacturing
+                isStartingManufacturing ||
+                !canStartManufacturing
               }
-              className="min-h-[44px] rounded-full bg-midnight-navy px-6 text-[8px] font-semibold uppercase tracking-[0.12em] text-soft-white transition hover:bg-rich-navy disabled:opacity-40"
+              className="min-h-[44px] rounded-full bg-midnight-navy px-6 text-[8px] font-semibold uppercase tracking-[0.12em] text-soft-white transition hover:bg-rich-navy disabled:cursor-not-allowed disabled:opacity-40"
             >
               {isStartingManufacturing
                 ? "Starting..."
-                : "Start Manufacturing"}
+                : canStartManufacturing
+                  ? "Start Manufacturing"
+                  : "Confirm Order First"}
             </button>
           ) : null}
         </div>
+
+        {!canStartManufacturing &&
+          (!manufacturingOrder ||
+            manufacturingOrder.status === "pending") && (
+            <div className="mb-5 rounded-[14px] border border-champagne-gold/25 bg-soft-cream/75 px-4 py-3 text-[10px] leading-5 text-antique-gold">
+              Manufacturing can only be started while the order status is
+              <strong className="ml-1">Confirmed</strong>. If the order is moved
+              back to Pending or forward to another status before manufacturing
+              starts, this action stays disabled.
+            </div>
+          )}
 
         {manufacturingError && (
           <div className="mb-5 rounded-[14px] border border-red-200 bg-red-50 p-4 text-[11px] text-red-600">

@@ -11,12 +11,16 @@ import {
 export const createOrderController = async (req, res, next) => {
   try {
     const {
+      manufacturingName,
+      manufacturingNotes = "",
       shippingAddress,
       shippingAreaId,
       paymentMethod,
     } = req.body;
 
     const order = await createOrder(req.user.userId, {
+      manufacturingName,
+      manufacturingNotes,
       shippingAddress,
       shippingAreaId,
       paymentMethod,

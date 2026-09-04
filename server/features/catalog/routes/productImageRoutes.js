@@ -9,12 +9,24 @@ import {
 
 const router = express.Router();
 
-router.post("/", createImageController);
+router.post(
+  "/",
+  createImageController,
+);
 
-router.get("/product/:productId", getImagesController);
+router.get(
+  "/product/:productId",
+  getImagesController,
+);
 
-router.delete("/:id", deleteImageController);
+router.delete(
+  "/:id",
+  deleteImageController,
+);
 
-router.put("/:id/primary", setPrimaryImageController);
+router.put(
+  "/:id/primary",
+  setPrimaryImageController,
+);
 
 export default router;

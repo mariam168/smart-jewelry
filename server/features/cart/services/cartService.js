@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 import Cart from "../models/Cart.js";
 
 import Product from "../../catalog/models/Product.js";
@@ -8,22 +10,41 @@ import ProductTechnology from "../../catalog/models/ProductTechnology.js";
 
 import ProductImage from "../../catalog/models/ProductImage.js";
 
+const createServiceError = (
+  message,
+  statusCode = 400,
+) => {
+  const error = new Error(message);
+
+  error.statusCode = statusCode;
+
+  return error;
+};
+
+const normalizeId = (value) => {
+  if (!value) {
+    return null;
+  }
+
+  return value.toString();
+};
+
 const populateCart = async (cart) => {
+  if (!cart) {
+    return null;
+  }
+
   await cart.populate([
     {
       path: "items.product",
     },
-
     {
       path: "items.variant",
     },
-
     {
       path: "items.productTechnology",
-
       populate: {
         path: "technologyModel",
-
         populate: {
           path: "technology",
         },
@@ -41,17 +62,18 @@ const populateCart = async (cart) => {
     return cartObject;
   }
 
-  const productImages = await ProductImage.find({
-    product: {
-      $in: productIds,
-    },
-  })
-    .sort({
-      isPrimary: -1,
-      sortOrder: 1,
-      createdAt: 1,
+  const productImages =
+    await ProductImage.find({
+      product: {
+        $in: productIds,
+      },
     })
-    .lean();
+      .sort({
+        isPrimary: -1,
+        sortOrder: 1,
+        createdAt: 1,
+      })
+      .lean();
 
   const imagesByProduct = new Map();
 
@@ -99,9 +121,7 @@ const populateCart = async (cart) => {
         item.product._id.toString();
 
       const productImagesList =
-        imagesByProduct.get(
-          productId,
-        ) || [];
+        imagesByProduct.get(productId) || [];
 
       const primaryImageRecord =
         productImagesList.find(
@@ -112,8 +132,7 @@ const populateCart = async (cart) => {
         null;
 
       const primaryImage =
-        primaryImageRecord?.imageUrl ||
-        "";
+        primaryImageRecord?.imageUrl || "";
 
       return {
         ...item,
@@ -129,8 +148,7 @@ const populateCart = async (cart) => {
 
           images:
             productImagesList.map(
-              (image) =>
-                image.imageUrl,
+              (image) => image.imageUrl,
             ),
         },
       };
@@ -139,9 +157,19 @@ const populateCart = async (cart) => {
   return cartObject;
 };
 
+/*
+ * GET CART
+ */
 export const getUserCart = async (
   userId,
 ) => {
+  if (!userId) {
+    throw createServiceError(
+      "User ID is required",
+      401,
+    );
+  }
+
   let cart = await Cart.findOne({
     user: userId,
   });
@@ -156,6 +184,9 @@ export const getUserCart = async (
   return populateCart(cart);
 };
 
+/*
+ * ADD PRODUCT
+ */
 export const addProductToCart = async (
   userId,
   productId,
@@ -164,142 +195,158 @@ export const addProductToCart = async (
   productTechnologyId = null,
 ) => {
   if (!userId) {
-    const error = new Error(
+    throw createServiceError(
       "User ID is required",
+      401,
     );
-
-    error.statusCode = 401;
-
-    throw error;
   }
 
   if (!productId) {
-    const error = new Error(
+    throw createServiceError(
       "Product ID is required",
+      400,
     );
-
-    error.statusCode = 400;
-
-    throw error;
   }
 
   if (
     !Number.isInteger(quantity) ||
     quantity < 1
   ) {
-    const error = new Error(
+    throw createServiceError(
       "Quantity must be at least 1",
+      400,
     );
+  }
 
-    error.statusCode = 400;
-
-    throw error;
+  if (
+    !mongoose.isValidObjectId(productId)
+  ) {
+    throw createServiceError(
+      "Invalid product ID",
+      400,
+    );
   }
 
   const product =
-    await Product.findById(
-      productId,
-    );
+    await Product.findById(productId);
 
   if (!product) {
-    const error = new Error(
+    throw createServiceError(
       "Product not found",
+      404,
     );
-
-    error.statusCode = 404;
-
-    throw error;
   }
 
-  let variant = null;
-
+  /*
+   * VARIANT
+   */
   if (variantId) {
-    variant =
+    if (
+      !mongoose.isValidObjectId(
+        variantId,
+      )
+    ) {
+      throw createServiceError(
+        "Invalid product variant ID",
+        400,
+      );
+    }
+
+    const variant =
       await ProductVariant.findById(
         variantId,
       );
 
     if (!variant) {
-      const error = new Error(
+      throw createServiceError(
         "Product variant not found",
+        404,
       );
-
-      error.statusCode = 404;
-
-      throw error;
     }
 
     if (
       variant.product &&
-      variant.product.toString() !==
-        productId.toString()
+      normalizeId(variant.product) !==
+        normalizeId(productId)
     ) {
-      const error = new Error(
+      throw createServiceError(
         "Selected variant does not belong to this product",
+        400,
       );
-
-      error.statusCode = 400;
-
-      throw error;
     }
   }
 
-  let productTechnology = null;
-
+  /*
+   * TECHNOLOGY
+   */
   if (productTechnologyId) {
-    productTechnology =
+    if (
+      !mongoose.isValidObjectId(
+        productTechnologyId,
+      )
+    ) {
+      throw createServiceError(
+        "Invalid product technology ID",
+        400,
+      );
+    }
+
+    const productTechnology =
       await ProductTechnology.findById(
         productTechnologyId,
       );
 
     if (!productTechnology) {
-      const error = new Error(
+      throw createServiceError(
         "Product technology not found",
+        404,
       );
-
-      error.statusCode = 404;
-
-      throw error;
     }
 
     if (
       productTechnology.product &&
-      productTechnology.product.toString() !==
-        productId.toString()
+      normalizeId(
+        productTechnology.product,
+      ) !== normalizeId(productId)
     ) {
-      const error = new Error(
+      throw createServiceError(
         "Selected technology does not belong to this product",
+        400,
       );
+    }
 
-      error.statusCode = 400;
-
-      throw error;
+    /*
+     * Support both status and isActive models.
+     */
+    if (
+      productTechnology.status &&
+      productTechnology.status !==
+        "active"
+    ) {
+      throw createServiceError(
+        "Selected product technology is inactive",
+        400,
+      );
     }
 
     if (
-      productTechnology.status !==
-      "active"
+      productTechnology.isActive ===
+      false
     ) {
-      const error = new Error(
+      throw createServiceError(
         "Selected product technology is inactive",
+        400,
       );
-
-      error.statusCode = 400;
-
-      throw error;
     }
 
     if (
       productTechnology.isSelectable ===
       false
     ) {
-      const error = new Error(
+      throw createServiceError(
         "Selected product technology is not selectable",
+        400,
       );
-
-      error.statusCode = 400;
-
-      throw error;
     }
   }
 
@@ -310,46 +357,31 @@ export const addProductToCart = async (
   if (!cart) {
     cart = await Cart.create({
       user: userId,
-
-      items: [
-        {
-          product: productId,
-
-          variant: variantId,
-
-          productTechnology:
-            productTechnologyId,
-
-          quantity,
-        },
-      ],
+      items: [],
     });
-
-    return populateCart(cart);
   }
+
+  const normalizedProductId =
+    normalizeId(productId);
+
+  const normalizedVariantId =
+    normalizeId(variantId);
+
+  const normalizedTechnologyId =
+    normalizeId(
+      productTechnologyId,
+    );
 
   const existingItem =
     cart.items.find((item) => {
-      const sameProduct =
-        item.product.toString() ===
-        productId.toString();
-
-      const sameVariant =
-        item.variant?.toString() ===
-        (variantId
-          ? variantId.toString()
-          : null);
-
-      const sameProductTechnology =
-        item.productTechnology?.toString() ===
-        (productTechnologyId
-          ? productTechnologyId.toString()
-          : null);
-
       return (
-        sameProduct &&
-        sameVariant &&
-        sameProductTechnology
+        normalizeId(item.product) ===
+          normalizedProductId &&
+        normalizeId(item.variant) ===
+          normalizedVariantId &&
+        normalizeId(
+          item.productTechnology,
+        ) === normalizedTechnologyId
       );
     });
 
@@ -360,10 +392,11 @@ export const addProductToCart = async (
     cart.items.push({
       product: productId,
 
-      variant: variantId,
+      variant:
+        variantId || null,
 
       productTechnology:
-        productTechnologyId,
+        productTechnologyId || null,
 
       quantity,
     });
@@ -374,6 +407,11 @@ export const addProductToCart = async (
   return populateCart(cart);
 };
 
+/*
+ * UPDATE QUANTITY
+ *
+ * Atomic update.
+ */
 export const updateProductInCart =
   async (
     userId,
@@ -381,140 +419,160 @@ export const updateProductInCart =
     quantity,
   ) => {
     if (!userId) {
-      const error = new Error(
+      throw createServiceError(
         "User ID is required",
+        401,
       );
-
-      error.statusCode = 401;
-
-      throw error;
     }
 
     if (
       !Number.isInteger(quantity) ||
       quantity < 1
     ) {
-      const error = new Error(
+      throw createServiceError(
         "Quantity must be at least 1",
+        400,
       );
+    }
 
-      error.statusCode = 400;
-
-      throw error;
+    if (
+      !mongoose.isValidObjectId(itemId)
+    ) {
+      throw createServiceError(
+        "Invalid cart item ID",
+        400,
+      );
     }
 
     const cart =
-      await Cart.findOne({
-        user: userId,
-      });
+      await Cart.findOneAndUpdate(
+        {
+          user: userId,
+          "items._id": itemId,
+        },
+        {
+          $set: {
+            "items.$.quantity":
+              quantity,
+          },
+        },
+        {
+          new: true,
+          runValidators: true,
+        },
+      );
 
     if (!cart) {
-      const error = new Error(
-        "Cart not found",
-      );
-
-      error.statusCode = 404;
-
-      throw error;
-    }
-
-    const item =
-      cart.items.id(itemId);
-
-    if (!item) {
-      const error = new Error(
+      throw createServiceError(
         "Cart item not found",
+        404,
       );
-
-      error.statusCode = 404;
-
-      throw error;
     }
-
-    item.quantity = quantity;
-
-    await cart.save();
 
     return populateCart(cart);
   };
 
+/*
+ * REMOVE CART ITEM
+ *
+ * Atomic $pull fixes the removal issue.
+ */
 export const removeProductFromCart =
   async (
     userId,
     itemId,
   ) => {
     if (!userId) {
-      const error = new Error(
+      throw createServiceError(
         "User ID is required",
+        401,
       );
+    }
 
-      error.statusCode = 401;
-
-      throw error;
+    if (
+      !mongoose.isValidObjectId(itemId)
+    ) {
+      throw createServiceError(
+        "Invalid cart item ID",
+        400,
+      );
     }
 
     const cart =
-      await Cart.findOne({
-        user: userId,
-      });
+      await Cart.findOneAndUpdate(
+        {
+          user: userId,
+          "items._id": itemId,
+        },
+        {
+          $pull: {
+            items: {
+              _id: itemId,
+            },
+          },
+        },
+        {
+          new: true,
+          runValidators: true,
+        },
+      );
 
     if (!cart) {
-      const error = new Error(
-        "Cart not found",
-      );
+      const existingCart =
+        await Cart.exists({
+          user: userId,
+        });
 
-      error.statusCode = 404;
+      if (!existingCart) {
+        throw createServiceError(
+          "Cart not found",
+          404,
+        );
+      }
 
-      throw error;
-    }
-
-    const item =
-      cart.items.id(itemId);
-
-    if (!item) {
-      const error = new Error(
+      throw createServiceError(
         "Cart item not found",
+        404,
       );
-
-      error.statusCode = 404;
-
-      throw error;
     }
-
-    cart.items.pull(itemId);
-
-    await cart.save();
 
     return populateCart(cart);
   };
 
+/*
+ * CLEAR CART
+ */
 export const clearUserCart =
   async (userId) => {
     if (!userId) {
-      const error = new Error(
+      throw createServiceError(
         "User ID is required",
+        401,
+      );
+    }
+
+    let cart =
+      await Cart.findOneAndUpdate(
+        {
+          user: userId,
+        },
+        {
+          $set: {
+            items: [],
+          },
+        },
+        {
+          new: true,
+          runValidators: true,
+        },
       );
 
-      error.statusCode = 401;
-
-      throw error;
-    }
-
-    const cart =
-      await Cart.findOne({
-        user: userId,
-      });
-
     if (!cart) {
-      return {
+      cart = await Cart.create({
         user: userId,
         items: [],
-      };
+      });
     }
-
-    cart.items = [];
-
-    await cart.save();
 
     return populateCart(cart);
   };

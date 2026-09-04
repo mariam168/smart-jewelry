@@ -31,9 +31,57 @@ const generateOrderNumber = () => {
   return `SJ-${timestamp}-${random}`;
 };
 
+const cleanRequiredText = (
+  value,
+  fieldName,
+  maxLength,
+) => {
+  const cleanValue =
+    String(value || "").trim();
+
+  if (!cleanValue) {
+    throw createError(
+      `${fieldName} is required`,
+    );
+  }
+
+  if (
+    cleanValue.length >
+    maxLength
+  ) {
+    throw createError(
+      `${fieldName} cannot exceed ${maxLength} characters`,
+    );
+  }
+
+  return cleanValue;
+};
+
+const cleanOptionalText = (
+  value,
+  fieldName,
+  maxLength,
+) => {
+  const cleanValue =
+    String(value || "").trim();
+
+  if (
+    cleanValue.length >
+    maxLength
+  ) {
+    throw createError(
+      `${fieldName} cannot exceed ${maxLength} characters`,
+    );
+  }
+
+  return cleanValue;
+};
+
 export const createOrder = async (
   userId,
   {
+    manufacturingName,
+    manufacturingNotes = "",
     shippingAddress,
     shippingAreaId,
     paymentMethod = "cash_on_delivery",
@@ -48,6 +96,20 @@ export const createOrder = async (
       "Invalid user ID",
     );
   }
+
+  const cleanManufacturingName =
+    cleanRequiredText(
+      manufacturingName,
+      "Name for manufacturing",
+      120,
+    );
+
+  const cleanManufacturingNotes =
+    cleanOptionalText(
+      manufacturingNotes,
+      "Manufacturing notes",
+      1000,
+    );
 
   if (!shippingAreaId) {
     throw createError(
@@ -86,7 +148,7 @@ export const createOrder = async (
         path: "items.product",
 
         select:
-          "name price costPrice images primaryImage image",
+          "name price costPrice images primaryImage image technologyRequired",
       })
       .populate({
         path: "items.variant",
@@ -155,6 +217,40 @@ export const createOrder = async (
           );
         }
 
+        const productTechnology =
+          item.productTechnology ||
+          null;
+
+        if (
+          product.technologyRequired ===
+            true &&
+          !productTechnology
+        ) {
+          throw createError(
+            `${product.name} requires Smart Technology before checkout`,
+          );
+        }
+
+        if (
+          productTechnology &&
+          productTechnology.status ===
+            "inactive"
+        ) {
+          throw createError(
+            `The selected technology for ${product.name} is no longer active`,
+          );
+        }
+
+        if (
+          productTechnology &&
+          productTechnology.isSelectable ===
+            false
+        ) {
+          throw createError(
+            `The selected technology for ${product.name} is no longer selectable`,
+          );
+        }
+
         const productPrice =
           Number(
             product.price ||
@@ -176,10 +272,6 @@ export const createOrder = async (
             variant?.price ||
               0,
           );
-
-        const productTechnology =
-          item.productTechnology ||
-          null;
 
         const technologyModel =
           productTechnology
@@ -351,8 +443,8 @@ export const createOrder = async (
             : null;
 
         const productImage =
-          product.images?.[0] ||
           product.primaryImage ||
+          product.images?.[0] ||
           product.image ||
           "";
 
@@ -436,6 +528,12 @@ export const createOrder = async (
       items:
         orderItems,
 
+      manufacturingName:
+        cleanManufacturingName,
+
+      manufacturingNotes:
+        cleanManufacturingNotes,
+
       shippingAddress: {
         firstName:
           String(
@@ -488,6 +586,11 @@ export const createOrder = async (
       total,
     });
 
+  /*
+   * The server is the source of truth for cart clearing.
+   * Frontend CartContext should also refresh/clear after
+   * this request succeeds so the badge updates immediately.
+   */
   cart.items = [];
 
   await cart.save();
@@ -498,7 +601,7 @@ export const createOrder = async (
     )
       .populate(
         "user",
-        "email",
+        "email phone",
       )
       .populate(
         "shippingArea",
@@ -506,7 +609,7 @@ export const createOrder = async (
       )
       .populate(
         "items.product",
-        "name price costPrice images primaryImage image",
+        "name price costPrice images primaryImage image technologyRequired",
       )
       .populate(
         "items.smartUnit",
@@ -527,7 +630,7 @@ export const getUserOrders =
     })
       .populate(
         "items.product",
-        "name price costPrice images primaryImage image",
+        "name price costPrice images primaryImage image technologyRequired",
       )
       .sort({
         createdAt:
@@ -556,7 +659,7 @@ export const getUserOrderById =
         user: userId,
       }).populate(
         "items.product",
-        "name price costPrice images primaryImage image",
+        "name price costPrice images primaryImage image technologyRequired",
       );
 
     if (!order) {
@@ -574,11 +677,11 @@ export const getAllOrders =
     return Order.find()
       .populate(
         "user",
-        "email",
+        "email phone",
       )
       .populate(
         "items.product",
-        "name price costPrice images primaryImage image",
+        "name price costPrice images primaryImage image technologyRequired",
       )
       .sort({
         createdAt:
@@ -606,11 +709,11 @@ export const getOrderById =
       )
         .populate(
           "user",
-          "email",
+          "email phone",
         )
         .populate(
           "items.product",
-          "name price costPrice images primaryImage image",
+          "name price costPrice images primaryImage image technologyRequired",
         );
 
     if (!order) {
@@ -662,9 +765,14 @@ export const updateOrderStatus =
     };
 
     /*
-      Once the order is delivered,
-      it is considered paid.
-    */
+     * Delivery keeps the existing business rule:
+     * once delivered, the order is considered paid.
+     *
+     * If the admin later moves the order backwards,
+     * orderStatus is allowed to move backwards and the
+     * customer profile will reflect that latest status.
+     * paymentStatus is intentionally not rolled back here.
+     */
     if (
       orderStatus ===
       "delivered"
@@ -687,11 +795,11 @@ export const updateOrderStatus =
       )
         .populate(
           "user",
-          "email",
+          "email phone",
         )
         .populate(
           "items.product",
-          "name price costPrice images primaryImage image",
+          "name price costPrice images primaryImage image technologyRequired",
         );
 
     if (!order) {

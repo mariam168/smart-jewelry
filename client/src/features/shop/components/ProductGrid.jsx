@@ -1,7 +1,7 @@
 import ProductCard from "./ProductCard";
 
-const ProductGrid = ({ products }) => {
-  if (!products.length) {
+const ProductGrid = ({ products = [] }) => {
+  if (!Array.isArray(products) || products.length === 0) {
     return (
       <div className="relative overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85 px-6 py-20 text-center shadow-[0_12px_35px_rgba(7,19,31,0.04)] backdrop-blur-sm sm:px-10 sm:py-24">
         <div className="pointer-events-none absolute left-1/2 top-[-120px] h-[280px] w-[480px] -translate-x-1/2 rounded-full bg-soft-cream/80 blur-[90px]" />
@@ -37,10 +37,11 @@ const ProductGrid = ({ products }) => {
 
   return (
     <div className="grid gap-x-5 gap-y-10 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-12 lg:grid-cols-3 xl:grid-cols-4">
-      {products.map((product) => (
+      {products.map((product, index) => (
         <ProductCard
           key={product._id}
           product={product}
+          index={index}
         />
       ))}
     </div>

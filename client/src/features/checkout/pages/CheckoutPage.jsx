@@ -179,6 +179,7 @@ const CheckoutPage = () => {
     cart,
     cartTotal,
     isLoading: cartLoading,
+    clearCart,
   } = useCart();
 
   const [shippingAreas, setShippingAreas] = useState([]);
@@ -188,6 +189,8 @@ const CheckoutPage = () => {
   const [error, setError] = useState("");
 
   const [formValues, setFormValues] = useState({
+    manufacturingName: "",
+    manufacturingNotes: "",
     firstName: "",
     lastName: "",
     phone: "",
@@ -256,6 +259,18 @@ const CheckoutPage = () => {
   };
 
   const validateForm = () => {
+    if (!formValues.manufacturingName.trim()) {
+      return "Name for manufacturing is required";
+    }
+
+    if (formValues.manufacturingName.trim().length > 120) {
+      return "Name for manufacturing cannot exceed 120 characters";
+    }
+
+    if (formValues.manufacturingNotes.trim().length > 1000) {
+      return "Manufacturing notes cannot exceed 1000 characters";
+    }
+
     if (!formValues.firstName.trim()) {
       return "First name is required";
     }
@@ -298,6 +313,10 @@ const CheckoutPage = () => {
       setError("");
 
       const response = await createOrder({
+        manufacturingName: formValues.manufacturingName.trim(),
+
+        manufacturingNotes: formValues.manufacturingNotes.trim(),
+
         shippingAreaId: formValues.shippingAreaId,
 
         shippingAddress: {
@@ -317,6 +336,21 @@ const CheckoutPage = () => {
       if (!order?._id) {
         throw new Error(
           "Order was created but no order ID was returned",
+        );
+      }
+
+      /*
+       * The backend already clears the MongoDB cart after
+       * creating the order. Calling clearCart here keeps
+       * CartContext, the cart badge and the drawer in sync
+       * immediately on the client.
+       */
+      try {
+        await clearCart();
+      } catch (cartError) {
+        console.error(
+          "Cart sync after order error:",
+          cartError,
         );
       }
 
@@ -791,11 +825,109 @@ const CheckoutPage = () => {
               </div>
             </section>
 
+            <section className="relative overflow-hidden rounded-[26px] border border-champagne-gold/20 bg-soft-white/90 shadow-[0_12px_38px_rgba(7,19,31,0.045)] backdrop-blur-sm">
+              <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-champagne-gold/[0.08] blur-[70px]" />
+
+              <SectionHeader
+                number="02"
+                title="Manufacturing Details"
+                subtitle="Required information that will follow this order into production"
+              />
+
+              <div className="relative p-6 sm:p-8">
+                <div className="mb-6 rounded-[18px] border border-champagne-gold/25 bg-soft-cream/70 p-5">
+                  <div className="flex items-start gap-4">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-midnight-navy text-[10px] text-champagne-gold">
+                      ✦
+                    </span>
+
+                    <div>
+                      <p className="text-[10px] font-semibold text-midnight-navy">
+                        Your manufacturing reference
+                      </p>
+
+                      <p className="mt-1.5 max-w-2xl text-[10px] leading-6 text-slate-gray">
+                        The name below is required and will be stored with your
+                        order for the manufacturing team. Add any optional note
+                        that may help during preparation.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid gap-5">
+                  <div>
+                    <label
+                      htmlFor="manufacturingName"
+                      className="mb-2 block text-[8px] font-semibold uppercase tracking-[0.18em] text-midnight-navy"
+                    >
+                      Name for Manufacturing
+                      <span className="ml-1 text-antique-gold">*</span>
+                    </label>
+
+                    <input
+                      id="manufacturingName"
+                      type="text"
+                      name="manufacturingName"
+                      value={formValues.manufacturingName}
+                      onChange={handleChange}
+                      required
+                      maxLength={120}
+                      autoComplete="off"
+                      placeholder="e.g. Mariam"
+                      className="checkout-input"
+                    />
+
+                    <p className="mt-2 text-[8px] leading-5 text-steel-gray">
+                      Required. This value will be available later in the
+                      manufacturing workflow.
+                    </p>
+                  </div>
+
+                  <div>
+                    <div className="mb-2 flex items-center justify-between gap-3">
+                      <label
+                        htmlFor="manufacturingNotes"
+                        className="block text-[8px] font-semibold uppercase tracking-[0.18em] text-midnight-navy"
+                      >
+                        Manufacturing Notes
+                      </label>
+
+                      <span className="text-[7px] font-semibold uppercase tracking-[0.12em] text-steel-gray">
+                        Optional
+                      </span>
+                    </div>
+
+                    <textarea
+                      id="manufacturingNotes"
+                      name="manufacturingNotes"
+                      value={formValues.manufacturingNotes}
+                      onChange={handleChange}
+                      maxLength={1000}
+                      rows={4}
+                      placeholder="Any note you want us to keep with the manufacturing order..."
+                      className="w-full resize-none rounded-[14px] border border-light-champagne bg-warm-ivory/65 px-4 py-3.5 text-[12px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/70 hover:border-champagne-gold/60 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
+                    />
+
+                    <div className="mt-2 flex items-center justify-between gap-3">
+                      <p className="text-[8px] leading-5 text-steel-gray">
+                        Keep it short and relevant to production.
+                      </p>
+
+                      <span className="shrink-0 text-[8px] text-steel-gray">
+                        {formValues.manufacturingNotes.length}/1000
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
             <section className="relative overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85 shadow-[0_12px_38px_rgba(7,19,31,0.045)] backdrop-blur-sm">
               <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-soft-cream blur-[70px]" />
 
               <SectionHeader
-                number="02"
+                number="03"
                 title="Shipping Information"
                 subtitle="Select your delivery area and enter your address"
               />
@@ -1017,7 +1149,7 @@ const CheckoutPage = () => {
               <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-soft-cream blur-[70px]" />
 
               <SectionHeader
-                number="03"
+                number="04"
                 title="Payment Method"
                 subtitle="Select your preferred payment method"
               />
@@ -1177,6 +1309,7 @@ const CheckoutPage = () => {
                   disabled={
                     submitting ||
                     shippingLoading ||
+                    !formValues.manufacturingName.trim() ||
                     !formValues.shippingAreaId ||
                     !selectedShippingArea ||
                     shippingAreas.length === 0

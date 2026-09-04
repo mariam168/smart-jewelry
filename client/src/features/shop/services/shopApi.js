@@ -13,13 +13,25 @@ export const getShopProduct = async (id) => {
 };
 
 export const getProductImages = async (productId) => {
-  const response = await api.get(`/product-images/product/${productId}`);
+  const response = await api.get(
+    `/product-images/product/${productId}`,
+  );
 
   return response.data.data.images;
 };
 
 export const getProductVariants = async (productId) => {
-  const response = await api.get(`/product-variants/product/${productId}`);
+  const response = await api.get(
+    `/product-variants/product/${productId}`,
+  );
 
   return response.data.data.variants;
+};
+
+export const getProductTechnologies = async (productId) => {
+  const response = await api.get(
+    `/product-technologies/product/${productId}`,
+  );
+
+  return response.data.data.productTechnologies;
 };

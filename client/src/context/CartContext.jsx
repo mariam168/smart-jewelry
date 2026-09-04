@@ -1,4 +1,10 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import {
   getCart,
@@ -8,39 +14,88 @@ import {
   clearCart as clearCartApi,
 } from "../features/cart/services/cartApi";
 
-export const CartContext = createContext(null);
+export const CartContext =
+  createContext(null);
 
-const CartProvider = ({ children }) => {
-  const [cart, setCart] = useState({
-    items: [],
-  });
+const EMPTY_CART = {
+  items: [],
+};
 
-  const [isCartOpen, setIsCartOpen] = useState(false);
+const CartProvider = ({
+  children,
+}) => {
+  const [cart, setCart] =
+    useState(EMPTY_CART);
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [
+    isCartOpen,
+    setIsCartOpen,
+  ] = useState(false);
 
+  const [
+    isLoading,
+    setIsLoading,
+  ] = useState(false);
+
+  const getCartFromResponse = (
+    response,
+  ) => {
+    const nextCart =
+      response?.data;
+
+    if (
+      nextCart &&
+      Array.isArray(
+        nextCart.items,
+      )
+    ) {
+      return nextCart;
+    }
+
+    return EMPTY_CART;
+  };
+
+  /*
+   * LOAD CART
+   */
   const loadCart = async () => {
     try {
       setIsLoading(true);
 
-      const response = await getCart();
+      const response =
+        await getCart();
 
       setCart(
-        response?.data || {
-          items: [],
-        },
+        getCartFromResponse(
+          response,
+        ),
       );
+
+      return response;
     } catch (error) {
-      console.error("Load Cart Error:", error);
+      console.error(
+        "Load Cart Error:",
+        error,
+      );
+
+      throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadCart();
+    loadCart().catch(() => {
+      /*
+       * A 401 can happen before login.
+       * Do not crash the provider.
+       */
+    });
   }, []);
 
+  /*
+   * ADD
+   */
   const addToCart = async (
     productId,
     quantity = 1,
@@ -50,24 +105,28 @@ const CartProvider = ({ children }) => {
     try {
       setIsLoading(true);
 
-      const response = await addToCartApi(
-        productId,
-        variantId,
-        productTechnologyId,
-        quantity,
-      );
+      const response =
+        await addToCartApi(
+          productId,
+          variantId,
+          productTechnologyId,
+          quantity,
+        );
 
       setCart(
-        response?.data || {
-          items: [],
-        },
+        getCartFromResponse(
+          response,
+        ),
       );
 
       setIsCartOpen(true);
 
       return response;
     } catch (error) {
-      console.error("Add To Cart Error:", error);
+      console.error(
+        "Add To Cart Error:",
+        error,
+      );
 
       throw error;
     } finally {
@@ -75,61 +134,181 @@ const CartProvider = ({ children }) => {
     }
   };
 
-  const updateQuantity = async (itemId, quantity) => {
-    if (quantity < 1) {
+  /*
+   * UPDATE QUANTITY
+   */
+  const updateQuantity = async (
+    itemId,
+    quantity,
+  ) => {
+    if (
+      !itemId ||
+      quantity < 1
+    ) {
       return;
     }
 
     try {
       setIsLoading(true);
 
-      const response = await updateCartApi(itemId, quantity);
+      const response =
+        await updateCartApi(
+          itemId,
+          quantity,
+        );
 
       setCart(
-        response?.data || {
-          items: [],
-        },
+        getCartFromResponse(
+          response,
+        ),
       );
+
+      return response;
     } catch (error) {
-      console.error("Update Cart Error:", error);
+      console.error(
+        "Update Cart Error:",
+        error,
+      );
+
+      /*
+       * Ensure frontend is synced
+       * even if mutation response fails.
+       */
+      try {
+        await loadCart();
+      } catch {
+        // keep original error
+      }
+
+      throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const removeFromCart = async (itemId) => {
+  /*
+   * REMOVE ITEM
+   */
+  const removeFromCart = async (
+    itemId,
+  ) => {
+    if (!itemId) {
+      return;
+    }
+
     try {
       setIsLoading(true);
 
-      const response = await removeFromCartApi(itemId);
+      const response =
+        await removeFromCartApi(
+          itemId,
+        );
 
-      setCart(
-        response?.data || {
-          items: [],
-        },
-      );
+      const nextCart =
+        getCartFromResponse(
+          response,
+        );
+
+      setCart(nextCart);
+
+      return response;
     } catch (error) {
-      console.error("Remove Cart Item Error:", error);
+      console.error(
+        "Remove Cart Item Error:",
+        error,
+      );
+
+      /*
+       * Reload server cart if mutation
+       * failed so UI never stays stale.
+       */
+      try {
+        const response =
+          await getCart();
+
+        setCart(
+          getCartFromResponse(
+            response,
+          ),
+        );
+      } catch {
+        // ignore secondary error
+      }
+
+      throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
+  /*
+   * CLEAR CART
+   */
   const clearCart = async () => {
     try {
       setIsLoading(true);
 
-      await clearCartApi();
+      const response =
+        await clearCartApi();
 
-      setCart({
-        items: [],
-      });
+      const nextCart =
+        getCartFromResponse(
+          response,
+        );
+
+      setCart(nextCart);
+
+      return response;
     } catch (error) {
-      console.error("Clear Cart Error:", error);
+      console.error(
+        "Clear Cart Error:",
+        error,
+      );
+
+      throw error;
     } finally {
       setIsLoading(false);
     }
   };
+
+  /*
+   * IMPORTANT:
+   *
+   * Call this ONLY after the order
+   * has been created successfully.
+   */
+  const clearCartAfterOrder =
+    async () => {
+      try {
+        setIsLoading(true);
+
+        const response =
+          await clearCartApi();
+
+        setCart(
+          getCartFromResponse(
+            response,
+          ),
+        );
+
+        setIsCartOpen(false);
+
+        return response;
+      } catch (error) {
+        console.error(
+          "Clear Cart After Order Error:",
+          error,
+        );
+
+        /*
+         * Do not silently pretend that
+         * the server cart was cleared.
+         */
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
   const openCart = () => {
     setIsCartOpen(true);
@@ -139,72 +318,117 @@ const CartProvider = ({ children }) => {
     setIsCartOpen(false);
   };
 
-  const cartItems = cart?.items || [];
+  const cartItems =
+    cart?.items || [];
 
-  const cartCount = cartItems.reduce((total, item) => {
-    return total + Number(item.quantity || 0);
-  }, 0);
-
-  const cartTotal = cartItems.reduce((total, item) => {
-    const productPrice = Number(item.product?.price || 0);
-
-    const variantPrice = Number(item.variant?.price || 0);
-
-    const basePrice = variantPrice > 0 ? variantPrice : productPrice;
-
-    const technologyPrice = Number(
-      item.technologyModel?.extraPrice ??
-        item.productTechnology?.extraPrice ??
-        item.productTechnologyId?.extraPrice ??
-        item.technology?.extraPrice ??
-        0,
+  const cartCount = useMemo(() => {
+    return cartItems.reduce(
+      (total, item) => {
+        return (
+          total +
+          Number(
+            item?.quantity || 0,
+          )
+        );
+      },
+      0,
     );
+  }, [cartItems]);
 
-    const finalUnitPrice = basePrice + technologyPrice;
+  const cartTotal = useMemo(() => {
+    return cartItems.reduce(
+      (total, item) => {
+        const productPrice =
+          Number(
+            item?.product?.price ||
+              0,
+          );
 
-    const quantity = Number(item.quantity || 0);
+        const variantPrice =
+          Number(
+            item?.variant?.price ||
+              0,
+          );
 
-    const itemTotal = finalUnitPrice * quantity;
+        const basePrice =
+          variantPrice > 0
+            ? variantPrice
+            : productPrice;
 
-    return total + itemTotal;
-  }, 0);
+        const technologyPrice =
+          Number(
+            item
+              ?.productTechnology
+              ?.extraPrice ??
+              item
+                ?.technologyModel
+                ?.extraPrice ??
+              0,
+          );
+
+        const finalUnitPrice =
+          basePrice +
+          technologyPrice;
+
+        const quantity =
+          Number(
+            item?.quantity || 0,
+          );
+
+        return (
+          total +
+          finalUnitPrice *
+            quantity
+        );
+      },
+      0,
+    );
+  }, [cartItems]);
 
   const value = {
     cart,
 
     cartItems,
-
     cartCount,
-
     cartTotal,
 
     isCartOpen,
-
     isLoading,
 
     addToCart,
-
     updateQuantity,
-
     removeFromCart,
 
     clearCart,
 
-    openCart,
+    /*
+     * Use after successful order.
+     */
+    clearCartAfterOrder,
 
+    openCart,
     closeCart,
 
     loadCart,
   };
 
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+  return (
+    <CartContext.Provider
+      value={value}
+    >
+      {children}
+    </CartContext.Provider>
+  );
 };
 
 export const useCart = () => {
-  const context = useContext(CartContext);
+  const context =
+    useContext(CartContext);
 
   if (!context) {
-    throw new Error("useCart must be used inside CartProvider");
+    throw new Error(
+      "useCart must be used inside CartProvider",
+    );
   }
 
   return context;

@@ -327,6 +327,20 @@ const orderSchema = new mongoose.Schema(
       },
     },
 
+    manufacturingName: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 120,
+    },
+
+    manufacturingNotes: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 1000,
+    },
+
     shippingAddress: {
       type: shippingAddressSchema,
       required: true,

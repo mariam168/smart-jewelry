@@ -100,6 +100,46 @@ const AccountPage = () => {
   ] = useState("");
 
   useEffect(() => {
+    let isMounted = true;
+
+    const applyOrders = (ordersResponse) => {
+      const ordersData =
+        ordersResponse?.data?.data ||
+        [];
+
+      if (!isMounted) {
+        return;
+      }
+
+      setOrders(
+        Array.isArray(ordersData)
+          ? ordersData
+          : []
+      );
+    };
+
+    const refreshOrders = async () => {
+      try {
+        const ordersResponse =
+          await api.get(
+            "/orders/my-orders"
+          );
+
+        applyOrders(
+          ordersResponse
+        );
+      } catch (error) {
+        /*
+         * Background refresh errors should not replace
+         * the whole profile with an error screen.
+         */
+        console.error(
+          "ORDER STATUS REFRESH ERROR:",
+          error
+        );
+      }
+    };
+
     const loadAccountData = async () => {
       try {
         setIsLoading(true);
@@ -110,23 +150,25 @@ const AccountPage = () => {
           ordersResponse,
         ] = await Promise.all([
           api.get("/auth/me"),
-          api.get("/orders/my-orders"),
+          api.get(
+            "/orders/my-orders"
+          ),
         ]);
+
+        if (!isMounted) {
+          return;
+        }
 
         const accountData =
           accountResponse?.data?.data ||
           null;
 
-        const ordersData =
-          ordersResponse?.data?.data ||
-          [];
+        setAccount(
+          accountData
+        );
 
-        setAccount(accountData);
-
-        setOrders(
-          Array.isArray(ordersData)
-            ? ordersData
-            : []
+        applyOrders(
+          ordersResponse
         );
       } catch (error) {
         console.error(
@@ -134,17 +176,88 @@ const AccountPage = () => {
           error
         );
 
+        if (!isMounted) {
+          return;
+        }
+
         setError(
           error?.response?.data?.message ||
             error?.message ||
             "Failed to load account information."
         );
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
+    /*
+     * Keep the profile order status synchronized with the
+     * latest value stored by the admin.
+     *
+     * This deliberately uses the current orderStatus from
+     * the server every time. If an admin moves an order
+     * backwards, for example Processing -> Confirmed, the
+     * timeline also moves backwards on the next refresh.
+     */
+    const intervalId =
+      window.setInterval(
+        () => {
+          if (
+            document.visibilityState ===
+            "visible"
+          ) {
+            refreshOrders();
+          }
+        },
+        10000
+      );
+
+    const handleWindowFocus =
+      () => {
+        refreshOrders();
+      };
+
+    const handleVisibilityChange =
+      () => {
+        if (
+          document.visibilityState ===
+          "visible"
+        ) {
+          refreshOrders();
+        }
+      };
+
+    window.addEventListener(
+      "focus",
+      handleWindowFocus
+    );
+
+    document.addEventListener(
+      "visibilitychange",
+      handleVisibilityChange
+    );
+
     loadAccountData();
+
+    return () => {
+      isMounted = false;
+
+      window.clearInterval(
+        intervalId
+      );
+
+      window.removeEventListener(
+        "focus",
+        handleWindowFocus
+      );
+
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibilityChange
+      );
+    };
   }, []);
 
   const user =
@@ -1079,6 +1192,43 @@ const AccountPage = () => {
                                 </p>
                               </div>
                             </div>
+
+                            {(order.manufacturingName ||
+                              order.manufacturingNotes) && (
+                              <section className="mt-6 overflow-hidden rounded-[18px] border border-champagne-gold/20 bg-soft-cream/60">
+                                <div className="border-b border-champagne-gold/15 px-5 py-4">
+                                  <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-antique-gold">
+                                    Manufacturing Details
+                                  </p>
+
+                                  <p className="mt-1 text-[10px] leading-5 text-slate-gray">
+                                    Information saved with this order for production.
+                                  </p>
+                                </div>
+
+                                <div className="grid gap-4 p-5 sm:grid-cols-2">
+                                  <div>
+                                    <p className="text-[8px] font-semibold uppercase tracking-[0.14em] text-steel-gray">
+                                      Name
+                                    </p>
+
+                                    <p className="mt-2 font-serif text-[1.15rem] text-midnight-navy">
+                                      {order.manufacturingName || "—"}
+                                    </p>
+                                  </div>
+
+                                  <div>
+                                    <p className="text-[8px] font-semibold uppercase tracking-[0.14em] text-steel-gray">
+                                      Notes
+                                    </p>
+
+                                    <p className="mt-2 whitespace-pre-wrap text-[10px] leading-5 text-slate-gray">
+                                      {order.manufacturingNotes || "No notes"}
+                                    </p>
+                                  </div>
+                                </div>
+                              </section>
+                            )}
 
                             <section className="mt-7">
                               <div className="mb-4">

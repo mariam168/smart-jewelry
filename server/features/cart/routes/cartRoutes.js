@@ -12,14 +12,34 @@ import {
 
 const router = express.Router();
 
-router.get("/", protect, getCart);
+router.get(
+  "/",
+  protect,
+  getCart,
+);
 
-router.post("/items", protect, addToCart);
+router.post(
+  "/items",
+  protect,
+  addToCart,
+);
 
-router.patch("/items/:itemId", protect, updateCartItem);
+router.patch(
+  "/items/:itemId",
+  protect,
+  updateCartItem,
+);
 
-router.delete("/items/:itemId", protect, removeCartItem);
+router.delete(
+  "/items/:itemId",
+  protect,
+  removeCartItem,
+);
 
-router.delete("/", protect, clearCart);
+router.delete(
+  "/",
+  protect,
+  clearCart,
+);
 
 export default router;

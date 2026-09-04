@@ -38,6 +38,12 @@ const productSchema = new mongoose.Schema(
       },
     ],
 
+    technologyRequired: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
     price: {
       type: Number,
       required: true,
@@ -171,7 +177,6 @@ productSchema.index(
   },
   {
     unique: true,
-
     partialFilterExpression: {
       sku: {
         $gt: "",

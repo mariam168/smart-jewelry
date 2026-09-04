@@ -441,6 +441,20 @@ const AdminFinancePage =
         ? data.recentExpenses
         : [];
 
+    const recognizedSales =
+      Number(
+        overview.recognizedSales ??
+          overview.deliveredSales ??
+          0,
+      );
+
+    const recognizedOrders =
+      Number(
+        overview.recognizedOrders ??
+          overview.deliveredOrders ??
+          0,
+      );
+
     return (
       <main className="min-h-screen bg-warm-ivory text-rich-navy">
         <header className="border-b border-light-champagne bg-soft-white">
@@ -460,9 +474,10 @@ const AdminFinancePage =
                 </h1>
 
                 <p className="mt-3 max-w-xl text-[13px] leading-6 text-slate-gray">
-                  Delivered sales, product
-                  costs and actual product
-                  profit.
+                  Sales are recognized from
+                  Confirmed status onward,
+                  together with product costs
+                  and actual product profit.
                 </p>
               </div>
 
@@ -560,14 +575,11 @@ const AdminFinancePage =
 
           <section className="grid gap-5 md:grid-cols-3">
             <SummaryCard
-              label="Delivered Sales"
+              label="Confirmed Sales"
               value={`${formatMoney(
-                overview.deliveredSales,
+                recognizedSales,
               )} ${currency}`}
-              helper={`${Number(
-                overview.deliveredOrders ||
-                  0,
-              )} delivered order(s)`}
+              helper={`${recognizedOrders} confirmed-or-later order(s)`}
               dark
             />
 
@@ -594,6 +606,25 @@ const AdminFinancePage =
                 )
               }
             />
+          </section>
+
+          <section className="mt-7 rounded-[18px] border border-champagne-gold/25 bg-soft-cream px-5 py-4">
+            <p className="text-[9px] font-semibold uppercase tracking-[0.17em] text-antique-gold">
+              Finance Recognition Rule
+            </p>
+
+            <p className="mt-2 text-[10px] leading-6 text-slate-gray">
+              An order starts appearing in
+              Finance when its status becomes{" "}
+              <strong className="text-rich-navy">
+                Confirmed
+              </strong>
+              . It remains counted while it
+              moves through Processing,
+              Shipped and Delivered. Pending
+              and Cancelled orders are not
+              included.
+            </p>
           </section>
 
           <section className="mt-7 overflow-hidden rounded-[26px] border border-light-champagne bg-soft-white">
@@ -635,15 +666,17 @@ const AdminFinancePage =
 
           <section className="mt-7 overflow-hidden rounded-[26px] border border-light-champagne bg-soft-white">
             <SectionHeader
-              eyebrow="Delivered Products"
+              eyebrow="Confirmed Orders"
               title="Sales & Profit"
             />
 
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[1500px]">
+              <table className="w-full min-w-[1580px]">
                 <thead>
                   <tr className="border-b border-light-champagne bg-warm-ivory/60 text-left">
                     <TableHead text="Order" />
+
+                    <TableHead text="Status" />
 
                     <TableHead text="Product" />
 
@@ -720,6 +753,14 @@ const AdminFinancePage =
                                 item.orderDate,
                               )}
                             </p>
+                          </td>
+
+                          <td className="px-5 py-4">
+                            <OrderStatusBadge
+                              status={
+                                item.orderStatus
+                              }
+                            />
                           </td>
 
                           <td className="px-5 py-4">
@@ -836,10 +877,10 @@ const AdminFinancePage =
                     <tr>
                       <td
                         colSpan={
-                          12
+                          13
                         }
                       >
-                        <EmptyState text="No delivered sales yet." />
+                        <EmptyState text="No confirmed sales yet." />
                       </td>
                     </tr>
                   )}
@@ -1092,8 +1133,8 @@ const AdminFinancePage =
             </p>
 
             <p className="mt-3 text-[11px] leading-7 text-slate-gray">
-              Delivered Product Sales
-              − Product Cost − Smart
+              Confirmed-or-Later Product
+              Sales − Product Cost − Smart
               Unit Cost − Smart Unit
               Installation Cost −
               Packaging Cost ={" "}
@@ -1328,6 +1369,56 @@ const ProfitCell = ({
       </span>
     </td>
   );
+};
+
+const OrderStatusBadge = ({
+  status,
+}) => {
+  const normalized =
+    String(
+      status ||
+        "confirmed",
+    ).toLowerCase();
+
+  const className =
+    normalized ===
+    "delivered"
+      ? "border-classic-gold/30 bg-soft-cream text-antique-gold"
+      : normalized ===
+        "shipped"
+      ? "border-navy-soft/20 bg-silver-mist/80 text-navy-soft"
+      : normalized ===
+        "processing"
+      ? "border-light-champagne bg-warm-ivory text-slate-gray"
+      : "border-champagne-gold/30 bg-champagne-gold/10 text-antique-gold";
+
+  return (
+    <span
+      className={`inline-flex rounded-full border px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.08em] ${className}`}
+    >
+      {formatStatusLabel(
+        normalized,
+      )}
+    </span>
+  );
+};
+
+const formatStatusLabel = (
+  value,
+) => {
+  return String(
+    value ||
+      "",
+  )
+    .replaceAll(
+      "_",
+      " ",
+    )
+    .replace(
+      /\b\w/g,
+      (letter) =>
+        letter.toUpperCase(),
+    );
 };
 
 const EmptyState = ({
