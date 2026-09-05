@@ -273,7 +273,7 @@ export const changeUserRole = async ({ userId, roleName, adminUserId }) => {
     throw createError("Role is required", 400);
   }
 
-  const allowedRoles = ["admin", "customer"];
+  const allowedRoles = ["admin", "customer", "super_admin"];
 
   if (!allowedRoles.includes(normalizedRole)) {
     throw createError("Invalid role", 400);

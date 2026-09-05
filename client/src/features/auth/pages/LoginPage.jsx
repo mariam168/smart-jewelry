@@ -88,16 +88,17 @@ const LoginPage = () => {
 
       console.log("Authenticated");
 
-      const role =
-        response.data.user.role.name;
+    const role =
+  response.data.user.role.name;
 
-      console.log("ROLE:", role);
-
-      if (role === "admin") {
-        navigate("/admin");
-      } else {
-        navigate("/account");
-      }
+if (
+  role === "admin" ||
+  role === "super_admin"
+) {
+  navigate("/admin");
+} else {
+  navigate("/account");
+}
 
       console.log("Navigation Done");
 

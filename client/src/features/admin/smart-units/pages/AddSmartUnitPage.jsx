@@ -467,17 +467,15 @@ text-slate-gray
 md:col-span-2
 "
                   >
-                  <label className={labelClass}>
-  Production Date
-</label>
+                    <label className={labelClass}>Production Date</label>
 
-<input
-  type="date"
-  name="productionDate"
-  value={formData.productionDate}
-  onChange={handleChange}
-  className={inputClass}
-/>
+                    <input
+                      type="date"
+                      name="productionDate"
+                      value={formData.productionDate}
+                      onChange={handleChange}
+                      className={inputClass}
+                    />
                   </div>
                 </div>
               </section>

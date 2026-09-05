@@ -1,3 +1,4 @@
+
 import {
   useEffect,
   useMemo,
@@ -9,7 +10,19 @@ import {
   updateAdminUserRole,
 } from "../services/adminUserApi";
 
+import {
+  useAuth,
+} from "../../auth/context/AuthContext";
+
 const AdminUsersPage = () => {
+  const {
+    user: currentUser,
+  } = useAuth();
+
+  const isSuperAdmin =
+    currentUser?.role?.name ===
+    "super_admin";
+
   const [
     users,
     setUsers,
@@ -155,6 +168,13 @@ const AdminUsersPage = () => {
         "customer",
     ).length;
 
+  const superAdminCount =
+    users.filter(
+      (user) =>
+        user.role?.name ===
+        "super_admin",
+    ).length;
+
   const handleRoleChange =
     async (
       user,
@@ -167,6 +187,32 @@ const AdminUsersPage = () => {
         currentRole ===
         newRole
       ) {
+        return;
+      }
+
+      // Only Super Admin can assign Super Admin role
+      if (
+        newRole ===
+          "super_admin" &&
+        !isSuperAdmin
+      ) {
+        setError(
+          "Only a Super Admin can assign the Super Admin role.",
+        );
+
+        return;
+      }
+
+      // Only Super Admin can modify a Super Admin
+      if (
+        currentRole ===
+          "super_admin" &&
+        !isSuperAdmin
+      ) {
+        setError(
+          "You cannot modify a Super Admin account.",
+        );
+
         return;
       }
 
@@ -184,7 +230,10 @@ const AdminUsersPage = () => {
 
       const confirmed =
         window.confirm(
-          `Change ${fullName} from ${currentRole || "unknown"} to ${newRole}?`,
+          `Change ${fullName} from ${
+            currentRole ||
+            "unknown"
+          } to ${newRole}?`,
         );
 
       if (!confirmed) {
@@ -334,7 +383,7 @@ const AdminUsersPage = () => {
           </div>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-[22px] border border-light-champagne bg-soft-white p-6 shadow-[0_12px_32px_rgba(7,19,31,0.04)]">
             <p className="text-[8px] font-semibold uppercase tracking-[0.22em] text-steel-gray">
               Total Users
@@ -355,13 +404,23 @@ const AdminUsersPage = () => {
             </p>
           </div>
 
-          <div className="rounded-[22px] border border-champagne-gold/25 bg-soft-cream p-6 shadow-[0_12px_32px_rgba(7,19,31,0.04)]">
+          <div className="rounded-[22px] border border-champagne-gold/25 bg-soft-cream p-6 shadow-[0_12px_32px_rgba(7,19,31,0.05)]">
             <p className="text-[8px] font-semibold uppercase tracking-[0.22em] text-antique-gold">
               Administrators
             </p>
 
             <p className="mt-3 font-serif text-[2.4rem] text-antique-gold">
               {adminCount}
+            </p>
+          </div>
+
+          <div className="rounded-[22px] border border-rich-navy/20 bg-soft-white p-6 shadow-[0_12px_32px_rgba(7,19,31,0.05)]">
+            <p className="text-[8px] font-semibold uppercase tracking-[0.22em] text-midnight-navy">
+              Super Administrators
+            </p>
+
+            <p className="mt-3 font-serif text-[2.4rem] text-midnight-navy">
+              {superAdminCount}
             </p>
           </div>
         </div>
@@ -419,6 +478,12 @@ const AdminUsersPage = () => {
                 <option value="admin">
                   Admins
                 </option>
+
+                {isSuperAdmin && (
+                  <option value="super_admin">
+                    Super Admins
+                  </option>
+                )}
               </select>
             </div>
           </div>
@@ -483,15 +548,27 @@ const AdminUsersPage = () => {
                           " ",
                         )
                         .map(
-                          (part) =>
+                          (
+                            part,
+                          ) =>
                             part[0],
                         )
-                        .join("")
+                        .join(
+                          "",
+                        )
                         .slice(
                           0,
                           2,
                         )
                         .toUpperCase();
+
+                    const isTargetSuperAdmin =
+                      role ===
+                      "super_admin";
+
+                    const canEditRole =
+                      isSuperAdmin ||
+                      !isTargetSuperAdmin;
 
                     return (
                       <tr
@@ -533,7 +610,8 @@ const AdminUsersPage = () => {
                         </td>
 
                         <td className="px-6 py-5 text-[11px] text-slate-gray">
-                          {user.customer
+                          {user
+                            .customer
                             ?.phone ||
                             "—"}
                         </td>
@@ -565,7 +643,8 @@ const AdminUsersPage = () => {
                             }
                             disabled={
                               updatingId ===
-                              user._id
+                                user._id ||
+                              !canEditRole
                             }
                             onChange={(
                               event,
@@ -577,9 +656,11 @@ const AdminUsersPage = () => {
                                   .value,
                               )
                             }
-                            className={`min-w-[130px] rounded-[11px] border px-3 py-2.5 text-[10px] font-semibold outline-none disabled:opacity-50 ${
+                            className={`min-w-[150px] rounded-[11px] border px-3 py-2.5 text-[10px] font-semibold outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
                               role ===
-                              "admin"
+                                "admin" ||
+                              role ===
+                                "super_admin"
                                 ? "border-champagne-gold/35 bg-soft-cream text-antique-gold"
                                 : "border-light-champagne bg-soft-white text-midnight-navy"
                             }`}
@@ -591,6 +672,12 @@ const AdminUsersPage = () => {
                             <option value="admin">
                               Admin
                             </option>
+
+                            {isSuperAdmin && (
+                              <option value="super_admin">
+                                Super Admin
+                              </option>
+                            )}
                           </select>
                         </td>
                       </tr>
@@ -619,3 +706,4 @@ const AdminUsersPage = () => {
 };
 
 export default AdminUsersPage;
+

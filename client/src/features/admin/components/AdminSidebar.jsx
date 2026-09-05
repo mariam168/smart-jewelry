@@ -1,51 +1,71 @@
+
 import { NavLink } from "react-router-dom";
 
+import { useAuth } from "../../auth/context/AuthContext";
+
 const AdminSidebar = () => {
+  const { user } = useAuth();
+
+  const isSuperAdmin = user?.role?.name === "super_admin";
+
   const menuItems = [
-    {
-      label: "Dashboard",
-      path: "/admin",
-    },
-    {
-      label: "Finance",
-      path: "/admin/finance",
-    },
+    ...(isSuperAdmin
+      ? [
+          {
+            label: "Dashboard",
+            path: "/admin",
+          },
+          {
+            label: "Users",
+            path: "/admin/users",
+          },
+          {
+            label: "Finance",
+            path: "/admin/finance",
+          },
+        ]
+      : []),
+
     {
       label: "Shipping",
       path: "/admin/shipping",
     },
+
     {
       label: "Technologies",
       path: "/admin/technologies",
     },
+
     {
       label: "Technology Models",
       path: "/admin/technology-models",
     },
+
     {
       label: "Smart Units",
       path: "/admin/smart-units",
     },
+
     {
       label: "Products",
       path: "/admin/products",
     },
+
     {
       label: "Manufacturing Orders",
       path: "/admin/manufacturing",
     },
+
     {
       label: "Categories",
       path: "/admin/categories",
     },
-    {
-  label: "Users",
-  path: "/admin/users",
-},
+
     {
       label: "Orders",
       path: "/admin/orders",
     },
+
     {
       label: "Experience Media Settings",
       path: "/admin/experience-media-settings",
@@ -60,7 +80,7 @@ const AdminSidebar = () => {
 
       <div className="pointer-events-none absolute -bottom-32 -left-28 h-80 w-80 rounded-full bg-navy-soft/20 blur-[90px]" />
 
-      <div className="pointer-events-none absolute right-0 top-[26%] h-64 w-64 rounded-full border border-champagne-gold/[0.05]" />
+      <div className="pointer-events-none absolute right-0 top-[26%] h-64 h-64 rounded-full border border-champagne-gold/[0.05]" />
 
       <div className="relative z-10 shrink-0 border-b border-soft-white/[0.08] px-6 py-7">
         <div className="flex items-center gap-4">
@@ -106,94 +126,91 @@ const AdminSidebar = () => {
               to={item.path}
               end={item.path === "/admin"}
               className={({ isActive }) =>
-                `
-                  group relative flex min-h-[48px] items-center
-                  overflow-hidden rounded-[14px]
-                  px-3.5 py-3
-                  text-[11px] font-medium
-                  transition-all duration-300
-                  ${
-                    isActive
-                      ? `
-                        border border-champagne-gold/15
-                        bg-soft-white/[0.07]
-                        text-soft-white
-                        shadow-[0_8px_24px_rgba(0,0,0,0.13)]
-                      `
-                      : `
-                        border border-transparent
-                        text-premium-silver/60
-                        hover:border-soft-white/[0.06]
-                        hover:bg-soft-white/[0.04]
-                        hover:text-soft-white
-                      `
-                  }
-                `
+                ` 
+group relative flex min-h-[48px] items-center 
+overflow-hidden rounded-[14px] 
+px-3.5 py-3 
+text-[11px] font-medium 
+transition-all duration-300 
+ 
+${
+  isActive
+    ? ` 
+border border-champagne-gold/15 
+bg-soft-white/[0.07] 
+text-soft-white 
+shadow-[0_8px_24px_rgba(0,0,0,0.13)] 
+`
+    : ` 
+border border-transparent 
+text-premium-silver/60 
+hover:border-soft-white/[0.06] 
+hover:bg-soft-white/[0.04] 
+hover:text-soft-white 
+`
+} 
+`
               }
             >
               {({ isActive }) => (
                 <>
                   <span
-                    className={`
-                      absolute left-0 top-1/2
-                      h-7 w-[2px]
-                      -translate-y-1/2
-                      rounded-r-full
-                      bg-champagne-gold
-                      shadow-[0_0_12px_rgba(227,196,122,0.35)]
-                      transition-all duration-300
-                      ${
-                        isActive
-                          ? "opacity-100"
-                          : "opacity-0"
-                      }
-                    `}
+                    className={` 
+absolute left-0 top-1/2 
+h-7 w-[2px] 
+-translate-y-1/2 
+rounded-r-full 
+bg-champagne-gold 
+shadow-[0_0_12px_rgba(227,196,122,0.35)] 
+ 
+${isActive ? "opacity-100" : "opacity-0"} 
+ 
+`}
                   />
 
                   <span
-                    className={`
-                      flex h-8 w-8 shrink-0
-                      items-center justify-center
-                      rounded-full
-                      text-[7px]
-                      transition-all duration-300
-                      ${
-                        isActive
-                          ? `
-                            border border-champagne-gold/20
-                            bg-midnight-navy
-                            text-champagne-gold
-                            shadow-[0_6px_16px_rgba(0,0,0,0.12)]
-                          `
-                          : `
-                            border border-transparent
-                            bg-soft-white/[0.025]
-                            text-premium-silver/35
-                            group-hover:border-champagne-gold/10
-                            group-hover:text-champagne-gold
-                          `
-                      }
-                    `}
+                    className={` 
+flex h-8 w-8 shrink-0 
+items-center justify-center 
+rounded-full 
+text-[7px] 
+ 
+${
+  isActive
+    ? ` 
+border border-champagne-gold/20 
+bg-midnight-navy 
+text-champagne-gold 
+`
+    : ` 
+border border-transparent 
+bg-soft-white/[0.025] 
+text-premium-silver/35 
+group-hover:border-champagne-gold/10 
+group-hover:text-champagne-gold 
+`
+} 
+ 
+`}
                   >
                     ✦
                   </span>
 
-                  <span className="ml-3 truncate">
-                    {item.label}
-                  </span>
+                  <span className="ml-3 truncate">{item.label}</span>
 
                   <span
-                    className={`
-                      ml-auto
-                      text-[11px]
-                      text-champagne-gold
-                      transition-all duration-300
-                      ${
-                        isActive
-                          ? "translate-x-0 opacity-100"
-                          : "-translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-50"
-                      }
-                    `}
+                    className={` 
+ml-auto 
+text-[11px] 
+text-champagne-gold 
+ 
+${
+  isActive
+    ? "translate-x-0 opacity-100"
+    : "-translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-50"
+} 
+ 
+`}
                   >
                     →
                   </span>
@@ -202,17 +219,9 @@ const AdminSidebar = () => {
             </NavLink>
           ))}
         </div>
-
-        <div className="h-4" />
       </nav>
 
       <div className="relative z-10 shrink-0">
-        <div className="pointer-events-none absolute -bottom-24 -right-24 h-56 w-56 rounded-full border border-champagne-gold/[0.08]" />
-
-        <div className="pointer-events-none absolute -bottom-16 -right-16 h-40 w-40 rounded-full border border-champagne-gold/[0.06]" />
-
-        <div className="pointer-events-none absolute bottom-0 left-1/2 h-32 w-56 -translate-x-1/2 rounded-full bg-champagne-gold/[0.04] blur-[60px]" />
-
         <div className="relative mx-6 border-t border-soft-white/[0.08] py-5">
           <div className="flex items-center justify-center gap-2 text-[6px] font-semibold uppercase tracking-[0.23em] text-premium-silver/30">
             <span>Elegant</span>
@@ -230,27 +239,41 @@ const AdminSidebar = () => {
 
       <style>
         {`
-          .admin-sidebar-scroll {
-            scrollbar-width: thin;
-            scrollbar-color: rgba(227, 196, 122, 0.25) transparent;
-          }
 
-          .admin-sidebar-scroll::-webkit-scrollbar {
-            width: 4px;
-          }
+.admin-sidebar-scroll {
 
-          .admin-sidebar-scroll::-webkit-scrollbar-track {
-            background: transparent;
-          }
+scrollbar-width: thin;
 
-          .admin-sidebar-scroll::-webkit-scrollbar-thumb {
-            background: rgba(227, 196, 122, 0.22);
-            border-radius: 999px;
-          }
+scrollbar-color: 
+rgba(227,196,122,0.25) 
+transparent;
 
-          .admin-sidebar-scroll::-webkit-scrollbar-thumb:hover {
-            background: rgba(227, 196, 122, 0.4);
-          }
+}
+
+
+.admin-sidebar-scroll::-webkit-scrollbar {
+
+width:4px;
+
+}
+
+
+.admin-sidebar-scroll::-webkit-scrollbar-track {
+
+background:transparent;
+
+}
+
+
+.admin-sidebar-scroll::-webkit-scrollbar-thumb {
+
+background: 
+rgba(227,196,122,0.22); 
+
+border-radius:999px;
+
+}
+
         `}
       </style>
     </aside>

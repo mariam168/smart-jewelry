@@ -7,8 +7,7 @@ import {
   useAuth,
 } from "../context/AuthContext";
 
-
-const AdminProtectedRoute = () => {
+const SuperAdminRoute = () => {
   const {
     user,
     isLoading,
@@ -32,23 +31,18 @@ const AdminProtectedRoute = () => {
     );
   }
 
- const role =
-  user?.role?.name;
-
-const isAdmin =
-  role === "admin" ||
-  role === "super_admin";
-
-if (!isAdmin) {
-  return (
-    <Navigate
-      to="/account"
-      replace
-    />
-  );
-}
+  if (
+    user?.role?.name !== "super_admin"
+  ) {
+    return (
+      <Navigate
+        to="/admin"
+        replace
+      />
+    );
+  }
 
   return <Outlet />;
 };
 
-export default AdminProtectedRoute;
+export default SuperAdminRoute;

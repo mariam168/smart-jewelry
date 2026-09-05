@@ -1,3 +1,4 @@
+
 import { useContext, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 
@@ -22,7 +23,14 @@ const Header = () => {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+  const cartCount = cartItems.reduce(
+    (total, item) => total + item.quantity,
+    0,
+  );
+
+  const isAdmin =
+    user?.role?.name === "admin" ||
+    user?.role?.name === "super_admin";
 
   const handleLogout = async () => {
     await logout();
@@ -31,15 +39,15 @@ const Header = () => {
   };
 
   const navLinkClass = ({ isActive }) =>
-    `relative flex h-full items-center justify-center px-0.5 text-[12px] font-semibold uppercase tracking-[0.035em] transition-colors duration-300
+    `relative flex h-full items-center justify-center px-0.5 text-[12px] font-semibold uppercase tracking-[0.035em] transition-colors duration-300 
     ${
       isActive
         ? "text-midnight-navy"
         : "text-midnight-navy/85 hover:text-classic-gold"
-    }
-    after:absolute after:bottom-[28px] after:left-1/2 after:h-[1.5px]
-    after:-translate-x-1/2 after:bg-midnight-navy
-    after:transition-all after:duration-300
+    } 
+    after:absolute after:bottom-[28px] after:left-1/2 after:h-[1.5px] 
+    after:-translate-x-1/2 after:bg-midnight-navy 
+    after:transition-all after:duration-300 
     ${isActive ? "after:w-full" : "after:w-0 hover:after:w-full"}`;
 
   return (
@@ -78,7 +86,7 @@ const Header = () => {
           {user ? (
             <>
               <Link
-                to={user?.role?.name === "admin" ? "/admin" : "/account"}
+                to={isAdmin ? "/admin" : "/account"}
                 className="group hidden items-center gap-2.5 text-[11px] font-medium text-midnight-navy transition-colors duration-300 hover:text-classic-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-classic-gold/40 sm:flex"
               >
                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-warm-ivory text-midnight-navy transition-all duration-300 group-hover:bg-soft-cream group-hover:text-classic-gold md:h-10 md:w-10">
@@ -86,7 +94,7 @@ const Header = () => {
                 </span>
 
                 <span className="hidden whitespace-nowrap lg:block">
-                  {user?.role?.name === "admin" ? "Dashboard" : "My Account"}
+                  {isAdmin ? "Dashboard" : "My Account"}
                 </span>
               </Link>
 
@@ -110,7 +118,9 @@ const Header = () => {
                 <FaArrowRightToBracket className="text-[14px]" />
               </span>
 
-              <span className="hidden whitespace-nowrap lg:block">Login</span>
+              <span className="hidden whitespace-nowrap lg:block">
+                Login
+              </span>
             </Link>
           )}
 
@@ -171,7 +181,7 @@ const Header = () => {
               {user ? (
                 <div className="flex flex-col gap-1">
                   <Link
-                    to={user?.role?.name === "admin" ? "/admin" : "/account"}
+                    to={isAdmin ? "/admin" : "/account"}
                     onClick={() => setIsMenuOpen(false)}
                     className="flex items-center gap-3 rounded-lg px-1 py-3 text-[12px] font-medium text-midnight-navy transition-colors duration-300 hover:text-classic-gold"
                   >
@@ -179,7 +189,7 @@ const Header = () => {
                       <FaUsers className="text-[14px]" />
                     </span>
 
-                    {user?.role?.name === "admin" ? "Dashboard" : "My Account"}
+                    {isAdmin ? "Dashboard" : "My Account"}
                   </Link>
 
                   <button
@@ -189,6 +199,7 @@ const Header = () => {
                     <span className="flex h-9 w-9 items-center justify-center rounded-full bg-warm-ivory">
                       <FaArrowRightFromBracket className="text-[14px]" />
                     </span>
+
                     Logout
                   </button>
                 </div>
@@ -201,6 +212,7 @@ const Header = () => {
                   <span className="flex h-9 w-9 items-center justify-center rounded-full bg-warm-ivory">
                     <FaArrowRightToBracket className="text-[14px]" />
                   </span>
+
                   Login
                 </Link>
               )}

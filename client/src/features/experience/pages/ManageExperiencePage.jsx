@@ -1,3 +1,4 @@
+
 import {
   useEffect,
   useState,
@@ -100,8 +101,6 @@ const ManageExperiencePage = () => {
   ] = useState({
     ownerName: "",
     receiverName: "",
-    receiverEmail: "",
-    title: "",
     message: "",
     profileImage: "",
   });
@@ -152,41 +151,40 @@ const ManageExperiencePage = () => {
           "",
       );
 
-      if (
-        data.personal
-      ) {
-        setForm({
-          ownerName:
-            data.personal
-              .ownerName ||
-            "",
+      const order =
+        data.experience?.order ||
+        {};
 
-          receiverName:
-            data.personal
-              .receiverName ||
-            "",
+      const manufacturingName =
+        order.manufacturingName ||
+        "";
 
-          receiverEmail:
-            data.personal
-              .receiverEmail ||
-            "",
+      const shippingAddress =
+        order.shippingAddress ||
+        {};
 
-          title:
-            data.personal
-              .title ||
-            "",
+      const receiverName = [
+        shippingAddress.firstName,
+        shippingAddress.lastName,
+      ]
+        .filter(Boolean)
+        .join(" ");
 
-          message:
-            data.personal
-              .message ||
-            "",
+      setForm({
+        ownerName:
+          manufacturingName,
 
-          profileImage:
-            data.personal
-              .profileImage ||
-            "",
-        });
-      }
+        receiverName:
+          receiverName,
+
+        message:
+          data.personal?.message ||
+          "",
+
+        profileImage:
+          data.personal?.profileImage ||
+          "",
+      });
     } catch (
       error
     ) {

@@ -1,3 +1,4 @@
+
 import {
   useEffect,
   useMemo,
@@ -414,20 +415,29 @@ const AccountPage = () => {
       );
   };
 
- const getImageUrl = (image) => {
-  if (!image) {
-    return "";
-  }
+  const getImageUrl = (image) => {
+    if (!image) {
+      return "";
+    }
 
-  if (image.startsWith("http://") || image.startsWith("https://")) {
-    return image;
-  }
-  const baseUrl = import.meta.env.VITE_API_URL 
-    ? import.meta.env.VITE_API_URL.replace("/api", "") 
-    : "http://localhost:5000";
+    if (
+      image.startsWith("http://") ||
+      image.startsWith("https://")
+    ) {
+      return image;
+    }
 
-  return `${baseUrl}${image}`;
-};
+    const baseUrl =
+      import.meta.env.VITE_API_URL
+        ? import.meta.env.VITE_API_URL.replace(
+            "/api",
+            ""
+          )
+        : "http://localhost:5000";
+
+    return `${baseUrl}${image}`;
+  };
+
   const getOrderStepIndex = (status) => {
     return orderSteps.findIndex(
       (step) =>
@@ -523,6 +533,31 @@ const AccountPage = () => {
       (step) =>
         step.key === status
     );
+  };
+
+  /*
+   * Payment is considered paid once the order is confirmed.
+   *
+   * This is used for the customer account display.
+   * Pending orders keep their original payment status.
+   */
+  const getDisplayPaymentStatus = (
+    order
+  ) => {
+    if (
+      [
+        "confirmed",
+        "processing",
+        "shipped",
+        "delivered",
+      ].includes(
+        order?.orderStatus
+      )
+    ) {
+      return "paid";
+    }
+
+    return order?.paymentStatus;
   };
 
   if (isLoading) {
@@ -824,6 +859,11 @@ const AccountPage = () => {
                         order.orderStatus
                       );
 
+                    const displayPaymentStatus =
+                      getDisplayPaymentStatus(
+                        order
+                      );
+
                     return (
                       <article
                         key={order._id}
@@ -884,11 +924,11 @@ const AccountPage = () => {
 
                                 <span
                                   className={`mt-1 inline-flex rounded-full border px-3 py-1.5 text-[10px] font-semibold ${getPaymentStatusStyle(
-                                    order.paymentStatus
+                                    displayPaymentStatus
                                   )}`}
                                 >
                                   {formatStatus(
-                                    order.paymentStatus
+                                    displayPaymentStatus
                                   )}
                                 </span>
                               </div>
@@ -1162,11 +1202,11 @@ const AccountPage = () => {
 
                                 <span
                                   className={`mt-3 inline-flex rounded-full border px-3 py-1.5 text-[10px] font-semibold ${getPaymentStatusStyle(
-                                    order.paymentStatus
+                                    displayPaymentStatus
                                   )}`}
                                 >
                                   {formatStatus(
-                                    order.paymentStatus
+                                    displayPaymentStatus
                                   )}
                                 </span>
                               </div>
@@ -1247,15 +1287,6 @@ const AccountPage = () => {
                                     item,
                                     index
                                   ) => {
-                                    const manufacturingRequired =
-                                      item.manufacturingStatus !==
-                                      "not_required";
-
-                                    const manufacturingIndex =
-                                      getManufacturingStepIndex(
-                                        item.manufacturingStatus
-                                      );
-
                                     return (
                                       <article
                                         key={
@@ -1490,155 +1521,6 @@ const AccountPage = () => {
                                                 </div>
                                               </div>
                                             )}
-
-                                            <div className="mt-5 border-t border-light-champagne/75 pt-5">
-                                              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                                <div>
-                                                  <p className="text-[9px] font-semibold uppercase tracking-[0.17em] text-steel-gray">
-                                                    Manufacturing
-                                                  </p>
-
-                                                  <span
-                                                    className={`mt-2 inline-flex rounded-full border px-3 py-1.5 text-[10px] font-semibold ${getManufacturingStatusStyle(
-                                                      item.manufacturingStatus
-                                                    )}`}
-                                                  >
-                                                    {formatStatus(
-                                                      item.manufacturingStatus
-                                                    )}
-                                                  </span>
-                                                </div>
-
-                                                {item.smartUnit && (
-                                                  <div className="sm:text-right">
-                                                    <p className="text-[9px] text-steel-gray">
-                                                      Smart Unit
-                                                    </p>
-
-                                                    <p className="mt-1 text-[10px] font-semibold">
-                                                      {typeof item.smartUnit ===
-                                                      "object"
-                                                        ? item
-                                                            .smartUnit
-                                                            .name ||
-                                                          item
-                                                            .smartUnit
-                                                            ._id
-                                                        : item.smartUnit}
-                                                    </p>
-                                                  </div>
-                                                )}
-                                              </div>
-
-                                              {manufacturingRequired && (
-                                                <div className="mt-6">
-                                                  <div className="relative hidden sm:block">
-                                                    <div className="absolute left-[12.5%] right-[12.5%] top-4 h-px bg-light-champagne" />
-
-                                                    {manufacturingIndex >
-                                                      0 && (
-                                                      <div
-                                                        className="absolute left-[12.5%] top-4 h-px bg-classic-gold transition-all"
-                                                        style={{
-                                                          width: `${
-                                                            (manufacturingIndex /
-                                                              (manufacturingSteps.length -
-                                                                1)) *
-                                                            75
-                                                          }%`,
-                                                        }}
-                                                      />
-                                                    )}
-
-                                                    <div className="relative grid grid-cols-4">
-                                                      {manufacturingSteps.map(
-                                                        (
-                                                          step,
-                                                          stepIndex
-                                                        ) => {
-                                                          const completed =
-                                                            stepIndex <
-                                                            manufacturingIndex;
-
-                                                          const current =
-                                                            stepIndex ===
-                                                            manufacturingIndex;
-
-                                                          return (
-                                                            <div
-                                                              key={
-                                                                step.key
-                                                              }
-                                                              className="flex flex-col items-center"
-                                                            >
-                                                              <div
-                                                                className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full border ${
-                                                                  completed
-                                                                    ? "border-midnight-navy bg-midnight-navy text-soft-white"
-                                                                    : current
-                                                                      ? "border-classic-gold bg-soft-white text-classic-gold"
-                                                                      : "border-light-champagne bg-soft-white text-steel-gray"
-                                                                }`}
-                                                              >
-                                                                {completed
-                                                                  ? "✓"
-                                                                  : current
-                                                                    ? "•"
-                                                                    : ""}
-                                                              </div>
-
-                                                              <p
-                                                                className={`mt-2 text-[9px] font-semibold ${
-                                                                  completed ||
-                                                                  current
-                                                                    ? "text-midnight-navy"
-                                                                    : "text-steel-gray"
-                                                                }`}
-                                                              >
-                                                                {
-                                                                  step.label
-                                                                }
-                                                              </p>
-                                                            </div>
-                                                          );
-                                                        }
-                                                      )}
-                                                    </div>
-                                                  </div>
-
-                                                  <div className="sm:hidden">
-                                                    <div className="h-1.5 overflow-hidden rounded-full bg-light-champagne/70">
-                                                      <div
-                                                        className="h-full rounded-full bg-classic-gold"
-                                                        style={{
-                                                          width: `${
-                                                            manufacturingIndex >=
-                                                            0
-                                                              ? ((manufacturingIndex +
-                                                                  1) /
-                                                                  manufacturingSteps.length) *
-                                                                100
-                                                              : 0
-                                                          }%`,
-                                                        }}
-                                                      />
-                                                    </div>
-
-                                                    <p className="mt-2 text-[9px] text-steel-gray">
-                                                      {formatStatus(
-                                                        item.manufacturingStatus
-                                                      )}
-                                                    </p>
-                                                  </div>
-                                                </div>
-                                              )}
-
-                                              {!manufacturingRequired && (
-                                                <p className="mt-3 text-[10px] leading-5 text-steel-gray">
-                                                  This product does not require a manufacturing workflow.
-                                                </p>
-                                              )}
-                                            </div>
                                           </div>
                                         </div>
                                       </article>
@@ -1779,3 +1661,4 @@ const AccountPage = () => {
 };
 
 export default AccountPage;
+

@@ -1,4 +1,10 @@
-const PersonalInfoForm = ({ form, handleChange, handleSave, saving }) => {
+
+const PersonalInfoForm = ({
+  form,
+  handleChange,
+  handleSave,
+  saving,
+}) => {
   return (
     <section className="relative overflow-hidden rounded-[28px] border border-light-champagne/90 bg-soft-white/90 shadow-[0_20px_60px_rgba(7,19,31,0.055)]">
       <div className="pointer-events-none absolute -right-28 -top-28 h-72 w-72 rounded-full border border-champagne-gold/[0.08]" />
@@ -26,6 +32,7 @@ const PersonalInfoForm = ({ form, handleChange, handleSave, saving }) => {
 
       <div className="relative px-6 py-7 sm:px-8 sm:py-9 lg:px-10 lg:py-10">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          
           <div>
             <label className="mb-2.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-gray">
               From
@@ -33,10 +40,9 @@ const PersonalInfoForm = ({ form, handleChange, handleSave, saving }) => {
 
             <input
               type="text"
-              name="ownerName"
-              placeholder="Your name"
-              value={form.ownerName}
-              onChange={handleChange}
+              name="receiverName"
+              value={form.receiverName}
+              readOnly
               className="
                 h-[54px]
                 w-full
@@ -48,19 +54,12 @@ const PersonalInfoForm = ({ form, handleChange, handleSave, saving }) => {
                 text-[13px]
                 text-rich-navy
                 outline-none
-                transition-all
-                duration-300
-                placeholder:text-steel-gray/65
-                hover:border-champagne-gold/55
-                hover:bg-soft-white
-                focus:border-classic-gold
-                focus:bg-soft-white
-                focus:ring-4
-                focus:ring-classic-gold/10
+                cursor-default
               "
             />
           </div>
 
+          {/* To */}
           <div>
             <label className="mb-2.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-gray">
               To
@@ -68,10 +67,9 @@ const PersonalInfoForm = ({ form, handleChange, handleSave, saving }) => {
 
             <input
               type="text"
-              name="receiverName"
-              placeholder="Recipient's name"
-              value={form.receiverName}
-              onChange={handleChange}
+              name="ownerName"
+              value={form.ownerName}
+              readOnly
               className="
                 h-[54px]
                 w-full
@@ -83,89 +81,12 @@ const PersonalInfoForm = ({ form, handleChange, handleSave, saving }) => {
                 text-[13px]
                 text-rich-navy
                 outline-none
-                transition-all
-                duration-300
-                placeholder:text-steel-gray/65
-                hover:border-champagne-gold/55
-                hover:bg-soft-white
-                focus:border-classic-gold
-                focus:bg-soft-white
-                focus:ring-4
-                focus:ring-classic-gold/10
+                cursor-default
               "
             />
           </div>
 
-          <div className="md:col-span-2">
-            <label className="mb-2.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-gray">
-              Recipient Email
-            </label>
-
-            <input
-              type="email"
-              name="receiverEmail"
-              placeholder="recipient@example.com"
-              value={form.receiverEmail}
-              onChange={handleChange}
-              className="
-                h-[54px]
-                w-full
-                rounded-[14px]
-                border
-                border-light-champagne
-                bg-warm-ivory/60
-                px-5
-                text-[13px]
-                text-rich-navy
-                outline-none
-                transition-all
-                duration-300
-                placeholder:text-steel-gray/65
-                hover:border-champagne-gold/55
-                hover:bg-soft-white
-                focus:border-classic-gold
-                focus:bg-soft-white
-                focus:ring-4
-                focus:ring-classic-gold/10
-              "
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="mb-2.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-gray">
-              Message Title
-            </label>
-
-            <input
-              type="text"
-              name="title"
-              placeholder="A special message for you"
-              value={form.title}
-              onChange={handleChange}
-              className="
-                h-[54px]
-                w-full
-                rounded-[14px]
-                border
-                border-light-champagne
-                bg-warm-ivory/60
-                px-5
-                text-[13px]
-                text-rich-navy
-                outline-none
-                transition-all
-                duration-300
-                placeholder:text-steel-gray/65
-                hover:border-champagne-gold/55
-                hover:bg-soft-white
-                focus:border-classic-gold
-                focus:bg-soft-white
-                focus:ring-4
-                focus:ring-classic-gold/10
-              "
-            />
-          </div>
-
+          {/* Personal Message */}
           <div className="md:col-span-2">
             <div className="mb-2.5 flex items-center justify-between gap-4">
               <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-gray">

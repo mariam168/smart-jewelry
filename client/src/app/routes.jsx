@@ -70,7 +70,7 @@ import AdminManufacturingOrderDetailsPage from "../features/admin/pages/AdminMan
 import AdminExperienceMediaSettingsPage from "../features/admin/pages/AdminExperienceMediaSettingsPage";
 
 import AdminFinancePage from "../features/finance/pages/AdminFinancePage";
-
+import SuperAdminRoute from "../features/auth/components/SuperAdminRoute";
 import AdminShippingAreasPage from "../features/shipping/pages/AdminShippingAreasPage";
 
 const router = createBrowserRouter([
@@ -189,10 +189,15 @@ const router = createBrowserRouter([
                 element: <AdminDashboardPage />,
               },
 
-              {
-                path: "finance",
-                element: <AdminFinancePage />,
-              },
+             {
+  element: <SuperAdminRoute />,
+  children: [
+    {
+      path: "finance",
+      element: <AdminFinancePage />,
+    },
+  ],
+},
 
               {
                 path: "products",
@@ -284,9 +289,9 @@ const router = createBrowserRouter([
                 element: <AdminSmartUnitsPage />,
               },
               {
-  path: "smart-units/instance/:id/edit",
-  element: <AdminEditSmartUnitInstancePage />,
-},
+                path: "smart-units/instance/:id/edit",
+                element: <AdminEditSmartUnitInstancePage />,
+              },
 
               {
                 path: "smart-units/new",
@@ -323,9 +328,9 @@ const router = createBrowserRouter([
                 element: <AdminManufacturingOrderDetailsPage />,
               },
               {
-  path: "users",
-  element: <AdminUsersPage />,
-},
+                path: "users",
+                element: <AdminUsersPage />,
+              },
 
               {
                 path: "shipping",

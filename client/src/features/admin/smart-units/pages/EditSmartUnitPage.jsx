@@ -63,9 +63,9 @@ const EditSmartUnitPage = () => {
 
           stock: smartUnit?.stock ?? "",
 
-         productionDate: smartUnit?.productionDate
-  ? smartUnit.productionDate.substring(0,10)
-  : "",
+          productionDate: smartUnit?.productionDate
+            ? smartUnit.productionDate.substring(0, 10)
+            : "",
 
           manufacturer: smartUnit?.manufacturer || "",
 
@@ -274,17 +274,15 @@ const EditSmartUnitPage = () => {
                   </div>
 
                   <div className="md:col-span-2">
-                   <label className={labelClass}>
-Production Date
-</label>
+                    <label className={labelClass}>Production Date</label>
 
-<input
-type="date"
-name="productionDate"
-value={formData.productionDate}
-onChange={handleChange}
-className={inputClass}
-/>
+                    <input
+                      type="date"
+                      name="productionDate"
+                      value={formData.productionDate}
+                      onChange={handleChange}
+                      className={inputClass}
+                    />
                   </div>
                 </div>
               </section>

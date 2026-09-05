@@ -13,10 +13,12 @@ const permissionsData = [
     name: "profile.read",
     description: "View own profile",
   },
+
   {
     name: "profile.update",
     description: "Update own profile",
   },
+
   {
     name: "profile.password.update",
     description: "Change own password",
@@ -29,7 +31,10 @@ const seedAuthData = async () => {
 
     console.log("Starting Auth Seed...");
 
-    // Create permissions
+    // =======================
+    // Permissions
+    // =======================
+
     const permissions = [];
 
     for (const permissionData of permissionsData) {
@@ -42,13 +47,16 @@ const seedAuthData = async () => {
 
         console.log(`Permission created: ${permission.name}`);
       } else {
-        console.log(`Permission already exists: ${permission.name}`);
+        console.log(`Permission exists: ${permission.name}`);
       }
 
       permissions.push(permission);
     }
 
-    // Create customer role
+    // =======================
+    // Customer Role
+    // =======================
+
     let customerRole = await Role.findOne({
       name: "customer",
     });
@@ -56,20 +64,18 @@ const seedAuthData = async () => {
     if (!customerRole) {
       customerRole = await Role.create({
         name: "customer",
+
         description: "Platform customer",
+
         permissions: permissions.map((permission) => permission._id),
       });
 
       console.log("Customer role created");
-    } else {
-      customerRole.permissions = permissions.map(
-        (permission) => permission._id,
-      );
-
-      await customerRole.save();
-
-      console.log("Customer role updated");
     }
+
+    // =======================
+    // Admin Role
+    // =======================
 
     let adminRole = await Role.findOne({
       name: "admin",
@@ -78,13 +84,35 @@ const seedAuthData = async () => {
     if (!adminRole) {
       adminRole = await Role.create({
         name: "admin",
+
         description: "Platform administrator",
+
         permissions: permissions.map((permission) => permission._id),
       });
 
       console.log("Admin role created");
+    }
+
+    // =======================
+    // Super Admin Role
+    // =======================
+
+    let superAdminRole = await Role.findOne({
+      name: "super_admin",
+    });
+
+    if (!superAdminRole) {
+      superAdminRole = await Role.create({
+        name: "super_admin",
+
+        description: "Platform super administrator",
+
+        permissions: permissions.map((permission) => permission._id),
+      });
+
+      console.log("Super admin role created");
     } else {
-      console.log("Admin role already exists");
+      console.log("Super admin already exists");
     }
 
     console.log("Auth Seed Completed Successfully");
@@ -93,7 +121,7 @@ const seedAuthData = async () => {
 
     process.exit(0);
   } catch (error) {
-    console.error("Auth Seed Error:", error.message);
+    console.error("Auth Seed Error:", error);
 
     await mongoose.connection.close();
 
