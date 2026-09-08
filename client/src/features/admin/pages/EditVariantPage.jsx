@@ -2,12 +2,38 @@ import { useEffect, useState } from "react";
 
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import { getVariant, updateVariant, uploadImage } from "../services/productApi";
+import { useTranslation } from "react-i18next";
+
+import {
+  getVariant,
+  updateVariant,
+  uploadImage,
+} from "../services/productApi";
+
+const normalizeLocalizedField = (value) => {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return {
+      en: value.en || "",
+      ar: value.ar || "",
+    };
+  }
+
+  const fallback = value || "";
+
+  return {
+    en: fallback,
+    ar: fallback,
+  };
+};
 
 const EditVariantPage = () => {
   const { id } = useParams();
 
   const navigate = useNavigate();
+
+  const { t } = useTranslation();
+
+  const [activeLanguage, setActiveLanguage] = useState("en");
 
   const [image, setImage] = useState(null);
 
@@ -22,15 +48,30 @@ const EditVariantPage = () => {
   const [formData, setFormData] = useState({
     sku: "",
 
-    name: "",
+    name: {
+      en: "",
+      ar: "",
+    },
 
-    color: "",
+    color: {
+      en: "",
+      ar: "",
+    },
 
-    size: "",
+    size: {
+      en: "",
+      ar: "",
+    },
 
-    material: "",
+    material: {
+      en: "",
+      ar: "",
+    },
 
-    finish: "",
+    finish: {
+      en: "",
+      ar: "",
+    },
 
     price: "",
 
@@ -45,7 +86,7 @@ const EditVariantPage = () => {
 
   useEffect(() => {
     loadVariant();
-  }, []);
+  }, [id]);
 
   const loadVariant = async () => {
     try {
@@ -56,34 +97,46 @@ const EditVariantPage = () => {
       setFormData({
         sku: variant.sku || "",
 
-        name: variant.name || "",
+        name: normalizeLocalizedField(variant.name),
 
-        color: variant.color || "",
+        color: normalizeLocalizedField(variant.color),
 
-        size: variant.size || "",
+        size: normalizeLocalizedField(variant.size),
 
-        material: variant.material || "",
+        material: normalizeLocalizedField(variant.material),
 
-        finish: variant.finish || "",
+        finish: normalizeLocalizedField(variant.finish),
 
-        price: variant.price || "",
+        price: variant.price ?? "",
 
-        compareAtPrice: variant.compareAtPrice || "",
+        compareAtPrice: variant.compareAtPrice ?? "",
 
-        stock: variant.stock || "",
+        stock: variant.stock ?? "",
 
         image: variant.image || "",
 
-        isActive: variant.isActive,
+        isActive: variant.isActive ?? true,
       });
 
       if (variant.image) {
-        setPreview(`http://localhost:5000${variant.image}`);
+        if (
+          variant.image.startsWith("http://") ||
+          variant.image.startsWith("https://") ||
+          variant.image.startsWith("data:") ||
+          variant.image.startsWith("blob:")
+        ) {
+          setPreview(variant.image);
+        } else {
+          setPreview(`http://localhost:5000${variant.image}`);
+        }
       }
     } catch (error) {
       console.log(error);
 
-      setError(error?.response?.data?.message || "Failed to load variant.");
+      setError(
+        error?.response?.data?.message ||
+          t("editVariant.failedToLoadVariant"),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -96,6 +149,18 @@ const EditVariantPage = () => {
       ...previous,
 
       [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleLocalizedChange = (field, value) => {
+    setFormData((previous) => ({
+      ...previous,
+
+      [field]: {
+        ...previous[field],
+
+        [activeLanguage]: value,
+      },
     }));
   };
 
@@ -114,6 +179,18 @@ const EditVariantPage = () => {
 
     setError("");
 
+    if (!formData.name.en.trim() || !formData.name.ar.trim()) {
+      setError(
+        t("editVariant.variantNameRequired"),
+      );
+
+      setActiveLanguage(
+        !formData.name.en.trim() ? "en" : "ar",
+      );
+
+      return;
+    }
+
     setIsSaving(true);
 
     try {
@@ -129,39 +206,56 @@ const EditVariantPage = () => {
         imageUrl = upload.image;
       }
 
-      await updateVariant(
-        id,
+      await updateVariant(id, {
+        sku: formData.sku.trim(),
 
-        {
-          sku: formData.sku,
-
-          name: formData.name,
-
-          color: formData.color,
-
-          size: formData.size,
-
-          material: formData.material,
-
-          finish: formData.finish,
-
-          price: Number(formData.price),
-
-          compareAtPrice: Number(formData.compareAtPrice),
-
-          stock: Number(formData.stock),
-
-          image: imageUrl,
-
-          isActive: formData.isActive,
+        name: {
+          en: formData.name.en.trim(),
+          ar: formData.name.ar.trim(),
         },
-      );
+
+        color: {
+          en: formData.color.en.trim(),
+          ar: formData.color.ar.trim(),
+        },
+
+        size: {
+          en: formData.size.en.trim(),
+          ar: formData.size.ar.trim(),
+        },
+
+        material: {
+          en: formData.material.en.trim(),
+          ar: formData.material.ar.trim(),
+        },
+
+        finish: {
+          en: formData.finish.en.trim(),
+          ar: formData.finish.ar.trim(),
+        },
+
+        price: Number(formData.price),
+
+        compareAtPrice:
+          formData.compareAtPrice === ""
+            ? null
+            : Number(formData.compareAtPrice),
+
+        stock: Number(formData.stock),
+
+        image: imageUrl,
+
+        isActive: formData.isActive,
+      });
 
       navigate(-1);
     } catch (error) {
       console.log(error);
 
-      setError(error?.response?.data?.message || "Failed to update variant.");
+      setError(
+        error?.response?.data?.message ||
+          t("editVariant.failedToUpdateVariant"),
+      );
     } finally {
       setIsSaving(false);
     }
@@ -174,7 +268,7 @@ const EditVariantPage = () => {
 
         <div className="relative rounded-[22px] border border-light-champagne/80 bg-soft-white/80 px-10 py-8 shadow-[0_18px_50px_rgba(7,19,31,0.05)] backdrop-blur-sm">
           <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-gray">
-            Loading...
+            {t("editVariant.loading")}
           </div>
         </div>
       </div>
@@ -191,20 +285,49 @@ const EditVariantPage = () => {
         <div className="mx-auto flex max-w-[1080px] flex-col gap-5 px-6 py-7 sm:px-8 md:flex-row md:items-center md:justify-between lg:px-10">
           <div>
             <h1 className="font-serif text-[2.5rem] font-normal leading-none tracking-[-0.04em] text-midnight-navy sm:text-[3rem]">
-              Edit Variant
+              {t("editVariant.editVariant")}
             </h1>
 
             <p className="mt-3 text-[11px] leading-6 text-slate-gray sm:text-[12px]">
-              Update variant information
+              {t("editVariant.updateVariantInformation")}
             </p>
           </div>
 
-          <Link
-            to={-1}
-            className="inline-flex min-h-[46px] w-fit items-center justify-center rounded-full border border-light-champagne bg-soft-white/85 px-6 text-[8px] font-semibold uppercase tracking-[0.11em] text-slate-gray shadow-[0_7px_18px_rgba(7,19,31,0.035)] transition-all duration-300 hover:-translate-y-0.5 hover:border-champagne-gold hover:bg-warm-ivory hover:text-midnight-navy"
-          >
-            Back
-          </Link>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            {/* Language Toggle */}
+            <div className="flex w-fit rounded-full border border-light-champagne bg-soft-white p-1">
+              <button
+                type="button"
+                onClick={() => setActiveLanguage("en")}
+                className={`rounded-full px-4 py-2 text-[8px] font-semibold uppercase tracking-[0.12em] transition ${
+                  activeLanguage === "en"
+                    ? "bg-midnight-navy text-champagne-gold"
+                    : "text-steel-gray hover:bg-warm-ivory"
+                }`}
+              >
+                EN
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveLanguage("ar")}
+                className={`rounded-full px-4 py-2 text-[8px] font-semibold transition ${
+                  activeLanguage === "ar"
+                    ? "bg-midnight-navy text-champagne-gold"
+                    : "text-steel-gray hover:bg-warm-ivory"
+                }`}
+              >
+                العربية
+              </button>
+            </div>
+
+            <Link
+              to={-1}
+              className="inline-flex min-h-[46px] w-fit items-center justify-center rounded-full border border-light-champagne bg-soft-white/85 px-6 text-[8px] font-semibold uppercase tracking-[0.11em] text-slate-gray shadow-[0_7px_18px_rgba(7,19,31,0.035)] transition-all duration-300 hover:-translate-y-0.5 hover:border-champagne-gold hover:bg-warm-ivory hover:text-midnight-navy"
+            >
+              {t("editVariant.back")}
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -223,6 +346,7 @@ const EditVariantPage = () => {
           )}
 
           <form onSubmit={handleSubmit} className="relative space-y-7">
+            {/* SKU */}
             <div>
               <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
                 SKU
@@ -237,84 +361,147 @@ const EditVariantPage = () => {
               />
             </div>
 
+            {/* Variant Name */}
             <div>
-              <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                Variant Name
-              </label>
+              <div className="mb-2.5 flex items-center justify-between gap-3">
+                <label className="block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+                  {t("editVariant.variantName")}
+                </label>
+
+                <span className="rounded-full bg-warm-ivory px-3 py-1 text-[7px] font-semibold uppercase tracking-[0.1em] text-slate-gray">
+                  {activeLanguage === "en"
+                    ? t("editVariant.english")
+                    : "العربية"}
+                </span>
+              </div>
 
               <input
                 type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
+                value={formData.name[activeLanguage]}
+                onChange={(event) =>
+                  handleLocalizedChange(
+                    "name",
+                    event.target.value,
+                  )
+                }
+                dir={activeLanguage === "ar" ? "rtl" : "ltr"}
+                placeholder={
+                  activeLanguage === "en"
+                    ? t("editVariant.enterVariantNameEnglish")
+                    : t("editVariant.enterVariantNameArabic")
+                }
+                required
                 className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 text-[12px] text-midnight-navy outline-none transition-all duration-300 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
               />
             </div>
 
+            {/* Color + Size */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div>
                 <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                  Color
+                  {t("editVariant.color")}
                 </label>
 
                 <input
                   type="text"
-                  name="color"
-                  value={formData.color}
-                  onChange={handleChange}
+                  value={formData.color[activeLanguage]}
+                  onChange={(event) =>
+                    handleLocalizedChange(
+                      "color",
+                      event.target.value,
+                    )
+                  }
+                  dir={activeLanguage === "ar" ? "rtl" : "ltr"}
+                  placeholder={
+                    activeLanguage === "en"
+                      ? t("editVariant.enterColor")
+                      : t("editVariant.enterColorArabic")
+                  }
                   className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 text-[12px] text-midnight-navy outline-none transition-all duration-300 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
                 />
               </div>
 
               <div>
                 <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                  Size
+                  {t("editVariant.size")}
                 </label>
 
                 <input
                   type="text"
-                  name="size"
-                  value={formData.size}
-                  onChange={handleChange}
+                  value={formData.size[activeLanguage]}
+                  onChange={(event) =>
+                    handleLocalizedChange(
+                      "size",
+                      event.target.value,
+                    )
+                  }
+                  dir={activeLanguage === "ar" ? "rtl" : "ltr"}
+                  placeholder={
+                    activeLanguage === "en"
+                      ? t("editVariant.enterSize")
+                      : t("editVariant.enterSizeArabic")
+                  }
                   className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 text-[12px] text-midnight-navy outline-none transition-all duration-300 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
                 />
               </div>
             </div>
 
+            {/* Material + Finish */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div>
                 <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                  Material
+                  {t("editVariant.material")}
                 </label>
 
                 <input
                   type="text"
-                  name="material"
-                  value={formData.material}
-                  onChange={handleChange}
+                  value={formData.material[activeLanguage]}
+                  onChange={(event) =>
+                    handleLocalizedChange(
+                      "material",
+                      event.target.value,
+                    )
+                  }
+                  dir={activeLanguage === "ar" ? "rtl" : "ltr"}
+                  placeholder={
+                    activeLanguage === "en"
+                      ? t("editVariant.enterMaterial")
+                      : t("editVariant.enterMaterialArabic")
+                  }
                   className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 text-[12px] text-midnight-navy outline-none transition-all duration-300 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
                 />
               </div>
 
               <div>
                 <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                  Finish
+                  {t("editVariant.finish")}
                 </label>
 
                 <input
                   type="text"
-                  name="finish"
-                  value={formData.finish}
-                  onChange={handleChange}
+                  value={formData.finish[activeLanguage]}
+                  onChange={(event) =>
+                    handleLocalizedChange(
+                      "finish",
+                      event.target.value,
+                    )
+                  }
+                  dir={activeLanguage === "ar" ? "rtl" : "ltr"}
+                  placeholder={
+                    activeLanguage === "en"
+                      ? t("editVariant.enterFinish")
+                      : t("editVariant.enterFinishArabic")
+                  }
                   className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 text-[12px] text-midnight-navy outline-none transition-all duration-300 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
                 />
               </div>
             </div>
 
+            {/* Pricing */}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               <div>
                 <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                  Price
+                  {t("editVariant.price")}
                 </label>
 
                 <input
@@ -330,7 +517,7 @@ const EditVariantPage = () => {
 
               <div>
                 <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                  Compare Price
+                  {t("editVariant.comparePrice")}
                 </label>
 
                 <input
@@ -345,7 +532,7 @@ const EditVariantPage = () => {
 
               <div>
                 <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                  Stock
+                  {t("editVariant.stock")}
                 </label>
 
                 <input
@@ -360,9 +547,10 @@ const EditVariantPage = () => {
               </div>
             </div>
 
+            {/* Image */}
             <div>
               <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                Variant Image
+                {t("editVariant.variantImage")}
               </label>
 
               <input
@@ -380,17 +568,22 @@ const EditVariantPage = () => {
                 <div className="relative h-48 w-full max-w-[280px] overflow-hidden rounded-[16px] border border-light-champagne bg-soft-cream shadow-[0_8px_22px_rgba(7,19,31,0.04)]">
                   <img
                     src={preview}
-                    alt="Variant"
+                    alt={
+                      formData.name.en ||
+                      formData.name.ar ||
+                      t("editVariant.variant")
+                    }
                     className="h-full w-full object-cover"
                   />
                 </div>
               </div>
             )}
 
+            {/* Active */}
             <div className="rounded-[18px] border border-light-champagne/90 bg-warm-ivory/60 p-5">
               <label className="flex cursor-pointer items-center justify-between gap-5">
                 <span className="text-[11px] font-semibold text-midnight-navy">
-                  Active Variant
+                  {t("editVariant.activeVariant")}
                 </span>
 
                 <div className="relative shrink-0">
@@ -409,13 +602,14 @@ const EditVariantPage = () => {
               </label>
             </div>
 
+            {/* Actions */}
             <div className="flex flex-col-reverse gap-3 border-t border-light-champagne/80 pt-7 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={() => navigate(-1)}
                 className="inline-flex min-h-[48px] items-center justify-center rounded-[13px] border border-light-champagne bg-soft-white px-7 text-[8px] font-semibold uppercase tracking-[0.11em] text-slate-gray transition-all duration-300 hover:-translate-y-0.5 hover:border-champagne-gold hover:bg-warm-ivory hover:text-midnight-navy"
               >
-                Cancel
+                {t("editVariant.cancel")}
               </button>
 
               <button
@@ -423,7 +617,9 @@ const EditVariantPage = () => {
                 disabled={isSaving}
                 className="inline-flex min-h-[48px] items-center justify-center rounded-[13px] bg-midnight-navy px-8 text-[8px] font-semibold uppercase tracking-[0.11em] text-soft-white shadow-[0_11px_26px_rgba(18,38,58,0.14)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-rich-navy hover:shadow-[0_15px_32px_rgba(18,38,58,0.2)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
               >
-                {isSaving ? "Updating..." : "Update Variant"}
+                {isSaving
+                  ? t("editVariant.updating")
+                  : t("editVariant.updateVariant")}
               </button>
             </div>
           </form>

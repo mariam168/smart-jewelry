@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { FaArrowRight, FaHeart } from "react-icons/fa6";
 
 const getBackendOrigin = () => {
@@ -118,7 +119,22 @@ const formatMoney = (value) => {
   });
 };
 
-const getTechnologyLabel = (productTechnology) => {
+const getLocalizedText = (value, language = "en") => {
+  if (
+    value &&
+    typeof value === "object" &&
+    !Array.isArray(value)
+  ) {
+    return value[language] || value.en || value.ar || "";
+  }
+
+  return value || "";
+};
+
+const getTechnologyLabel = (
+  productTechnology,
+  language = "en",
+) => {
   const technologyModel =
     productTechnology?.technologyModel || {};
 
@@ -126,16 +142,35 @@ const getTechnologyLabel = (productTechnology) => {
     technologyModel?.technology || {};
 
   return (
-    technology?.name ||
-    technologyModel?.modelName ||
-    productTechnology?.name ||
+    getLocalizedText(
+      technology?.name,
+      language,
+    ) ||
+    getLocalizedText(
+      technologyModel?.modelName,
+      language,
+    ) ||
+    getLocalizedText(
+      productTechnology?.name,
+      language,
+    ) ||
     "Smart Technology"
   );
 };
 
 const ProductCard = ({ product, index = 0 }) => {
+  const { t, i18n } = useTranslation();
+
+  const isRtl = i18n.language === "ar";
+
+  const activeLanguage = isRtl
+    ? "ar"
+    : "en";
+
   const productTechnologies = useMemo(() => {
-    return Array.isArray(product?.productTechnologies)
+    return Array.isArray(
+      product?.productTechnologies,
+    )
       ? product.productTechnologies
       : [];
   }, [product?.productTechnologies]);
@@ -156,10 +191,15 @@ const ProductCard = ({ product, index = 0 }) => {
         );
       });
 
-    return activeTechnology || productTechnologies[0];
+    return (
+      activeTechnology ||
+      productTechnologies[0]
+    );
   }, [productTechnologies]);
 
-  const basePrice = Number(product?.price || 0);
+  const basePrice = Number(
+    product?.price || 0,
+  );
 
   const baseComparePrice = Number(
     product?.comparePrice || 0,
@@ -172,32 +212,36 @@ const ProductCard = ({ product, index = 0 }) => {
   const hasTechnology =
     Boolean(defaultTechnology);
 
-  /*
-   * CARD PRICE ALWAYS INCLUDES
-   * THE DEFAULT TECHNOLOGY.
-   */
   const finalPrice =
     basePrice +
-    (hasTechnology ? technologyPrice : 0);
+    (hasTechnology
+      ? technologyPrice
+      : 0);
 
   const hasDiscount =
     baseComparePrice > 0 &&
     basePrice > 0 &&
     baseComparePrice > basePrice;
 
-  const finalComparePrice = hasDiscount
-    ? baseComparePrice +
-      (hasTechnology ? technologyPrice : 0)
-    : 0;
+  const finalComparePrice =
+    hasDiscount
+      ? baseComparePrice +
+        (hasTechnology
+          ? technologyPrice
+          : 0)
+      : 0;
 
   const saving = hasDiscount
     ? finalComparePrice - finalPrice
     : 0;
 
   const discountPercentage =
-    hasDiscount && finalComparePrice > 0
+    hasDiscount &&
+    finalComparePrice > 0
       ? Math.round(
-          (saving / finalComparePrice) * 100,
+          (saving /
+            finalComparePrice) *
+            100,
         )
       : 0;
 
@@ -210,253 +254,907 @@ const ProductCard = ({ product, index = 0 }) => {
       product?.images,
   );
 
-  const number = String(index + 1).padStart(2, "0");
+  const number = String(index + 1).padStart(
+    2,
+    "0",
+  );
 
   const technologyLabel =
-    getTechnologyLabel(defaultTechnology);
+    getTechnologyLabel(
+      defaultTechnology,
+      activeLanguage,
+    );
+
+  const productName =
+    getLocalizedText(
+      product?.name,
+      activeLanguage,
+    );
+
+  const productShortDescription =
+    getLocalizedText(
+      product?.shortDescription,
+      activeLanguage,
+    );
+
+  const productDescription =
+    getLocalizedText(
+      product?.description,
+      activeLanguage,
+    );
+
+  const categoryName =
+    getLocalizedText(
+      product?.category?.name,
+      activeLanguage,
+    );
 
   const detailsUrl =
     `/shop/products/${product._id}`;
 
   const badge = hasDiscount
-    ? `${discountPercentage}% OFF`
+    ? `${discountPercentage}% ${t(
+        "productCard.off",
+      )}`
     : product?.newArrival
-      ? "New"
+      ? t("productCard.new")
       : product?.bestSeller
-        ? "Bestseller"
+        ? t(
+            "productCard.bestseller",
+          )
         : product?.featured
-          ? "Featured"
+          ? t(
+              "productCard.featured",
+            )
           : null;
 
   return (
-    <article className="group relative h-full">
-      <div className="flex h-full flex-col">
-        {/* =========================================
-            IMAGE
-        ========================================== */}
-        <div className="relative overflow-hidden rounded-[22px] bg-soft-cream">
-          <Link
-            to={detailsUrl}
-            className="relative block"
+    <article
+      className="
+        group
+        relative
+        h-full
+      "
+    >
+      {/* =====================================================
+          IMAGE AREA
+      ===================================================== */}
+
+      <div
+        className="
+          relative
+          overflow-hidden
+          rounded-[30px]
+          bg-[#F1EDE5]
+          shadow-[0_12px_35px_rgba(7,19,31,0.045)]
+          transition-all
+          duration-700
+          group-hover:shadow-[0_22px_55px_rgba(7,19,31,0.10)]
+        "
+      >
+        {/* Thin luxury frame */}
+
+        <div
+          className="
+            pointer-events-none
+            absolute
+            inset-2
+            z-10
+            rounded-[24px]
+            border
+            border-white/15
+            opacity-70
+            transition-all
+            duration-700
+            group-hover:inset-3
+            group-hover:border-[#D9B96E]/35
+          "
+        />
+
+        <Link
+          to={detailsUrl}
+          className="
+            relative
+            block
+            aspect-[4/5]
+            overflow-hidden
+          "
+        >
+          <img
+            src={imageUrl}
+            alt={
+              productName ||
+              t("productCard.jewelry")
+            }
+            className="
+              h-full
+              w-full
+              object-cover
+              transition-transform
+              duration-[1500ms]
+              ease-[cubic-bezier(.16,1,.3,1)]
+              group-hover:scale-[1.055]
+            "
+            onError={(event) => {
+              event.currentTarget.src =
+                "/placeholder.png";
+            }}
+          />
+
+          {/* Dark cinematic gradient */}
+
+          <div
+            className="
+              pointer-events-none
+              absolute
+              inset-0
+              bg-gradient-to-t
+              from-[#07131F]/70
+              via-[#07131F]/10
+              to-transparent
+            "
+          />
+
+          {/* Soft light */}
+
+          <div
+            className="
+              pointer-events-none
+              absolute
+              -right-20
+              -top-20
+              h-48
+              w-48
+              rounded-full
+              bg-white/10
+              blur-3xl
+            "
+          />
+
+          {/* =================================================
+              INDEX
+          ================================================= */}
+
+          <div
+            className={`
+              absolute
+              top-6
+              z-20
+              ${
+                isRtl
+                  ? "right-6"
+                  : "left-6"
+              }
+            `}
           >
-            <div className="aspect-[4/5] overflow-hidden">
-              <img
-                src={imageUrl}
-                alt={
-                  product?.name ||
-                  "Jevorya jewelry"
-                }
-                className="h-full w-full object-cover transition-transform duration-[1200ms] ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-[1.045]"
-                onError={(event) => {
-                  event.currentTarget.src =
-                    "/placeholder.png";
-                }}
+            <div
+              className="
+                flex
+                items-center
+                gap-2
+              "
+            >
+              <span
+                className="
+                  h-px
+                  w-5
+                  bg-[#D9B96E]/80
+                "
               />
-            </div>
 
-            {/* subtle luxury overlay */}
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-luxury-black/45 via-transparent to-luxury-black/[0.08]" />
-
-            {/* INDEX */}
-            <div className="absolute left-5 top-5">
-              <span className="font-serif text-[27px] font-light italic text-soft-white/90">
+              <span
+                className="
+                  font-serif
+                  text-[11px]
+                  tracking-[0.18em]
+                  text-white/80
+                "
+              >
                 {number}
               </span>
             </div>
+          </div>
 
-            {/* BADGE */}
-            {badge && (
-              <div className="absolute right-5 top-5">
-                <span className="inline-flex items-center rounded-full border border-soft-white/30 bg-midnight-navy/80 px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.17em] text-champagne-gold backdrop-blur-lg">
-                  {badge}
-                </span>
-              </div>
-            )}
+          {/* =================================================
+              BADGE
+          ================================================= */}
 
-            {/* CATEGORY */}
-            <div className="absolute bottom-5 left-5">
-              <div className="flex items-center gap-2.5">
-                <span className="h-px w-6 bg-champagne-gold" />
-
-                <span className="text-[7px] font-medium uppercase tracking-[0.28em] text-soft-white/90">
-                  {product?.category?.name ||
-                    "Jewelry"}
-                </span>
-              </div>
-            </div>
-
-            {/* HOVER DISCOVER */}
-            <div className="absolute bottom-5 right-5 translate-y-2 opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full border border-soft-white/30 bg-soft-white/10 text-soft-white backdrop-blur-md">
-                <FaArrowRight className="text-[10px]" />
+          {badge && (
+            <div
+              className={`
+                absolute
+                top-5
+                z-20
+                ${
+                  isRtl
+                    ? "left-5"
+                    : "right-5"
+                }
+              `}
+            >
+              <span
+                className="
+                  inline-flex
+                  items-center
+                  rounded-full
+                  border
+                  border-white/30
+                  bg-[#07131F]/75
+                  px-4
+                  py-2
+                  text-[7px]
+                  font-bold
+                  uppercase
+                  tracking-[0.2em]
+                  text-[#E2C681]
+                  shadow-lg
+                  backdrop-blur-xl
+                "
+              >
+                {badge}
               </span>
             </div>
-          </Link>
+          )}
 
-          {/* WISHLIST */}
-          <button
-            type="button"
-            aria-label="Add to wishlist"
-            className="absolute right-5 top-[4.6rem] z-10 flex h-9 w-9 items-center justify-center rounded-full border border-soft-white/60 bg-soft-white/90 text-midnight-navy shadow-[0_8px_22px_rgba(7,19,31,0.1)] backdrop-blur-md transition-all duration-300 hover:scale-105 hover:border-midnight-navy hover:bg-midnight-navy hover:text-champagne-gold"
+          {/* =================================================
+              CATEGORY
+          ================================================= */}
+
+          <div
+            className={`
+              absolute
+              bottom-6
+              z-20
+              ${
+                isRtl
+                  ? "right-6"
+                  : "left-6"
+              }
+            `}
           >
-            <FaHeart className="text-[9px]" />
-          </button>
+            <div
+              className={`
+                flex
+                items-center
+                gap-2.5
+                ${
+                  isRtl
+                    ? "flex-row-reverse"
+                    : ""
+                }
+              `}
+            >
+              <span
+                className="
+                  h-px
+                  w-7
+                  bg-[#D9B96E]
+                  transition-all
+                  duration-500
+                  group-hover:w-12
+                "
+              />
 
-          {/* SOLD OUT */}
-          {isOutOfStock && (
-            <div className="absolute inset-0 z-20 flex items-center justify-center bg-luxury-black/45 backdrop-blur-[1px]">
-              <span className="rounded-full border border-soft-white/50 bg-soft-white/95 px-6 py-2.5 text-[8px] font-semibold uppercase tracking-[0.24em] text-midnight-navy">
-                Sold Out
+              <span
+                dir={
+                  activeLanguage === "ar"
+                    ? "rtl"
+                    : "ltr"
+                }
+                className="
+                  text-[7px]
+                  font-semibold
+                  uppercase
+                  tracking-[0.28em]
+                  text-white/90
+                "
+              >
+                {categoryName ||
+                  t("productCard.jewelry")}
+              </span>
+            </div>
+          </div>
+
+          {/* =================================================
+              VIEW ARROW
+          ================================================= */}
+
+          <div
+            className={`
+              absolute
+              bottom-5
+              z-20
+              translate-y-3
+              opacity-0
+              transition-all
+              duration-500
+              group-hover:translate-y-0
+              group-hover:opacity-100
+              ${
+                isRtl
+                  ? "left-5"
+                  : "right-5"
+              }
+            `}
+          >
+            <span
+              className="
+                flex
+                h-11
+                w-11
+                items-center
+                justify-center
+                rounded-full
+                border
+                border-white/35
+                bg-white/15
+                text-white
+                backdrop-blur-lg
+              "
+            >
+              <FaArrowRight
+                className={`
+                  text-[9px]
+                  ${
+                    isRtl
+                      ? "rotate-180"
+                      : ""
+                  }
+                `}
+              />
+            </span>
+          </div>
+        </Link>
+
+        {/* ===================================================
+            WISHLIST
+        =================================================== */}
+
+        <button
+          type="button"
+          aria-label={t(
+            "productCard.addToWishlist",
+          )}
+          className={`
+            absolute
+            top-16
+            z-30
+            flex
+            h-10
+            w-10
+            items-center
+            justify-center
+            rounded-full
+            border
+            border-white/60
+            bg-white/90
+            text-[#07131F]
+            shadow-[0_8px_25px_rgba(7,19,31,0.15)]
+            backdrop-blur-md
+            transition-all
+            duration-300
+            hover:scale-110
+            hover:border-[#07131F]
+            hover:bg-[#07131F]
+            hover:text-[#D9B96E]
+            ${
+              isRtl
+                ? "left-5"
+                : "right-5"
+            }
+          `}
+        >
+          <FaHeart className="text-[9px]" />
+        </button>
+
+        {/* ===================================================
+            SOLD OUT
+        =================================================== */}
+
+        {isOutOfStock && (
+          <div
+            className="
+              absolute
+              inset-0
+              z-40
+              flex
+              items-center
+              justify-center
+              bg-[#07131F]/55
+              backdrop-blur-[3px]
+            "
+          >
+            <span
+              className="
+                rounded-full
+                border
+                border-white/40
+                bg-white
+                px-8
+                py-3
+                text-[8px]
+                font-bold
+                uppercase
+                tracking-[0.3em]
+                text-[#07131F]
+                shadow-2xl
+              "
+            >
+              {t(
+                "productCard.soldOut",
+              )}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* =====================================================
+          CONTENT
+      ===================================================== */}
+
+      <div
+        className={`
+          px-1
+          pt-6
+          ${
+            isRtl
+              ? "text-right"
+              : "text-left"
+          }
+        `}
+      >
+        {/* =================================================
+            BRAND
+        ================================================= */}
+
+        <div
+          className={`
+            flex
+            items-center
+            gap-2
+            ${
+              isRtl
+                ? "flex-row-reverse"
+                : ""
+            }
+          `}
+        >
+          <span
+            className="
+              h-px
+              w-6
+              bg-[#C9A75E]
+            "
+          />
+
+          <span
+            className="
+              text-[7px]
+              font-bold
+              uppercase
+              tracking-[0.3em]
+              text-[#9D8350]
+            "
+          >
+            Jevorya
+          </span>
+
+          <span
+            className="
+              text-[6px]
+              text-[#C9A75E]
+            "
+          >
+            ✦
+          </span>
+        </div>
+
+        {/* =================================================
+            NAME
+        ================================================= */}
+
+        <div className="mt-3">
+          <Link to={detailsUrl}>
+            <h3
+              dir={
+                activeLanguage === "ar"
+                  ? "rtl"
+                  : "ltr"
+              }
+              className="
+                line-clamp-1
+                font-serif
+                text-[24px]
+                font-normal
+                leading-[1.15]
+                tracking-[-0.025em]
+                text-[#07131F]
+                transition-colors
+                duration-300
+                group-hover:text-[#A7864C]
+              "
+            >
+              {productName}
+            </h3>
+          </Link>
+        </div>
+
+        {/* =================================================
+            PRICE ROW
+        ================================================= */}
+
+        <div
+          className={`
+            mt-3
+            flex
+            items-center
+            justify-between
+            gap-4
+            ${
+              isRtl
+                ? "flex-row-reverse"
+                : ""
+            }
+          `}
+        >
+          {/* Main Price */}
+
+          <div
+            className={`
+              flex
+              items-baseline
+              gap-2
+              ${
+                isRtl
+                  ? "flex-row-reverse"
+                  : ""
+              }
+            `}
+          >
+            <span
+              className="
+                text-[21px]
+                font-bold
+                tracking-[-0.04em]
+                text-[#07131F]
+              "
+            >
+              {formatMoney(finalPrice)}
+            </span>
+
+            <span
+              className="
+                text-[7px]
+                font-bold
+                uppercase
+                tracking-[0.2em]
+                text-[#8D877D]
+              "
+            >
+              EGP
+            </span>
+          </div>
+
+          {/* Discount */}
+
+          {hasDiscount && (
+            <div
+              className={`
+                flex
+                items-center
+                gap-2
+                ${
+                  isRtl
+                    ? "flex-row-reverse"
+                    : ""
+                }
+              `}
+            >
+              <span
+                className="
+                  text-[9px]
+                  text-[#9C968D]
+                  line-through
+                "
+              >
+                {formatMoney(
+                  finalComparePrice,
+                )}{" "}
+                EGP
+              </span>
+
+              <span
+                className="
+                  rounded-full
+                  border
+                  border-[#D6BD91]
+                  bg-[#FBF7EF]
+                  px-2
+                  py-1
+                  text-[7px]
+                  font-bold
+                  tracking-[0.08em]
+                  text-[#9A783D]
+                "
+              >
+                -{discountPercentage}%
               </span>
             </div>
           )}
         </div>
 
-        {/* =========================================
-            PRODUCT INFO
-        ========================================== */}
-        <div className="flex flex-1 flex-col px-1 pb-2 pt-5">
-          {/* SMALL EYEBROW */}
-          <div className="flex items-center gap-2.5">
-            <span className="h-px w-5 bg-classic-gold/75" />
+        {/* =================================================
+            SAVING
+        ================================================= */}
 
-            <span className="text-[7px] font-semibold uppercase tracking-[0.27em] text-antique-gold">
-              Jevorya
+        {hasDiscount && (
+          <div
+            className={`
+              mt-2
+              flex
+              ${
+                isRtl
+                  ? "justify-end"
+                  : "justify-start"
+              }
+            `}
+          >
+            <span
+              className="
+                text-[7px]
+                font-semibold
+                uppercase
+                tracking-[0.15em]
+                text-[#A7864C]
+              "
+            >
+              {t("productCard.save")}{" "}
+              {formatMoney(saving)} EGP
             </span>
           </div>
+        )}
 
-          {/* NAME + PRICE */}
-          <div className="mt-3 flex items-start justify-between gap-5">
-            <Link
-              to={detailsUrl}
-              className="min-w-0"
+        {/* =================================================
+            DESCRIPTION
+        ================================================= */}
+
+        {(productShortDescription ||
+          productDescription) && (
+          <p
+            dir={
+              activeLanguage === "ar"
+                ? "rtl"
+                : "ltr"
+            }
+            className="
+              mt-3
+              line-clamp-2
+              max-w-[96%]
+              text-[10px]
+              leading-[1.8]
+              text-[#888278]
+            "
+          >
+            {productShortDescription ||
+              productDescription}
+          </p>
+        )}
+
+        {/* =================================================
+            SMART TECHNOLOGY
+        ================================================= */}
+
+        {hasTechnology && (
+          <div
+            className="
+              mt-5
+              rounded-[18px]
+              border
+              border-[#E9E0D2]
+              bg-[#FAF7F1]
+              px-3.5
+              py-3
+              transition-all
+              duration-300
+              group-hover:border-[#D9C79F]
+            "
+          >
+            <div
+              className={`
+                flex
+                items-center
+                justify-between
+                gap-3
+                ${
+                  isRtl
+                    ? "flex-row-reverse"
+                    : ""
+                }
+              `}
             >
-              <h3 className="font-serif text-[1.55rem] font-normal leading-[1.12] tracking-[-0.025em] text-midnight-navy transition-colors duration-300 group-hover:text-navy-soft">
-                {product?.name}
-              </h3>
-            </Link>
+              <div
+                className={`
+                  flex
+                  min-w-0
+                  items-center
+                  gap-3
+                  ${
+                    isRtl
+                      ? "flex-row-reverse"
+                      : ""
+                  }
+                `}
+              >
+                <span
+                  className="
+                    flex
+                    h-8
+                    w-8
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-full
+                    bg-[#07131F]
+                    text-[8px]
+                    text-[#D9B96E]
+                  "
+                >
+                  ✦
+                </span>
 
-            <div className="shrink-0 text-right">
-              <span className="block font-serif text-[1.22rem] leading-none text-midnight-navy">
-                {formatMoney(finalPrice)}
-              </span>
+                <div className="min-w-0">
+                  <p
+                    className="
+                      text-[6px]
+                      font-bold
+                      uppercase
+                      tracking-[0.18em]
+                      text-[#A7864C]
+                    "
+                  >
+                    {t(
+                      "productCard.smartTechnologyIncluded",
+                    )}
+                  </p>
 
-              <span className="mt-1 block text-[7px] font-medium uppercase tracking-[0.16em] text-antique-gold">
+                  <p
+                    dir={
+                      activeLanguage ===
+                      "ar"
+                        ? "rtl"
+                        : "ltr"
+                    }
+                    className="
+                      mt-0.5
+                      truncate
+                      text-[9px]
+                      font-medium
+                      text-[#07131F]
+                    "
+                  >
+                    {technologyLabel}
+                  </p>
+                </div>
+              </div>
+
+              <span
+                className="
+                  shrink-0
+                  text-[8px]
+                  font-semibold
+                  text-[#777168]
+                "
+              >
+                +
+                {formatMoney(
+                  technologyPrice,
+                )}{" "}
                 EGP
               </span>
             </div>
           </div>
+        )}
 
-          {/* OLD PRICE */}
-          {hasDiscount && (
-            <div className="mt-2 flex items-center justify-between">
-              <span className="text-[8px] uppercase tracking-[0.13em] text-antique-gold">
-                Save {formatMoney(saving)} EGP
-              </span>
+        {/* =================================================
+            FOOTER
+        ================================================= */}
 
-              <span className="text-[9px] text-steel-gray/80 line-through">
-                {formatMoney(finalComparePrice)} EGP
-              </span>
-            </div>
-          )}
-
-          {/* DESCRIPTION */}
-          {(product?.shortDescription ||
-            product?.description) && (
-            <p className="mt-3 line-clamp-2 text-[10px] leading-[1.75] text-slate-gray/80">
-              {product.shortDescription ||
-                product.description}
-            </p>
-          )}
-
-          {/* =========================================
-              SMART TECHNOLOGY
-          ========================================== */}
-          {hasTechnology && (
-            <div className="mt-4 border-y border-light-champagne/65 py-3.5">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex min-w-0 items-center gap-2.5">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-midnight-navy text-[8px] text-champagne-gold">
-                    ✦
-                  </span>
-
-                  <div className="min-w-0">
-                    <p className="text-[6px] font-semibold uppercase tracking-[0.18em] text-antique-gold">
-                      Smart Technology Included
-                    </p>
-
-                    <p className="mt-1 truncate text-[9px] font-medium text-midnight-navy">
-                      {technologyLabel}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="shrink-0 text-right">
-                  <span className="text-[8px] text-steel-gray">
-                    +
-                    {formatMoney(
-                      technologyPrice,
-                    )}
-                  </span>
-
-                  <span className="ml-1 text-[6px] uppercase tracking-[0.1em] text-steel-gray">
-                    EGP
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* =========================================
-              FOOTER
-          ========================================== */}
-          <div className="mt-auto pt-4">
-            <div className="flex items-center justify-between">
-              {/* STOCK */}
-              <div className="flex items-center gap-2">
-                <span
-                  className={`h-1.5 w-1.5 rounded-full ${
-                    isOutOfStock
-                      ? "bg-steel-gray"
-                      : Number(
-                            product?.stock || 0,
-                          ) <= 5
-                        ? "bg-antique-gold"
-                        : "bg-classic-gold"
-                  }`}
-                />
-
-                <span className="text-[7px] font-medium uppercase tracking-[0.16em] text-steel-gray">
-                  {isOutOfStock
-                    ? "Unavailable"
-                    : Number(
-                          product?.stock || 0,
-                        ) <= 5
-                      ? `Only ${product.stock} left`
-                      : "Available"}
-                </span>
-              </div>
-
-              {/* PERSONALIZED */}
-              {product?.isCustomizable && (
-                <span className="text-[6px] font-semibold uppercase tracking-[0.16em] text-antique-gold">
-                  Personalized
-                </span>
-              )}
-            </div>
-
-            {/* DISCOVER LINK */}
-            <Link
-              to={detailsUrl}
-              className="mt-4 flex items-center justify-between border-t border-light-champagne/70 pt-4 transition-colors duration-300"
+        <div
+          className="
+            mt-5
+            border-t
+            border-[#E9E0D2]
+            pt-4
+          "
+        >
+          <Link
+            to={detailsUrl}
+            className={`
+              group/discover
+              flex
+              items-center
+              justify-between
+              ${
+                isRtl
+                  ? "flex-row-reverse"
+                  : ""
+              }
+            `}
+          >
+            <div
+              className={`
+                flex
+                items-center
+                gap-2
+                ${
+                  isRtl
+                    ? "flex-row-reverse"
+                    : ""
+                }
+              `}
             >
-              <span className="text-[7px] font-semibold uppercase tracking-[0.22em] text-midnight-navy">
-                Discover Piece
-              </span>
+              <span
+                className="
+                  h-px
+                  w-4
+                  bg-[#C9A75E]
+                  transition-all
+                  duration-300
+                  group-hover/discover:w-7
+                "
+              />
 
-              <FaArrowRight className="text-[9px] text-antique-gold transition-transform duration-300 group-hover:translate-x-1" />
-            </Link>
-          </div>
+              <span
+                className="
+                  text-[7px]
+                  font-bold
+                  uppercase
+                  tracking-[0.25em]
+                  text-[#07131F]
+                  transition-colors
+                  duration-300
+                  group-hover/discover:text-[#A7864C]
+                "
+              >
+                {t(
+                  "productCard.discoverPiece",
+                )}
+              </span>
+            </div>
+
+            <span
+              className="
+                flex
+                h-7
+                w-7
+                items-center
+                justify-center
+                rounded-full
+                border
+                border-[#DDD4C6]
+                text-[#07131F]
+                transition-all
+                duration-300
+                group-hover/discover:border-[#07131F]
+                group-hover/discover:bg-[#07131F]
+                group-hover/discover:text-white
+              "
+            >
+              <FaArrowRight
+                className={`
+                  text-[7px]
+                  transition-transform
+                  duration-300
+                  group-hover/discover:translate-x-0.5
+                  ${
+                    isRtl
+                      ? "rotate-180"
+                      : ""
+                  }
+                `}
+              />
+            </span>
+          </Link>
         </div>
       </div>
     </article>

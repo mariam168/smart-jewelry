@@ -12,60 +12,33 @@ import {
   validateLoginInput,
 } from "../validation/authValidation.js";
 
+import {
+  verifyWhatsappOtp,
+  resendWhatsappOtp,
+} from "../services/authService.js";
+
 const getCookieOptions = () => {
-  const isProduction =
-    process.env.NODE_ENV ===
-    "production";
+  const isProduction = process.env.NODE_ENV === "production";
 
   return {
     httpOnly: true,
-
-    secure:
-      isProduction,
-
-    sameSite:
-      isProduction
-        ? "none"
-        : "lax",
-
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
     path: "/",
-
-    maxAge:
-      7 *
-      24 *
-      60 *
-      60 *
-      1000,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   };
 };
 
-export const register = async (
-  req,
-  res,
-  next,
-) => {
+export const register = async (req, res, next) => {
   try {
-    const errors =
-      validateRegisterInput(
-        req.body,
-      );
+    const errors = validateRegisterInput(req.body);
 
-    if (
-      Object.keys(
+    if (Object.keys(errors).length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please fix the validation errors",
         errors,
-      ).length > 0
-    ) {
-      return res
-        .status(400)
-        .json({
-          success:
-            false,
-
-          message:
-            "Please fix the validation errors",
-
-          errors,
-        });
+      });
     }
 
     const {
@@ -78,321 +51,204 @@ export const register = async (
       marketingConsent,
     } = req.body;
 
-    const result =
-      await registerCustomer({
-        firstName,
-        lastName,
-        email,
-        password,
-        phone,
-        privacyConsent,
-        marketingConsent,
-      });
+    const result = await registerCustomer({
+      firstName,
+      lastName,
+      email,
+      password,
+      phone,
+      privacyConsent,
+      marketingConsent,
+    });
 
-    return res
-      .status(201)
-      .json({
-        success:
-          true,
-
-        message:
-          "Account created successfully",
-
-        data: {
-          user: {
-            id:
-              result.user
-                ._id,
-
-            email:
-              result.user
-                .email,
-          },
-
-          customer: {
-            id:
-              result.customer
-                ._id,
-
-            firstName:
-              result.customer
-                .firstName,
-
-            lastName:
-              result.customer
-                .lastName,
-          },
+    return res.status(201).json({
+      success: true,
+      message: "Account created successfully",
+      data: {
+        user: {
+          id: result.user._id,
+          email: result.user.email,
         },
-      });
+        customer: {
+          id: result.customer._id,
+          firstName: result.customer.firstName,
+          lastName: result.customer.lastName,
+        },
+      },
+    });
   } catch (error) {
     next(error);
   }
 };
 
-export const verifyEmailController =
-  async (
-    req,
-    res,
-    next,
-  ) => {
-    try {
-      const { token } =
-        req.query;
-
-      const user =
-        await verifyEmail(
-          token,
-        );
-
-      return res
-        .status(200)
-        .json({
-          success:
-            true,
-
-          message:
-            "Email verified successfully",
-
-          data: {
-            email:
-              user.email,
-
-            emailVerifiedAt:
-              user.emailVerifiedAt,
-          },
-        });
-    } catch (error) {
-      next(error);
-    }
-  };
-
-export const login = async (
-  req,
-  res,
-  next,
-) => {
+export const verifyEmailController = async (req, res, next) => {
   try {
-    const errors =
-      validateLoginInput(
-        req.body,
-      );
+    const { token } = req.query;
 
-    if (
-      Object.keys(
+    const user = await verifyEmail(token);
+
+    return res.status(200).json({
+      success: true,
+      message: "Email verified successfully",
+      data: {
+        email: user.email,
+        emailVerifiedAt: user.emailVerifiedAt,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const login = async (req, res, next) => {
+  try {
+    const errors = validateLoginInput(req.body);
+
+    if (Object.keys(errors).length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please fix the validation errors",
         errors,
-      ).length > 0
-    ) {
-      return res
-        .status(400)
-        .json({
-          success:
-            false,
-
-          message:
-            "Please fix the validation errors",
-
-          errors,
-        });
+      });
     }
 
-    const {
+    const { email, password } = req.body;
+
+    const result = await loginUser({
       email,
       password,
-    } = req.body;
-
-    const result =
-      await loginUser({
-        email,
-        password,
-      });
+    });
 
     res.cookie(
       "accessToken",
       result.accessToken,
-      getCookieOptions(),
+      getCookieOptions()
     );
 
-    return res
-      .status(200)
-      .json({
-        success:
-          true,
-
-        message:
-          "Logged in successfully",
-
-        data: {
-          user: {
-            id:
-              result.user
-                ._id,
-
-            email:
-              result.user
-                .email,
-
-            role: {
-              id:
-                result.user
-                  .role._id,
-
-              name:
-                result.user
-                  .role.name,
-            },
-          },
-        },
-      });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getMe = async (
-  req,
-  res,
-  next,
-) => {
-  try {
-    const result =
-      await getCurrentUser(
-        req.user.userId,
-      );
-
-    return res
-      .status(200)
-      .json({
-        success:
-          true,
-
-        data: {
-          user: {
-            id:
-              result.user._id,
-
-            email:
-              result.user.email,
-
-            role:
-              result.user.role,
-
-            isActive:
-              result.user
-                .isActive,
-
-            emailVerifiedAt:
-              result.user
-                .emailVerifiedAt,
-          },
-
-          customer:
-            result.customer,
-        },
-      });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const logout = (
-  req,
-  res,
-) => {
-  const isProduction =
-    process.env.NODE_ENV ===
-    "production";
-
-  res.clearCookie(
-    "accessToken",
-    {
-      httpOnly: true,
-
-      secure:
-        isProduction,
-
-      sameSite:
-        isProduction
-          ? "none"
-          : "lax",
-
-      path: "/",
-    },
-  );
-
-  return res
-    .status(200)
-    .json({
+    return res.status(200).json({
       success: true,
-
-      message:
-        "Logged out successfully",
+      message: "Logged in successfully",
+      data: {
+        user: {
+          id: result.user._id,
+          email: result.user.email,
+          role: {
+            id: result.user.role._id,
+            name: result.user.role.name,
+          },
+        },
+      },
     });
+  } catch (error) {
+    if (error?.code === "WHATSAPP_NOT_VERIFIED") {
+      return res.status(403).json({
+        success: false,
+        message: error.message,
+        code: "WHATSAPP_NOT_VERIFIED",
+        phone: error.phone || "",
+      });
+    }
+
+    next(error);
+  }
 };
 
-/*
-|--------------------------------------------------------------------------
-| ADMIN USERS
-|--------------------------------------------------------------------------
-*/
+export const getMe = async (req, res, next) => {
+  try {
+    const result = await getCurrentUser(req.user.userId);
 
-export const getAdminUsersController =
-  async (
-    req,
-    res,
-    next,
-  ) => {
-    try {
-      const users =
-        await getUsersForAdmin();
+    return res.status(200).json({
+      success: true,
+      data: {
+        user: {
+          id: result.user._id,
+          email: result.user.email,
+          role: result.user.role,
+          isActive: result.user.isActive,
+          emailVerifiedAt: result.user.emailVerifiedAt,
+        },
+        customer: result.customer,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
-      return res
-        .status(200)
-        .json({
-          success:
-            true,
+export const logout = (req, res) => {
+  const isProduction = process.env.NODE_ENV === "production";
 
-          data: {
-            users,
-          },
-        });
-    } catch (error) {
-      next(error);
-    }
-  };
+  res.clearCookie("accessToken", {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    path: "/",
+  });
 
-export const updateUserRoleController =
-  async (
-    req,
-    res,
-    next,
-  ) => {
-    try {
-      const user =
-        await changeUserRole({
-          userId:
-            req.params.userId,
+  return res.status(200).json({
+    success: true,
+    message: "Logged out successfully",
+  });
+};
 
-          roleName:
-            req.body.role,
+export const getAdminUsersController = async (req, res, next) => {
+  try {
+    const users = await getUsersForAdmin();
 
-          adminUserId:
-            req.user.userId,
-        });
+    return res.status(200).json({
+      success: true,
+      data: {
+        users,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
-      return res
-        .status(200)
-        .json({
-          success:
-            true,
+export const updateUserRoleController = async (req, res, next) => {
+  try {
+    const user = await changeUserRole({
+      userId: req.params.userId,
+      roleName: req.body.role,
+      adminUserId: req.user.userId,
+    });
 
-          message:
-            "User role updated successfully.",
+    return res.status(200).json({
+      success: true,
+      message: "User role updated successfully.",
+      data: {
+        user,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
-          data: {
-            user,
-          },
-        });
-    } catch (error) {
-      next(error);
-    }
-  };
+export const verifyWhatsappOtpController = async (req, res) => {
+  const { phone, otp } = req.body;
+
+  const result = await verifyWhatsappOtp({
+    phone,
+    otp,
+  });
+
+  return res.status(200).json({
+    success: true,
+    ...result,
+  });
+};
+
+export const resendWhatsappOtpController = async (req, res) => {
+  const { phone } = req.body;
+
+  const result = await resendWhatsappOtp({
+    phone,
+  });
+
+  return res.status(200).json({
+    success: true,
+    ...result,
+  });
+};

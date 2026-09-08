@@ -15,6 +15,27 @@ export const loginUser = async (data) => {
     data
   );
 
+  return {
+    ...response.data,
+    user: response.data?.data?.user,
+  };
+};
+
+export const resendWhatsappOtp = async (data) => {
+  const response = await api.post(
+    "/auth/resend-otp",
+    data
+  );
+
+  return response.data;
+};
+
+export const verifyWhatsappOtp = async (data) => {
+  const response = await api.post(
+    "/auth/verify-otp",
+    data
+  );
+
   return response.data;
 };
 

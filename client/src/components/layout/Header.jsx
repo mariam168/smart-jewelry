@@ -1,227 +1,311 @@
-
 import { useContext, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import {
-  FaBars,
-  FaXmark,
-  FaUsers,
-  FaBagShopping,
-  FaArrowRightToBracket,
-  FaArrowRightFromBracket,
+FaBars,
+FaXmark,
+FaUsers,
+FaBagShopping,
+FaArrowRightToBracket,
+FaArrowRightFromBracket,
+FaGlobe,
 } from "react-icons/fa6";
 
 import logo from "../../assets/logo5.png";
+
 import { useAuth } from "../../features/auth/context/AuthContext";
 import { CartContext } from "../../context/CartContext";
 
 const Header = () => {
-  const navigate = useNavigate();
+const { t, i18n } = useTranslation();
 
-  const { user, logout } = useAuth();
-  const { cartItems, openCart } = useContext(CartContext);
+const navigate = useNavigate();
 
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+const { user, logout } = useAuth();
 
-  const cartCount = cartItems.reduce(
-    (total, item) => total + item.quantity,
-    0,
-  );
+const { cartItems, openCart } = useContext(CartContext);
 
-  const isAdmin =
-    user?.role?.name === "admin" ||
-    user?.role?.name === "super_admin";
+const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/login");
-    setIsMenuOpen(false);
-  };
+const cartCount = cartItems.reduce(
+(total, item) => total + item.quantity,
+0,
+);
 
-  const navLinkClass = ({ isActive }) =>
-    `relative flex h-full items-center justify-center px-0.5 text-[12px] font-semibold uppercase tracking-[0.035em] transition-colors duration-300 
-    ${
+const isAdmin =
+user?.role?.name === "admin" ||
+user?.role?.name === "super_admin";
+
+const customerFirstName =
+user?.customer?.firstName ||
+user?.firstName ||
+"";
+
+const customerLastName =
+user?.customer?.lastName ||
+user?.lastName ||
+"";
+
+const emailName = user?.email
+? user.email.split("@")[0]
+: "";
+
+const customerName =
+user?.name ||
+`${customerFirstName} ${customerLastName}`.trim() ||
+user?.username ||
+emailName;
+
+const toggleLanguage = () => {
+const newLang =
+i18n.language === "en" ? "ar" : "en";
+
+
+i18n.changeLanguage(newLang);
+
+
+};
+
+const handleLogout = async () => {
+await logout();
+
+
+navigate("/login");
+
+setIsMenuOpen(false);
+
+};
+
+const navLinkClass = ({ isActive }) =>
+`relative py-2 text-[11px] font-bold uppercase tracking-[0.15em] transition-all duration-300 ${
       isActive
         ? "text-midnight-navy"
-        : "text-midnight-navy/85 hover:text-classic-gold"
-    } 
-    after:absolute after:bottom-[28px] after:left-1/2 after:h-[1.5px] 
-    after:-translate-x-1/2 after:bg-midnight-navy 
-    after:transition-all after:duration-300 
-    ${isActive ? "after:w-full" : "after:w-0 hover:after:w-full"}`;
+        : "text-midnight-navy/50 hover:text-classic-gold"
+    } after:absolute after:bottom-0 after:left-1/2 after:h-[1.5px] after:bg-classic-gold after:transition-all after:duration-300 after:-translate-x-1/2 ${
+      isActive
+        ? "after:w-full"
+        : "after:w-0 hover:after:w-full"
+    }`;
 
-  return (
-    <header className="sticky top-0 z-50 border-b border-light-champagne/60 bg-soft-white/98 backdrop-blur-xl">
-      <div className="mx-auto flex h-[78px] max-w-[1480px] items-center justify-between px-4 sm:px-6 md:h-[106px] lg:px-10 xl:px-14">
+const actionIconClass =
+"group relative flex h-10 w-10 items-center justify-center rounded-full text-midnight-navy/80 transition-all duration-300 hover:bg-midnight-navy hover:text-white";
+
+return ( <header className="sticky top-0 z-50 w-full border-b border-light-champagne/40 bg-soft-white/90 backdrop-blur-lg"> <div className="mx-auto flex h-20 max-w-[1600px] items-center justify-between px-6 lg:px-12"> <div className="flex-1"> <Link
+         to="/"
+         className="inline-block transition-transform duration-300 hover:scale-[1.03]"
+       > <img
+           src={logo}
+           alt="logo"
+           className="h-12 w-auto md:h-16"
+         /> </Link> </div>
+
+    <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-10 md:flex">
+      <NavLink
+        to="/"
+        className={navLinkClass}
+      >
+        {t("header.home")}
+      </NavLink>
+
+      <NavLink
+        to="/shop"
+        className={navLinkClass}
+      >
+        {t("header.shop")}
+      </NavLink>
+
+      <NavLink
+        to="/about"
+        className={navLinkClass}
+      >
+        {t("header.about")}
+      </NavLink>
+
+      <NavLink
+        to="/contact"
+        className={navLinkClass}
+      >
+        {t("header.contact")}
+      </NavLink>
+    </nav>
+
+    <div className="flex flex-1 items-center justify-end gap-1 sm:gap-3">
+      <button
+        onClick={toggleLanguage}
+        className="hidden items-center gap-2 rounded-full border border-light-champagne/50 px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-midnight-navy transition-all hover:bg-warm-ivory md:flex"
+      >
+        <FaGlobe className="text-sm" />
+
+        <span>
+          {i18n.language}
+        </span>
+      </button>
+
+      <div className="mx-2 hidden h-5 w-px bg-light-champagne/60 sm:block" />
+
+      {user ? (
+        <div className="flex items-center gap-1">
+          <Link
+            to={
+              isAdmin
+                ? "/admin"
+                : "/account"
+            }
+            className={
+              user?.role?.name === "customer"
+                ? "group relative flex h-10 max-w-[180px] items-center rounded-full border border-light-champagne/60 bg-warm-ivory/40 px-4 text-[10px] font-bold uppercase tracking-[0.12em] text-midnight-navy transition-all duration-300 hover:border-classic-gold hover:bg-midnight-navy hover:text-white"
+                : actionIconClass
+            }
+            title={t("header.myAccount")}
+          >
+            {user?.role?.name === "customer" ? (
+              <span className="truncate">
+                {customerName}
+              </span>
+            ) : (
+              <FaUsers className="text-lg" />
+            )}
+          </Link>
+
+          <button
+            onClick={handleLogout}
+            className={`${actionIconClass} hidden sm:flex`}
+            title={t("header.logout")}
+          >
+            <FaArrowRightFromBracket className="text-base" />
+          </button>
+        </div>
+      ) : (
         <Link
-          to="/"
-          className="group flex shrink-0 items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-classic-gold/40"
+          to="/login"
+          className={actionIconClass}
+          title={t("header.login")}
         >
-          <img
-            src={logo}
-            alt="logo"
-            className="h-[64px] w-auto object-contain transition-transform duration-300 group-hover:scale-[1.015] md:h-[94px] lg:h-[98px]"
-          />
+          <FaArrowRightToBracket className="text-lg" />
         </Link>
+      )}
 
-        <nav className="absolute left-1/2 hidden h-full -translate-x-1/2 items-center gap-8 md:flex lg:gap-11 xl:gap-14">
-          <NavLink to="/" className={navLinkClass}>
-            Home
+      <button
+        onClick={openCart}
+        className={actionIconClass}
+      >
+        <FaBagShopping className="text-lg" />
+
+        {cartCount > 0 && (
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-classic-gold text-[9px] font-bold text-white shadow-sm group-hover:bg-midnight-navy">
+            {cartCount}
+          </span>
+        )}
+      </button>
+
+      <button
+        onClick={() =>
+          setIsMenuOpen(!isMenuOpen)
+        }
+        className="flex h-10 w-10 items-center justify-center rounded-full bg-warm-ivory/40 text-midnight-navy md:hidden"
+      >
+        {isMenuOpen ? (
+          <FaXmark className="text-xl" />
+        ) : (
+          <FaBars className="text-lg" />
+        )}
+      </button>
+    </div>
+  </div>
+
+  {isMenuOpen && (
+    <div className="absolute left-0 top-full w-full bg-soft-white/98 px-8 py-10 shadow-2xl backdrop-blur-xl md:hidden">
+      <nav className="flex flex-col space-y-6">
+        {[
+          [
+            t("header.home"),
+            "/",
+          ],
+          [
+            t("header.shop"),
+            "/shop",
+          ],
+          [
+            t("header.about"),
+            "/about",
+          ],
+          [
+            t("header.contact"),
+            "/contact",
+          ],
+        ].map(([name, path]) => (
+          <NavLink
+            key={path}
+            to={path}
+            onClick={() =>
+              setIsMenuOpen(false)
+            }
+            className={({ isActive }) =>
+              `text-xs font-black uppercase tracking-[0.2em] transition-colors ${
+                isActive
+                  ? "text-classic-gold"
+                  : "text-midnight-navy"
+              }`
+            }
+          >
+            {name}
           </NavLink>
+        ))}
 
-          <NavLink to="/shop" className={navLinkClass}>
-            Shop
-          </NavLink>
+        <div className="mt-4 flex flex-col gap-4 border-t border-light-champagne/40 pt-6">
+          <button
+            onClick={() => {
+              toggleLanguage();
+              setIsMenuOpen(false);
+            }}
+            className="flex items-center gap-4 text-[11px] font-bold uppercase tracking-widest text-midnight-navy"
+          >
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-warm-ivory">
+              <FaGlobe />
+            </span>
 
-          <NavLink to="/about" className={navLinkClass}>
-            About
-          </NavLink>
+            {t("header.language")} (
+            {i18n.language})
+          </button>
 
-          <NavLink to="/contact" className={navLinkClass}>
-            Contact
-          </NavLink>
-        </nav>
-
-        <div className="flex items-center gap-1.5 sm:gap-3 md:gap-5">
-          {user ? (
-            <>
-              <Link
-                to={isAdmin ? "/admin" : "/account"}
-                className="group hidden items-center gap-2.5 text-[11px] font-medium text-midnight-navy transition-colors duration-300 hover:text-classic-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-classic-gold/40 sm:flex"
-              >
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-warm-ivory text-midnight-navy transition-all duration-300 group-hover:bg-soft-cream group-hover:text-classic-gold md:h-10 md:w-10">
-                  <FaUsers className="text-[15px]" />
-                </span>
-
-                <span className="hidden whitespace-nowrap lg:block">
-                  {isAdmin ? "Dashboard" : "My Account"}
-                </span>
-              </Link>
-
-              <button
-                onClick={handleLogout}
-                className="group hidden items-center gap-2 text-[11px] font-medium text-slate-gray transition-colors duration-300 hover:text-antique-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-classic-gold/40 sm:flex"
-              >
-                <span className="flex h-9 w-9 items-center justify-center rounded-full text-slate-gray transition-all duration-300 group-hover:bg-warm-ivory group-hover:text-antique-gold md:h-10 md:w-10">
-                  <FaArrowRightFromBracket className="text-[14px]" />
-                </span>
-
-                <span className="hidden lg:block">Logout</span>
-              </button>
-            </>
-          ) : (
+          {user?.role?.name === "customer" && (
             <Link
-              to="/login"
-              className="group hidden items-center gap-2.5 text-[11px] font-medium text-midnight-navy transition-colors duration-300 hover:text-classic-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-classic-gold/40 sm:flex"
+              to="/account"
+              onClick={() =>
+                setIsMenuOpen(false)
+              }
+              className="flex items-center gap-4 text-[11px] font-bold uppercase tracking-widest text-midnight-navy"
             >
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-warm-ivory text-midnight-navy transition-all duration-300 group-hover:bg-soft-cream group-hover:text-classic-gold md:h-10 md:w-10">
-                <FaArrowRightToBracket className="text-[14px]" />
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-warm-ivory">
+                <FaUsers />
               </span>
 
-              <span className="hidden whitespace-nowrap lg:block">
-                Login
+              <span className="truncate">
+                {customerName}
               </span>
             </Link>
           )}
 
-          <button
-            onClick={openCart}
-            aria-label="Open shopping cart"
-            className="group relative flex h-10 w-10 items-center justify-center text-midnight-navy transition-all duration-300 hover:text-classic-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-classic-gold/40 md:h-11 md:w-11"
-          >
-            <FaBagShopping className="text-[19px] transition-transform duration-300 group-hover:-translate-y-0.5 md:text-[21px]" />
-
-            {cartCount > 0 && (
-              <span className="absolute -right-[1px] top-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-midnight-navy px-1 text-[9px] font-bold leading-none text-soft-white shadow-sm md:-right-[2px] md:top-[1px]">
-                {cartCount}
+          {user && (
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-4 text-[11px] font-bold uppercase tracking-widest text-red-700"
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-red-50">
+                <FaArrowRightFromBracket />
               </span>
-            )}
-          </button>
 
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="Toggle menu"
-            className="flex h-10 w-10 items-center justify-center rounded-full text-midnight-navy transition-all duration-300 hover:bg-warm-ivory hover:text-classic-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-classic-gold/40 md:hidden"
-          >
-            {isMenuOpen ? (
-              <FaXmark className="text-[20px]" />
-            ) : (
-              <FaBars className="text-[19px]" />
-            )}
-          </button>
+              {t("header.logout")}
+            </button>
+          )}
         </div>
-      </div>
+      </nav>
+    </div>
+  )}
+</header>
 
-      {isMenuOpen && (
-        <div className="border-t border-light-champagne/70 bg-soft-white px-4 pb-7 pt-4 shadow-[0_18px_35px_rgba(7,19,31,0.06)] md:hidden sm:px-6">
-          <nav className="mx-auto flex max-w-7xl flex-col">
-            {[
-              ["Home", "/"],
-              ["Shop", "/shop"],
-              ["About", "/about"],
-              ["Contact", "/contact"],
-            ].map(([name, path]) => (
-              <NavLink
-                key={path}
-                to={path}
-                onClick={() => setIsMenuOpen(false)}
-                className={({ isActive }) =>
-                  `relative flex min-h-[50px] items-center border-b border-light-champagne/60 px-1 text-[12px] font-semibold uppercase tracking-[0.08em] transition-colors duration-300 ${
-                    isActive
-                      ? "text-classic-gold"
-                      : "text-midnight-navy hover:text-classic-gold"
-                  }`
-                }
-              >
-                {name}
-              </NavLink>
-            ))}
-
-            <div className="pt-4">
-              {user ? (
-                <div className="flex flex-col gap-1">
-                  <Link
-                    to={isAdmin ? "/admin" : "/account"}
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-3 rounded-lg px-1 py-3 text-[12px] font-medium text-midnight-navy transition-colors duration-300 hover:text-classic-gold"
-                  >
-                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-warm-ivory text-midnight-navy">
-                      <FaUsers className="text-[14px]" />
-                    </span>
-
-                    {isAdmin ? "Dashboard" : "My Account"}
-                  </Link>
-
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center gap-3 rounded-lg px-1 py-3 text-left text-[12px] font-medium text-slate-gray transition-colors duration-300 hover:text-antique-gold"
-                  >
-                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-warm-ivory">
-                      <FaArrowRightFromBracket className="text-[14px]" />
-                    </span>
-
-                    Logout
-                  </button>
-                </div>
-              ) : (
-                <Link
-                  to="/login"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-3 rounded-lg px-1 py-3 text-[12px] font-medium text-midnight-navy transition-colors duration-300 hover:text-classic-gold"
-                >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-warm-ivory">
-                    <FaArrowRightToBracket className="text-[14px]" />
-                  </span>
-
-                  Login
-                </Link>
-              )}
-            </div>
-          </nav>
-        </div>
-      )}
-    </header>
-  );
+);
 };
 
 export default Header;

@@ -1,45 +1,59 @@
+import { useTranslation } from "react-i18next";
+
 const ShopHeader = ({ productsCount }) => {
+  const { t, i18n } = useTranslation();
+  const isRtl = i18n.language === "ar";
+  const activeLanguage = isRtl ? "ar" : "en";
+
   return (
-    <section className="relative overflow-hidden border-b border-light-champagne/80 bg-warm-ivory">
-      <div className="pointer-events-none absolute left-1/2 top-[-180px] h-[420px] w-[760px] -translate-x-1/2 rounded-full bg-soft-cream/80 blur-[110px]" />
+    <section className="relative overflow-hidden border-b border-light-champagne/40 bg-warm-ivory">
+      <div className={`pointer-events-none absolute top-[-150px] h-[450px] w-[450px] rounded-full bg-champagne-gold/10 blur-[120px] ${isRtl ? '-right-20' : '-left-20'}`} />
+      <div className={`pointer-events-none absolute bottom-[-150px] h-[450px] w-[450px] rounded-full bg-light-champagne/60 blur-[120px] ${isRtl ? '-left-20' : '-right-20'}`} />
+      <div className="pointer-events-none absolute left-1/2 top-0 h-[300px] w-full -translate-x-1/2 rounded-full bg-white/40 blur-[100px]" />
 
-      <div className="pointer-events-none absolute -left-32 bottom-[-180px] h-[360px] w-[360px] rounded-full bg-champagne-gold/10 blur-[100px]" />
-
-      <div className="pointer-events-none absolute -right-32 top-10 h-[360px] w-[360px] rounded-full bg-light-champagne/70 blur-[100px]" />
-
-      <div className="relative mx-auto max-w-[1360px] px-6 py-16 text-center sm:px-8 sm:py-20 lg:px-10 lg:py-24 xl:px-12">
-        <div className="mx-auto max-w-[820px]">
-          <div className="mb-5 flex items-center justify-center gap-3">
-            <span className="h-px w-10 bg-classic-gold/45" />
-
-            <p className="text-[10px] font-semibold uppercase tracking-[0.34em] text-midnight-navy">
-              Smart Jewelry
+      <div className="relative mx-auto max-w-[1400px] px-6 py-20 sm:py-28 lg:px-12">
+        <div className="flex flex-col items-center text-center">
+          <div className="mb-8 flex items-center gap-4">
+            <span className="h-[1px] w-12 bg-classic-gold/30" />
+            <p className="text-[11px] font-bold uppercase tracking-[0.4em] text-midnight-navy/70">
+              {t("shopHeader.smartJewelry")}
             </p>
-
-            <span className="h-px w-10 bg-classic-gold/45" />
+            <span className="h-[1px] w-12 bg-classic-gold/30" />
           </div>
 
-          <h1 className="font-serif text-[3rem] font-normal leading-[1.02] tracking-[-0.045em] text-midnight-navy sm:text-[3.8rem] lg:text-[4.6rem]">
-            Discover Your
-            <span className="ml-2 italic text-navy-soft">Jewelry.</span>
+          <h1
+            dir={activeLanguage === "ar" ? "rtl" : "ltr"}
+            className="font-serif text-[2.8rem] font-normal leading-[1.1] tracking-tight text-midnight-navy sm:text-[4rem] lg:text-[5.2rem]"
+          >
+            {t("shopHeader.titleFirst")}
+            <span className={`block lg:inline lg:ml-4 text-navy-soft ${isRtl ? "not-italic" : "italic"}`}>
+              {t("shopHeader.titleSecond")}
+            </span>
           </h1>
 
-          <p className="mx-auto mt-6 max-w-[620px] text-[13px] leading-7 text-slate-gray sm:text-[15px] sm:leading-8">
-            Explore our collection of smart jewelry designed to combine
-            elegance, technology, and meaningful connections.
+          <div className="mt-8 h-1 w-20 bg-classic-gold" />
+
+          <p
+            dir={activeLanguage === "ar" ? "rtl" : "ltr"}
+            className="mx-auto mt-10 max-w-[680px] text-[15px] font-medium leading-[1.8] text-slate-gray sm:text-[17px]"
+          >
+            {t("shopHeader.description")}
           </p>
 
-          <div className="mt-7 flex justify-center">
-            <div className="inline-flex items-center gap-3 rounded-full border border-light-champagne bg-soft-white/75 px-4 py-2.5 shadow-[0_6px_18px_rgba(7,19,31,0.04)] backdrop-blur-sm">
-              <span className="text-[9px] text-classic-gold">✦</span>
-
-              <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-gray">
-                {productsCount} products available
+          <div className="mt-12">
+            <div className="inline-flex items-center gap-4 rounded-full border border-light-champagne/60 bg-white/80 px-6 py-3 shadow-[0_10px_30px_rgba(0,0,0,0.04)] backdrop-blur-md">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-midnight-navy text-[10px] text-classic-gold">
+                ✦
+              </div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-midnight-navy">
+                {productsCount} <span className="text-slate-gray/60 ml-1">{t("shopHeader.productsAvailable")}</span>
               </p>
             </div>
           </div>
         </div>
       </div>
+      
+      <div className="absolute bottom-0 left-0 h-px w-full bg-gradient-to-r from-transparent via-light-champagne to-transparent" />
     </section>
   );
 };

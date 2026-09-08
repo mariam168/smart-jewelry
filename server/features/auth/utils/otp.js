@@ -1,3 +1,4 @@
+
 import crypto from "crypto";
 
 const getOtpSecret = () => {
@@ -17,8 +18,8 @@ const getOtpSecret = () => {
 export const generateOtp = () => {
   return String(
     crypto.randomInt(
-      100000,
-      1000000,
+      1000,
+      10000,
     ),
   );
 };

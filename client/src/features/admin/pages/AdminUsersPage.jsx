@@ -1,9 +1,12 @@
-
 import {
   useEffect,
   useMemo,
   useState,
 } from "react";
+
+import {
+  useTranslation,
+} from "react-i18next";
 
 import {
   getAdminUsers,
@@ -15,6 +18,10 @@ import {
 } from "../../auth/context/AuthContext";
 
 const AdminUsersPage = () => {
+  const {
+    t,
+  } = useTranslation();
+
   const {
     user: currentUser,
   } = useAuth();
@@ -82,7 +89,9 @@ const AdminUsersPage = () => {
         setError(
           error?.response?.data
             ?.message ||
-            "Failed to load users.",
+            t(
+              "adminUsers.failedToLoadUsers",
+            ),
         );
       } finally {
         setLoading(false);
@@ -197,7 +206,9 @@ const AdminUsersPage = () => {
         !isSuperAdmin
       ) {
         setError(
-          "Only a Super Admin can assign the Super Admin role.",
+          t(
+            "adminUsers.onlySuperAdminCanAssign",
+          ),
         );
 
         return;
@@ -210,7 +221,9 @@ const AdminUsersPage = () => {
         !isSuperAdmin
       ) {
         setError(
-          "You cannot modify a Super Admin account.",
+          t(
+            "adminUsers.cannotModifySuperAdmin",
+          ),
         );
 
         return;
@@ -230,10 +243,18 @@ const AdminUsersPage = () => {
 
       const confirmed =
         window.confirm(
-          `Change ${fullName} from ${
-            currentRole ||
-            "unknown"
-          } to ${newRole}?`,
+          t(
+            "adminUsers.changeRoleConfirmation",
+            {
+              fullName,
+              currentRole:
+                currentRole ||
+                t(
+                  "adminUsers.unknown",
+                ),
+              newRole,
+            },
+          ),
         );
 
       if (!confirmed) {
@@ -281,7 +302,9 @@ const AdminUsersPage = () => {
         );
 
         setMessage(
-          "User role updated successfully.",
+          t(
+            "adminUsers.roleUpdatedSuccessfully",
+          ),
         );
       } catch (error) {
         console.error(
@@ -292,7 +315,9 @@ const AdminUsersPage = () => {
         setError(
           error?.response?.data
             ?.message ||
-            "Failed to update user role.",
+            t(
+              "adminUsers.failedToUpdateRole",
+            ),
         );
       } finally {
         setUpdatingId("");
@@ -339,7 +364,9 @@ const AdminUsersPage = () => {
           <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-light-champagne border-t-classic-gold" />
 
           <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.2em] text-steel-gray">
-            Loading Users
+            {t(
+              "adminUsers.loadingUsers",
+            )}
           </p>
         </div>
       </div>
@@ -356,16 +383,22 @@ const AdminUsersPage = () => {
             <span className="h-px w-9 bg-classic-gold" />
 
             <span className="text-[9px] font-semibold uppercase tracking-[0.32em] text-champagne-gold">
-              Administration
+              {t(
+                "adminUsers.administration",
+              )}
             </span>
           </div>
 
           <h1 className="mt-4 font-serif text-[3rem] font-normal tracking-[-0.04em] text-soft-white sm:text-[3.6rem]">
-            Registered Users
+            {t(
+              "adminUsers.registeredUsers",
+            )}
           </h1>
 
           <p className="mt-4 max-w-2xl text-[13px] leading-7 text-premium-silver/70">
-            View registered accounts and manage administrator access.
+            {t(
+              "adminUsers.description",
+            )}
           </p>
         </div>
       </header>
@@ -386,7 +419,9 @@ const AdminUsersPage = () => {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-[22px] border border-light-champagne bg-soft-white p-6 shadow-[0_12px_32px_rgba(7,19,31,0.04)]">
             <p className="text-[8px] font-semibold uppercase tracking-[0.22em] text-steel-gray">
-              Total Users
+              {t(
+                "adminUsers.totalUsers",
+              )}
             </p>
 
             <p className="mt-3 font-serif text-[2.4rem] text-midnight-navy">
@@ -396,7 +431,9 @@ const AdminUsersPage = () => {
 
           <div className="rounded-[22px] border border-light-champagne bg-soft-white p-6 shadow-[0_12px_32px_rgba(7,19,31,0.04)]">
             <p className="text-[8px] font-semibold uppercase tracking-[0.22em] text-steel-gray">
-              Customers
+              {t(
+                "adminUsers.customers",
+              )}
             </p>
 
             <p className="mt-3 font-serif text-[2.4rem] text-midnight-navy">
@@ -406,7 +443,9 @@ const AdminUsersPage = () => {
 
           <div className="rounded-[22px] border border-champagne-gold/25 bg-soft-cream p-6 shadow-[0_12px_32px_rgba(7,19,31,0.05)]">
             <p className="text-[8px] font-semibold uppercase tracking-[0.22em] text-antique-gold">
-              Administrators
+              {t(
+                "adminUsers.administrators",
+              )}
             </p>
 
             <p className="mt-3 font-serif text-[2.4rem] text-antique-gold">
@@ -416,7 +455,9 @@ const AdminUsersPage = () => {
 
           <div className="rounded-[22px] border border-rich-navy/20 bg-soft-white p-6 shadow-[0_12px_32px_rgba(7,19,31,0.05)]">
             <p className="text-[8px] font-semibold uppercase tracking-[0.22em] text-midnight-navy">
-              Super Administrators
+              {t(
+                "adminUsers.superAdministrators",
+              )}
             </p>
 
             <p className="mt-3 font-serif text-[2.4rem] text-midnight-navy">
@@ -429,11 +470,19 @@ const AdminUsersPage = () => {
           <div className="flex flex-col gap-4 border-b border-light-champagne bg-warm-ivory/45 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
             <div>
               <h2 className="font-serif text-[1.7rem]">
-                User Accounts
+                {t(
+                  "adminUsers.userAccounts",
+                )}
               </h2>
 
               <p className="mt-1 text-[10px] text-steel-gray">
-                {filteredUsers.length} account(s)
+                {t(
+                  "adminUsers.accountCount",
+                  {
+                    count:
+                      filteredUsers.length,
+                  },
+                )}
               </p>
             </div>
 
@@ -449,7 +498,9 @@ const AdminUsersPage = () => {
                       .value,
                   )
                 }
-                placeholder="Search name or email..."
+                placeholder={t(
+                  "adminUsers.searchPlaceholder",
+                )}
                 className="h-[44px] min-w-[250px] rounded-[12px] border border-light-champagne bg-soft-white px-4 text-[11px] outline-none focus:border-classic-gold"
               />
 
@@ -468,20 +519,28 @@ const AdminUsersPage = () => {
                 className="h-[44px] rounded-[12px] border border-light-champagne bg-soft-white px-4 text-[11px] outline-none"
               >
                 <option value="all">
-                  All Roles
+                  {t(
+                    "adminUsers.allRoles",
+                  )}
                 </option>
 
                 <option value="customer">
-                  Customers
+                  {t(
+                    "adminUsers.customers",
+                  )}
                 </option>
 
                 <option value="admin">
-                  Admins
+                  {t(
+                    "adminUsers.admins",
+                  )}
                 </option>
 
                 {isSuperAdmin && (
                   <option value="super_admin">
-                    Super Admins
+                    {t(
+                      "adminUsers.superAdmins",
+                    )}
                   </option>
                 )}
               </select>
@@ -493,27 +552,39 @@ const AdminUsersPage = () => {
               <thead>
                 <tr className="border-b border-light-champagne bg-soft-cream/50 text-left">
                   <th className="px-6 py-4 text-[8px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                    User
+                    {t(
+                      "adminUsers.user",
+                    )}
                   </th>
 
                   <th className="px-6 py-4 text-[8px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                    Email
+                    {t(
+                      "adminUsers.email",
+                    )}
                   </th>
 
                   <th className="px-6 py-4 text-[8px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                    Phone
+                    {t(
+                      "adminUsers.phone",
+                    )}
                   </th>
 
                   <th className="px-6 py-4 text-[8px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                    Joined
+                    {t(
+                      "adminUsers.joined",
+                    )}
                   </th>
 
                   <th className="px-6 py-4 text-[8px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                    Status
+                    {t(
+                      "adminUsers.status",
+                    )}
                   </th>
 
                   <th className="px-6 py-4 text-[8px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                    Role
+                    {t(
+                      "adminUsers.role",
+                    )}
                   </th>
                 </tr>
               </thead>
@@ -535,7 +606,9 @@ const AdminUsersPage = () => {
                         .join(
                           " ",
                         ) ||
-                      "Admin Account";
+                      t(
+                        "adminUsers.adminAccount",
+                      );
 
                     const role =
                       user.role
@@ -631,8 +704,12 @@ const AdminUsersPage = () => {
                             }`}
                           >
                             {user.isActive
-                              ? "Active"
-                              : "Inactive"}
+                              ? t(
+                                  "adminUsers.active",
+                                )
+                              : t(
+                                  "adminUsers.inactive",
+                                )}
                           </span>
                         </td>
 
@@ -666,16 +743,22 @@ const AdminUsersPage = () => {
                             }`}
                           >
                             <option value="customer">
-                              Customer
+                              {t(
+                                "adminUsers.customer",
+                              )}
                             </option>
 
                             <option value="admin">
-                              Admin
+                              {t(
+                                "adminUsers.admin",
+                              )}
                             </option>
 
                             {isSuperAdmin && (
                               <option value="super_admin">
-                                Super Admin
+                                {t(
+                                  "adminUsers.superAdmin",
+                                )}
                               </option>
                             )}
                           </select>
@@ -692,7 +775,9 @@ const AdminUsersPage = () => {
                       colSpan="6"
                       className="px-6 py-16 text-center text-[12px] text-steel-gray"
                     >
-                      No users found.
+                      {t(
+                        "adminUsers.noUsersFound",
+                      )}
                     </td>
                   </tr>
                 )}
@@ -706,4 +791,3 @@ const AdminUsersPage = () => {
 };
 
 export default AdminUsersPage;
-

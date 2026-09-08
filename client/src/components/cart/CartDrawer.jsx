@@ -1,19 +1,29 @@
+
 import { useContext, useState } from "react";
+
 import { Link } from "react-router-dom";
+
 import { FaTrashCan } from "react-icons/fa6";
+
+import { useTranslation } from "react-i18next";
 
 import { CartContext } from "../../context/CartContext";
 
 const getBackendOrigin = () => {
-  const explicitBackend = import.meta.env.VITE_BACKEND_URL;
+  const explicitBackend =
+    import.meta.env.VITE_BACKEND_URL;
 
   if (explicitBackend) {
     return String(explicitBackend).replace(/\/+$/, "");
   }
 
-  const apiUrl = import.meta.env.VITE_API_URL;
+  const apiUrl =
+    import.meta.env.VITE_API_URL;
 
-  if (apiUrl && /^https?:\/\//i.test(apiUrl)) {
+  if (
+    apiUrl &&
+    /^https?:\/\//i.test(apiUrl)
+  ) {
     return String(apiUrl)
       .replace(/\/api\/?$/i, "")
       .replace(/\/+$/, "");
@@ -113,12 +123,10 @@ const getCartItemImage = (item) => {
     item?.image,
     item?.imageUrl,
     item?.primaryImage,
-
     variant?.image,
     variant?.imageUrl,
     variant?.primaryImage,
     variant?.images?.[0],
-
     product?.primaryImage,
     product?.image,
     product?.imageUrl,
@@ -139,7 +147,6 @@ const getCartItemImage = (item) => {
 const getCartItemPricing = (item) => {
   const product = item?.product || null;
   const variant = item?.variant || null;
-
   const productTechnology =
     item?.productTechnology || null;
 
@@ -148,13 +155,17 @@ const getCartItemPricing = (item) => {
     item?.technologyModel ||
     null;
 
-  const productPrice = Number(product?.price || 0);
+  const productPrice = Number(
+    product?.price || 0,
+  );
 
   const productComparePrice = Number(
     product?.comparePrice || 0,
   );
 
-  const variantPrice = Number(variant?.price || 0);
+  const variantPrice = Number(
+    variant?.price || 0,
+  );
 
   const variantComparePrice = Number(
     variant?.compareAtPrice || 0,
@@ -191,9 +202,12 @@ const getCartItemPricing = (item) => {
       ? baseComparePrice + technologyPrice
       : 0;
 
-  const quantity = Number(item?.quantity || 1);
+  const quantity = Number(
+    item?.quantity || 1,
+  );
 
-  const itemTotal = unitPrice * quantity;
+  const itemTotal =
+    unitPrice * quantity;
 
   const originalItemTotal =
     hasDiscount
@@ -216,21 +230,37 @@ const getCartItemPricing = (item) => {
     product,
     productTechnology,
     technologyModel,
-
     basePrice,
     technologyPrice,
-
     unitPrice,
     compareUnitPrice,
-
     hasDiscount,
     discountPercentage,
-
     quantity,
     itemTotal,
     originalItemTotal,
     itemSaving,
   };
+};
+
+const getLocalizedText = (
+  value,
+  language = "en",
+) => {
+  if (
+    value &&
+    typeof value === "object" &&
+    !Array.isArray(value)
+  ) {
+    return (
+      value[language] ||
+      value.en ||
+      value.ar ||
+      ""
+    );
+  }
+
+  return value || "";
 };
 
 const CartDrawer = () => {
@@ -242,6 +272,13 @@ const CartDrawer = () => {
     updateQuantity,
     removeFromCart,
   } = useContext(CartContext);
+
+  const { t, i18n } = useTranslation();
+
+  const activeLanguage =
+    i18n.language === "ar"
+      ? "ar"
+      : "en";
 
   const [removingItemId, setRemovingItemId] =
     useState(null);
@@ -271,23 +308,29 @@ const CartDrawer = () => {
 
   const totalSavings = cartItems.reduce(
     (total, item) =>
-      total + getCartItemPricing(item).itemSaving,
+      total +
+      getCartItemPricing(item).itemSaving,
     0,
   );
 
-  const currentCartTotal = Number(cartTotal || 0);
+  const currentCartTotal =
+    Number(cartTotal || 0);
 
   return (
-    <div className="fixed inset-0 z-[100]">
+    <div
+      className="fixed inset-0 z-[100]"
+      dir={activeLanguage === "ar" ? "rtl" : "ltr"}
+    >
       <button
         type="button"
         onClick={closeCart}
         className="absolute inset-0 bg-luxury-black/55 backdrop-blur-[3px]"
-        aria-label="Close cart"
+        aria-label={t("cartDrawer.closeCart")}
       />
 
       <aside className="absolute right-0 top-0 flex h-full w-full max-w-[540px] flex-col overflow-hidden border-l border-light-champagne/20 bg-warm-ivory shadow-[-25px_0_70px_rgba(7,19,31,0.20)]">
         {/* HEADER */}
+
         <header className="relative overflow-hidden bg-midnight-navy px-6 py-7 text-soft-white">
           <div className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-champagne-gold/10 blur-[70px]" />
 
@@ -297,20 +340,20 @@ const CartDrawer = () => {
                 <span className="h-px w-8 bg-classic-gold/70" />
 
                 <span className="text-[8px] font-semibold uppercase tracking-[0.32em] text-champagne-gold">
-                  Your Selection
+                  {t("cartDrawer.yourSelection")}
                 </span>
               </div>
 
               <h2 className="mt-3 font-serif text-[1.9rem]">
-                Your Cart
+                {t("cartDrawer.yourCart")}
               </h2>
 
               {cartItems.length > 0 && (
                 <p className="mt-2 text-[10px] text-premium-silver/60">
                   {cartItems.length}{" "}
                   {cartItems.length === 1
-                    ? "piece"
-                    : "pieces"}
+                    ? t("cartDrawer.piece")
+                    : t("cartDrawer.pieces")}
                 </p>
               )}
             </div>
@@ -326,6 +369,7 @@ const CartDrawer = () => {
         </header>
 
         {/* CONTENT */}
+
         <div className="flex-1 overflow-y-auto px-5 py-6">
           {cartItems.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center text-center">
@@ -334,7 +378,7 @@ const CartDrawer = () => {
               </div>
 
               <h3 className="mt-6 font-serif text-[2rem] text-midnight-navy">
-                Your cart is waiting.
+                {t("cartDrawer.emptyTitle")}
               </h3>
 
               <Link
@@ -342,7 +386,7 @@ const CartDrawer = () => {
                 onClick={closeCart}
                 className="mt-7 rounded-[13px] bg-midnight-navy px-7 py-4 text-[9px] font-semibold uppercase tracking-[0.15em] text-soft-white"
               >
-                Start Shopping
+                {t("cartDrawer.startShopping")}
               </Link>
             </div>
           ) : (
@@ -355,16 +399,12 @@ const CartDrawer = () => {
                   product,
                   productTechnology,
                   technologyModel,
-
                   basePrice,
                   technologyPrice,
-
                   unitPrice,
                   compareUnitPrice,
-
                   hasDiscount,
                   discountPercentage,
-
                   quantity,
                   itemTotal,
                   originalItemTotal,
@@ -376,10 +416,19 @@ const CartDrawer = () => {
                     getCartItemImage(item),
                   );
 
+                const productName =
+                  getLocalizedText(
+                    product?.name,
+                    activeLanguage,
+                  );
+
                 const technologyName =
-                  technologyModel?.modelName ||
-                  technologyModel?.name ||
-                  "";
+                  getLocalizedText(
+                    technologyModel?.modelName ||
+                      technologyModel?.name ||
+                      "",
+                    activeLanguage,
+                  );
 
                 return (
                   <article
@@ -389,6 +438,7 @@ const CartDrawer = () => {
                     <div className="p-4 sm:p-5">
                       <div className="flex gap-4">
                         {/* IMAGE */}
+
                         <div className="relative">
                           <Link
                             to={`/shop/products/${product?._id}`}
@@ -399,14 +449,16 @@ const CartDrawer = () => {
                               <img
                                 src={imageUrl}
                                 alt={
-                                  product?.name ||
-                                  "Product"
+                                  productName ||
+                                  t("cartDrawer.product")
                                 }
                                 className="h-full w-full object-cover"
                               />
                             ) : (
                               <div className="flex h-full items-center justify-center text-[8px] text-steel-gray">
-                                No Image
+                                {t(
+                                  "cartDrawer.noImage",
+                                )}
                               </div>
                             )}
                           </Link>
@@ -419,13 +471,15 @@ const CartDrawer = () => {
                         </div>
 
                         {/* INFO */}
+
                         <div className="min-w-0 flex-1">
                           <Link
                             to={`/shop/products/${product?._id}`}
                             onClick={closeCart}
                             className="block truncate font-serif text-[1.2rem] text-midnight-navy"
+                            dir="auto"
                           >
-                            {product?.name}
+                            {productName}
                           </Link>
 
                           {hasDiscount && (
@@ -446,11 +500,16 @@ const CartDrawer = () => {
 
                           {technologyPrice > 0 && (
                             <p className="mt-1 text-[8px] text-steel-gray">
-                              Jewelry{" "}
+                              {t(
+                                "cartDrawer.jewelry",
+                              )}{" "}
                               {basePrice.toLocaleString(
                                 "en-EG",
                               )}{" "}
-                              + Technology{" "}
+                              +{" "}
+                              {t(
+                                "cartDrawer.technology",
+                              )}{" "}
                               {technologyPrice.toLocaleString(
                                 "en-EG",
                               )}
@@ -460,16 +519,24 @@ const CartDrawer = () => {
                       </div>
 
                       {/* TECHNOLOGY */}
+
                       {productTechnology && (
                         <div className="mt-4 flex items-center justify-between rounded-[14px] bg-midnight-navy px-4 py-3 text-soft-white">
                           <div>
                             <p className="text-[6px] font-semibold uppercase tracking-[0.2em] text-champagne-gold">
-                              Smart Technology
+                              {t(
+                                "cartDrawer.smartTechnology",
+                              )}
                             </p>
 
-                            <p className="mt-1 text-[10px]">
+                            <p
+                              className="mt-1 text-[10px]"
+                              dir="auto"
+                            >
                               {technologyName ||
-                                "Included"}
+                                t(
+                                  "cartDrawer.included",
+                                )}
                             </p>
                           </div>
 
@@ -484,6 +551,7 @@ const CartDrawer = () => {
                       )}
 
                       {/* QUANTITY + TOTAL */}
+
                       <div className="mt-4 flex items-end justify-between border-t border-light-champagne pt-4">
                         <div className="flex overflow-hidden rounded-full border border-light-champagne">
                           <button
@@ -539,7 +607,11 @@ const CartDrawer = () => {
 
                       {hasDiscount && (
                         <div className="mt-3 flex justify-between rounded-[12px] bg-soft-cream px-4 py-2.5 text-[8px] text-antique-gold">
-                          <span>You Save</span>
+                          <span>
+                            {t(
+                              "cartDrawer.youSave",
+                            )}
+                          </span>
 
                           <strong>
                             {itemSaving.toLocaleString(
@@ -552,21 +624,29 @@ const CartDrawer = () => {
                     </div>
 
                     {/* REMOVE — ALWAYS VISIBLE */}
+
                     <button
                       type="button"
                       disabled={
                         removingItemId === item._id
                       }
                       onClick={() =>
-                        handleRemoveItem(item._id)
+                        handleRemoveItem(
+                          item._id,
+                        )
                       }
                       className="flex min-h-[44px] w-full items-center justify-center gap-2 border-t border-light-champagne bg-soft-cream/45 text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray transition-all hover:bg-midnight-navy hover:text-soft-white disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <FaTrashCan className="text-[9px]" />
 
-                      {removingItemId === item._id
-                        ? "Removing..."
-                        : "Remove From Cart"}
+                      {removingItemId ===
+                      item._id
+                        ? t(
+                            "cartDrawer.removing",
+                          )
+                        : t(
+                            "cartDrawer.removeFromCart",
+                          )}
                     </button>
                   </article>
                 );
@@ -576,12 +656,13 @@ const CartDrawer = () => {
         </div>
 
         {/* SUMMARY */}
+
         {cartItems.length > 0 && (
           <footer className="bg-midnight-navy px-6 py-6 text-soft-white">
             {totalSavings > 0 && (
               <div className="mb-3 flex justify-between">
                 <span className="text-[8px] text-premium-silver/50">
-                  Savings
+                  {t("cartDrawer.savings")}
                 </span>
 
                 <span className="text-[10px] font-semibold text-champagne-gold">
@@ -596,7 +677,7 @@ const CartDrawer = () => {
 
             <div className="flex items-end justify-between">
               <span className="font-serif text-[1.2rem]">
-                Subtotal
+                {t("cartDrawer.subtotal")}
               </span>
 
               <span className="font-serif text-[1.7rem] text-champagne-gold">
@@ -612,7 +693,7 @@ const CartDrawer = () => {
               onClick={closeCart}
               className="mt-6 flex min-h-[52px] items-center justify-center rounded-[13px] bg-soft-white text-[9px] font-semibold uppercase tracking-[0.15em] text-midnight-navy"
             >
-              View Cart →
+              {t("cartDrawer.viewCart")} →
             </Link>
           </footer>
         )}

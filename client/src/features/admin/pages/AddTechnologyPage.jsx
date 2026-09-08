@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { createTechnology } from "../services/technologyApi";
 
 const AddTechnologyPage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -40,7 +42,8 @@ const AddTechnologyPage = () => {
       console.error(error);
 
       setError(
-        error?.response?.data?.message || "Failed to create technology.",
+        error?.response?.data?.message ||
+          t("addTechnology.failedToCreateTechnology"),
       );
     } finally {
       setIsLoading(false);
@@ -60,16 +63,16 @@ const AddTechnologyPage = () => {
               <span className="h-px w-8 bg-classic-gold/60" />
 
               <span className="text-[8px] font-semibold uppercase tracking-[0.3em] text-antique-gold">
-                Smart Jewelry
+                {t("addTechnology.smartJewelry")}
               </span>
             </div>
 
             <h1 className="font-serif text-[2.5rem] font-normal leading-none tracking-[-0.04em] text-midnight-navy sm:text-[3rem]">
-              Add Technology
+              {t("addTechnology.addTechnology")}
             </h1>
 
             <p className="mt-4 max-w-xl text-[12px] leading-7 text-slate-gray sm:text-[13px]">
-              Create a new technology for your smart jewelry collection.
+              {t("addTechnology.createNewTechnologyDescription")}
             </p>
           </div>
 
@@ -80,7 +83,7 @@ const AddTechnologyPage = () => {
             <span className="text-[14px] text-classic-gold transition-transform duration-300 group-hover:-translate-x-1">
               ←
             </span>
-            Back
+            {t("addTechnology.back")}
           </Link>
         </div>
       </header>
@@ -101,11 +104,11 @@ const AddTechnologyPage = () => {
 
               <div>
                 <p className="text-[8px] font-semibold uppercase tracking-[0.25em] text-antique-gold">
-                  Technology Details
+                  {t("addTechnology.technologyDetails")}
                 </p>
 
                 <h2 className="mt-1.5 font-serif text-[1.4rem] font-normal tracking-[-0.02em] text-midnight-navy">
-                  Create Technology
+                  {t("addTechnology.createTechnology")}
                 </h2>
               </div>
             </div>
@@ -124,11 +127,11 @@ const AddTechnologyPage = () => {
             <div className="space-y-7">
               <div>
                 <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                  Technology Name
+                  {t("addTechnology.technologyName")}
                 </label>
 
                 <p className="mb-3 text-[10px] leading-5 text-steel-gray">
-                  The name displayed to customers and admins.
+                  {t("addTechnology.technologyNameDescription")}
                 </p>
 
                 <input
@@ -144,11 +147,11 @@ const AddTechnologyPage = () => {
 
               <div>
                 <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                  Technology Code
+                  {t("addTechnology.technologyCode")}
                 </label>
 
                 <p className="mb-3 text-[10px] leading-5 text-steel-gray">
-                  A unique uppercase code used internally.
+                  {t("addTechnology.technologyCodeDescription")}
                 </p>
 
                 <input
@@ -166,7 +169,7 @@ const AddTechnologyPage = () => {
                 <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-champagne-gold/[0.07] blur-[45px]" />
 
                 <p className="relative text-[7px] font-semibold uppercase tracking-[0.25em] text-antique-gold">
-                  Preview
+                  {t("addTechnology.preview")}
                 </p>
 
                 <div className="relative mt-4 flex items-center gap-4">
@@ -176,7 +179,7 @@ const AddTechnologyPage = () => {
 
                   <div className="min-w-0">
                     <p className="truncate font-serif text-[1.15rem] font-normal text-midnight-navy">
-                      {formData.name || "Technology Name"}
+                      {formData.name || t("addTechnology.technologyName")}
                     </p>
 
                     <p className="mt-1 font-mono text-[8px] font-semibold uppercase tracking-[0.15em] text-slate-gray">
@@ -194,7 +197,7 @@ const AddTechnologyPage = () => {
                 to="/admin/technologies"
                 className="inline-flex min-h-[48px] items-center justify-center rounded-[13px] border border-light-champagne bg-soft-white px-7 text-[8px] font-semibold uppercase tracking-[0.11em] text-slate-gray transition-all duration-300 hover:-translate-y-0.5 hover:border-champagne-gold hover:bg-warm-ivory hover:text-midnight-navy"
               >
-                Cancel
+                {t("addTechnology.cancel")}
               </Link>
 
               <button
@@ -205,13 +208,13 @@ const AddTechnologyPage = () => {
                 {isLoading ? (
                   <>
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-champagne-gold/25 border-t-champagne-gold" />
-                    Creating...
+                    {t("addTechnology.creating")}
                   </>
                 ) : (
                   <>
                     <span className="text-[9px] text-champagne-gold">✦</span>
 
-                    <span>Create Technology</span>
+                    <span>{t("addTechnology.createTechnology")}</span>
                   </>
                 )}
               </button>

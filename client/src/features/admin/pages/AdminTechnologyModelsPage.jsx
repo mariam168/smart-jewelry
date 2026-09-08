@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
+
 import { Link } from "react-router-dom";
+
+import { useTranslation } from "react-i18next";
 
 import {
   getTechnologyModels,
@@ -41,13 +44,18 @@ const getImageUrl = (image) => {
 };
 
 const AdminTechnologyModelsPage = () => {
+  const { t } = useTranslation();
+
   const [technologyModels, setTechnologyModels] = useState([]);
+
   const [isLoading, setIsLoading] = useState(true);
+
   const [error, setError] = useState("");
 
   const loadTechnologyModels = async () => {
     try {
       setIsLoading(true);
+
       setError("");
 
       const response = await getTechnologyModels();
@@ -58,7 +66,7 @@ const AdminTechnologyModelsPage = () => {
 
       setError(
         error?.response?.data?.message ||
-          "Failed to load technology models.",
+          t("adminTechnologyModels.failedToLoadTechnologyModels"),
       );
     } finally {
       setIsLoading(false);
@@ -71,7 +79,7 @@ const AdminTechnologyModelsPage = () => {
 
   const handleDelete = async (id) => {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this technology model?",
+      t("adminTechnologyModels.deleteConfirmation"),
     );
 
     if (!confirmed) return;
@@ -87,7 +95,7 @@ const AdminTechnologyModelsPage = () => {
 
       alert(
         error?.response?.data?.message ||
-          "Failed to delete technology model.",
+          t("adminTechnologyModels.failedToDeleteTechnologyModel"),
       );
     }
   };
@@ -105,17 +113,16 @@ const AdminTechnologyModelsPage = () => {
               <span className="h-px w-8 bg-classic-gold/60" />
 
               <span className="text-[8px] font-semibold uppercase tracking-[0.3em] text-antique-gold">
-                Smart Jewelry
+                {t("adminTechnologyModels.smartJewelry")}
               </span>
             </div>
 
             <h1 className="font-serif text-[2.6rem] font-normal leading-none tracking-[-0.04em] text-midnight-navy sm:text-[3.1rem]">
-              Technology Models
+              {t("adminTechnologyModels.technologyModels")}
             </h1>
 
             <p className="mt-4 max-w-xl text-[12px] leading-7 text-slate-gray sm:text-[13px]">
-              Manage the technology models used across your smart jewelry
-              collection.
+              {t("adminTechnologyModels.manageDescription")}
             </p>
           </div>
 
@@ -123,11 +130,9 @@ const AdminTechnologyModelsPage = () => {
             to="/admin/technology-models/new"
             className="inline-flex min-h-[50px] w-fit shrink-0 items-center justify-center gap-3 rounded-[13px] bg-midnight-navy px-6 text-[8px] font-semibold uppercase tracking-[0.11em] text-soft-white shadow-[0_12px_28px_rgba(18,38,58,0.15)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-rich-navy hover:shadow-[0_16px_35px_rgba(18,38,58,0.20)]"
           >
-            <span className="text-[10px] text-champagne-gold">
-              ✦
-            </span>
+            <span className="text-[10px] text-champagne-gold">✦</span>
 
-            Add Technology Model
+            {t("adminTechnologyModels.addTechnologyModel")}
           </Link>
         </div>
       </header>
@@ -148,7 +153,7 @@ const AdminTechnologyModelsPage = () => {
             </div>
 
             <p className="relative text-[9px] font-semibold uppercase tracking-[0.22em] text-slate-gray">
-              Loading Technology Models...
+              {t("adminTechnologyModels.loadingTechnologyModels")}
             </p>
           </div>
         ) : technologyModels.length === 0 ? (
@@ -159,22 +164,20 @@ const AdminTechnologyModelsPage = () => {
               </div>
 
               <h2 className="mt-6 font-serif text-[2rem] font-normal text-midnight-navy">
-                No Technology Models Found
+                {t("adminTechnologyModels.noTechnologyModelsFound")}
               </h2>
 
               <p className="mx-auto mt-3 max-w-md text-[11px] leading-6 text-slate-gray">
-                Create your first technology model.
+                {t("adminTechnologyModels.createFirstTechnologyModel")}
               </p>
 
               <Link
                 to="/admin/technology-models/new"
                 className="mt-7 inline-flex min-h-[50px] items-center justify-center gap-3 rounded-[13px] bg-midnight-navy px-7 text-[8px] font-semibold uppercase tracking-[0.11em] text-soft-white"
               >
-                <span className="text-champagne-gold">
-                  ✦
-                </span>
+                <span className="text-champagne-gold">✦</span>
 
-                Add Technology Model
+                {t("adminTechnologyModels.addTechnologyModel")}
               </Link>
             </div>
           </div>
@@ -188,11 +191,11 @@ const AdminTechnologyModelsPage = () => {
 
                 <div>
                   <p className="text-[7px] font-semibold uppercase tracking-[0.24em] text-antique-gold">
-                    Technology Collection
+                    {t("adminTechnologyModels.technologyCollection")}
                   </p>
 
                   <h2 className="mt-1.5 font-serif text-[1.5rem] font-normal text-midnight-navy">
-                    Technology Models
+                    {t("adminTechnologyModels.technologyModels")}
                   </h2>
                 </div>
               </div>
@@ -202,7 +205,9 @@ const AdminTechnologyModelsPage = () => {
 
                 <span className="text-[8px] font-semibold uppercase tracking-[0.09em] text-slate-gray">
                   {technologyModels.length}{" "}
-                  {technologyModels.length === 1 ? "Model" : "Models"}
+                  {technologyModels.length === 1
+                    ? t("adminTechnologyModels.model")
+                    : t("adminTechnologyModels.models")}
                 </span>
               </div>
             </div>
@@ -212,43 +217,43 @@ const AdminTechnologyModelsPage = () => {
                 <thead className="border-b border-light-champagne/80 bg-warm-ivory/55">
                   <tr>
                     <th className="px-6 py-4 text-left text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                      Image
+                      {t("adminTechnologyModels.image")}
                     </th>
 
                     <th className="px-6 py-4 text-left text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                      Technology
+                      {t("adminTechnologyModels.technology")}
                     </th>
 
                     <th className="px-6 py-4 text-left text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                      Model Name
+                      {t("adminTechnologyModels.modelName")}
                     </th>
 
                     <th className="px-6 py-4 text-left text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                      Model Code
+                      {t("adminTechnologyModels.modelCode")}
                     </th>
 
                     <th className="px-6 py-4 text-left text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                      Manufacturer
+                      {t("adminTechnologyModels.manufacturer")}
                     </th>
 
                     <th className="px-6 py-4 text-center text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                      Battery
+                      {t("adminTechnologyModels.battery")}
                     </th>
 
                     <th className="px-6 py-4 text-center text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                      Activation
+                      {t("adminTechnologyModels.activation")}
                     </th>
 
                     <th className="px-6 py-4 text-center text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                      Subscription
+                      {t("adminTechnologyModels.subscription")}
                     </th>
 
                     <th className="px-6 py-4 text-center text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                      Status
+                      {t("adminTechnologyModels.status")}
                     </th>
 
                     <th className="px-6 py-4 text-left text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                      Actions
+                      {t("adminTechnologyModels.actions")}
                     </th>
                   </tr>
                 </thead>
@@ -270,7 +275,7 @@ const AdminTechnologyModelsPage = () => {
                           </div>
                         ) : (
                           <div className="flex h-16 w-16 items-center justify-center rounded-[15px] border border-light-champagne/80 bg-soft-cream text-[8px] text-steel-gray">
-                            No Image
+                            {t("adminTechnologyModels.noImage")}
                           </div>
                         )}
                       </td>
@@ -337,7 +342,12 @@ const AdminTechnologyModelsPage = () => {
                             }`}
                           />
 
-                          {model.status}
+                          {t(
+                            `adminTechnologyModels.statuses.${model.status}`,
+                            {
+                              defaultValue: model.status,
+                            },
+                          )}
                         </span>
                       </td>
 
@@ -347,7 +357,7 @@ const AdminTechnologyModelsPage = () => {
                             to={`/admin/technology-models/${model._id}/edit`}
                             className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-light-champagne bg-soft-white px-4 text-[7px] font-semibold uppercase tracking-[0.1em] text-slate-gray transition-all hover:border-champagne-gold hover:bg-warm-ivory"
                           >
-                            Edit
+                            {t("adminTechnologyModels.edit")}
                           </Link>
 
                           <button
@@ -355,7 +365,7 @@ const AdminTechnologyModelsPage = () => {
                             onClick={() => handleDelete(model._id)}
                             className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-antique-gold/20 bg-soft-white px-4 text-[7px] font-semibold uppercase tracking-[0.1em] text-antique-gold transition-all hover:bg-soft-cream"
                           >
-                            Delete
+                            {t("adminTechnologyModels.delete")}
                           </button>
                         </div>
                       </td>

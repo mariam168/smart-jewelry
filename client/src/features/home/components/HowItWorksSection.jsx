@@ -1,68 +1,68 @@
-const steps = [
-  {
-    number: "01",
-    title: "Discover",
-    description:
-      "Explore jewelry designed around your style and the moments that matter to you.",
-  },
-  {
-    number: "02",
-    title: "Customize",
-    description:
-      "Choose the options available for your selected piece and make it truly yours.",
-  },
-  {
-    number: "03",
-    title: "Order",
-    description:
-      "Complete your order through a simple and secure checkout experience.",
-  },
-  {
-    number: "04",
-    title: "Activate",
-    description:
-      "For compatible smart pieces, activate your technology once your jewelry arrives.",
-  },
-  {
-    number: "05",
-    title: "Connect",
-    description:
-      "Enjoy the personal digital experience connected to your jewelry.",
-  },
-];
+import { useTranslation } from "react-i18next";
 
 const HowItWorksSection = () => {
+  const { t, i18n } = useTranslation();
+  const isRtl = i18n.language === "ar";
+
+  const steps = [
+    {
+      number: "01",
+      title: t("howItWorks.steps.discover.title"),
+      description: t("howItWorks.steps.discover.desc"),
+    },
+    {
+      number: "02",
+      title: t("howItWorks.steps.customize.title"),
+      description: t("howItWorks.steps.customize.desc"),
+    },
+    {
+      number: "03",
+      title: t("howItWorks.steps.order.title"),
+      description: t("howItWorks.steps.order.desc"),
+    },
+    {
+      number: "04",
+      title: t("howItWorks.steps.activate.title"),
+      description: t("howItWorks.steps.activate.desc"),
+    },
+    {
+      number: "05",
+      title: t("howItWorks.steps.connect.title"),
+      description: t("howItWorks.steps.connect.desc"),
+    },
+  ];
+
   return (
     <section className="relative overflow-hidden bg-soft-white py-20 sm:py-24 lg:py-28">
-      <div className="pointer-events-none absolute -left-40 top-24 h-[420px] w-[420px] rounded-full bg-light-champagne/60 blur-[110px]" />
-
-      <div className="pointer-events-none absolute -right-40 bottom-0 h-[420px] w-[420px] rounded-full bg-champagne-gold/10 blur-[110px]" />
-
+      {/* Background Orbs */}
+      <div className={`pointer-events-none absolute top-24 h-[420px] w-[420px] rounded-full bg-light-champagne/60 blur-[110px] ${isRtl ? "-right-40" : "-left-40"}`} />
+      <div className={`pointer-events-none absolute bottom-0 h-[420px] w-[420px] rounded-full bg-champagne-gold/10 blur-[110px] ${isRtl ? "-left-40" : "-right-40"}`} />
       <div className="pointer-events-none absolute left-1/2 top-0 h-[280px] w-[700px] -translate-x-1/2 rounded-full bg-warm-ivory blur-[90px]" />
 
       <div className="relative mx-auto max-w-[1360px] px-6 sm:px-8 lg:px-10 xl:px-12">
+        {/* Header */}
         <div className="mx-auto max-w-[760px] text-center">
           <div className="mb-5 flex items-center justify-center gap-3">
             <span className="h-px w-9 bg-classic-gold/40" />
-
             <span className="text-[10px] font-semibold uppercase tracking-[0.34em] text-midnight-navy">
-              The Experience
+              {t("howItWorks.eyebrow")}
             </span>
-
             <span className="h-px w-9 bg-classic-gold/40" />
           </div>
 
           <h2 className="font-serif text-[2.7rem] font-normal leading-[1.03] tracking-[-0.04em] text-midnight-navy sm:text-[3.4rem] lg:text-[4rem]">
-            From discovery
-            <span className="ml-2 italic text-navy-soft">to connection.</span>
+            {t("howItWorks.titlePart1")}
+            <span className={`${isRtl ? "mr-2" : "ml-2"} italic text-navy-soft`}>
+              {t("howItWorks.titlePart2")}
+            </span>
           </h2>
 
           <p className="mx-auto mt-5 max-w-[590px] text-[13px] leading-7 text-slate-gray sm:text-[14px]">
-            A simple journey from choosing your perfect piece to creating a
-            meaningful experience around it.
+            {t("howItWorks.description")}
           </p>
         </div>
 
+        {/* Desktop View */}
         <div className="relative mt-16 hidden lg:block">
           <div className="absolute left-[9%] right-[9%] top-[36px] h-px bg-gradient-to-r from-transparent via-classic-gold/35 to-transparent" />
 
@@ -79,7 +79,7 @@ const HowItWorksSection = () => {
                   </div>
 
                   {index < steps.length - 1 && (
-                    <span className="absolute -right-[18px] top-1/2 hidden -translate-y-1/2 text-[10px] text-classic-gold/50 xl:block">
+                    <span className={`absolute top-1/2 hidden -translate-y-1/2 text-[10px] text-classic-gold/50 xl:block ${isRtl ? "-left-[18px]" : "-right-[18px]"}`}>
                       ✦
                     </span>
                   )}
@@ -89,9 +89,7 @@ const HowItWorksSection = () => {
                   <h3 className="font-serif text-[1.45rem] font-normal tracking-[-0.02em] text-midnight-navy">
                     {step.title}
                   </h3>
-
                   <div className="mx-auto mt-3 h-px w-7 bg-classic-gold/50 transition-all duration-500 group-hover:w-12 group-hover:bg-classic-gold" />
-
                   <p className="mx-auto mt-4 max-w-[200px] text-[12px] leading-[1.8] text-slate-gray">
                     {step.description}
                   </p>
@@ -101,8 +99,9 @@ const HowItWorksSection = () => {
           </div>
         </div>
 
+        {/* Mobile View */}
         <div className="relative mt-14 lg:hidden">
-          <div className="absolute bottom-8 left-[31px] top-8 w-px bg-gradient-to-b from-classic-gold/20 via-light-champagne to-classic-gold/20" />
+          <div className={`absolute bottom-8 top-8 w-px bg-gradient-to-b from-classic-gold/20 via-light-champagne to-classic-gold/20 ${isRtl ? "right-[31px]" : "left-[31px]"}`} />
 
           <div className="space-y-7">
             {steps.map((step) => (
@@ -118,9 +117,7 @@ const HowItWorksSection = () => {
                   <h3 className="font-serif text-[1.45rem] font-normal tracking-[-0.02em] text-midnight-navy">
                     {step.title}
                   </h3>
-
-                  <div className="mt-2.5 h-px w-7 bg-classic-gold/55 transition-all duration-300 group-hover:w-11" />
-
+                  <div className={`mt-2.5 h-px w-7 bg-classic-gold/55 transition-all duration-300 group-hover:w-11 ${isRtl ? "mr-0" : "ml-0"}`} />
                   <p className="mt-3 max-w-lg text-[12px] leading-[1.8] text-slate-gray sm:text-[13px]">
                     {step.description}
                   </p>
@@ -130,18 +127,16 @@ const HowItWorksSection = () => {
           </div>
         </div>
 
+        {/* Footer Card */}
         <div className="relative mt-16 overflow-hidden rounded-[24px] border border-light-champagne/80 bg-warm-ivory/70 px-6 py-8 text-center shadow-[0_10px_35px_rgba(7,19,31,0.035)] sm:mt-20 sm:px-10 sm:py-10">
           <div className="pointer-events-none absolute left-1/2 top-0 h-[180px] w-[420px] -translate-x-1/2 rounded-full bg-champagne-gold/8 blur-[60px]" />
-
           <div className="relative">
             <span className="text-[11px] text-classic-gold">✦</span>
-
             <p className="mt-3 font-serif text-[1.45rem] italic text-midnight-navy sm:text-[1.7rem]">
-              Every piece has a story.
+              {t("howItWorks.footer.text")}
             </p>
-
             <p className="mt-2 text-[8px] font-semibold uppercase tracking-[0.32em] text-slate-gray sm:text-[9px]">
-              Make yours unforgettable
+              {t("howItWorks.footer.subtext")}
             </p>
           </div>
         </div>

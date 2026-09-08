@@ -1,17 +1,63 @@
 import mongoose from "mongoose";
 
-const productSchema = new mongoose.Schema(
+const localizedStringSchema = new mongoose.Schema(
   {
-    name: {
+    en: {
       type: String,
-      required: true,
+      default: "",
       trim: true,
     },
 
-    description: {
+    ar: {
       type: String,
-      required: true,
+      default: "",
       trim: true,
+    },
+  },
+  {
+    _id: false,
+  },
+);
+
+const localizedTagsSchema = new mongoose.Schema(
+  {
+    en: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+
+    ar: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+  },
+  {
+    _id: false,
+  },
+);
+
+const productSchema = new mongoose.Schema(
+  {
+    name: {
+      type: localizedStringSchema,
+      required: true,
+    },
+
+    shortDescription: {
+      type: localizedStringSchema,
+      default: () => ({
+        en: "",
+        ar: "",
+      }),
+    },
+
+    description: {
+      type: localizedStringSchema,
+      required: true,
     },
 
     category: {
@@ -21,6 +67,11 @@ const productSchema = new mongoose.Schema(
     },
 
     image: {
+      type: String,
+      default: "",
+    },
+
+    primaryImage: {
       type: String,
       default: "",
     },
@@ -78,18 +129,25 @@ const productSchema = new mongoose.Schema(
     },
 
     material: {
-      type: String,
-      default: "",
+      type: localizedStringSchema,
+      default: () => ({
+        en: "",
+        ar: "",
+      }),
     },
 
     color: {
-      type: String,
-      default: "",
+      type: localizedStringSchema,
+      default: () => ({
+        en: "",
+        ar: "",
+      }),
     },
 
     weight: {
       type: Number,
       default: 0,
+      min: 0,
     },
 
     featured: {
@@ -102,41 +160,41 @@ const productSchema = new mongoose.Schema(
       default: false,
     },
 
-    primaryImage: {
-      type: String,
-      default: "",
+    newArrival: {
+      type: Boolean,
+      default: false,
     },
 
-    shortDescription: {
-      type: String,
-      default: "",
-      trim: true,
+    tags: {
+      type: localizedTagsSchema,
+      default: () => ({
+        en: [],
+        ar: [],
+      }),
     },
-
-    tags: [
-      {
-        type: String,
-        trim: true,
-      },
-    ],
 
     seoTitle: {
-      type: String,
-      default: "",
-      trim: true,
+      type: localizedStringSchema,
+      default: () => ({
+        en: "",
+        ar: "",
+      }),
     },
 
     seoDescription: {
-      type: String,
-      default: "",
-      trim: true,
+      type: localizedStringSchema,
+      default: () => ({
+        en: "",
+        ar: "",
+      }),
     },
 
     seoSlug: {
-      type: String,
-      default: "",
-      trim: true,
-      lowercase: true,
+      type: localizedStringSchema,
+      default: () => ({
+        en: "",
+        ar: "",
+      }),
     },
 
     preparationDays: {
@@ -146,16 +204,14 @@ const productSchema = new mongoose.Schema(
     },
 
     careInstructions: {
-      type: String,
-      default: "",
+      type: localizedStringSchema,
+      default: () => ({
+        en: "",
+        ar: "",
+      }),
     },
 
     isCustomizable: {
-      type: Boolean,
-      default: false,
-    },
-
-    newArrival: {
       type: Boolean,
       default: false,
     },
@@ -186,7 +242,6 @@ productSchema.index(
 );
 
 const Product =
-  mongoose.models.Product ||
-  mongoose.model("Product", productSchema);
+  mongoose.models.Product || mongoose.model("Product", productSchema);
 
 export default Product;

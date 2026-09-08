@@ -5,6 +5,8 @@ import {
   useState,
 } from "react";
 
+import { useTranslation } from "react-i18next";
+
 import {
   requestVideoUpload,
 } from "../services/experienceApi";
@@ -114,6 +116,8 @@ const MediaUploader = ({
   serialNumber = "",
   onRefresh,
 }) => {
+  const { t } = useTranslation();
+
   const [
     selectedImages,
     setSelectedImages,
@@ -404,7 +408,13 @@ const MediaUploader = ({
         imageRemaining
       ) {
         setError(
-          `You can add only ${imageRemaining} more photo(s) to this experience.`,
+          t(
+            "mediaUploader.imageLimitError",
+            {
+              count:
+                imageRemaining,
+            },
+          ),
         );
 
         event.target.value =
@@ -445,7 +455,9 @@ const MediaUploader = ({
         );
 
         setMessage(
-          "Photos uploaded successfully.",
+          t(
+            "mediaUploader.photosUploaded",
+          ),
         );
 
         if (
@@ -462,7 +474,9 @@ const MediaUploader = ({
             ?.message ||
             uploadError
               ?.message ||
-            "Unable to upload photos.",
+            t(
+              "mediaUploader.unableToUploadPhotos",
+            ),
         );
       } finally {
         setUploadingImages(
@@ -480,7 +494,9 @@ const MediaUploader = ({
         0
       ) {
         setError(
-          "You have reached the voice-message limit.",
+          t(
+            "mediaUploader.voiceLimitReached",
+          ),
         );
 
         return;
@@ -496,7 +512,9 @@ const MediaUploader = ({
           "undefined"
       ) {
         setError(
-          "Audio recording is not supported by this browser. Please use a current browser and allow microphone access.",
+          t(
+            "mediaUploader.audioNotSupported",
+          ),
         );
 
         return;
@@ -657,7 +675,9 @@ const MediaUploader = ({
         );
 
         setError(
-          "Microphone access could not be started. Please allow microphone permission and try again.",
+          t(
+            "mediaUploader.microphoneError",
+          ),
         );
       }
     };
@@ -732,7 +752,9 @@ const MediaUploader = ({
         discardRecording();
 
         setMessage(
-          "Voice message saved successfully.",
+          t(
+            "mediaUploader.voiceMessageSaved",
+          ),
         );
 
         if (
@@ -749,7 +771,9 @@ const MediaUploader = ({
             ?.message ||
             uploadError
               ?.message ||
-            "Unable to save voice message.",
+            t(
+              "mediaUploader.unableToSaveVoiceMessage",
+            ),
         );
       } finally {
         setUploadingAudio(
@@ -791,7 +815,9 @@ const MediaUploader = ({
         !videoRequestForm.requesterName.trim()
       ) {
         setError(
-          "Please enter your name for the video request.",
+          t(
+            "mediaUploader.enterName",
+          ),
         );
 
         return;
@@ -801,7 +827,9 @@ const MediaUploader = ({
         !videoRequestForm.requesterPhone.trim()
       ) {
         setError(
-          "Please enter a phone number for the video request.",
+          t(
+            "mediaUploader.enterPhone",
+          ),
         );
 
         return;
@@ -828,7 +856,9 @@ const MediaUploader = ({
           );
 
         setMessage(
-          "Your request was sent to the admin dashboard. WhatsApp will open so you can contact JEVORYA directly.",
+          t(
+            "mediaUploader.videoRequestSent",
+          ),
         );
 
         if (
@@ -865,7 +895,9 @@ const MediaUploader = ({
             ?.message ||
             requestError
               ?.message ||
-            "Unable to send video upload request.",
+            t(
+              "mediaUploader.unableToSendVideoRequest",
+            ),
         );
       } finally {
         setRequestingVideo(
@@ -902,7 +934,13 @@ const MediaUploader = ({
         videoRemaining
       ) {
         setError(
-          `Your approval allows only ${videoRemaining} more video(s).`,
+          t(
+            "mediaUploader.videoApprovalLimitError",
+            {
+              count:
+                videoRemaining,
+            },
+          ),
         );
 
         event.target.value =
@@ -943,7 +981,9 @@ const MediaUploader = ({
         );
 
         setMessage(
-          "Approved video uploaded successfully.",
+          t(
+            "mediaUploader.videoUploaded",
+          ),
         );
 
         if (
@@ -960,7 +1000,9 @@ const MediaUploader = ({
             ?.message ||
             uploadError
               ?.message ||
-            "Unable to upload video.",
+            t(
+              "mediaUploader.unableToUploadVideo",
+            ),
         );
       } finally {
         setUploadingVideo(
@@ -1004,17 +1046,16 @@ const MediaUploader = ({
           <span className="h-px w-8 bg-classic-gold/70" />
 
           <span className="text-[10px] font-semibold uppercase tracking-[0.32em] text-antique-gold">
-            Memories
+            {t("mediaUploader.memories")}
           </span>
         </div>
 
         <h2 className="mt-4 font-serif text-[2.25rem] font-normal tracking-[-0.035em] text-deep-navy sm:text-[2.7rem]">
-          Add Your Memories
+          {t("mediaUploader.addYourMemories")}
         </h2>
 
         <p className="mt-3 max-w-2xl text-[13px] leading-7 text-slate-gray">
-          Add photos, record a voice message directly, or request approval for
-          video uploads.
+          {t("mediaUploader.description")}
         </p>
       </div>
 
@@ -1035,17 +1076,17 @@ const MediaUploader = ({
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-[9px] font-semibold uppercase tracking-[0.25em] text-antique-gold">
-                Photos
+                {t("mediaUploader.photos")}
               </p>
 
               <h3 className="mt-2 font-serif text-[1.65rem] text-deep-navy">
-                Upload Photos
+                {t("mediaUploader.uploadPhotos")}
               </h3>
 
               <p className="mt-2 text-[11px] leading-5 text-slate-gray">
-                {counts.image} of{" "}
-                {limits.imageLimit} used ·{" "}
-                {imageRemaining} remaining
+                {counts.image} {t("mediaUploader.of")}{" "}
+                {limits.imageLimit} {t("mediaUploader.used")} ·{" "}
+                {imageRemaining} {t("mediaUploader.remaining")}
               </p>
             </div>
 
@@ -1072,7 +1113,7 @@ const MediaUploader = ({
               }
               className="min-h-[44px] rounded-[13px] bg-midnight-navy px-6 text-[10px] font-semibold text-soft-white transition hover:bg-rich-navy disabled:cursor-not-allowed disabled:opacity-45"
             >
-              Choose Photos
+              {t("mediaUploader.choosePhotos")}
             </button>
           </div>
 
@@ -1080,7 +1121,8 @@ const MediaUploader = ({
             0 && (
             <div className="mt-5 rounded-[16px] border border-light-champagne bg-soft-white p-4">
               <p className="text-[10px] font-semibold text-deep-navy">
-                {selectedImages.length} photo(s) selected
+                {selectedImages.length}{" "}
+                {t("mediaUploader.photosSelected")}
               </p>
 
               <div className="mt-3 flex flex-wrap gap-2">
@@ -1111,8 +1153,12 @@ const MediaUploader = ({
                   className="rounded-[12px] bg-classic-gold px-5 py-2.5 text-[10px] font-semibold text-deep-navy disabled:opacity-50"
                 >
                   {uploadingImages
-                    ? "Uploading..."
-                    : "Upload Photos"}
+                    ? t(
+                        "mediaUploader.uploading",
+                      )
+                    : t(
+                        "mediaUploader.uploadPhotos",
+                      )}
                 </button>
 
                 <button
@@ -1127,7 +1173,7 @@ const MediaUploader = ({
                   }
                   className="rounded-[12px] border border-light-champagne px-5 py-2.5 text-[10px] text-slate-gray"
                 >
-                  Cancel
+                  {t("mediaUploader.cancel")}
                 </button>
               </div>
             </div>
@@ -1138,22 +1184,21 @@ const MediaUploader = ({
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-[9px] font-semibold uppercase tracking-[0.25em] text-antique-gold">
-                Voice Message
+                {t("mediaUploader.voiceMessage")}
               </p>
 
               <h3 className="mt-2 font-serif text-[1.65rem] text-deep-navy">
-                Record Your Voice
+                {t("mediaUploader.recordYourVoice")}
               </h3>
 
               <p className="mt-2 text-[11px] leading-5 text-slate-gray">
-                Voice messages must be recorded here. Audio-file upload is not
-                available.
+                {t("mediaUploader.voiceDescription")}
               </p>
 
               <p className="mt-1 text-[10px] text-steel-gray">
-                {counts.audio} of{" "}
-                {limits.audioLimit} used ·{" "}
-                {audioRemaining} remaining
+                {counts.audio} {t("mediaUploader.of")}{" "}
+                {limits.audioLimit} {t("mediaUploader.used")} ·{" "}
+                {audioRemaining} {t("mediaUploader.remaining")}
               </p>
             </div>
 
@@ -1170,7 +1215,7 @@ const MediaUploader = ({
                 }
                 className="min-h-[44px] rounded-[13px] bg-midnight-navy px-6 text-[10px] font-semibold text-soft-white transition hover:bg-rich-navy disabled:cursor-not-allowed disabled:opacity-45"
               >
-                Start Recording
+                {t("mediaUploader.startRecording")}
               </button>
             ) : (
               <button
@@ -1180,7 +1225,7 @@ const MediaUploader = ({
                 }
                 className="min-h-[44px] rounded-[13px] bg-red-600 px-6 text-[10px] font-semibold text-white"
               >
-                Stop ·{" "}
+                {t("mediaUploader.stop")} ·{" "}
                 {formatRecordingTime(
                   recordingSeconds,
                 )}
@@ -1192,7 +1237,7 @@ const MediaUploader = ({
             audioBlob && (
             <div className="mt-5 rounded-[16px] border border-champagne-gold/25 bg-warm-ivory/60 p-4">
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-antique-gold">
-                Recording Preview
+                {t("mediaUploader.recordingPreview")}
               </p>
 
               <audio
@@ -1213,8 +1258,12 @@ const MediaUploader = ({
                   className="rounded-[12px] bg-classic-gold px-5 py-2.5 text-[10px] font-semibold text-deep-navy disabled:opacity-50"
                 >
                   {uploadingAudio
-                    ? "Saving..."
-                    : "Save Voice Message"}
+                    ? t(
+                        "mediaUploader.saving",
+                      )
+                    : t(
+                        "mediaUploader.saveVoiceMessage",
+                      )}
                 </button>
 
                 <button
@@ -1227,7 +1276,7 @@ const MediaUploader = ({
                   }
                   className="rounded-[12px] border border-light-champagne bg-soft-white px-5 py-2.5 text-[10px] text-slate-gray"
                 >
-                  Discard
+                  {t("mediaUploader.discard")}
                 </button>
               </div>
             </div>
@@ -1238,44 +1287,43 @@ const MediaUploader = ({
           <div className="flex items-start justify-between gap-5">
             <div>
               <p className="text-[9px] font-semibold uppercase tracking-[0.25em] text-champagne-gold">
-                Video Memories
+                {t("mediaUploader.videoMemories")}
               </p>
 
               <h3 className="mt-2 font-serif text-[1.65rem] text-soft-white">
-                Video Upload Requires Approval
+                {t("mediaUploader.videoRequiresApproval")}
               </h3>
 
               <p className="mt-2 max-w-2xl text-[11px] leading-6 text-premium-silver/80">
-                Videos are not available as a normal upload. Send a request
-                first. The request appears in the admin dashboard, and JEVORYA
-                can enable video upload for this experience.
+                {t("mediaUploader.videoDescription")}
               </p>
             </div>
 
             <span className="rounded-full border border-champagne-gold/25 bg-soft-white/[0.06] px-3 py-1.5 text-[8px] font-semibold uppercase tracking-[0.12em] text-champagne-gold">
               {videoAccess?.status ===
               "approved"
-                ? "Approved"
+                ? t("mediaUploader.approved")
                 : videoAccess?.status ===
                     "pending"
-                  ? "Pending"
+                  ? t("mediaUploader.pending")
                   : videoAccess?.status ===
                       "rejected"
-                    ? "Not Approved"
-                    : "Approval Required"}
+                    ? t("mediaUploader.notApproved")
+                    : t("mediaUploader.approvalRequired")}
             </span>
           </div>
 
           {canUploadVideo ? (
             <div className="mt-6 rounded-[17px] border border-champagne-gold/20 bg-soft-white/[0.055] p-5">
               <p className="text-[11px] font-semibold text-soft-white">
-                Video upload is enabled for this experience.
+                {t("mediaUploader.videoUploadEnabled")}
               </p>
 
               <p className="mt-2 text-[10px] text-premium-silver/70">
-                {counts.video} of{" "}
-                {effectiveVideoLimit} approved video(s) used ·{" "}
-                {videoRemaining} remaining
+                {counts.video} {t("mediaUploader.of")}{" "}
+                {effectiveVideoLimit}{" "}
+                {t("mediaUploader.approvedVideosUsed")} ·{" "}
+                {videoRemaining} {t("mediaUploader.remaining")}
               </p>
 
               <input
@@ -1304,7 +1352,7 @@ const MediaUploader = ({
                   }
                   className="rounded-[12px] bg-champagne-gold px-5 py-2.5 text-[10px] font-semibold text-deep-navy disabled:opacity-45"
                 >
-                  Choose Approved Video
+                  {t("mediaUploader.chooseApprovedVideo")}
                 </button>
               </div>
 
@@ -1312,7 +1360,8 @@ const MediaUploader = ({
                 0 && (
                 <div className="mt-4 rounded-[14px] border border-soft-white/10 bg-soft-white/[0.04] p-4">
                   <p className="text-[10px] text-premium-silver">
-                    {selectedVideos.length} video(s) selected
+                    {selectedVideos.length}{" "}
+                    {t("mediaUploader.videosSelected")}
                   </p>
 
                   <div className="mt-4 flex flex-wrap gap-3">
@@ -1327,8 +1376,12 @@ const MediaUploader = ({
                       className="rounded-[12px] bg-classic-gold px-5 py-2.5 text-[10px] font-semibold text-deep-navy disabled:opacity-50"
                     >
                       {uploadingVideo
-                        ? "Uploading..."
-                        : "Upload Video"}
+                        ? t(
+                            "mediaUploader.uploading",
+                          )
+                        : t(
+                            "mediaUploader.uploadVideo",
+                          )}
                     </button>
 
                     <button
@@ -1343,7 +1396,7 @@ const MediaUploader = ({
                       }
                       className="rounded-[12px] border border-soft-white/15 px-5 py-2.5 text-[10px] text-premium-silver"
                     >
-                      Cancel
+                      {t("mediaUploader.cancel")}
                     </button>
                   </div>
                 </div>
@@ -1358,7 +1411,7 @@ const MediaUploader = ({
             >
               <div>
                 <label className="mb-2 block text-[8px] font-semibold uppercase tracking-[0.16em] text-premium-silver/70">
-                  Your Name
+                  {t("mediaUploader.yourName")}
                 </label>
 
                 <input
@@ -1369,14 +1422,16 @@ const MediaUploader = ({
                   onChange={
                     handleVideoRequestChange
                   }
-                  placeholder="Your name"
+                  placeholder={t(
+                    "mediaUploader.yourNamePlaceholder",
+                  )}
                   className="h-[46px] w-full rounded-[12px] border border-soft-white/10 bg-soft-white/[0.06] px-4 text-[11px] text-soft-white outline-none placeholder:text-premium-silver/35 focus:border-champagne-gold/50"
                 />
               </div>
 
               <div>
                 <label className="mb-2 block text-[8px] font-semibold uppercase tracking-[0.16em] text-premium-silver/70">
-                  WhatsApp / Phone
+                  {t("mediaUploader.whatsappPhone")}
                 </label>
 
                 <input
@@ -1394,7 +1449,7 @@ const MediaUploader = ({
 
               <div className="md:col-span-2">
                 <label className="mb-2 block text-[8px] font-semibold uppercase tracking-[0.16em] text-premium-silver/70">
-                  Note
+                  {t("mediaUploader.note")}
                 </label>
 
                 <textarea
@@ -1406,7 +1461,9 @@ const MediaUploader = ({
                   onChange={
                     handleVideoRequestChange
                   }
-                  placeholder="Tell us briefly what video you would like to add."
+                  placeholder={t(
+                    "mediaUploader.notePlaceholder",
+                  )}
                   className="w-full resize-none rounded-[12px] border border-soft-white/10 bg-soft-white/[0.06] px-4 py-3 text-[11px] leading-5 text-soft-white outline-none placeholder:text-premium-silver/35 focus:border-champagne-gold/50"
                 />
               </div>
@@ -1414,18 +1471,22 @@ const MediaUploader = ({
               {videoAccess?.status ===
                 "pending" && (
                 <div className="md:col-span-2 rounded-[12px] border border-champagne-gold/20 bg-champagne-gold/[0.06] px-4 py-3 text-[10px] leading-5 text-champagne-gold">
-                  Your previous request is pending. Sending again will update
-                  the request information and keep it pending for admin review.
+                  {t(
+                    "mediaUploader.pendingMessage",
+                  )}
                 </div>
               )}
 
               {videoAccess?.status ===
                 "rejected" && (
                 <div className="md:col-span-2 rounded-[12px] border border-red-300/15 bg-red-300/[0.06] px-4 py-3 text-[10px] leading-5 text-red-100">
-                  The previous request was not approved. You can update the
-                  information and submit another request.
+                  {t(
+                    "mediaUploader.rejectedMessage",
+                  )}
                   {videoAccess?.adminNote
-                    ? ` Admin note: ${videoAccess.adminNote}`
+                    ? ` ${t(
+                        "mediaUploader.adminNote",
+                      )}: ${videoAccess.adminNote}`
                     : ""}
                 </div>
               )}
@@ -1439,8 +1500,12 @@ const MediaUploader = ({
                   className="min-h-[44px] rounded-[12px] bg-champagne-gold px-6 text-[10px] font-semibold text-deep-navy disabled:opacity-50"
                 >
                   {requestingVideo
-                    ? "Sending Request..."
-                    : "Request Video Access + WhatsApp"}
+                    ? t(
+                        "mediaUploader.sendingRequest",
+                      )
+                    : t(
+                        "mediaUploader.requestVideoAccess",
+                      )}
                 </button>
 
                 <a
@@ -1449,7 +1514,9 @@ const MediaUploader = ({
                   rel="noopener noreferrer"
                   className="min-h-[44px] rounded-[12px] border border-soft-white/15 px-6 py-3 text-[10px] font-semibold text-premium-silver transition hover:border-champagne-gold/40 hover:text-champagne-gold"
                 >
-                  Contact JEVORYA on WhatsApp
+                  {t(
+                    "mediaUploader.contactWhatsApp",
+                  )}
                 </a>
               </div>
             </form>

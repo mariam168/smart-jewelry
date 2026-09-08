@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import { Link, useNavigate } from "react-router-dom";
 
 import {
@@ -7,6 +8,8 @@ import {
 } from "../services/technologyModelApi";
 
 import { getTechnologies } from "../services/technologyApi";
+
+import { useTranslation } from "react-i18next";
 
 const getImageUrl = (image) => {
   if (!image) return "";
@@ -45,6 +48,8 @@ const getImageUrl = (image) => {
 const AddTechnologyModelPage = () => {
   const navigate = useNavigate();
 
+  const { t } = useTranslation();
+
   const [technologies, setTechnologies] = useState([]);
 
   const [formData, setFormData] = useState({
@@ -60,7 +65,9 @@ const AddTechnologyModelPage = () => {
   });
 
   const [isLoading, setIsLoading] = useState(false);
+
   const [isUploading, setIsUploading] = useState(false);
+
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -75,7 +82,7 @@ const AddTechnologyModelPage = () => {
     } catch (error) {
       console.error(error);
 
-      setError("Failed to load technologies.");
+      setError(t("addTechnologyModel.failedToLoadTechnologies"));
     }
   };
 
@@ -109,7 +116,7 @@ const AddTechnologyModelPage = () => {
     } catch (error) {
       console.error(error);
 
-      alert("Failed to upload image.");
+      alert(t("addTechnologyModel.failedToUploadImage"));
     } finally {
       setIsUploading(false);
     }
@@ -119,6 +126,7 @@ const AddTechnologyModelPage = () => {
     event.preventDefault();
 
     setError("");
+
     setIsLoading(true);
 
     try {
@@ -130,7 +138,7 @@ const AddTechnologyModelPage = () => {
 
       setError(
         error?.response?.data?.message ||
-          "Failed to create technology model.",
+          t("addTechnologyModel.failedToCreateTechnologyModel"),
       );
     } finally {
       setIsLoading(false);
@@ -150,16 +158,16 @@ const AddTechnologyModelPage = () => {
               <span className="h-px w-8 bg-classic-gold/60" />
 
               <span className="text-[8px] font-semibold uppercase tracking-[0.3em] text-antique-gold">
-                Smart Jewelry
+                {t("addTechnologyModel.smartJewelry")}
               </span>
             </div>
 
             <h1 className="font-serif text-[2.5rem] font-normal leading-none tracking-[-0.04em] text-midnight-navy sm:text-[3rem]">
-              Add Technology Model
+              {t("addTechnologyModel.addTechnologyModel")}
             </h1>
 
             <p className="mt-4 max-w-xl text-[12px] leading-7 text-slate-gray sm:text-[13px]">
-              Create a new smart jewelry technology model.
+              {t("addTechnologyModel.createNewSmartJewelryTechnologyModel")}
             </p>
           </div>
 
@@ -171,7 +179,7 @@ const AddTechnologyModelPage = () => {
               ←
             </span>
 
-            Back
+            {t("addTechnologyModel.back")}
           </Link>
         </div>
       </header>
@@ -194,11 +202,11 @@ const AddTechnologyModelPage = () => {
 
               <div>
                 <p className="text-[8px] font-semibold uppercase tracking-[0.25em] text-antique-gold">
-                  Model Details
+                  {t("addTechnologyModel.modelDetails")}
                 </p>
 
                 <h2 className="mt-1.5 font-serif text-[1.45rem] font-normal tracking-[-0.02em] text-midnight-navy">
-                  Create Technology Model
+                  {t("addTechnologyModel.createTechnologyModel")}
                 </h2>
               </div>
             </div>
@@ -217,11 +225,11 @@ const AddTechnologyModelPage = () => {
             <div className="space-y-8">
               <div>
                 <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                  Technology
+                  {t("addTechnologyModel.technology")}
                 </label>
 
                 <p className="mb-3 text-[10px] leading-5 text-steel-gray">
-                  Select the technology this model belongs to.
+                  {t("addTechnologyModel.selectTechnologyDescription")}
                 </p>
 
                 <select
@@ -231,7 +239,9 @@ const AddTechnologyModelPage = () => {
                   required
                   className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/65 px-5 text-[12px] text-midnight-navy outline-none transition-all duration-300 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:shadow-[0_0_0_4px_rgba(201,162,77,0.08)]"
                 >
-                  <option value="">Select Technology</option>
+                  <option value="">
+                    {t("addTechnologyModel.selectTechnology")}
+                  </option>
 
                   {technologies.map((technology) => (
                     <option
@@ -247,11 +257,11 @@ const AddTechnologyModelPage = () => {
               <div className="grid gap-7 md:grid-cols-2">
                 <div>
                   <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                    Model Name
+                    {t("addTechnologyModel.modelName")}
                   </label>
 
                   <p className="mb-3 text-[10px] leading-5 text-steel-gray">
-                    The name of the technology model.
+                    {t("addTechnologyModel.technologyModelNameDescription")}
                   </p>
 
                   <input
@@ -259,7 +269,7 @@ const AddTechnologyModelPage = () => {
                     name="modelName"
                     value={formData.modelName}
                     onChange={handleChange}
-                    placeholder="NFC Ring"
+                    placeholder={t("addTechnologyModel.nfcRing")}
                     required
                     className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/65 px-5 text-[12px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:shadow-[0_0_0_4px_rgba(201,162,77,0.08)]"
                   />
@@ -267,11 +277,11 @@ const AddTechnologyModelPage = () => {
 
                 <div>
                   <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                    Model Code
+                    {t("addTechnologyModel.modelCode")}
                   </label>
 
                   <p className="mb-3 text-[10px] leading-5 text-steel-gray">
-                    A unique code is generated automatically by the system.
+                    {t("addTechnologyModel.uniqueCodeDescription")}
                   </p>
 
                   <div className="flex h-[54px] items-center rounded-[14px] border border-dashed border-champagne-gold/40 bg-soft-cream px-5">
@@ -281,7 +291,7 @@ const AddTechnologyModelPage = () => {
                       </span>
 
                       <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-gray">
-                        Auto Generated
+                        {t("addTechnologyModel.autoGenerated")}
                       </span>
                     </div>
                   </div>
@@ -290,11 +300,11 @@ const AddTechnologyModelPage = () => {
 
               <div>
                 <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                  Description
+                  {t("addTechnologyModel.description")}
                 </label>
 
                 <p className="mb-3 text-[10px] leading-5 text-steel-gray">
-                  Add a short description of this technology model.
+                  {t("addTechnologyModel.addShortDescription")}
                 </p>
 
                 <textarea
@@ -302,18 +312,18 @@ const AddTechnologyModelPage = () => {
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
-                  placeholder="Describe the technology model and its main features..."
+                  placeholder={t("addTechnologyModel.descriptionPlaceholder")}
                   className="w-full resize-none rounded-[14px] border border-light-champagne bg-warm-ivory/65 px-5 py-4 text-[12px] leading-6 text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:shadow-[0_0_0_4px_rgba(201,162,77,0.08)]"
                 />
               </div>
 
               <div>
                 <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                  Manufacturer
+                  {t("addTechnologyModel.manufacturer")}
                 </label>
 
                 <p className="mb-3 text-[10px] leading-5 text-steel-gray">
-                  The company or manufacturer responsible for the model.
+                  {t("addTechnologyModel.manufacturerDescription")}
                 </p>
 
                 <input
@@ -321,18 +331,18 @@ const AddTechnologyModelPage = () => {
                   name="manufacturer"
                   value={formData.manufacturer}
                   onChange={handleChange}
-                  placeholder="Samsung"
+                  placeholder={t("addTechnologyModel.samsung")}
                   className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/65 px-5 text-[12px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:shadow-[0_0_0_4px_rgba(201,162,77,0.08)]"
                 />
               </div>
 
               <div>
                 <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                  Model Image
+                  {t("addTechnologyModel.modelImage")}
                 </label>
 
                 <p className="mb-3 text-[10px] leading-5 text-steel-gray">
-                  Upload an image for this technology model.
+                  {t("addTechnologyModel.uploadModelImageDescription")}
                 </p>
 
                 <div className="relative overflow-hidden rounded-[18px] border border-dashed border-champagne-gold/35 bg-warm-ivory/55 p-6">
@@ -349,20 +359,20 @@ const AddTechnologyModelPage = () => {
                     <div className="relative mt-4 flex items-center gap-3 text-[10px] text-slate-gray">
                       <span className="h-4 w-4 animate-spin rounded-full border-2 border-champagne-gold/25 border-t-classic-gold" />
 
-                      Uploading image...
+                      {t("addTechnologyModel.uploadingImage")}
                     </div>
                   )}
 
                   {formData.image && (
                     <div className="relative mt-5">
                       <p className="mb-3 text-[7px] font-semibold uppercase tracking-[0.2em] text-antique-gold">
-                        Image Preview
+                        {t("addTechnologyModel.imagePreview")}
                       </p>
 
                       <div className="relative h-40 w-40 overflow-hidden rounded-[18px] border border-light-champagne bg-soft-white shadow-[0_10px_26px_rgba(7,19,31,0.045)]">
                         <img
                           src={getImageUrl(formData.image)}
-                          alt="Technology Model Preview"
+                          alt={t("addTechnologyModel.technologyModelPreview")}
                           className="h-full w-full object-cover"
                         />
 
@@ -376,11 +386,11 @@ const AddTechnologyModelPage = () => {
               <div>
                 <div className="mb-4">
                   <label className="text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                    Model Requirements
+                    {t("addTechnologyModel.modelRequirements")}
                   </label>
 
                   <p className="mt-2 text-[10px] leading-5 text-steel-gray">
-                    Select the features required by this model.
+                    {t("addTechnologyModel.selectRequiredFeatures")}
                   </p>
                 </div>
 
@@ -406,11 +416,11 @@ const AddTechnologyModelPage = () => {
 
                     <div>
                       <p className="text-[11px] font-semibold text-midnight-navy">
-                        Battery
+                        {t("addTechnologyModel.battery")}
                       </p>
 
                       <p className="mt-1 text-[9px] text-steel-gray">
-                        Requires battery
+                        {t("addTechnologyModel.requiresBattery")}
                       </p>
                     </div>
                   </label>
@@ -436,11 +446,11 @@ const AddTechnologyModelPage = () => {
 
                     <div>
                       <p className="text-[11px] font-semibold text-midnight-navy">
-                        Activation
+                        {t("addTechnologyModel.activation")}
                       </p>
 
                       <p className="mt-1 text-[9px] text-steel-gray">
-                        Requires activation
+                        {t("addTechnologyModel.requiresActivation")}
                       </p>
                     </div>
                   </label>
@@ -466,11 +476,11 @@ const AddTechnologyModelPage = () => {
 
                     <div>
                       <p className="text-[11px] font-semibold text-midnight-navy">
-                        Subscription
+                        {t("addTechnologyModel.subscription")}
                       </p>
 
                       <p className="mt-1 text-[9px] text-steel-gray">
-                        Requires subscription
+                        {t("addTechnologyModel.requiresSubscription")}
                       </p>
                     </div>
                   </label>
@@ -479,11 +489,11 @@ const AddTechnologyModelPage = () => {
 
               <div>
                 <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                  Status
+                  {t("addTechnologyModel.status")}
                 </label>
 
                 <p className="mb-3 text-[10px] leading-5 text-steel-gray">
-                  Control whether this model is available.
+                  {t("addTechnologyModel.statusDescription")}
                 </p>
 
                 <select
@@ -492,9 +502,13 @@ const AddTechnologyModelPage = () => {
                   onChange={handleChange}
                   className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/65 px-5 text-[12px] text-midnight-navy outline-none transition-all duration-300 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:shadow-[0_0_0_4px_rgba(201,162,77,0.08)]"
                 >
-                  <option value="active">Active</option>
+                  <option value="active">
+                    {t("addTechnologyModel.active")}
+                  </option>
 
-                  <option value="inactive">Inactive</option>
+                  <option value="inactive">
+                    {t("addTechnologyModel.inactive")}
+                  </option>
                 </select>
               </div>
 
@@ -502,7 +516,7 @@ const AddTechnologyModelPage = () => {
                 <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-champagne-gold/[0.06] blur-[55px]" />
 
                 <p className="relative text-[7px] font-semibold uppercase tracking-[0.25em] text-antique-gold">
-                  Model Preview
+                  {t("addTechnologyModel.modelPreview")}
                 </p>
 
                 <div className="relative mt-5 flex flex-col gap-5 sm:flex-row">
@@ -510,7 +524,7 @@ const AddTechnologyModelPage = () => {
                     {formData.image ? (
                       <img
                         src={getImageUrl(formData.image)}
-                        alt="Preview"
+                        alt={t("addTechnologyModel.preview")}
                         className="h-full w-full object-cover"
                       />
                     ) : (
@@ -523,7 +537,8 @@ const AddTechnologyModelPage = () => {
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-3">
                       <h3 className="font-serif text-[1.35rem] font-normal text-midnight-navy">
-                        {formData.modelName || "Model Name"}
+                        {formData.modelName ||
+                          t("addTechnologyModel.modelName")}
                       </h3>
 
                       <span
@@ -537,22 +552,24 @@ const AddTechnologyModelPage = () => {
                           }
                         `}
                       >
-                        {formData.status}
+                        {t(`addTechnologyModel.statuses.${formData.status}`, {
+                          defaultValue: formData.status,
+                        })}
                       </span>
                     </div>
 
                     <p className="mt-2 font-mono text-[8px] font-semibold uppercase tracking-[0.14em] text-slate-gray">
-                      MODEL CODE WILL BE GENERATED AUTOMATICALLY
+                      {t("addTechnologyModel.modelCodeWillBeGenerated")}
                     </p>
 
                     <p className="mt-3 text-[10px] leading-6 text-slate-gray">
                       {formData.description ||
-                        "Technology model description will appear here."}
+                        t("addTechnologyModel.descriptionWillAppear")}
                     </p>
 
                     {formData.manufacturer && (
                       <p className="mt-3 text-[9px] text-steel-gray">
-                        Manufacturer:{" "}
+                        {t("addTechnologyModel.manufacturerLabel")}{" "}
                         <span className="font-semibold text-midnight-navy">
                           {formData.manufacturer}
                         </span>
@@ -568,7 +585,7 @@ const AddTechnologyModelPage = () => {
                 to="/admin/technology-models"
                 className="inline-flex min-h-[48px] items-center justify-center rounded-[13px] border border-light-champagne bg-soft-white px-7 text-[8px] font-semibold uppercase tracking-[0.11em] text-slate-gray transition-all duration-300 hover:-translate-y-0.5 hover:border-champagne-gold hover:bg-warm-ivory hover:text-midnight-navy"
               >
-                Cancel
+                {t("addTechnologyModel.cancel")}
               </Link>
 
               <button
@@ -580,17 +597,19 @@ const AddTechnologyModelPage = () => {
                   <>
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-champagne-gold/25 border-t-champagne-gold" />
 
-                    Creating...
+                    {t("addTechnologyModel.creating")}
                   </>
                 ) : isUploading ? (
-                  "Uploading Image..."
+                  t("addTechnologyModel.uploadingImageButton")
                 ) : (
                   <>
                     <span className="text-[9px] text-champagne-gold">
                       ✦
                     </span>
 
-                    <span>Create Technology Model</span>
+                    <span>
+                      {t("addTechnologyModel.createTechnologyModel")}
+                    </span>
                   </>
                 )}
               </button>

@@ -1,153 +1,144 @@
 import { Link } from "react-router-dom";
-
-const technologies = [
-  {
-    name: "NFC",
-    number: "01",
-    title: "Tap. Connect. Remember.",
-    description:
-      "A simple tap turns your jewelry into a gateway to a personal digital experience.",
-  },
-  {
-    name: "QR",
-    number: "02",
-    title: "Scan your story.",
-    description:
-      "A beautifully simple way to connect your jewelry with memories, messages, photos, and more.",
-  },
-  {
-    name: "Bluetooth",
-    number: "03",
-    title: "Stay connected.",
-    description:
-      "Smart connectivity designed for compatible jewelry experiences and future possibilities.",
-  },
-];
+import { useTranslation } from "react-i18next";
 
 const SmartTechnologySection = () => {
+  const { t, i18n } = useTranslation();
+  const isRtl = i18n.language === "ar";
+
+  const technologies = [
+    {
+      name: t("smartTech.tech.nfc.name"),
+      number: "01",
+      title: t("smartTech.tech.nfc.title"),
+      description: t("smartTech.tech.nfc.desc"),
+    },
+    {
+      name: t("smartTech.tech.qr.name"),
+      number: "02",
+      title: t("smartTech.tech.qr.title"),
+      description: t("smartTech.tech.qr.desc"),
+    },
+    {
+      name: t("smartTech.tech.bluetooth.name"),
+      number: "03",
+      title: t("smartTech.tech.bluetooth.title"),
+      description: t("smartTech.tech.bluetooth.desc"),
+    },
+  ];
+
   return (
-    <section className="relative overflow-hidden bg-warm-ivory py-20 sm:py-24 lg:py-28">
-      <div className="pointer-events-none absolute -left-40 top-[-140px] h-[460px] w-[460px] rounded-full bg-champagne-gold/10 blur-[120px]" />
-
-      <div className="pointer-events-none absolute -right-40 bottom-[-160px] h-[460px] w-[460px] rounded-full bg-light-champagne/70 blur-[120px]" />
-
+    <section className="relative overflow-hidden bg-warm-ivory py-24 lg:py-32">
+      <div className={`pointer-events-none absolute top-[-140px] h-[460px] w-[460px] rounded-full bg-champagne-gold/10 blur-[120px] ${isRtl ? "-right-40" : "-left-40"}`} />
+      <div className={`pointer-events-none absolute bottom-[-160px] h-[460px] w-[460px] rounded-full bg-light-champagne/70 blur-[120px] ${isRtl ? "-left-40" : "-right-40"}`} />
       <div className="pointer-events-none absolute left-1/2 top-0 h-[360px] w-[760px] -translate-x-1/2 rounded-full bg-soft-cream/70 blur-[110px]" />
 
-      <div className="relative mx-auto max-w-[1360px] px-6 sm:px-8 lg:px-10 xl:px-12">
-        <div className="grid gap-10 lg:grid-cols-[1fr_0.85fr] lg:items-end lg:gap-16">
-          <div>
-            <div className="mb-5 flex items-center gap-3">
-              <span className="h-px w-10 bg-classic-gold/50" />
-
-              <span className="text-[10px] font-semibold uppercase tracking-[0.34em] text-midnight-navy">
-                Smart Technology
+      <div className="relative mx-auto max-w-[1400px] px-6 lg:px-12">
+        <div className="grid items-end gap-12 lg:grid-cols-2 lg:gap-20">
+          <div className={isRtl ? "text-right" : "text-left"}>
+            <div className={`mb-6 flex items-center gap-3 ${isRtl ? "justify-start" : "justify-start"}`}>
+              <span className="h-px w-12 bg-classic-gold" />
+              <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-midnight-navy/80">
+                {t("smartTech.eyebrow")}
               </span>
-
-              <span className="text-[9px] text-classic-gold">✦</span>
             </div>
 
-            <h2 className="max-w-[760px] font-serif text-[2.8rem] font-normal leading-[1.01] tracking-[-0.04em] text-midnight-navy sm:text-[3.6rem] lg:text-[4.4rem]">
-              Jewelry with a
-              <span className="mt-1 block italic font-normal text-navy-soft">
-                hidden connection.
+            <h2 className="font-serif text-[2.8rem] font-normal leading-[1.1] tracking-tight text-midnight-navy sm:text-[3.8rem] lg:text-[4.6rem]">
+              {t("smartTech.titlePart1")}
+              <span className={`mt-2 block font-normal text-navy-soft ${isRtl ? "not-italic" : "italic"}`}>
+                {t("smartTech.titlePart2")}
               </span>
             </h2>
           </div>
 
-          <div className="max-w-[540px] lg:ml-auto lg:pb-1">
-            <p className="text-[14px] leading-8 text-slate-gray sm:text-[15px]">
-              Your jewelry can be more than something beautiful. Connect it with
-              your memories, your message, and the moments you never want to
-              forget.
+          <div className={`max-w-[500px] ${isRtl ? "lg:mr-auto lg:text-right" : "lg:ml-auto lg:text-left"}`}>
+            <p className="text-[15px] leading-[1.8] text-slate-gray sm:text-[16px]">
+              {t("smartTech.description")}
             </p>
 
             <Link
               to="/shop"
-              className="group mt-7 inline-flex items-center gap-4 text-[10px] font-semibold uppercase tracking-[0.13em] text-midnight-navy transition-colors duration-300 hover:text-classic-gold"
+              className="group mt-10 inline-flex items-center gap-5 text-[11px] font-bold uppercase tracking-[0.2em] text-midnight-navy transition-all duration-300 hover:text-classic-gold"
             >
-              Explore Smart Jewelry
-              <span className="flex h-9 w-9 items-center justify-center rounded-full border border-midnight-navy/15 bg-soft-white/70 text-[14px] transition-all duration-300 group-hover:border-midnight-navy group-hover:bg-midnight-navy group-hover:text-soft-white">
-                <span className="transition-transform duration-300 group-hover:translate-x-0.5">
-                  →
+              <span className="border-b border-midnight-navy/20 pb-1 group-hover:border-classic-gold">
+                {t("smartTech.cta")}
+              </span>
+              <span className="flex h-11 w-11 items-center justify-center rounded-full border border-midnight-navy/10 bg-white shadow-sm transition-all duration-500 group-hover:bg-midnight-navy group-hover:text-white">
+                <span className={`text-lg transition-transform duration-500 ${isRtl ? "group-hover:-translate-x-1" : "group-hover:translate-x-1"}`}>
+                  {isRtl ? "←" : "→"}
                 </span>
               </span>
             </Link>
           </div>
         </div>
 
-        <div className="my-12 h-px bg-gradient-to-r from-transparent via-classic-gold/35 to-transparent sm:my-14 lg:my-16" />
+        <div className="my-20 h-px w-full bg-gradient-to-r from-transparent via-light-champagne to-transparent" />
 
-        <div className="grid gap-5 lg:grid-cols-3">
-          {technologies.map((technology, index) => (
+        <div className="grid gap-8 lg:grid-cols-3">
+          {technologies.map((tech, index) => (
             <div
-              key={technology.name}
-              className={`group relative overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/75 p-6 shadow-[0_10px_35px_rgba(7,19,31,0.045)] backdrop-blur-sm transition-all duration-500 hover:-translate-y-2 hover:border-champagne-gold/70 hover:bg-soft-white hover:shadow-[0_26px_60px_rgba(7,19,31,0.10)] sm:p-7 lg:p-8 ${
-                index === 1 ? "lg:-translate-y-5" : ""
+              key={tech.name}
+              className={`group relative overflow-hidden rounded-[32px] border border-light-champagne/60 bg-white/60 p-8 shadow-[0_15px_45px_rgba(0,0,0,0.03)] backdrop-blur-md transition-all duration-700 hover:-translate-y-4 hover:border-classic-gold/30 hover:bg-white hover:shadow-[0_30px_70px_rgba(7,19,31,0.1)] lg:p-10 ${
+                index === 1 ? "lg:-translate-y-8" : ""
               }`}
             >
-              <span className="pointer-events-none absolute -right-2 -top-8 select-none font-serif text-[118px] leading-none text-soft-cream transition-all duration-500 group-hover:text-light-champagne/90 sm:text-[132px]">
-                {technology.number}
+              <span className={`pointer-events-none absolute -top-10 select-none font-serif text-[140px] leading-none text-warm-ivory transition-all duration-700 group-hover:scale-110 group-hover:text-soft-cream/80 ${isRtl ? "-left-4" : "-right-4"}`}>
+                {tech.number}
               </span>
 
-              <div className="pointer-events-none absolute left-0 top-0 h-[2px] w-0 bg-gradient-to-r from-classic-gold to-champagne-gold transition-all duration-500 group-hover:w-full" />
-
               <div className="relative flex items-center justify-between">
-                <span className="text-[10px] font-semibold tracking-[0.22em] text-antique-gold">
-                  {technology.number}
-                </span>
-
-                <div className="flex h-11 w-11 items-center justify-center rounded-full border border-light-champagne bg-warm-ivory text-[15px] text-classic-gold transition-all duration-500 group-hover:border-midnight-navy group-hover:bg-midnight-navy group-hover:text-champagne-gold">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-warm-ivory text-xl text-classic-gold transition-all duration-700 group-hover:rotate-[360deg] group-hover:bg-midnight-navy group-hover:text-white">
                   ✦
                 </div>
+                <span className="text-[12px] font-black tracking-widest text-classic-gold/40">
+                  {tech.number}
+                </span>
               </div>
 
-              <div className="relative mt-12">
-                <p className="text-[9px] font-semibold uppercase tracking-[0.3em] text-steel-gray">
-                  Connected by
+              <div className={`relative mt-16 ${isRtl ? "text-right" : "text-left"}`}>
+                <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-gray/60">
+                  {t("smartTech.connectedBy")}
                 </p>
 
-                <h3 className="mt-2.5 font-serif text-[2.1rem] font-normal tracking-[-0.03em] text-midnight-navy sm:text-[2.35rem]">
-                  {technology.name}
+                <h3 className="mt-3 font-serif text-3xl font-normal tracking-wide text-midnight-navy sm:text-4xl">
+                  {tech.name}
                 </h3>
 
-                <div className="mt-5 h-px w-10 bg-classic-gold/60 transition-all duration-500 group-hover:w-16 group-hover:bg-classic-gold" />
+                <div className={`mt-6 h-1 w-10 bg-classic-gold transition-all duration-500 group-hover:w-20 ${isRtl ? "mr-0" : "ml-0"}`} />
 
-                <h4 className="mt-6 text-[15px] font-semibold tracking-[-0.01em] text-midnight-navy">
-                  {technology.title}
+                <h4 className="mt-8 text-base font-bold tracking-tight text-midnight-navy">
+                  {tech.title}
                 </h4>
 
-                <p className="mt-3 min-h-[78px] text-[12px] leading-[1.8] text-slate-gray sm:text-[13px]">
-                  {technology.description}
+                <p className="mt-4 min-h-[80px] text-[13px] leading-[1.7] text-slate-gray">
+                  {tech.description}
                 </p>
               </div>
 
-              <div className="relative mt-7 flex items-center justify-between border-t border-light-champagne/90 pt-5">
-                <span className="text-[8px] font-semibold uppercase tracking-[0.25em] text-steel-gray">
-                  Smart Jewelry
+              <div className="relative mt-8 flex items-center justify-between border-t border-light-champagne/50 pt-6">
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-gray/50">
+                  {t("smartTech.subBadge")}
                 </span>
 
-                <span className="flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-[14px] text-classic-gold transition-all duration-300 group-hover:border-midnight-navy/10 group-hover:bg-warm-ivory group-hover:translate-x-0.5 group-hover:text-midnight-navy">
-                  →
+                <span className={`flex h-10 w-10 items-center justify-center rounded-full bg-warm-ivory/50 text-midnight-navy transition-all duration-500 group-hover:bg-midnight-navy group-hover:text-white ${isRtl ? "group-hover:-translate-x-1" : "group-hover:translate-x-1"}`}>
+                  {isRtl ? "←" : "→"}
                 </span>
               </div>
             </div>
           ))}
         </div>
 
-        <div className="relative mt-16 overflow-hidden rounded-[24px] border border-light-champagne/80 bg-soft-white/70 px-6 py-9 text-center shadow-[0_10px_35px_rgba(7,19,31,0.035)] backdrop-blur-sm sm:mt-20 sm:px-10 sm:py-11">
-          <div className="pointer-events-none absolute left-1/2 top-1/2 h-[220px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-champagne-gold/8 blur-[70px]" />
-
+        <div className="relative mt-20 overflow-hidden rounded-[32px] border border-light-champagne/40 bg-white/40 px-8 py-12 text-center backdrop-blur-sm lg:mt-32 lg:px-16 lg:py-16">
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-champagne-gold/5 via-transparent to-light-champagne/10" />
+          
           <div className="relative">
-            <div className="mx-auto mb-5 flex items-center justify-center gap-4">
-              <span className="h-px w-12 bg-classic-gold/30 sm:w-16" />
-
-              <span className="text-[10px] text-classic-gold">✦</span>
-
-              <span className="h-px w-12 bg-classic-gold/30 sm:w-16" />
+            <div className="mx-auto mb-8 flex items-center justify-center gap-6">
+              <span className="h-px w-16 bg-classic-gold/30" />
+              <span className="text-xl text-classic-gold">✦</span>
+              <span className="h-px w-16 bg-classic-gold/30" />
             </div>
 
-            <p className="font-serif text-[1.55rem] italic leading-snug text-midnight-navy sm:text-[1.9rem] lg:text-[2.2rem]">
-              "Beautiful enough to wear. Smart enough to remember."
+            <p className={`font-serif text-[1.8rem] leading-[1.3] text-midnight-navy sm:text-[2.2rem] lg:text-[2.6rem] ${isRtl ? "not-italic" : "italic"}`}>
+              {t("smartTech.quote")}
             </p>
           </div>
         </div>

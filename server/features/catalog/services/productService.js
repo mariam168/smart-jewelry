@@ -8,6 +8,34 @@ const generateProductSku = (productId) => {
   return `JEV-${productId.toString().toUpperCase()}`;
 };
 
+const validateLocalizedField = (field, fieldName) => {
+  if (!field || typeof field !== "object") {
+    const error = new Error(
+      `${fieldName} must contain English and Arabic values.`,
+    );
+
+    error.statusCode = 400;
+
+    throw error;
+  }
+
+  if (!String(field.en || "").trim()) {
+    const error = new Error(`${fieldName} English value is required.`);
+
+    error.statusCode = 400;
+
+    throw error;
+  }
+
+  if (!String(field.ar || "").trim()) {
+    const error = new Error(`${fieldName} Arabic value is required.`);
+
+    error.statusCode = 400;
+
+    throw error;
+  }
+};
+
 export const createProduct = async (productData) => {
   const category = await Category.findById(productData.category);
 
@@ -18,6 +46,10 @@ export const createProduct = async (productData) => {
 
     throw error;
   }
+
+  validateLocalizedField(productData.name, "Product name");
+
+  validateLocalizedField(productData.description, "Product description");
 
   const productId = new mongoose.Types.ObjectId();
 
@@ -31,7 +63,14 @@ export const createProduct = async (productData) => {
     sku: generateProductSku(productId),
   });
 
-  return await product.populate("category");
+  return await product.populate([
+    {
+      path: "category",
+    },
+    {
+      path: "technologyModels",
+    },
+  ]);
 };
 
 export const getAllProducts = async () => {
@@ -102,6 +141,14 @@ export const updateProduct = async (productId, productData) => {
     return null;
   }
 
+  if (productData.name !== undefined) {
+    validateLocalizedField(productData.name, "Product name");
+  }
+
+  if (productData.description !== undefined) {
+    validateLocalizedField(productData.description, "Product description");
+  }
+
   const { sku: ignoredSku, _id: ignoredId, ...safeProductData } = productData;
 
   if (!String(existingProduct.sku || "").trim()) {
@@ -118,7 +165,9 @@ export const updateProduct = async (productId, productData) => {
 
       runValidators: true,
     },
-  ).populate("category");
+  )
+    .populate("category")
+    .populate("technologyModels");
 };
 
 export const deleteProduct = async (productId) => {

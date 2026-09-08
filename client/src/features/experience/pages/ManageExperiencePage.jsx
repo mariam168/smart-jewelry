@@ -1,8 +1,11 @@
-
 import {
   useEffect,
   useState,
 } from "react";
+
+import {
+  useTranslation,
+} from "react-i18next";
 
 import {
   useParams,
@@ -40,7 +43,8 @@ const DEFAULT_VIDEO_ACCESS = {
   requesterPhone:
     "",
 
-  message: "",
+  message:
+    "",
 
   adminNote:
     "",
@@ -50,6 +54,9 @@ const ManageExperiencePage = () => {
   const {
     token,
   } = useParams();
+
+  const { t } =
+    useTranslation();
 
   const [
     loading,
@@ -199,7 +206,9 @@ const ManageExperiencePage = () => {
         alert(
           error?.response?.data
             ?.message ||
-            "Failed To Load Experience",
+            t(
+              "manageExperience.failedToLoadExperience",
+            ),
         );
       }
     } finally {
@@ -246,7 +255,9 @@ const ManageExperiencePage = () => {
         );
 
         alert(
-          "Saved Successfully",
+          t(
+            "manageExperience.savedSuccessfully",
+          ),
         );
 
         await loadExperience();
@@ -260,7 +271,9 @@ const ManageExperiencePage = () => {
         alert(
           error?.response?.data
             ?.message ||
-            "Failed To Save",
+            t(
+              "manageExperience.failedToSave",
+            ),
         );
       } finally {
         setSaving(false);
@@ -283,7 +296,9 @@ const ManageExperiencePage = () => {
         !accessDate
       ) {
         alert(
-          "Please choose a date",
+          t(
+            "manageExperience.pleaseChooseDate",
+          ),
         );
 
         return;
@@ -300,7 +315,9 @@ const ManageExperiencePage = () => {
         );
 
         alert(
-          "Date Protection Enabled",
+          t(
+            "manageExperience.dateProtectionEnabled",
+          ),
         );
 
         await loadExperience();
@@ -310,7 +327,9 @@ const ManageExperiencePage = () => {
         alert(
           error?.response?.data
             ?.message ||
-            "Failed To Save Access Date",
+            t(
+              "manageExperience.failedToSaveAccessDate",
+            ),
         );
       } finally {
         setSavingAccessDate(
@@ -340,7 +359,9 @@ const ManageExperiencePage = () => {
         alert(
           error?.response?.data
             ?.message ||
-            "Failed To Remove Access Date",
+            t(
+              "manageExperience.failedToRemoveAccessDate",
+            ),
         );
       } finally {
         setSavingAccessDate(
@@ -361,7 +382,9 @@ const ManageExperiencePage = () => {
           <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-light-champagne border-t-classic-gold" />
 
           <p className="mt-5 text-[13px] text-slate-gray">
-            Loading your jewelry experience...
+            {t(
+              "manageExperience.loadingExperience",
+            )}
           </p>
         </div>
       </div>
@@ -374,7 +397,9 @@ const ManageExperiencePage = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-warm-ivory">
         <h2 className="font-serif text-[2rem]">
-          Experience Not Found
+          {t(
+            "manageExperience.experienceNotFound",
+          )}
         </h2>
       </div>
     );
@@ -385,15 +410,21 @@ const ManageExperiencePage = () => {
       <header className="bg-gradient-to-br from-deep-navy via-rich-navy to-luxury-black">
         <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8">
           <p className="text-[10px] uppercase tracking-[0.25em] text-champagne-gold">
-            ✦ Smart Jewelry
+            ✦ {t(
+              "manageExperience.smartJewelry",
+            )}
           </p>
 
           <h1 className="mt-3 font-serif text-[3rem] text-soft-white">
-            Manage Experience
+            {t(
+              "manageExperience.manageExperience",
+            )}
           </h1>
 
           <p className="mt-4 font-mono text-[12px] text-premium-silver">
-            Serial:{" "}
+            {t(
+              "manageExperience.serial",
+            )}{" "}
             {
               serialNumber
             }
@@ -466,7 +497,9 @@ const ManageExperiencePage = () => {
 
         <section className="rounded-[28px] border border-light-champagne bg-soft-white p-6 sm:p-8">
           <h2 className="mb-6 font-serif text-[1.65rem]">
-            Your Memories
+            {t(
+              "manageExperience.yourMemories",
+            )}
           </h2>
 
           <MediaGallery

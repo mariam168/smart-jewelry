@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { getTechnologies, deleteTechnology } from "../services/technologyApi";
 
 const AdminTechnologiesPage = () => {
+  const { t } = useTranslation();
+
   const [technologies, setTechnologies] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -20,7 +23,8 @@ const AdminTechnologiesPage = () => {
       console.error(error);
 
       setError(
-        error?.response?.data?.message || "Failed to load technologies.",
+        error?.response?.data?.message ||
+          t("adminTechnologies.failedToLoadTechnologies"),
       );
     } finally {
       setIsLoading(false);
@@ -33,7 +37,7 @@ const AdminTechnologiesPage = () => {
 
   const handleDelete = async (technologyId) => {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this technology?",
+      t("adminTechnologies.deleteConfirmation"),
     );
 
     if (!confirmed) return;
@@ -47,7 +51,10 @@ const AdminTechnologiesPage = () => {
     } catch (error) {
       console.error(error);
 
-      alert(error?.response?.data?.message || "Failed to delete technology.");
+      alert(
+        error?.response?.data?.message ||
+          t("adminTechnologies.failedToDeleteTechnology"),
+      );
     }
   };
 
@@ -64,18 +71,18 @@ const AdminTechnologiesPage = () => {
               <span className="h-px w-8 bg-classic-gold/60" />
 
               <span className="text-[8px] font-semibold uppercase tracking-[0.3em] text-antique-gold">
-                Smart Jewelry
+                {t("adminTechnologies.smartJewelry")}
               </span>
 
               <span className="text-[7px] text-classic-gold">✦</span>
             </div>
 
             <h1 className="font-serif text-[2.6rem] font-normal leading-none tracking-[-0.04em] text-midnight-navy sm:text-[3.2rem]">
-              Technologies
+              {t("adminTechnologies.technologies")}
             </h1>
 
             <p className="mt-4 max-w-[560px] text-[12px] leading-7 text-slate-gray sm:text-[13px]">
-              Manage the technologies available for your smart jewelry products.
+              {t("adminTechnologies.manageDescription")}
             </p>
           </div>
 
@@ -86,7 +93,7 @@ const AdminTechnologiesPage = () => {
             <span className="text-[18px] font-light leading-none text-champagne-gold">
               +
             </span>
-            Add Technology
+            {t("adminTechnologies.addTechnology")}
           </Link>
         </div>
       </header>
@@ -116,7 +123,7 @@ const AdminTechnologiesPage = () => {
               </div>
 
               <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-slate-gray">
-                Loading Technologies...
+                {t("adminTechnologies.loadingTechnologies")}
               </p>
             </div>
           </div>
@@ -134,12 +141,11 @@ const AdminTechnologiesPage = () => {
               </div>
 
               <h2 className="mt-6 font-serif text-[2rem] font-normal tracking-[-0.03em] text-midnight-navy">
-                No Technologies Found
+                {t("adminTechnologies.noTechnologiesFound")}
               </h2>
 
               <p className="mx-auto mt-3 max-w-md text-[12px] leading-7 text-slate-gray">
-                Start building your smart jewelry system by adding your first
-                technology.
+                {t("adminTechnologies.startBuildingDescription")}
               </p>
 
               <Link
@@ -149,7 +155,7 @@ const AdminTechnologiesPage = () => {
                 <span className="text-[17px] leading-none text-champagne-gold">
                   +
                 </span>
-                Add Technology
+                {t("adminTechnologies.addTechnology")}
               </Link>
             </div>
           </div>
@@ -163,14 +169,14 @@ const AdminTechnologiesPage = () => {
                   <span className="h-px w-7 bg-classic-gold/60" />
 
                   <span className="text-[8px] font-semibold uppercase tracking-[0.3em] text-antique-gold">
-                    Collection System
+                    {t("adminTechnologies.collectionSystem")}
                   </span>
 
                   <span className="text-[7px] text-classic-gold">✦</span>
                 </div>
 
                 <h2 className="mt-2.5 font-serif text-[1.55rem] font-normal tracking-[-0.025em] text-midnight-navy">
-                  Available Technologies
+                  {t("adminTechnologies.availableTechnologies")}
                 </h2>
               </div>
 
@@ -180,7 +186,7 @@ const AdminTechnologiesPage = () => {
                 </span>
 
                 <span className="text-[7px] font-semibold uppercase tracking-[0.17em] text-steel-gray">
-                  Technologies
+                  {t("adminTechnologies.technologies")}
                 </span>
               </div>
             </div>
@@ -190,15 +196,15 @@ const AdminTechnologiesPage = () => {
                 <thead>
                   <tr className="border-b border-light-champagne/80 bg-warm-ivory/55">
                     <th className="px-7 py-4.5 text-left text-[7px] font-semibold uppercase tracking-[0.2em] text-steel-gray">
-                      Technology
+                      {t("adminTechnologies.technology")}
                     </th>
 
                     <th className="px-7 py-4.5 text-left text-[7px] font-semibold uppercase tracking-[0.2em] text-steel-gray">
-                      Code
+                      {t("adminTechnologies.code")}
                     </th>
 
                     <th className="px-7 py-4.5 text-right text-[7px] font-semibold uppercase tracking-[0.2em] text-steel-gray">
-                      Actions
+                      {t("adminTechnologies.actions")}
                     </th>
                   </tr>
                 </thead>
@@ -221,7 +227,9 @@ const AdminTechnologiesPage = () => {
                             </p>
 
                             <p className="mt-1 text-[8px] uppercase tracking-[0.1em] text-steel-gray">
-                              Technology #{String(index + 1).padStart(2, "0")}
+                              {t("adminTechnologies.technologyNumber", {
+                                number: String(index + 1).padStart(2, "0"),
+                              })}
                             </p>
                           </div>
                         </div>
@@ -239,14 +247,14 @@ const AdminTechnologiesPage = () => {
                             to={`/admin/technologies/${technology._id}/edit`}
                             className="inline-flex min-h-[38px] items-center justify-center rounded-full border border-light-champagne bg-soft-white px-4 text-[8px] font-semibold uppercase tracking-[0.12em] text-slate-gray transition-all duration-300 hover:border-champagne-gold hover:bg-warm-ivory hover:text-midnight-navy"
                           >
-                            Edit
+                            {t("adminTechnologies.edit")}
                           </Link>
 
                           <button
                             onClick={() => handleDelete(technology._id)}
                             className="inline-flex min-h-[38px] items-center justify-center rounded-full border border-antique-gold/20 bg-transparent px-4 text-[8px] font-semibold uppercase tracking-[0.12em] text-antique-gold transition-all duration-300 hover:border-antique-gold/40 hover:bg-soft-cream hover:text-midnight-navy"
                           >
-                            Delete
+                            {t("adminTechnologies.delete")}
                           </button>
                         </div>
                       </td>

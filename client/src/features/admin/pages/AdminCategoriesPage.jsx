@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import { Link } from "react-router-dom";
 
 import {
@@ -6,59 +7,28 @@ import {
   deleteCategory,
 } from "../services/categoryApi";
 
+import { useTranslation } from "react-i18next";
+
 const getBackendOrigin = () => {
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  const baseURL =
+    import.meta.env.VITE_API_URL ||
+    "http://localhost:5000/api";
 
-  if (backendUrl) {
-    return String(backendUrl).replace(/\/+$/, "");
-  }
-
-  const apiUrl = import.meta.env.VITE_API_URL;
-
-  if (apiUrl && /^https?:\/\//i.test(apiUrl)) {
-    return String(apiUrl)
-      .replace(/\/api\/?$/i, "")
-      .replace(/\/+$/, "");
-  }
-
-  if (typeof window !== "undefined") {
-    return window.location.origin;
-  }
-
-  return "";
+  return baseURL.replace(/\/api\/?$/, "");
 };
 
-const BACKEND_URL = getBackendOrigin();
-
 const getFilePath = (value) => {
-  if (!value) {
-    return "";
-  }
+  if (!value) return "";
 
   if (typeof value === "string") {
-    return value.trim();
-  }
-
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      const path = getFilePath(item);
-
-      if (path) {
-        return path;
-      }
-    }
-
-    return "";
+    return value;
   }
 
   if (typeof value === "object") {
     return (
-      getFilePath(value.imageUrl) ||
-      getFilePath(value.url) ||
-      getFilePath(value.path) ||
-      getFilePath(value.src) ||
-      getFilePath(value.image) ||
-      getFilePath(value.file) ||
+      value.url ||
+      value.path ||
+      value.secure_url ||
       ""
     );
   }
@@ -66,80 +36,86 @@ const getFilePath = (value) => {
   return "";
 };
 
-const getImageUrl = (value) => {
-  let image = getFilePath(value);
+const getImageUrl = (image) => {
+  const filePath = getFilePath(image);
 
-  if (!image) {
+  if (!filePath) {
     return "";
   }
 
   if (
-    image.startsWith("blob:") ||
-    image.startsWith("data:")
+    filePath.startsWith("http://") ||
+    filePath.startsWith("https://")
   ) {
-    return image;
+    return filePath;
   }
 
-  if (
-    /^https?:\/\/localhost:5000/i.test(image) ||
-    /^https?:\/\/127\.0\.0\.1:5000/i.test(image)
-  ) {
-    image = image.replace(
-      /^https?:\/\/(?:localhost|127\.0\.0\.1):5000/i,
-      "",
+  const origin = getBackendOrigin();
+
+  return `${origin}${
+    filePath.startsWith("/") ? "" : "/"
+  }${filePath}`;
+};
+
+const getLocalizedValue = (value, fallback = "") => {
+  if (!value) {
+    return fallback;
+  }
+
+  if (typeof value === "object") {
+    return (
+      value.en ||
+      value.ar ||
+      fallback
     );
-  } else if (
-    image.startsWith("http://") ||
-    image.startsWith("https://")
-  ) {
-    return image;
   }
 
-  if (image.startsWith("/api/uploads/")) {
-    image = image.replace(/^\/api/, "");
-  }
-
-  if (!image.startsWith("/")) {
-    image = `/${image}`;
-  }
-
-  return `${BACKEND_URL}${image}`;
+  return String(value);
 };
 
 const AdminCategoriesPage = () => {
+  const { t } = useTranslation();
+
   const [categories, setCategories] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [deletingId, setDeletingId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  // =========================
+  // Load Categories
+  // =========================
+
   const loadCategories = async () => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       setError("");
 
       const response = await getCategories();
 
-      const categoriesData =
-        response?.data?.categories ||
+      const data =
+        response?.data ||
         response?.categories ||
+        response ||
         [];
 
       setCategories(
-        Array.isArray(categoriesData)
-          ? categoriesData
-          : [],
+        Array.isArray(data)
+          ? data
+          : data?.categories || [],
       );
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(
+        "Failed to load categories:",
+        err,
+      );
 
       setError(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Failed to load categories.",
+        err?.response?.data?.message ||
+          t("adminCategories.failedToLoadCategories"),
       );
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -147,9 +123,13 @@ const AdminCategoriesPage = () => {
     loadCategories();
   }, []);
 
-  const handleDelete = async (categoryId) => {
+  // =========================
+  // Delete Category
+  // =========================
+
+  const handleDelete = async (id) => {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this category?",
+      t("adminCategories.deleteConfirmation"),
     );
 
     if (!confirmed) {
@@ -157,438 +137,310 @@ const AdminCategoriesPage = () => {
     }
 
     try {
-      setDeletingId(categoryId);
+      setDeleting(id);
       setError("");
       setSuccess("");
 
-      await deleteCategory(categoryId);
+      await deleteCategory(id);
 
-      setCategories((previousCategories) =>
-        previousCategories.filter(
-          (category) => category._id !== categoryId,
+      setCategories((prev) =>
+        prev.filter(
+          (category) =>
+            category._id !== id &&
+            category.id !== id,
         ),
       );
 
       setSuccess(
-        "Category deleted successfully.",
+        t("adminCategories.categoryDeletedSuccessfully"),
       );
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(
+        "Failed to delete category:",
+        err,
+      );
 
       setError(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Failed to delete category.",
+        err?.response?.data?.message ||
+          t("adminCategories.failedToDeleteCategory"),
       );
     } finally {
-      setDeletingId(null);
+      setDeleting(null);
     }
   };
 
-  if (isLoading) {
+  // =========================
+  // Loading
+  // =========================
+
+  if (loading) {
     return (
-      <div className="relative min-h-screen overflow-hidden bg-warm-ivory text-midnight-navy">
-        <div className="pointer-events-none fixed -right-48 top-10 h-[500px] w-[500px] rounded-full bg-champagne-gold/[0.05] blur-[130px]" />
+      <div className="p-6">
+        <div className="mb-6">
+          <div className="h-8 w-48 animate-pulse rounded bg-gray-200" />
+          <div className="mt-2 h-4 w-72 animate-pulse rounded bg-gray-200" />
+        </div>
 
-        <div className="pointer-events-none fixed -left-44 bottom-0 h-[460px] w-[460px] rounded-full bg-light-champagne/55 blur-[120px]" />
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+          <div className="space-y-4 p-6">
+            {[1, 2, 3, 4, 5].map((item) => (
+              <div
+                key={item}
+                className="flex items-center gap-4"
+              >
+                <div className="h-16 w-16 animate-pulse rounded-lg bg-gray-200" />
 
-        <header className="relative border-b border-light-champagne/80 bg-soft-white/60 backdrop-blur-sm">
-          <div className="mx-auto flex max-w-[1360px] items-center justify-between px-6 py-7 sm:px-8 lg:px-10">
-            <div>
-              <h1 className="font-serif text-[2.3rem] font-normal leading-none tracking-[-0.035em] text-midnight-navy">
-                Categories
-              </h1>
-
-              <p className="mt-2 text-[11px] text-slate-gray">
-                Manage your product categories
-              </p>
-            </div>
-
-            <div className="h-11 w-32 animate-pulse rounded-[13px] bg-light-champagne/80" />
-          </div>
-        </header>
-
-        <main className="relative mx-auto max-w-[1360px] px-6 py-10 sm:px-8 lg:px-10">
-          <div className="overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85 shadow-[0_14px_42px_rgba(7,19,31,0.045)] backdrop-blur-sm">
-            <div className="animate-pulse">
-              {[1, 2, 3, 4, 5].map((item) => (
-                <div
-                  key={item}
-                  className="flex items-center gap-6 border-b border-light-champagne/65 px-6 py-5 last:border-b-0"
-                >
-                  <div className="h-16 w-16 rounded-[14px] bg-light-champagne/80" />
-
-                  <div className="flex-1 space-y-3">
-                    <div className="h-4 w-40 rounded bg-light-champagne/80" />
-
-                    <div className="h-3 w-64 rounded bg-soft-cream" />
-                  </div>
-
-                  <div className="h-9 w-20 rounded-[11px] bg-light-champagne/80" />
-
-                  <div className="h-9 w-20 rounded-[11px] bg-light-champagne/80" />
+                <div className="flex-1">
+                  <div className="h-5 w-40 animate-pulse rounded bg-gray-200" />
+                  <div className="mt-2 h-4 w-64 animate-pulse rounded bg-gray-200" />
                 </div>
-              ))}
-            </div>
+
+                <div className="h-8 w-20 animate-pulse rounded bg-gray-200" />
+              </div>
+            ))}
           </div>
-        </main>
+        </div>
       </div>
     );
   }
 
+  // =========================
+  // Render
+  // =========================
+
   return (
-    <div className="relative min-h-screen overflow-hidden bg-warm-ivory text-midnight-navy">
-      <div className="pointer-events-none fixed -right-52 top-20 h-[520px] w-[520px] rounded-full bg-champagne-gold/[0.06] blur-[130px]" />
+    <div className="p-6">
+      {/* Header */}
 
-      <div className="pointer-events-none fixed -left-44 bottom-0 h-[460px] w-[460px] rounded-full bg-light-champagne/50 blur-[120px]" />
+      <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {t("adminCategories.categories")}
+          </h1>
 
-      <header className="sticky top-0 z-30 border-b border-light-champagne/80 bg-soft-white/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-[1360px] items-center justify-between gap-6 px-6 py-5 sm:px-8 lg:px-10">
-          <div>
-            <div className="flex items-center gap-4">
-              <div className="flex h-11 w-11 items-center justify-center rounded-full border border-champagne-gold/25 bg-midnight-navy text-[11px] font-semibold text-champagne-gold shadow-[0_8px_20px_rgba(18,38,58,0.13)]">
-                C
-              </div>
+          <p className="mt-1 text-sm text-gray-500">
+            {t("adminCategories.manageProductCategories")}
+          </p>
+        </div>
 
-              <div>
-                <h1 className="font-serif text-[2rem] font-normal leading-none tracking-[-0.03em] text-midnight-navy">
-                  Categories
-                </h1>
+        <Link
+          to="/admin/categories/new"
+          className="inline-flex items-center justify-center rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800"
+        >
+          + {t("adminCategories.addCategory")}
+        </Link>
+      </div>
 
-                <p className="mt-2 text-[10px] text-slate-gray">
-                  Manage your product categories
-                </p>
-              </div>
-            </div>
+      {/* Error */}
+
+      {error && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {/* Success */}
+
+      {success && (
+        <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+          {success}
+        </div>
+      )}
+
+      {/* Empty State */}
+
+      {categories.length === 0 ? (
+        <div className="rounded-xl border border-gray-200 bg-white px-6 py-16 text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-2xl">
+            📂
           </div>
+
+          <h2 className="text-lg font-semibold text-gray-900">
+            {t("adminCategories.noCategoriesFound")}
+          </h2>
+
+          <p className="mt-2 text-sm text-gray-500">
+            {t("adminCategories.createFirstCategory")}
+          </p>
 
           <Link
             to="/admin/categories/new"
-            className="group inline-flex min-h-[48px] items-center justify-center gap-3 rounded-[13px] bg-midnight-navy px-5 text-[8px] font-semibold uppercase tracking-[0.12em] text-soft-white shadow-[0_10px_24px_rgba(18,38,58,0.14)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-rich-navy hover:shadow-[0_14px_30px_rgba(18,38,58,0.2)]"
+            className="mt-5 inline-flex rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800"
           >
-            <span className="text-[16px] font-light leading-none text-champagne-gold">
-              +
-            </span>
-
-            Add Category
+            {t("adminCategories.addCategory")}
           </Link>
         </div>
-      </header>
+      ) : (
+        /* Categories List */
 
-      <main className="relative mx-auto max-w-[1360px] px-6 py-10 sm:px-8 lg:px-10">
-        {error && (
-          <div className="mb-6 flex items-start gap-3 rounded-[16px] border border-antique-gold/25 bg-soft-cream/85 p-4 text-[10px] leading-5 text-antique-gold shadow-[0_7px_20px_rgba(7,19,31,0.03)]">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-midnight-navy font-semibold text-champagne-gold">
-              !
-            </div>
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[900px]">
+              <thead className="border-b border-gray-200 bg-gray-50">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    {t("adminCategories.category")}
+                  </th>
 
-            <div className="flex-1">
-              {error}
-            </div>
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    {t("adminCategories.slug")}
+                  </th>
 
-            <button
-              type="button"
-              onClick={() => setError("")}
-              className="text-antique-gold/60 transition-colors duration-300 hover:text-midnight-navy"
-            >
-              ✕
-            </button>
-          </div>
-        )}
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    {t("adminCategories.description")}
+                  </th>
 
-        {success && (
-          <div className="mb-6 flex items-center gap-3 rounded-[16px] border border-classic-gold/25 bg-soft-cream/85 p-4 text-[10px] leading-5 text-antique-gold shadow-[0_7px_20px_rgba(7,19,31,0.03)]">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-midnight-navy font-semibold text-champagne-gold">
-              ✓
-            </div>
+                  <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    {t("adminCategories.products")}
+                  </th>
 
-            <span>{success}</span>
-          </div>
-        )}
+                  <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    {t("adminCategories.actions")}
+                  </th>
+                </tr>
+              </thead>
 
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <div className="mb-2 flex items-center gap-3">
-              <span className="h-px w-7 bg-classic-gold/60" />
-            </div>
+              <tbody className="divide-y divide-gray-200">
+                {categories.map((category) => {
+                  const categoryId =
+                    category._id || category.id;
 
-            <h2 className="font-serif text-[1.6rem] font-normal tracking-[-0.025em] text-midnight-navy">
-              All Categories
-            </h2>
+                  const categoryName =
+                    getLocalizedValue(
+                      category.name,
+                      t("adminCategories.unnamedCategory"),
+                    );
 
-            <p className="mt-1.5 text-[10px] text-slate-gray">
-              {categories.length}{" "}
-              {categories.length === 1
-                ? "category"
-                : "categories"}
-            </p>
-          </div>
+                  const categoryDescription =
+                    getLocalizedValue(
+                      category.description,
+                      t("adminCategories.noDescription"),
+                    );
 
-          <Link
-            to="/admin/categories/new"
-            className="group inline-flex min-h-[42px] w-fit items-center justify-center gap-3 rounded-full border border-champagne-gold/30 bg-soft-white/80 px-4 text-[8px] font-semibold uppercase tracking-[0.1em] text-midnight-navy transition-all duration-300 hover:-translate-y-0.5 hover:border-champagne-gold hover:bg-warm-ivory"
-          >
-            <span className="text-[14px] text-classic-gold">
-              +
-            </span>
+                  const imageUrl =
+                    getImageUrl(
+                      category.image,
+                    );
 
-            New Category
-          </Link>
-        </div>
+                  const productCount =
+                    category.productCount ??
+                    category.productsCount ??
+                    category.products?.length ??
+                    0;
 
-        {categories.length === 0 ? (
-          <div className="relative overflow-hidden rounded-[28px] border border-light-champagne/90 bg-soft-white/85 px-6 py-16 text-center shadow-[0_14px_42px_rgba(7,19,31,0.045)] backdrop-blur-sm">
-            <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full border border-champagne-gold/10" />
+                  return (
+                    <tr
+                      key={categoryId}
+                      className="transition hover:bg-gray-50"
+                    >
+                      {/* Category */}
 
-            <div className="pointer-events-none absolute -bottom-24 -left-20 h-56 w-56 rounded-full border border-champagne-gold/[0.08]" />
-
-            <div className="pointer-events-none absolute left-1/2 top-1/2 h-[300px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-soft-cream blur-[90px]" />
-
-            <div className="relative">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[20px] border border-champagne-gold/25 bg-warm-ivory font-serif text-[1.4rem] text-antique-gold shadow-[0_8px_22px_rgba(7,19,31,0.04)]">
-                C
-              </div>
-
-              <h2 className="mt-6 font-serif text-[1.9rem] font-normal tracking-[-0.025em] text-midnight-navy">
-                No Categories Found
-              </h2>
-
-              <p className="mx-auto mt-3 max-w-md text-[11px] leading-6 text-slate-gray">
-                You don't have any product categories yet.
-                Create your first category to start organizing
-                your products.
-              </p>
-
-              <Link
-                to="/admin/categories/new"
-                className="mt-7 inline-flex min-h-[48px] items-center justify-center gap-3 rounded-[13px] bg-midnight-navy px-6 text-[8px] font-semibold uppercase tracking-[0.11em] text-soft-white shadow-[0_10px_24px_rgba(18,38,58,0.14)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-rich-navy"
-              >
-                <span className="text-[15px] text-champagne-gold">
-                  +
-                </span>
-
-                Add Category
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <div className="relative overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85 shadow-[0_16px_50px_rgba(7,19,31,0.05)] backdrop-blur-sm">
-            <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-soft-cream blur-[75px]" />
-
-            <div className="relative hidden border-b border-light-champagne/80 bg-warm-ivory/55 px-6 py-4 lg:grid lg:grid-cols-[100px_1.2fr_2fr_100px_220px] lg:items-center lg:gap-5">
-              <div className="text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                Image
-              </div>
-
-              <div className="text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                Category
-              </div>
-
-              <div className="text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                Description
-              </div>
-
-              <div className="text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                Products
-              </div>
-
-              <div className="text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                Actions
-              </div>
-            </div>
-
-            <div className="relative divide-y divide-light-champagne/65">
-              {categories.map((category) => {
-                const imageUrl =
-                  getImageUrl(category.image);
-
-                const productCount =
-                  category.productCount ?? 0;
-
-                const isDeleting =
-                  deletingId === category._id;
-
-                return (
-                  <div
-                    key={category._id}
-                    className="group px-6 py-5 transition-colors duration-300 hover:bg-warm-ivory/55"
-                  >
-                    <div className="hidden lg:grid lg:grid-cols-[100px_1.2fr_2fr_100px_220px] lg:items-center lg:gap-5">
-                      <div>
-                        {imageUrl ? (
-                          <img
-                            src={imageUrl}
-                            alt={category.name}
-                            className="h-16 w-16 rounded-[14px] border border-light-champagne/80 bg-soft-cream object-cover shadow-[0_5px_16px_rgba(7,19,31,0.035)] transition-transform duration-300 group-hover:scale-[1.03]"
-                            onError={(event) => {
-                              event.currentTarget.style.display =
-                                "none";
-
-                              const fallback =
-                                event.currentTarget
-                                  .nextElementSibling;
-
-                              if (fallback) {
-                                fallback.style.display =
-                                  "flex";
-                              }
-                            }}
-                          />
-                        ) : null}
-
-                        <div
-                          className={`${
-                            imageUrl
-                              ? "hidden"
-                              : "flex"
-                          } h-16 w-16 items-center justify-center rounded-[14px] border border-light-champagne/80 bg-soft-cream text-[8px] font-medium text-steel-gray`}
-                        >
-                          No Image
-                        </div>
-                      </div>
-
-                      <div className="min-w-0">
-                        <h3 className="truncate font-serif text-[1.05rem] font-normal text-midnight-navy">
-                          {category.name}
-                        </h3>
-
-                        {category.slug && (
-                          <p className="mt-1 truncate text-[8px] text-steel-gray">
-                            /{category.slug}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="min-w-0">
-                        <p className="line-clamp-2 text-[10px] leading-5 text-slate-gray">
-                          {category.description ||
-                            "No description provided."}
-                        </p>
-                      </div>
-
-                      <div>
-                        <span className="inline-flex min-w-[40px] items-center justify-center rounded-full border border-light-champagne bg-warm-ivory/80 px-3 py-2 text-[9px] font-semibold text-midnight-navy">
-                          {productCount}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Link
-                          to={`/admin/categories/${category._id}/edit`}
-                          className="inline-flex min-h-[38px] items-center justify-center rounded-full border border-light-champagne bg-soft-white px-4 text-[7px] font-semibold uppercase tracking-[0.1em] text-slate-gray transition-all duration-300 hover:-translate-y-0.5 hover:border-champagne-gold hover:bg-warm-ivory hover:text-midnight-navy"
-                        >
-                          Edit
-                        </Link>
-
-                        <button
-                          type="button"
-                          disabled={isDeleting}
-                          onClick={() =>
-                            handleDelete(category._id)
-                          }
-                          className="inline-flex min-h-[38px] items-center justify-center rounded-full border border-antique-gold/20 bg-soft-white px-4 text-[7px] font-semibold uppercase tracking-[0.1em] text-antique-gold transition-all duration-300 hover:-translate-y-0.5 hover:border-antique-gold/40 hover:bg-soft-cream hover:text-midnight-navy disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
-                        >
-                          {isDeleting
-                            ? "Deleting..."
-                            : "Delete"}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-5 lg:hidden">
-                      <div className="flex items-start gap-4">
-                        <div className="shrink-0">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-4">
                           {imageUrl ? (
                             <img
                               src={imageUrl}
-                              alt={category.name}
-                              className="h-20 w-20 rounded-[16px] border border-light-champagne/80 bg-soft-cream object-cover shadow-[0_5px_16px_rgba(7,19,31,0.035)]"
-                              onError={(event) => {
-                                event.currentTarget.style.display =
-                                  "none";
-
-                                const fallback =
-                                  event.currentTarget
-                                    .nextElementSibling;
-
-                                if (fallback) {
-                                  fallback.style.display =
-                                    "flex";
-                                }
-                              }}
+                              alt={categoryName}
+                              className="h-16 w-16 rounded-lg object-cover"
                             />
-                          ) : null}
-
-                          <div
-                            className={`${
-                              imageUrl
-                                ? "hidden"
-                                : "flex"
-                            } h-20 w-20 items-center justify-center rounded-[16px] border border-light-champagne/80 bg-soft-cream text-[8px] font-medium text-steel-gray`}
-                          >
-                            No Image
-                          </div>
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-serif text-[1.25rem] font-normal text-midnight-navy">
-                            {category.name}
-                          </h3>
-
-                          {category.slug && (
-                            <p className="mt-1 text-[8px] text-steel-gray">
-                              /{category.slug}
-                            </p>
+                          ) : (
+                            <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100 text-xl text-gray-400">
+                              📂
+                            </div>
                           )}
 
-                          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-light-champagne bg-warm-ivory/80 px-3 py-1.5">
-                            <span className="text-[8px] text-slate-gray">
-                              Products:
-                            </span>
+                          <div>
+                            <p className="font-semibold text-gray-900">
+                              {categoryName}
+                            </p>
 
-                            <span className="text-[9px] font-semibold text-midnight-navy">
-                              {productCount}
-                            </span>
+                            {/* Arabic name */}
+
+                            {category.name?.ar && (
+                              <p className="mt-1 text-sm text-gray-500">
+                                {category.name.ar}
+                              </p>
+                            )}
                           </div>
                         </div>
-                      </div>
+                      </td>
 
-                      <div>
-                        <p className="text-[10px] leading-6 text-slate-gray">
-                          {category.description ||
-                            "No description provided."}
-                        </p>
-                      </div>
+                      {/* Slug */}
 
-                      <div className="flex flex-col gap-2 sm:flex-row">
-                        <Link
-                          to={`/admin/categories/${category._id}/edit`}
-                          className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-[12px] border border-light-champagne bg-soft-white px-4 text-[8px] font-semibold uppercase tracking-[0.1em] text-midnight-navy transition-all duration-300 hover:-translate-y-0.5 hover:border-champagne-gold hover:bg-warm-ivory"
-                        >
-                          Edit Category
-                        </Link>
+                      <td className="px-6 py-4">
+                        <span className="rounded-md bg-gray-100 px-2.5 py-1 font-mono text-xs text-gray-700">
+                          {category.slug || "-"}
+                        </span>
+                      </td>
 
-                        <button
-                          type="button"
-                          disabled={isDeleting}
-                          onClick={() =>
-                            handleDelete(category._id)
-                          }
-                          className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-[12px] border border-antique-gold/20 bg-soft-white px-4 text-[8px] font-semibold uppercase tracking-[0.1em] text-antique-gold transition-all duration-300 hover:-translate-y-0.5 hover:border-antique-gold/40 hover:bg-soft-cream hover:text-midnight-navy disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
-                        >
-                          {isDeleting
-                            ? "Deleting..."
-                            : "Delete Category"}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                      {/* Description */}
+
+                      <td className="max-w-xs px-6 py-4">
+                        <div>
+                          <p className="line-clamp-2 text-sm text-gray-600">
+                            {categoryDescription}
+                          </p>
+
+                          {/* Arabic description */}
+
+                          {category.description?.ar && (
+                            <p
+                              className="mt-1 line-clamp-2 text-sm text-gray-400"
+                              dir="rtl"
+                            >
+                              {category.description.ar}
+                            </p>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Product Count */}
+
+                      <td className="px-6 py-4 text-center">
+                        <span className="inline-flex min-w-8 items-center justify-center rounded-full bg-gray-100 px-2.5 py-1 text-sm font-medium text-gray-700">
+                          {productCount}
+                        </span>
+                      </td>
+
+                      {/* Actions */}
+
+                      <td className="px-6 py-4">
+                        <div className="flex justify-end gap-2">
+                          <Link
+                            to={`/admin/categories/${categoryId}/edit`}
+                            className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                          >
+                            {t("adminCategories.edit")}
+                          </Link>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleDelete(
+                                categoryId,
+                              )
+                            }
+                            disabled={
+                              deleting ===
+                              categoryId
+                            }
+                            className="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {deleting ===
+                            categoryId
+                              ? t("adminCategories.deleting")
+                              : t("adminCategories.delete")}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        )}
-      </main>
+        </div>
+      )}
     </div>
   );
 };

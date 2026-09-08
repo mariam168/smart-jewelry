@@ -10,6 +10,10 @@ import {
 } from "react-router-dom";
 
 import {
+  useTranslation,
+} from "react-i18next";
+
+import {
   useAuth,
 } from "../../auth/context/AuthContext";
 
@@ -64,6 +68,8 @@ const manufacturingSteps = [
 
 const AccountPage = () => {
   const navigate = useNavigate();
+
+  const { t } = useTranslation();
 
   const {
     user: authUser,
@@ -184,7 +190,7 @@ const AccountPage = () => {
         setError(
           error?.response?.data?.message ||
             error?.message ||
-            "Failed to load account information."
+            t("account.failedToLoad")
         );
       } finally {
         if (isMounted) {
@@ -259,7 +265,7 @@ const AccountPage = () => {
         handleVisibilityChange
       );
     };
-  }, []);
+  }, [t]);
 
   const user =
     account?.user ||
@@ -449,7 +455,9 @@ const AccountPage = () => {
     if (
       status === "cancelled"
     ) {
-      return "Cancelled";
+      return t(
+        "account.orderStatuses.cancelled"
+      );
     }
 
     const step =
@@ -458,9 +466,33 @@ const AccountPage = () => {
           item.key === status
       );
 
-    return (
-      step?.label ||
-      formatStatus(status)
+    if (!step) {
+      return formatStatus(status);
+    }
+
+    return t(
+      `account.orderSteps.${step.key}.label`,
+      {
+        defaultValue: step.label,
+      }
+    );
+  };
+
+  const getOrderStepDescription = (step) => {
+    return t(
+      `account.orderSteps.${step.key}.description`,
+      {
+        defaultValue: step.description,
+      }
+    );
+  };
+
+  const getManufacturingStepLabel = (step) => {
+    return t(
+      `account.manufacturingSteps.${step.key}`,
+      {
+        defaultValue: step.label,
+      }
     );
   };
 
@@ -560,6 +592,15 @@ const AccountPage = () => {
     return order?.paymentStatus;
   };
 
+  const getPaymentStatusLabel = (status) => {
+    return t(
+      `account.paymentStatuses.${status}`,
+      {
+        defaultValue: formatStatus(status),
+      }
+    );
+  };
+
   if (isLoading) {
     return (
       <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-warm-ivory px-6">
@@ -571,7 +612,7 @@ const AccountPage = () => {
           </div>
 
           <p className="mt-5 text-[13px] text-slate-gray">
-            Loading your account...
+            {t("account.loading")}
           </p>
         </div>
       </main>
@@ -596,11 +637,11 @@ const AccountPage = () => {
             </div>
 
             <h1 className="font-serif text-[2.6rem] font-normal leading-none tracking-[-0.045em] text-midnight-navy sm:text-[3.2rem]">
-              My Account
+              {t("account.myAccount")}
             </h1>
 
             <p className="mt-3 text-[13px] leading-6 text-slate-gray">
-              Profile, purchases, manufacturing and delivery tracking.
+              {t("account.accountDescription")}
             </p>
           </div>
 
@@ -611,8 +652,8 @@ const AccountPage = () => {
             className="inline-flex min-h-[44px] w-fit items-center justify-center rounded-[12px] border border-light-champagne bg-soft-white px-5 text-[11px] font-semibold text-slate-gray transition-all duration-300 hover:border-champagne-gold hover:bg-soft-cream hover:text-midnight-navy disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoggingOut
-              ? "Logging out..."
-              : "Logout"}
+              ? t("account.loggingOut")
+              : t("account.logout")}
           </button>
         </div>
       </header>
@@ -629,11 +670,11 @@ const AccountPage = () => {
             <section className="overflow-hidden rounded-[24px] border border-light-champagne/90 bg-soft-white shadow-[0_15px_45px_rgba(7,19,31,0.045)]">
               <div className="border-b border-light-champagne/80 bg-warm-ivory/40 px-6 py-5">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-antique-gold">
-                  Profile
+                  {t("account.profile")}
                 </p>
 
                 <h2 className="mt-1.5 font-serif text-[1.45rem] font-normal">
-                  Account Details
+                  {t("account.accountDetails")}
                 </h2>
               </div>
 
@@ -647,7 +688,7 @@ const AccountPage = () => {
                 <h3 className="mt-5 font-serif text-[1.35rem] text-midnight-navy">
                   {customer
                     ? `${customer.firstName || ""} ${customer.lastName || ""}`.trim()
-                    : "Customer"}
+                    : t("account.customer")}
                 </h3>
 
                 <p className="mt-1 break-all text-[12px] text-slate-gray">
@@ -657,18 +698,18 @@ const AccountPage = () => {
                 <div className="mt-6 space-y-4 border-t border-light-champagne/80 pt-5">
                   <div>
                     <p className="text-[9px] font-semibold uppercase tracking-[0.15em] text-steel-gray">
-                      Phone
+                      {t("account.phone")}
                     </p>
 
                     <p className="mt-1.5 text-[12px] font-medium">
                       {customer?.phone ||
-                        "Not added"}
+                        t("account.notAdded")}
                     </p>
                   </div>
 
                   <div>
                     <p className="text-[9px] font-semibold uppercase tracking-[0.15em] text-steel-gray">
-                      Role
+                      {t("account.role")}
                     </p>
 
                     <p className="mt-1.5 text-[12px] font-medium capitalize">
@@ -680,7 +721,7 @@ const AccountPage = () => {
 
                   <div>
                     <p className="text-[9px] font-semibold uppercase tracking-[0.15em] text-steel-gray">
-                      Account Status
+                      {t("account.accountStatus")}
                     </p>
 
                     <div className="mt-1.5 flex items-center gap-2">
@@ -696,33 +737,33 @@ const AccountPage = () => {
                       <p className="text-[12px] font-medium">
                         {user?.isActive ===
                         false
-                          ? "Inactive"
-                          : "Active"}
+                          ? t("account.inactive")
+                          : t("account.active")}
                       </p>
                     </div>
                   </div>
 
                   <div>
                     <p className="text-[9px] font-semibold uppercase tracking-[0.15em] text-steel-gray">
-                      Email
+                      {t("account.email")}
                     </p>
 
                     <p className="mt-1.5 text-[12px] font-medium">
                       {user?.emailVerifiedAt
-                        ? "Verified"
-                        : "Not Verified"}
+                        ? t("account.verified")
+                        : t("account.notVerified")}
                     </p>
                   </div>
 
                   <div>
                     <p className="text-[9px] font-semibold uppercase tracking-[0.15em] text-steel-gray">
-                      Marketing Emails
+                      {t("account.marketingEmails")}
                     </p>
 
                     <p className="mt-1.5 text-[12px] font-medium">
                       {customer?.marketingConsent
-                        ? "Enabled"
-                        : "Disabled"}
+                        ? t("account.enabled")
+                        : t("account.disabled")}
                     </p>
                   </div>
                 </div>
@@ -732,18 +773,18 @@ const AccountPage = () => {
             <section className="overflow-hidden rounded-[24px] border border-light-champagne/90 bg-soft-white shadow-[0_15px_45px_rgba(7,19,31,0.045)]">
               <div className="border-b border-light-champagne/80 bg-warm-ivory/40 px-6 py-5">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-antique-gold">
-                  Purchases
+                  {t("account.purchases")}
                 </p>
 
                 <h2 className="mt-1.5 font-serif text-[1.4rem]">
-                  Order Summary
+                  {t("account.orderSummary")}
                 </h2>
               </div>
 
               <div className="divide-y divide-light-champagne/70 px-6">
                 <div className="flex items-center justify-between py-4">
                   <span className="text-[11px] text-slate-gray">
-                    Total Orders
+                    {t("account.totalOrders")}
                   </span>
 
                   <span className="font-serif text-[1.35rem]">
@@ -753,7 +794,7 @@ const AccountPage = () => {
 
                 <div className="flex items-center justify-between py-4">
                   <span className="text-[11px] text-slate-gray">
-                    Pending
+                    {t("account.pending")}
                   </span>
 
                   <span className="text-[12px] font-semibold">
@@ -763,7 +804,7 @@ const AccountPage = () => {
 
                 <div className="flex items-center justify-between py-4">
                   <span className="text-[11px] text-slate-gray">
-                    Active
+                    {t("account.active")}
                   </span>
 
                   <span className="text-[12px] font-semibold">
@@ -773,7 +814,7 @@ const AccountPage = () => {
 
                 <div className="flex items-center justify-between py-4">
                   <span className="text-[11px] text-slate-gray">
-                    Delivered
+                    {t("account.delivered")}
                   </span>
 
                   <span className="text-[12px] font-semibold">
@@ -783,7 +824,7 @@ const AccountPage = () => {
 
                 <div className="flex items-center justify-between py-4">
                   <span className="text-[11px] text-slate-gray">
-                    Cancelled
+                    {t("account.cancelled")}
                   </span>
 
                   <span className="text-[12px] font-semibold">
@@ -793,7 +834,7 @@ const AccountPage = () => {
 
                 <div className="py-5">
                   <p className="text-[10px] text-steel-gray">
-                    Order Value
+                    {t("account.orderValue")}
                   </p>
 
                   <div className="mt-1">
@@ -816,19 +857,19 @@ const AccountPage = () => {
             <div className="mb-6 flex items-end justify-between">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-antique-gold">
-                  Purchase History
+                  {t("account.purchaseHistory")}
                 </p>
 
                 <h2 className="mt-1 font-serif text-[2rem] tracking-[-0.03em]">
-                  My Orders
+                  {t("account.myOrders")}
                 </h2>
               </div>
 
               <p className="text-[11px] text-slate-gray">
                 {orders.length}{" "}
                 {orders.length === 1
-                  ? "order"
-                  : "orders"}
+                  ? t("account.order")
+                  : t("account.orders")}
               </p>
             </div>
 
@@ -839,11 +880,11 @@ const AccountPage = () => {
                 </div>
 
                 <h3 className="mt-5 font-serif text-[1.55rem]">
-                  No Orders Yet
+                  {t("account.noOrdersYet")}
                 </h3>
 
                 <p className="mt-2 text-[13px] text-slate-gray">
-                  Your purchases will appear here after checkout.
+                  {t("account.purchasesAppearHere")}
                 </p>
               </div>
             ) : (
@@ -882,7 +923,7 @@ const AccountPage = () => {
                             <div>
                               <div className="flex items-center gap-3">
                                 <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-antique-gold">
-                                  Order
+                                  {t("account.order")}
                                 </p>
 
                                 <span className="h-1 w-1 rounded-full bg-light-champagne" />
@@ -903,7 +944,7 @@ const AccountPage = () => {
                             <div className="flex flex-wrap items-center gap-3">
                               <div>
                                 <p className="text-[9px] uppercase tracking-[0.14em] text-steel-gray">
-                                  Status
+                                  {t("account.status")}
                                 </p>
 
                                 <span
@@ -919,7 +960,7 @@ const AccountPage = () => {
 
                               <div>
                                 <p className="text-[9px] uppercase tracking-[0.14em] text-steel-gray">
-                                  Payment
+                                  {t("account.payment")}
                                 </p>
 
                                 <span
@@ -927,7 +968,7 @@ const AccountPage = () => {
                                     displayPaymentStatus
                                   )}`}
                                 >
-                                  {formatStatus(
+                                  {getPaymentStatusLabel(
                                     displayPaymentStatus
                                   )}
                                 </span>
@@ -935,7 +976,7 @@ const AccountPage = () => {
 
                               <div className="min-w-[100px] xl:text-right">
                                 <p className="text-[9px] uppercase tracking-[0.14em] text-steel-gray">
-                                  Total
+                                  {t("account.total")}
                                 </p>
 
                                 <p className="mt-1 font-serif text-[1.35rem]">
@@ -963,13 +1004,13 @@ const AccountPage = () => {
                               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                   <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-antique-gold">
-                                    Order Tracking
+                                    {t("account.orderTracking")}
                                   </p>
 
                                   <h4 className="mt-1.5 font-serif text-[1.5rem]">
                                     {order.orderStatus ===
                                     "cancelled"
-                                      ? "Order Cancelled"
+                                      ? t("account.orderCancelled")
                                       : getOrderStatusLabel(
                                           order.orderStatus
                                         )}
@@ -977,7 +1018,7 @@ const AccountPage = () => {
                                 </div>
 
                                 <p className="text-[10px] text-steel-gray">
-                                  Updated{" "}
+                                  {t("account.updated")}{" "}
                                   {formatDateTime(
                                     order.updatedAt
                                   )}
@@ -994,11 +1035,11 @@ const AccountPage = () => {
 
                                     <div>
                                       <p className="text-[13px] font-semibold text-red-700">
-                                        This order has been cancelled
+                                        {t("account.orderCancelledMessage")}
                                       </p>
 
                                       <p className="mt-1 text-[11px] leading-5 text-red-600/80">
-                                        This order will not continue through processing and delivery.
+                                        {t("account.orderCancelledDescription")}
                                       </p>
                                     </div>
                                   </div>
@@ -1073,20 +1114,24 @@ const AccountPage = () => {
                                                       : "text-steel-gray"
                                                   }`}
                                                 >
-                                                  {
-                                                    step.label
-                                                  }
+                                                  {t(
+                                                    `account.orderSteps.${step.key}.label`,
+                                                    {
+                                                      defaultValue:
+                                                        step.label,
+                                                    }
+                                                  )}
                                                 </p>
 
                                                 <p className="mt-1 max-w-[130px] text-[9px] leading-4 text-steel-gray">
-                                                  {
-                                                    step.description
-                                                  }
+                                                  {getOrderStepDescription(
+                                                    step
+                                                  )}
                                                 </p>
 
                                                 {current && (
                                                   <span className="mt-2 rounded-full border border-champagne-gold/30 bg-soft-cream px-2.5 py-1 text-[8px] font-semibold uppercase tracking-[0.08em] text-antique-gold">
-                                                    Current
+                                                    {t("account.current")}
                                                   </span>
                                                 )}
                                               </div>
@@ -1155,20 +1200,24 @@ const AccountPage = () => {
                                                     : "text-steel-gray"
                                                 }`}
                                               >
-                                                {
-                                                  step.label
-                                                }
+                                                {t(
+                                                  `account.orderSteps.${step.key}.label`,
+                                                  {
+                                                    defaultValue:
+                                                      step.label,
+                                                  }
+                                                )}
                                               </p>
 
                                               <p className="mt-1 text-[10px] leading-5 text-steel-gray">
-                                                {
-                                                  step.description
-                                                }
+                                                {getOrderStepDescription(
+                                                  step
+                                                )}
                                               </p>
 
                                               {current && (
                                                 <span className="mt-2 inline-flex rounded-full border border-champagne-gold/30 bg-soft-cream px-2.5 py-1 text-[8px] font-semibold uppercase tracking-[0.08em] text-antique-gold">
-                                                  Current Status
+                                                  {t("account.currentStatus")}
                                                 </span>
                                               )}
                                             </div>
@@ -1184,20 +1233,20 @@ const AccountPage = () => {
                             <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
                               <div className="rounded-[18px] border border-light-champagne/85 bg-soft-white p-5">
                                 <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-antique-gold">
-                                  Payment Method
+                                  {t("account.paymentMethod")}
                                 </p>
 
                                 <p className="mt-3 text-[12px] font-semibold">
                                   {order.paymentMethod ===
                                   "cash_on_delivery"
-                                    ? "Cash on Delivery"
-                                    : "Card"}
+                                    ? t("account.paymentMethods.cashOnDelivery")
+                                    : t("account.paymentMethods.card")}
                                 </p>
                               </div>
 
                               <div className="rounded-[18px] border border-light-champagne/85 bg-soft-white p-5">
                                 <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-antique-gold">
-                                  Payment Status
+                                  {t("account.paymentStatus")}
                                 </p>
 
                                 <span
@@ -1205,7 +1254,7 @@ const AccountPage = () => {
                                     displayPaymentStatus
                                   )}`}
                                 >
-                                  {formatStatus(
+                                  {getPaymentStatusLabel(
                                     displayPaymentStatus
                                   )}
                                 </span>
@@ -1213,7 +1262,7 @@ const AccountPage = () => {
 
                               <div className="rounded-[18px] border border-light-champagne/85 bg-soft-white p-5">
                                 <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-antique-gold">
-                                  Number of Items
+                                  {t("account.numberOfItems")}
                                 </p>
 
                                 <p className="mt-2 font-serif text-[1.6rem]">
@@ -1238,18 +1287,18 @@ const AccountPage = () => {
                               <section className="mt-6 overflow-hidden rounded-[18px] border border-champagne-gold/20 bg-soft-cream/60">
                                 <div className="border-b border-champagne-gold/15 px-5 py-4">
                                   <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-antique-gold">
-                                    Manufacturing Details
+                                    {t("account.manufacturingDetails")}
                                   </p>
 
                                   <p className="mt-1 text-[10px] leading-5 text-slate-gray">
-                                    Information saved with this order for production.
+                                    {t("account.manufacturingDetailsDescription")}
                                   </p>
                                 </div>
 
                                 <div className="grid gap-4 p-5 sm:grid-cols-2">
                                   <div>
                                     <p className="text-[8px] font-semibold uppercase tracking-[0.14em] text-steel-gray">
-                                      Name
+                                      {t("account.name")}
                                     </p>
 
                                     <p className="mt-2 font-serif text-[1.15rem] text-midnight-navy">
@@ -1259,11 +1308,12 @@ const AccountPage = () => {
 
                                   <div>
                                     <p className="text-[8px] font-semibold uppercase tracking-[0.14em] text-steel-gray">
-                                      Notes
+                                      {t("account.notes")}
                                     </p>
 
                                     <p className="mt-2 whitespace-pre-wrap text-[10px] leading-5 text-slate-gray">
-                                      {order.manufacturingNotes || "No notes"}
+                                      {order.manufacturingNotes ||
+                                        t("account.noNotes")}
                                     </p>
                                   </div>
                                 </div>
@@ -1273,11 +1323,11 @@ const AccountPage = () => {
                             <section className="mt-7">
                               <div className="mb-4">
                                 <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-antique-gold">
-                                  Products
+                                  {t("account.products")}
                                 </p>
 
                                 <h4 className="mt-1 font-serif text-[1.45rem]">
-                                  Products & Manufacturing
+                                  {t("account.productsAndManufacturing")}
                                 </h4>
                               </div>
 
@@ -1324,7 +1374,7 @@ const AccountPage = () => {
                                                 </h5>
 
                                                 <p className="mt-1 text-[11px] text-slate-gray">
-                                                  Quantity{" "}
+                                                  {t("account.quantity")}{" "}
                                                   {
                                                     item.quantity
                                                   }
@@ -1343,7 +1393,7 @@ const AccountPage = () => {
                                                   {formatMoney(
                                                     item.unitPrice
                                                   )}{" "}
-                                                  EGP each
+                                                  EGP {t("account.each")}
                                                 </p>
                                               </div>
                                             </div>
@@ -1351,7 +1401,7 @@ const AccountPage = () => {
                                             {item.variant && (
                                               <div className="mt-4 rounded-[15px] bg-warm-ivory/60 p-4">
                                                 <p className="text-[9px] font-semibold uppercase tracking-[0.17em] text-antique-gold">
-                                                  Variant
+                                                  {t("account.variant")}
                                                 </p>
 
                                                 <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 text-[11px] sm:grid-cols-3">
@@ -1360,7 +1410,7 @@ const AccountPage = () => {
                                                     .name && (
                                                     <div>
                                                       <p className="text-[9px] text-steel-gray">
-                                                        Name
+                                                        {t("account.name")}
                                                       </p>
 
                                                       <p className="mt-1 font-medium">
@@ -1378,7 +1428,7 @@ const AccountPage = () => {
                                                     .color && (
                                                     <div>
                                                       <p className="text-[9px] text-steel-gray">
-                                                        Color
+                                                        {t("account.color")}
                                                       </p>
 
                                                       <p className="mt-1 font-medium">
@@ -1396,7 +1446,7 @@ const AccountPage = () => {
                                                     .size && (
                                                     <div>
                                                       <p className="text-[9px] text-steel-gray">
-                                                        Size
+                                                        {t("account.size")}
                                                       </p>
 
                                                       <p className="mt-1 font-medium">
@@ -1414,7 +1464,7 @@ const AccountPage = () => {
                                                     .material && (
                                                     <div>
                                                       <p className="text-[9px] text-steel-gray">
-                                                        Material
+                                                        {t("account.material")}
                                                       </p>
 
                                                       <p className="mt-1 font-medium">
@@ -1432,7 +1482,7 @@ const AccountPage = () => {
                                                     .finish && (
                                                     <div>
                                                       <p className="text-[9px] text-steel-gray">
-                                                        Finish
+                                                        {t("account.finish")}
                                                       </p>
 
                                                       <p className="mt-1 font-medium">
@@ -1450,7 +1500,7 @@ const AccountPage = () => {
                                                     .sku && (
                                                     <div>
                                                       <p className="text-[9px] text-steel-gray">
-                                                        SKU
+                                                        {t("account.sku")}
                                                       </p>
 
                                                       <p className="mt-1 font-mono font-medium">
@@ -1471,7 +1521,7 @@ const AccountPage = () => {
                                                 <div className="flex items-start justify-between gap-4">
                                                   <div>
                                                     <p className="text-[9px] font-semibold uppercase tracking-[0.17em] text-antique-gold">
-                                                      Smart Technology
+                                                      {t("account.smartTechnology")}
                                                     </p>
 
                                                     <p className="mt-2 text-[12px] font-semibold">
@@ -1481,7 +1531,7 @@ const AccountPage = () => {
                                                         item
                                                           .technologyModel
                                                           .name ||
-                                                        "Smart Technology"}
+                                                        t("account.smartTechnology")}
                                                     </p>
 
                                                     {item
@@ -1506,7 +1556,7 @@ const AccountPage = () => {
                                                     0 && (
                                                     <div className="text-right">
                                                       <p className="text-[9px] text-steel-gray">
-                                                        Extra
+                                                        {t("account.extra")}
                                                       </p>
 
                                                       <p className="mt-1 text-[12px] font-semibold">
@@ -1533,11 +1583,11 @@ const AccountPage = () => {
                             <div className="mt-7 grid grid-cols-1 gap-5 lg:grid-cols-2">
                               <section className="rounded-[20px] border border-light-champagne/85 bg-soft-white p-5">
                                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-antique-gold">
-                                  Delivery
+                                  {t("account.delivery")}
                                 </p>
 
                                 <h4 className="mt-1 font-serif text-[1.3rem]">
-                                  Shipping Address
+                                  {t("account.shippingAddress")}
                                 </h4>
 
                                 <div className="mt-4 space-y-2 text-[11px] leading-5 text-slate-gray">
@@ -1587,17 +1637,17 @@ const AccountPage = () => {
 
                               <section className="rounded-[20px] border border-light-champagne/85 bg-soft-white p-5">
                                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-antique-gold">
-                                  Payment
+                                  {t("account.payment")}
                                 </p>
 
                                 <h4 className="mt-1 font-serif text-[1.3rem]">
-                                  Order Total
+                                  {t("account.orderTotal")}
                                 </h4>
 
                                 <div className="mt-4 space-y-3">
                                   <div className="flex items-center justify-between">
                                     <span className="text-[11px] text-slate-gray">
-                                      Subtotal
+                                      {t("account.subtotal")}
                                     </span>
 
                                     <span className="text-[11px] font-semibold">
@@ -1610,7 +1660,7 @@ const AccountPage = () => {
 
                                   <div className="flex items-center justify-between">
                                     <span className="text-[11px] text-slate-gray">
-                                      Shipping
+                                      {t("account.shipping")}
                                     </span>
 
                                     <span className="text-[11px] font-semibold">
@@ -1618,7 +1668,7 @@ const AccountPage = () => {
                                         order.shippingCost ||
                                           0
                                       ) === 0
-                                        ? "Free"
+                                        ? t("account.free")
                                         : `${formatMoney(
                                             order.shippingCost
                                           )} EGP`}
@@ -1627,7 +1677,7 @@ const AccountPage = () => {
 
                                   <div className="flex items-end justify-between border-t border-light-champagne/80 pt-4">
                                     <span className="text-[12px] font-semibold">
-                                      Total
+                                      {t("account.total")}
                                     </span>
 
                                     <div>
@@ -1661,4 +1711,3 @@ const AccountPage = () => {
 };
 
 export default AccountPage;
-

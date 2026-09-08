@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 
 import { Link } from "react-router-dom";
 
+import { useTranslation } from "react-i18next";
+
 import { getMyOrders } from "../services/orderApi";
 
 const getStatusStyle = (status) => {
@@ -27,6 +29,8 @@ const getStatusStyle = (status) => {
 };
 
 const MyOrdersPage = () => {
+  const { t } = useTranslation();
+
   const [orders, setOrders] = useState([]);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -42,7 +46,10 @@ const MyOrdersPage = () => {
 
         setOrders(response.data || []);
       } catch (error) {
-        setError(error?.response?.data?.message || "Unable to load orders");
+        setError(
+          error?.response?.data?.message ||
+            t("myOrders.unableToLoadOrders")
+        );
       } finally {
         setIsLoading(false);
       }
@@ -54,7 +61,7 @@ const MyOrdersPage = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p>Loading orders...</p>
+        <p>{t("myOrders.loadingOrders")}</p>
       </div>
     );
   }
@@ -62,7 +69,9 @@ const MyOrdersPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-12">
       <div className="mx-auto max-w-6xl">
-        <h1 className="text-3xl font-semibold">My Orders</h1>
+        <h1 className="text-3xl font-semibold">
+          {t("myOrders.title")}
+        </h1>
 
         {error && (
           <div className="mt-6 rounded-lg bg-red-50 p-4 text-red-600">
@@ -73,18 +82,18 @@ const MyOrdersPage = () => {
         {orders.length === 0 ? (
           <div className="mt-10 rounded-2xl bg-white p-10 text-center shadow-sm">
             <h2 className="text-xl font-semibold">
-              You don't have any orders yet
+              {t("myOrders.noOrders")}
             </h2>
 
             <p className="mt-2 text-gray-500">
-              Start shopping and your orders will appear here.
+              {t("myOrders.noOrdersDescription")}
             </p>
 
             <Link
               to="/shop"
               className="mt-6 inline-block rounded-xl bg-black px-6 py-3 text-white"
             >
-              Start Shopping
+              {t("myOrders.startShopping")}
             </Link>
           </div>
         ) : (
@@ -96,21 +105,35 @@ const MyOrdersPage = () => {
               >
                 <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                   <div>
-                    <p className="text-sm text-gray-500">Order Number</p>
+                    <p className="text-sm text-gray-500">
+                      {t("myOrders.orderNumber")}
+                    </p>
 
-                    <p className="font-semibold">{order.orderNumber}</p>
+                    <p className="font-semibold">
+                      {order.orderNumber}
+                    </p>
                   </div>
 
                   <div>
-                    <p className="text-sm text-gray-500">Date</p>
+                    <p className="text-sm text-gray-500">
+                      {t("myOrders.date")}
+                    </p>
 
-                    <p>{new Date(order.createdAt).toLocaleDateString()}</p>
+                    <p>
+                      {new Date(
+                        order.createdAt
+                      ).toLocaleDateString()}
+                    </p>
                   </div>
 
                   <div>
-                    <p className="text-sm text-gray-500">Total</p>
+                    <p className="text-sm text-gray-500">
+                      {t("myOrders.total")}
+                    </p>
 
-                    <p className="font-semibold">{order.total} EGP</p>
+                    <p className="font-semibold">
+                      {order.total} EGP
+                    </p>
                   </div>
 
                   <span
@@ -125,7 +148,7 @@ const MyOrdersPage = () => {
                     to={`/account/orders/${order._id}`}
                     className="rounded-xl border border-gray-300 px-5 py-2 text-center text-sm hover:bg-gray-50"
                   >
-                    View Details
+                    {t("myOrders.viewDetails")}
                   </Link>
                 </div>
               </div>

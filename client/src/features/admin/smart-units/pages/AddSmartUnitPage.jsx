@@ -2,12 +2,16 @@ import { useEffect, useState } from "react";
 
 import { Link, useNavigate } from "react-router-dom";
 
+import { useTranslation } from "react-i18next";
+
 import { createSmartUnit } from "../services/smartUnitApi";
 
 import { getTechnologyModels } from "../../services/technologyModelApi";
 
 const AddSmartUnitPage = () => {
   const navigate = useNavigate();
+
+  const { t } = useTranslation();
 
   const [technologyModels, setTechnologyModels] = useState([]);
 
@@ -54,7 +58,8 @@ const AddSmartUnitPage = () => {
         console.error("LOAD TECHNOLOGY MODELS ERROR:", error);
 
         setError(
-          error?.response?.data?.message || "Failed to load Technology Models.",
+          error?.response?.data?.message ||
+            t("addSmartUnit.failedToLoadTechnologyModels"),
         );
       } finally {
         setIsLoading(false);
@@ -100,7 +105,7 @@ const AddSmartUnitPage = () => {
 
       setError(
         error?.response?.data?.message ||
-          "Failed to create Smart Unit. Please check your data.",
+          t("addSmartUnit.failedToCreateSmartUnit"),
       );
     } finally {
       setIsSaving(false);
@@ -143,7 +148,7 @@ const AddSmartUnitPage = () => {
             text-slate-gray
           "
           >
-            Loading Technology Models...
+            {t("addSmartUnit.loadingTechnologyModels")}
           </p>
         </div>
       </div>
@@ -196,12 +201,12 @@ text-slate-gray
 hover:text-antique-gold
 "
               >
-                Smart Units
+                {t("addSmartUnit.smartUnits")}
               </Link>
 
               <span>/</span>
 
-              <span>Add</span>
+              <span>{t("addSmartUnit.add")}</span>
             </div>
 
             <h1
@@ -212,7 +217,7 @@ text-[2.4rem]
 tracking-[-0.04em]
 "
             >
-              Add Smart Unit
+              {t("addSmartUnit.addSmartUnit")}
             </h1>
 
             <p
@@ -222,7 +227,7 @@ text-[13px]
 text-slate-gray
 "
             >
-              Create Smart Unit and generate physical inventory
+              {t("addSmartUnit.createSmartUnitDescription")}
             </p>
           </div>
 
@@ -240,7 +245,7 @@ font-semibold
 text-slate-gray
 "
           >
-            ← Back
+            {t("addSmartUnit.back")}
           </Link>
         </div>
       </header>
@@ -311,7 +316,7 @@ font-serif
 text-[1.45rem]
 "
                   >
-                    Basic Information
+                    {t("addSmartUnit.basicInformation")}
                   </h2>
                 </div>
 
@@ -322,7 +327,9 @@ p-6
 "
                 >
                   <div>
-                    <label className={labelClass}>Name</label>
+                    <label className={labelClass}>
+                      {t("addSmartUnit.name")}
+                    </label>
 
                     <input
                       type="text"
@@ -330,7 +337,7 @@ p-6
                       value={formData.name}
                       onChange={handleChange}
                       required
-                      placeholder="Smart Unit name"
+                      placeholder={t("addSmartUnit.smartUnitName")}
                       className={inputClass}
                     />
 
@@ -341,19 +348,21 @@ text-[11px]
 text-slate-gray
 "
                     >
-                      Multiple units with the same name are allowed.
+                      {t("addSmartUnit.multipleUnitsAllowed")}
                     </p>
                   </div>
 
                   <div>
-                    <label className={labelClass}>Description</label>
+                    <label className={labelClass}>
+                      {t("addSmartUnit.description")}
+                    </label>
 
                     <textarea
                       rows="4"
                       name="description"
                       value={formData.description}
                       onChange={handleChange}
-                      placeholder="Description..."
+                      placeholder={t("addSmartUnit.descriptionPlaceholder")}
                       className={`
 
 ${inputClass}
@@ -365,7 +374,9 @@ resize-none
                   </div>
 
                   <div>
-                    <label className={labelClass}>Technology Model</label>
+                    <label className={labelClass}>
+                      {t("addSmartUnit.technologyModel")}
+                    </label>
 
                     <select
                       name="technologyModel"
@@ -374,7 +385,9 @@ resize-none
                       required
                       className={inputClass}
                     >
-                      <option value="">Select Technology Model</option>
+                      <option value="">
+                        {t("addSmartUnit.selectTechnologyModel")}
+                      </option>
 
                       {technologyModels.map((technology) => (
                         <option key={technology._id} value={technology._id}>
@@ -410,7 +423,7 @@ font-serif
 text-[1.45rem]
 "
                   >
-                    Inventory Information
+                    {t("addSmartUnit.inventoryInformation")}
                   </h2>
                 </div>
 
@@ -424,7 +437,9 @@ md:grid-cols-2
 "
                 >
                   <div>
-                    <label className={labelClass}>Cost Price</label>
+                    <label className={labelClass}>
+                      {t("addSmartUnit.costPrice")}
+                    </label>
 
                     <input
                       type="number"
@@ -438,7 +453,9 @@ md:grid-cols-2
                   </div>
 
                   <div>
-                    <label className={labelClass}>Initial Stock</label>
+                    <label className={labelClass}>
+                      {t("addSmartUnit.initialStock")}
+                    </label>
 
                     <input
                       type="number"
@@ -458,7 +475,7 @@ text-[11px]
 text-slate-gray
 "
                     >
-                      This creates physical serial units automatically.
+                      {t("addSmartUnit.physicalSerialUnits")}
                     </p>
                   </div>
 
@@ -467,7 +484,9 @@ text-slate-gray
 md:col-span-2
 "
                   >
-                    <label className={labelClass}>Production Date</label>
+                    <label className={labelClass}>
+                      {t("addSmartUnit.productionDate")}
+                    </label>
 
                     <input
                       type="date"
@@ -504,7 +523,7 @@ font-serif
 text-[1.45rem]
 "
                   >
-                    Additional Information
+                    {t("addSmartUnit.additionalInformation")}
                   </h2>
                 </div>
 
@@ -515,27 +534,31 @@ p-6
 "
                 >
                   <div>
-                    <label className={labelClass}>Manufacturer</label>
+                    <label className={labelClass}>
+                      {t("addSmartUnit.manufacturer")}
+                    </label>
 
                     <input
                       type="text"
                       name="manufacturer"
                       value={formData.manufacturer}
                       onChange={handleChange}
-                      placeholder="Manufacturer"
+                      placeholder={t("addSmartUnit.manufacturer")}
                       className={inputClass}
                     />
                   </div>
 
                   <div>
-                    <label className={labelClass}>Notes</label>
+                    <label className={labelClass}>
+                      {t("addSmartUnit.notes")}
+                    </label>
 
                     <textarea
                       rows="4"
                       name="notes"
                       value={formData.notes}
                       onChange={handleChange}
-                      placeholder="Internal notes..."
+                      placeholder={t("addSmartUnit.internalNotes")}
                       className={`
 ${inputClass}
 resize-none
@@ -571,7 +594,7 @@ font-serif
 text-[1.4rem]
 "
                   >
-                    Status
+                    {t("addSmartUnit.status")}
                   </h2>
                 </div>
 
@@ -586,17 +609,29 @@ p-6
                     onChange={handleChange}
                     className={inputClass}
                   >
-                    <option value="available">Available</option>
+                    <option value="available">
+                      {t("addSmartUnit.statuses.available")}
+                    </option>
 
-                    <option value="reserved">Reserved</option>
+                    <option value="reserved">
+                      {t("addSmartUnit.statuses.reserved")}
+                    </option>
 
-                    <option value="assigned">Assigned</option>
+                    <option value="assigned">
+                      {t("addSmartUnit.statuses.assigned")}
+                    </option>
 
-                    <option value="activated">Activated</option>
+                    <option value="activated">
+                      {t("addSmartUnit.statuses.activated")}
+                    </option>
 
-                    <option value="inactive">Inactive</option>
+                    <option value="inactive">
+                      {t("addSmartUnit.statuses.inactive")}
+                    </option>
 
-                    <option value="damaged">Damaged</option>
+                    <option value="damaged">
+                      {t("addSmartUnit.statuses.damaged")}
+                    </option>
                   </select>
                 </div>
               </section>
@@ -629,7 +664,7 @@ font-semibold
 text-slate-gray
 "
             >
-              Cancel
+              {t("addSmartUnit.cancel")}
             </Link>
 
             <button
@@ -646,7 +681,9 @@ text-white
 disabled:opacity-50
 "
             >
-              {isSaving ? "Creating..." : "Create Smart Unit"}
+              {isSaving
+                ? t("addSmartUnit.creating")
+                : t("addSmartUnit.createSmartUnit")}
             </button>
           </div>
         </form>

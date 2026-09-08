@@ -2,12 +2,16 @@ import { useEffect, useState } from "react";
 
 import { Link, useNavigate, useParams } from "react-router-dom";
 
+import { useTranslation } from "react-i18next";
+
 import { getTechnology, updateTechnology } from "../services/technologyApi";
 
 const EditTechnologyPage = () => {
   const { id } = useParams();
 
   const navigate = useNavigate();
+
+  const { t } = useTranslation();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -40,7 +44,10 @@ const EditTechnologyPage = () => {
     } catch (error) {
       console.error(error);
 
-      setError(error?.response?.data?.message || "Failed to load technology.");
+      setError(
+        error?.response?.data?.message ||
+          t("editTechnology.failedToLoadTechnology"),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -72,7 +79,8 @@ const EditTechnologyPage = () => {
       console.error(error);
 
       setError(
-        error?.response?.data?.message || "Failed to update technology.",
+        error?.response?.data?.message ||
+          t("editTechnology.failedToUpdateTechnology"),
       );
     } finally {
       setIsSaving(false);
@@ -91,7 +99,7 @@ const EditTechnologyPage = () => {
             </div>
 
             <p className="mt-6 text-[9px] font-semibold uppercase tracking-[0.24em] text-slate-gray">
-              Loading technology...
+              {t("editTechnology.loadingTechnology")}
             </p>
           </div>
         </div>
@@ -112,17 +120,16 @@ const EditTechnologyPage = () => {
               <span className="h-px w-8 bg-classic-gold/60" />
 
               <span className="text-[8px] font-semibold uppercase tracking-[0.3em] text-antique-gold">
-                Smart Jewelry
+                {t("editTechnology.smartJewelry")}
               </span>
             </div>
 
             <h1 className="font-serif text-[2.5rem] font-normal leading-none tracking-[-0.04em] text-midnight-navy sm:text-[3rem]">
-              Edit Technology
+              {t("editTechnology.editTechnology")}
             </h1>
 
             <p className="mt-4 max-w-xl text-[12px] leading-7 text-slate-gray sm:text-[13px]">
-              Update the technology information for your smart jewelry
-              collection.
+              {t("editTechnology.updateDescription")}
             </p>
           </div>
 
@@ -133,7 +140,7 @@ const EditTechnologyPage = () => {
             <span className="text-[14px] text-classic-gold transition-transform duration-300 group-hover:-translate-x-1">
               ←
             </span>
-            Back
+            {t("editTechnology.back")}
           </Link>
         </div>
       </header>
@@ -156,11 +163,11 @@ const EditTechnologyPage = () => {
 
               <div>
                 <p className="text-[8px] font-semibold uppercase tracking-[0.25em] text-antique-gold">
-                  Technology Details
+                  {t("editTechnology.technologyDetails")}
                 </p>
 
                 <h2 className="mt-1.5 font-serif text-[1.4rem] font-normal tracking-[-0.02em] text-midnight-navy">
-                  Update Technology
+                  {t("editTechnology.updateTechnology")}
                 </h2>
               </div>
             </div>
@@ -183,11 +190,11 @@ const EditTechnologyPage = () => {
             <div className="space-y-7">
               <div>
                 <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                  Technology Name
+                  {t("editTechnology.technologyName")}
                 </label>
 
                 <p className="mb-3 text-[10px] leading-5 text-steel-gray">
-                  The name displayed to customers and administrators.
+                  {t("editTechnology.technologyNameDescription")}
                 </p>
 
                 <input
@@ -203,11 +210,11 @@ const EditTechnologyPage = () => {
 
               <div>
                 <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                  Technology Code
+                  {t("editTechnology.technologyCode")}
                 </label>
 
                 <p className="mb-3 text-[10px] leading-5 text-steel-gray">
-                  A unique uppercase code used internally.
+                  {t("editTechnology.technologyCodeDescription")}
                 </p>
 
                 <input
@@ -225,7 +232,7 @@ const EditTechnologyPage = () => {
                 <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-champagne-gold/[0.07] blur-[45px]" />
 
                 <p className="relative text-[7px] font-semibold uppercase tracking-[0.25em] text-antique-gold">
-                  Current Information
+                  {t("editTechnology.currentInformation")}
                 </p>
 
                 <div className="relative mt-4 flex items-center gap-4">
@@ -235,7 +242,7 @@ const EditTechnologyPage = () => {
 
                   <div className="min-w-0">
                     <p className="truncate font-serif text-[1.15rem] font-normal text-midnight-navy">
-                      {formData.name || "Technology Name"}
+                      {formData.name || t("editTechnology.technologyName")}
                     </p>
 
                     <p className="mt-1 font-mono text-[8px] font-semibold uppercase tracking-[0.15em] text-slate-gray">
@@ -253,7 +260,7 @@ const EditTechnologyPage = () => {
                 to="/admin/technologies"
                 className="inline-flex min-h-[48px] items-center justify-center rounded-[13px] border border-light-champagne bg-soft-white px-7 text-[8px] font-semibold uppercase tracking-[0.11em] text-slate-gray transition-all duration-300 hover:-translate-y-0.5 hover:border-champagne-gold hover:bg-warm-ivory hover:text-midnight-navy"
               >
-                Cancel
+                {t("editTechnology.cancel")}
               </Link>
 
               <button
@@ -264,13 +271,13 @@ const EditTechnologyPage = () => {
                 {isSaving ? (
                   <>
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-champagne-gold/25 border-t-champagne-gold" />
-                    Updating...
+                    {t("editTechnology.updating")}
                   </>
                 ) : (
                   <>
                     <span className="text-[9px] text-champagne-gold">✦</span>
 
-                    <span>Update Technology</span>
+                    <span>{t("editTechnology.updateTechnology")}</span>
                   </>
                 )}
               </button>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import ShopHeader from "../components/ShopHeader";
 import ShopFilters from "../components/ShopFilters";
@@ -23,7 +24,31 @@ const getTechnologyList = (response) => {
     : [];
 };
 
+const getLocalizedText = (value, language = "en") => {
+  if (
+    value &&
+    typeof value === "object" &&
+    !Array.isArray(value)
+  ) {
+    return (
+      value[language] ||
+      value.en ||
+      value.ar ||
+      ""
+    );
+  }
+
+  return value || "";
+};
+
 const ShopPage = () => {
+  const { t, i18n } = useTranslation();
+
+  const activeLanguage =
+    i18n.language === "ar"
+      ? "ar"
+      : "en";
+
   const [products, setProducts] = useState([]);
 
   const [search, setSearch] = useState("");
@@ -55,16 +80,6 @@ const ShopPage = () => {
           ? loadedProducts
           : [];
 
-        /*
-         * IMPORTANT
-         *
-         * Product list itself does not currently contain
-         * the ProductTechnology records.
-         *
-         * We load them here so ProductCard can calculate:
-         *
-         * product price + technology extraPrice
-         */
         const productsWithTechnologies =
           await Promise.all(
             safeProducts.map(async (product) => {
@@ -81,7 +96,6 @@ const ShopPage = () => {
 
                 return {
                   ...product,
-
                   productTechnologies,
                 };
               } catch (technologyError) {
@@ -92,7 +106,6 @@ const ShopPage = () => {
 
                 return {
                   ...product,
-
                   productTechnologies: [],
                 };
               }
@@ -115,7 +128,7 @@ const ShopPage = () => {
 
         setError(
           error?.response?.data?.message ||
-            "Failed to load products.",
+            t("shopPage.loadError"),
         );
       } finally {
         setIsLoading(false);
@@ -123,20 +136,38 @@ const ShopPage = () => {
     };
 
     loadProducts();
-  }, []);
+  }, [t]);
 
   const categories = useMemo(() => {
+    const categoryMap = new Map();
+
+    products.forEach((product) => {
+      const productCategory =
+        product?.category;
+
+      if (!productCategory) {
+        return;
+      }
+
+      const value =
+        productCategory.slug ||
+        productCategory._id;
+
+      if (!value) {
+        return;
+      }
+
+      if (!categoryMap.has(value)) {
+        categoryMap.set(
+          value,
+          productCategory,
+        );
+      }
+    });
+
     return [
       "all",
-
-      ...new Set(
-        products
-          .map(
-            (product) =>
-              product.category?.name,
-          )
-          .filter(Boolean),
-      ),
+      ...categoryMap.values(),
     ];
   }, [products]);
 
@@ -145,15 +176,33 @@ const ShopPage = () => {
       search.trim().toLowerCase();
 
     return products.filter((product) => {
+      const productName =
+        getLocalizedText(
+          product?.name,
+          activeLanguage,
+        );
+
+      const productShortDescription =
+        getLocalizedText(
+          product?.shortDescription,
+          activeLanguage,
+        );
+
+      const productDescription =
+        getLocalizedText(
+          product?.description,
+          activeLanguage,
+        );
+
       const matchesSearch =
         !normalizedSearch ||
-        product.name
+        productName
           ?.toLowerCase()
           .includes(normalizedSearch) ||
-        product.shortDescription
+        productShortDescription
           ?.toLowerCase()
           .includes(normalizedSearch) ||
-        product.description
+        productDescription
           ?.toLowerCase()
           .includes(normalizedSearch);
 
@@ -171,7 +220,12 @@ const ShopPage = () => {
         matchesCategory
       );
     });
-  }, [products, search, category]);
+  }, [
+    products,
+    search,
+    category,
+    activeLanguage,
+  ]);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-warm-ivory text-midnight-navy">
@@ -183,12 +237,6 @@ const ShopPage = () => {
         <div className="pointer-events-none absolute -left-40 -top-40 h-[420px] w-[420px] rounded-full border border-classic-gold/10" />
 
         <div className="pointer-events-none absolute -right-32 top-20 h-[350px] w-[350px] rounded-full bg-champagne-gold/[0.05] blur-[90px]" />
-
-        <ShopHeader
-          productsCount={
-            filteredProducts.length
-          }
-        />
       </div>
 
       <main className="relative mx-auto max-w-[1440px] px-6 pb-24 pt-10 sm:px-8 sm:pt-12 lg:px-12 lg:pb-28 lg:pt-14">
@@ -201,7 +249,7 @@ const ShopPage = () => {
                 <span className="h-px w-8 bg-classic-gold/60" />
 
                 <span className="text-[9px] font-semibold uppercase tracking-[0.3em] text-antique-gold">
-                  Collection
+                  {t("shopPage.collection")}
                 </span>
 
                 <span className="text-[8px] text-classic-gold">
@@ -209,9 +257,17 @@ const ShopPage = () => {
                 </span>
               </div>
 
-              <p className="max-w-[460px] text-[13px] leading-7 text-slate-gray sm:text-[14px]">
-                Discover pieces created to
-                become part of your story.
+              <p
+                dir={
+                  activeLanguage === "ar"
+                    ? "rtl"
+                    : "ltr"
+                }
+                className="max-w-[460px] text-[13px] leading-7 text-slate-gray sm:text-[14px]"
+              >
+                {t(
+                  "shopPage.collectionDescription",
+                )}
               </p>
             </div>
 
@@ -223,7 +279,7 @@ const ShopPage = () => {
               </span>
 
               <span className="text-[8px] font-semibold uppercase tracking-[0.24em] text-steel-gray">
-                Pieces
+                {t("shopPage.pieces")}
               </span>
             </div>
           </div>
@@ -294,19 +350,39 @@ const ShopPage = () => {
                 </div>
 
                 <p className="mt-6 text-[9px] font-semibold uppercase tracking-[0.3em] text-antique-gold">
-                  No pieces found
+                  {t("shopPage.noPiecesFound")}
                 </p>
 
-                <h3 className="mt-3 font-serif text-[2rem] font-normal leading-tight tracking-[-0.025em] text-midnight-navy sm:text-[2.3rem]">
-                  Nothing matches
+                <h3
+                  dir={
+                    activeLanguage === "ar"
+                      ? "rtl"
+                      : "ltr"
+                  }
+                  className="mt-3 font-serif text-[2rem] font-normal leading-tight tracking-[-0.025em] text-midnight-navy sm:text-[2.3rem]"
+                >
+                  {t(
+                    "shopPage.nothingMatches",
+                  )}
+
                   <span className="ml-2 italic text-navy-soft">
-                    your search.
+                    {t(
+                      "shopPage.yourSearch",
+                    )}
                   </span>
                 </h3>
 
-                <p className="mx-auto mt-4 max-w-[360px] text-[12px] leading-7 text-slate-gray sm:text-[13px]">
-                  Try another search or
-                  explore another collection.
+                <p
+                  dir={
+                    activeLanguage === "ar"
+                      ? "rtl"
+                      : "ltr"
+                  }
+                  className="mx-auto mt-4 max-w-[360px] text-[12px] leading-7 text-slate-gray sm:text-[13px]"
+                >
+                  {t(
+                    "shopPage.tryAnother",
+                  )}
                 </p>
 
                 <button
@@ -317,7 +393,7 @@ const ShopPage = () => {
                   }}
                   className="mt-8 inline-flex min-h-[48px] items-center justify-center rounded-[12px] border border-midnight-navy bg-midnight-navy px-7 text-[9px] font-semibold uppercase tracking-[0.18em] text-soft-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-rich-navy"
                 >
-                  View All Pieces
+                  {t("shopPage.viewAllPieces")}
                 </button>
               </div>
             </div>
@@ -339,12 +415,19 @@ const ShopPage = () => {
             <span className="h-px w-8 bg-classic-gold/60" />
 
             <span className="text-[8px] font-semibold uppercase tracking-[0.3em] text-steel-gray">
-              Smart Jewelry
+              {t("shopPage.smartJewelry")}
             </span>
           </div>
 
-          <span className="font-serif text-[14px] italic text-slate-gray">
-            Designed to tell your story.
+          <span
+            dir={
+              activeLanguage === "ar"
+                ? "rtl"
+                : "ltr"
+            }
+            className="font-serif text-[14px] italic text-slate-gray"
+          >
+            {t("shopPage.story")}
           </span>
         </div>
       </div>

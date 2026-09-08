@@ -1,5 +1,19 @@
 import mongoose from "mongoose";
 
+const localizedFieldSchema = {
+  en: {
+    type: String,
+    trim: true,
+    default: "",
+  },
+
+  ar: {
+    type: String,
+    trim: true,
+    default: "",
+  },
+};
+
 const productVariantSchema = new mongoose.Schema(
   {
     product: {
@@ -16,35 +30,15 @@ const productVariantSchema = new mongoose.Schema(
       uppercase: true,
     },
 
-    name: {
-      type: String,
-      trim: true,
-      default: "",
-    },
+    name: localizedFieldSchema,
 
-    color: {
-      type: String,
-      trim: true,
-      default: "",
-    },
+    color: localizedFieldSchema,
 
-    size: {
-      type: String,
-      trim: true,
-      default: "",
-    },
+    size: localizedFieldSchema,
 
-    material: {
-      type: String,
-      trim: true,
-      default: "",
-    },
+    material: localizedFieldSchema,
 
-    finish: {
-      type: String,
-      trim: true,
-      default: "",
-    },
+    finish: localizedFieldSchema,
 
     price: {
       type: Number,
@@ -79,6 +73,9 @@ const productVariantSchema = new mongoose.Schema(
   },
 );
 
-const ProductVariant = mongoose.model("ProductVariant", productVariantSchema);
+const ProductVariant = mongoose.model(
+  "ProductVariant",
+  productVariantSchema,
+);
 
 export default ProductVariant;

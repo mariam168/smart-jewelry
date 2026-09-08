@@ -25,6 +25,30 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    whatsappVerifiedAt: {
+  type: Date,
+  default: null,
+},
+
+whatsappOtpHash: {
+  type: String,
+  default: null,
+},
+
+whatsappOtpExpiresAt: {
+  type: Date,
+  default: null,
+},
+
+whatsappOtpLastSentAt: {
+  type: Date,
+  default: null,
+},
+
+whatsappOtpAttempts: {
+  type: Number,
+  default: 0,
+},
 
     emailVerifiedAt: {
       type: Date,

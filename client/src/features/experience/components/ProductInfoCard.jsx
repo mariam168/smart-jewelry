@@ -1,8 +1,50 @@
+
+import { useTranslation } from "react-i18next";
+
 import getMediaUrl from "../utils/mediaUrl";
+
+const getLocalizedText = (
+  value,
+  language,
+  fallback = "",
+) => {
+  if (
+    value === undefined ||
+    value === null ||
+    value === ""
+  ) {
+    return fallback;
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (typeof value === "object") {
+    return (
+      value?.[language] ||
+      value?.en ||
+      value?.ar ||
+      fallback
+    );
+  }
+
+  return String(value);
+};
 
 const ProductInfoCard = ({
   experience,
 }) => {
+  const {
+    t,
+    i18n,
+  } = useTranslation();
+
+  const activeLanguage =
+    i18n.language === "ar"
+      ? "ar"
+      : "en";
+
   if (!experience) {
     return null;
   }
@@ -32,16 +74,18 @@ const ProductInfoCard = ({
             <span className="h-px w-8 bg-classic-gold/70" />
 
             <span className="text-[10px] font-semibold uppercase tracking-[0.28em] text-antique-gold">
-              Smart Jewelry
+              {t("manageExperience.smartJewelry")}
             </span>
           </div>
 
           <h2 className="mt-4 font-serif text-[2rem] text-rich-navy">
-            Your Jewelry Experience
+            {t("manageExperience.yourJewelryExperience")}
           </h2>
 
           <p className="mt-3 text-[13px] text-slate-gray">
-            Product details connected to your personalized jewelry experience.
+            {t(
+              "manageExperience.productDetailsConnected",
+            )}
           </p>
         </div>
 
@@ -55,8 +99,11 @@ const ProductInfoCard = ({
           />
 
           <span className="text-[11px] font-semibold">
-            {experience.status ||
-              "Unknown"}
+            {getLocalizedText(
+              experience.status,
+              activeLanguage,
+              t("manageExperience.unknown"),
+            )}
           </span>
         </div>
       </div>
@@ -67,10 +114,11 @@ const ProductInfoCard = ({
             <div className="flex aspect-square items-center justify-center p-8">
               <img
                 src={image}
-                alt={
-                  product?.name ||
-                  "Jewelry Product"
-                }
+                alt={getLocalizedText(
+                  product?.name,
+                  activeLanguage,
+                  t("manageExperience.jewelryProduct"),
+                )}
                 className="h-full w-full object-contain"
                 onError={(
                   event,
@@ -84,25 +132,29 @@ const ProductInfoCard = ({
 
           <div className="flex flex-col justify-center">
             <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-antique-gold">
-              Featured Piece
+              {t("manageExperience.featuredPiece")}
             </span>
 
             <h3 className="mt-3 font-serif text-[2.7rem] text-rich-navy">
-              {product?.name ||
-                "Unnamed Product"}
+              {getLocalizedText(
+                product?.name,
+                activeLanguage,
+                t("manageExperience.unnamedProduct"),
+              )}
             </h3>
 
             {product?.description && (
               <p className="mt-5 text-[13px] leading-7 text-slate-gray">
-                {
-                  product.description
-                }
+                {getLocalizedText(
+                  product.description,
+                  activeLanguage,
+                )}
               </p>
             )}
 
             <div className="mt-8 flex items-end gap-3">
               <span className="text-[10px] uppercase text-steel-gray">
-                Price
+                {t("manageExperience.price")}
               </span>
 
               <span className="font-serif text-[2rem] text-classic-gold">
@@ -115,35 +167,44 @@ const ProductInfoCard = ({
             <div className="mt-8 grid gap-5 sm:grid-cols-2">
               <div className="rounded-[18px] border border-light-champagne bg-warm-ivory/45 p-5">
                 <p className="text-[10px] uppercase text-steel-gray">
-                  Smart Unit
+                  {t("manageExperience.smartUnit")}
                 </p>
 
                 <p className="mt-2.5 text-[13px] font-semibold text-rich-navy">
-                  {smartUnit?.name ||
-                    "-"}
+                  {getLocalizedText(
+                    smartUnit?.name,
+                    activeLanguage,
+                    "-",
+                  )}
                 </p>
               </div>
 
               <div className="rounded-[18px] border border-light-champagne bg-warm-ivory/45 p-5">
                 <p className="text-[10px] uppercase text-steel-gray">
-                  Status
+                  {t("manageExperience.status")}
                 </p>
 
                 <p className="mt-2.5 text-[13px] font-semibold capitalize text-rich-navy">
-                  {experience.status ||
-                    "Unknown"}
+                  {getLocalizedText(
+                    experience.status,
+                    activeLanguage,
+                    t("manageExperience.unknown"),
+                  )}
                 </p>
               </div>
             </div>
 
             <div className="mt-6 rounded-[18px] border border-light-champagne bg-warm-ivory/55 px-5 py-4">
               <span className="text-[10px] uppercase text-steel-gray">
-                Serial Number
+                {t("manageExperience.serialNumber")}
               </span>
 
               <p className="mt-2 break-all font-mono text-[11px] text-rich-navy">
-                {experience.serialNumber ||
-                  "-"}
+                {getLocalizedText(
+                  experience.serialNumber,
+                  activeLanguage,
+                  "-",
+                )}
               </p>
             </div>
           </div>
@@ -154,3 +215,4 @@ const ProductInfoCard = ({
 };
 
 export default ProductInfoCard;
+

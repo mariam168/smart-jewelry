@@ -3,9 +3,17 @@ import mongoose from "mongoose";
 const categorySchema = new mongoose.Schema(
   {
     name: {
-      type: String,
-      required: true,
-      trim: true,
+      en: {
+        type: String,
+        required: true,
+        trim: true,
+      },
+
+      ar: {
+        type: String,
+        required: true,
+        trim: true,
+      },
     },
 
     slug: {
@@ -13,11 +21,21 @@ const categorySchema = new mongoose.Schema(
       required: true,
       unique: true,
       lowercase: true,
+      trim: true,
     },
 
     description: {
-      type: String,
-      default: "",
+      en: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+
+      ar: {
+        type: String,
+        default: "",
+        trim: true,
+      },
     },
 
     image: {

@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+
 import { Link, useParams } from "react-router-dom";
+
+import { useTranslation } from "react-i18next";
 
 import {
   getAdminOrderById,
@@ -21,9 +24,7 @@ const statuses = [
   "cancelled",
 ];
 
-const BACKEND_URL = (
-  import.meta.env.VITE_BACKEND_URL || ""
-).replace(/\/$/, "");
+const BACKEND_URL = (import.meta.env.VITE_BACKEND_URL || "").replace(/\/$/, "");
 
 const formatDate = (date) => {
   if (!date) {
@@ -55,21 +56,42 @@ const formatLabel = (value) => {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 };
 
+const getLocalizedText = (value, language, fallback = "") => {
+  if (value === undefined || value === null || value === "") {
+    return fallback;
+  }
+
+  if (typeof value === "string") {
+    const localizedObjectMatch = value.match(
+      /^\{\s*en:\s*['"]([\s\S]*?)['"]\s*,\s*ar:\s*['"]([\s\S]*?)['"]\s*\}$/,
+    );
+
+    if (localizedObjectMatch) {
+      const [, enValue, arValue] = localizedObjectMatch;
+
+      return language === "ar" ? arValue : enValue;
+    }
+
+    return value;
+  }
+
+  if (typeof value === "object") {
+    return value?.[language] || value?.en || value?.ar || fallback;
+  }
+
+  return String(value);
+};
+
 const getImageUrl = (image) => {
   if (!image) {
     return "";
   }
 
-  if (
-    image.startsWith("http://") ||
-    image.startsWith("https://")
-  ) {
+  if (image.startsWith("http://") || image.startsWith("https://")) {
     return image;
   }
 
-  const cleanImage = image.startsWith("/")
-    ? image
-    : `/${image}`;
+  const cleanImage = image.startsWith("/") ? image : `/${image}`;
 
   return `${BACKEND_URL}${cleanImage}`;
 };
@@ -78,22 +100,16 @@ const getOrderStatusClass = (status) => {
   switch (status) {
     case "pending":
       return "border-champagne-gold/30 bg-champagne-gold/10 text-antique-gold";
-
     case "confirmed":
       return "border-premium-silver/60 bg-silver-mist/80 text-midnight-navy";
-
     case "processing":
       return "border-light-champagne bg-soft-cream text-slate-gray";
-
     case "shipped":
       return "border-navy-soft/20 bg-silver-mist/80 text-navy-soft";
-
     case "delivered":
       return "border-classic-gold/30 bg-soft-cream text-antique-gold";
-
     case "cancelled":
       return "border-red-200 bg-red-50 text-red-700";
-
     default:
       return "border-light-champagne bg-warm-ivory text-slate-gray";
   }
@@ -103,10 +119,8 @@ const getPaymentStatusClass = (status) => {
   switch (status) {
     case "paid":
       return "border-classic-gold/30 bg-soft-cream text-antique-gold";
-
     case "failed":
       return "border-red-200 bg-red-50 text-red-700";
-
     default:
       return "border-champagne-gold/30 bg-champagne-gold/10 text-antique-gold";
   }
@@ -116,19 +130,14 @@ const getManufacturingStatusClass = (status) => {
   switch (status) {
     case "pending":
       return "border-champagne-gold/30 bg-champagne-gold/10 text-antique-gold";
-
     case "in_progress":
       return "border-navy-soft/20 bg-silver-mist/80 text-navy-soft";
-
     case "manufacturing":
       return "border-navy-soft/20 bg-silver-mist/80 text-navy-soft";
-
     case "completed":
       return "border-classic-gold/30 bg-soft-cream text-antique-gold";
-
     case "cancelled":
       return "border-red-200 bg-red-50 text-red-700";
-
     default:
       return "border-light-champagne bg-warm-ivory text-slate-gray";
   }
@@ -138,40 +147,29 @@ const getUnitStatusClass = (status) => {
   switch (status) {
     case "pending":
       return "border-light-champagne bg-warm-ivory text-slate-gray";
-
     case "assigned":
     case "unit_assigned":
       return "border-champagne-gold/30 bg-soft-cream text-antique-gold";
-
     case "experience_created":
       return "border-premium-silver/60 bg-silver-mist/80 text-midnight-navy";
-
     case "manufacturing":
     case "in_production":
       return "border-navy-soft/20 bg-silver-mist/80 text-navy-soft";
-
     case "ready":
     case "completed":
       return "border-classic-gold/30 bg-soft-cream text-antique-gold";
-
     default:
       return "border-light-champagne bg-warm-ivory text-slate-gray";
   }
 };
 
-const SectionTitle = ({
-  eyebrow,
-  title,
-  description,
-  action = null,
-}) => {
+const SectionTitle = ({ eyebrow, title, description, action = null }) => {
   return (
     <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div>
         {eyebrow && (
           <div className="mb-2 flex items-center gap-3">
             <span className="h-px w-7 bg-classic-gold/60" />
-
             <p className="text-[8px] font-semibold uppercase tracking-[0.3em] text-antique-gold">
               {eyebrow}
             </p>
@@ -194,16 +192,8 @@ const SectionTitle = ({
   );
 };
 
-const InfoRow = ({
-  label,
-  value,
-  gold = false,
-  noBreak = false,
-}) => {
-  const hasValue =
-    value !== undefined &&
-    value !== null &&
-    value !== "";
+const InfoRow = ({ label, value, gold = false, noBreak = false }) => {
+  const hasValue = value !== undefined && value !== null && value !== "";
 
   return (
     <div className="flex flex-col gap-1.5 border-b border-light-champagne/75 py-3 last:border-b-0">
@@ -213,9 +203,7 @@ const InfoRow = ({
 
       <span
         className={`text-[11px] font-medium ${
-          gold
-            ? "text-antique-gold"
-            : "text-midnight-navy"
+          gold ? "text-antique-gold" : "text-midnight-navy"
         } ${noBreak ? "" : "break-all"}`}
       >
         {hasValue ? value : "N/A"}
@@ -224,13 +212,7 @@ const InfoRow = ({
   );
 };
 
-const SummaryCard = ({
-  label,
-  value,
-  description,
-  dark = false,
-  children,
-}) => {
+const SummaryCard = ({ label, value, description, dark = false, children }) => {
   return (
     <div
       className={`relative overflow-hidden rounded-[20px] border p-5 shadow-[0_8px_25px_rgba(7,19,31,0.035)] ${
@@ -242,7 +224,6 @@ const SummaryCard = ({
       {dark && (
         <>
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-rich-navy via-midnight-navy to-luxury-black" />
-
           <div className="pointer-events-none absolute -right-14 -top-14 h-32 w-32 rounded-full bg-champagne-gold/10 blur-[45px]" />
         </>
       )}
@@ -250,9 +231,7 @@ const SummaryCard = ({
       <div className="relative">
         <p
           className={`text-[7px] font-semibold uppercase tracking-[0.22em] ${
-            dark
-              ? "text-premium-silver/45"
-              : "text-steel-gray"
+            dark ? "text-premium-silver/45" : "text-steel-gray"
           }`}
         >
           {label}
@@ -261,9 +240,7 @@ const SummaryCard = ({
         {value && (
           <p
             className={`mt-3 font-serif text-[1.55rem] font-normal ${
-              dark
-                ? "text-champagne-gold"
-                : "text-midnight-navy"
+              dark ? "text-champagne-gold" : "text-midnight-navy"
             }`}
           >
             {value}
@@ -275,9 +252,7 @@ const SummaryCard = ({
         {description && (
           <p
             className={`mt-2 text-[9px] ${
-              dark
-                ? "text-premium-silver/50"
-                : "text-slate-gray"
+              dark ? "text-premium-silver/50" : "text-slate-gray"
             }`}
           >
             {description}
@@ -289,35 +264,20 @@ const SummaryCard = ({
 };
 
 const AdminOrderDetailsPage = () => {
+  const { t, i18n } = useTranslation();
   const { id } = useParams();
+
+  const activeLanguage = i18n.language === "ar" ? "ar" : "en";
 
   const [order, setOrder] = useState(null);
   const [status, setStatus] = useState("");
-
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
-
   const [error, setError] = useState("");
-
-  const [
-    manufacturingOrder,
-    setManufacturingOrder,
-  ] = useState(null);
-
-  const [
-    isManufacturingLoading,
-    setIsManufacturingLoading,
-  ] = useState(true);
-
-  const [
-    isStartingManufacturing,
-    setIsStartingManufacturing,
-  ] = useState(false);
-
-  const [
-    manufacturingError,
-    setManufacturingError,
-  ] = useState("");
+  const [manufacturingOrder, setManufacturingOrder] = useState(null);
+  const [isManufacturingLoading, setIsManufacturingLoading] = useState(true);
+  const [isStartingManufacturing, setIsStartingManufacturing] = useState(false);
+  const [manufacturingError, setManufacturingError] = useState("");
 
   useEffect(() => {
     const loadOrder = async () => {
@@ -325,35 +285,22 @@ const AdminOrderDetailsPage = () => {
         setIsLoading(true);
         setError("");
 
-        const response =
-          await getAdminOrderById(id);
-
-        const orderData =
-          response?.data ?? response;
+        const response = await getAdminOrderById(id);
+        const orderData = response?.data ?? response;
 
         if (!orderData) {
-          throw new Error(
-            "Order not found",
-          );
+          throw new Error("Order not found");
         }
 
         setOrder(orderData);
-
-        setStatus(
-          orderData.orderStatus ||
-            "pending",
-        );
+        setStatus(orderData.orderStatus || "pending");
       } catch (error) {
-        console.error(
-          "LOAD ORDER ERROR:",
-          error,
-        );
+        console.error("LOAD ORDER ERROR:", error);
 
         setError(
-          error?.response?.data
-            ?.message ||
+          error?.response?.data?.message ||
             error?.message ||
-            "Unable to load order",
+            t("adminOrderDetails.unableToLoadOrder"),
         );
       } finally {
         setIsLoading(false);
@@ -366,62 +313,35 @@ const AdminOrderDetailsPage = () => {
   }, [id]);
 
   useEffect(() => {
-    const loadManufacturingOrder =
-      async () => {
-        try {
-          setIsManufacturingLoading(
-            true,
-          );
+    const loadManufacturingOrder = async () => {
+      try {
+        setIsManufacturingLoading(true);
+        setManufacturingError("");
 
-          setManufacturingError("");
+        const response = await getManufacturingOrders();
+        const manufacturingOrders = response?.data ?? response ?? [];
 
-          const response =
-            await getManufacturingOrders();
+        const foundOrder = Array.isArray(manufacturingOrders)
+          ? manufacturingOrders.find((item) => {
+              const orderId = item.order?._id || item.order;
 
-          const manufacturingOrders =
-            response?.data ??
-            response ??
-            [];
+              return orderId?.toString() === id?.toString();
+            })
+          : null;
 
-          const foundOrder =
-            Array.isArray(
-              manufacturingOrders,
-            )
-              ? manufacturingOrders.find(
-                  (item) => {
-                    const orderId =
-                      item.order?._id ||
-                      item.order;
+        setManufacturingOrder(foundOrder || null);
+      } catch (error) {
+        console.error("LOAD MANUFACTURING ORDER ERROR:", error);
 
-                    return (
-                      orderId?.toString() ===
-                      id?.toString()
-                    );
-                  },
-                )
-              : null;
-
-          setManufacturingOrder(
-            foundOrder || null,
-          );
-        } catch (error) {
-          console.error(
-            "LOAD MANUFACTURING ORDER ERROR:",
-            error,
-          );
-
-          setManufacturingError(
-            error?.response?.data
-              ?.message ||
-              error?.message ||
-              "Unable to load manufacturing information",
-          );
-        } finally {
-          setIsManufacturingLoading(
-            false,
-          );
-        }
-      };
+        setManufacturingError(
+          error?.response?.data?.message ||
+            error?.message ||
+            t("adminOrderDetails.unableToLoadManufacturing"),
+        );
+      } finally {
+        setIsManufacturingLoading(false);
+      }
+    };
 
     if (id) {
       loadManufacturingOrder();
@@ -437,143 +357,89 @@ const AdminOrderDetailsPage = () => {
       setIsUpdating(true);
       setError("");
 
-      const response =
-        await updateOrderStatus(
-          id,
-          status,
-        );
-
-      const updatedOrder =
-        response?.data ?? response;
+      const response = await updateOrderStatus(id, status);
+      const updatedOrder = response?.data ?? response;
 
       if (updatedOrder) {
         setOrder(updatedOrder);
-
-        setStatus(
-          updatedOrder.orderStatus ||
-            status,
-        );
+        setStatus(updatedOrder.orderStatus || status);
       }
     } catch (error) {
-      console.error(
-        "UPDATE ORDER STATUS ERROR:",
-        error,
-      );
+      console.error("UPDATE ORDER STATUS ERROR:", error);
 
       setError(
-        error?.response?.data
-          ?.message ||
+        error?.response?.data?.message ||
           error?.message ||
-          "Unable to update status",
+          t("adminOrderDetails.unableToUpdateStatus"),
       );
     } finally {
       setIsUpdating(false);
     }
   };
 
-  const handleStartManufacturing =
-    async () => {
-      if (!id) {
-        return;
+  const handleStartManufacturing = async () => {
+    if (!id) {
+      return;
+    }
+
+    if (order?.orderStatus !== "confirmed") {
+      setManufacturingError(
+        t("adminOrderDetails.confirmedBeforeManufacturing"),
+      );
+
+      return;
+    }
+
+    try {
+      setIsStartingManufacturing(true);
+      setManufacturingError("");
+
+      let currentManufacturingOrder = manufacturingOrder;
+
+      if (!currentManufacturingOrder) {
+        const createResponse = await createManufacturingOrder(id);
+
+        currentManufacturingOrder = createResponse?.data ?? createResponse;
+
+        setManufacturingOrder(currentManufacturingOrder);
       }
 
-      if (order?.orderStatus !== "confirmed") {
-        setManufacturingError(
-          "Order status must be Confirmed before manufacturing can start.",
-        );
+      const manufacturingId = currentManufacturingOrder?._id;
 
-        return;
+      if (!manufacturingId) {
+        throw new Error("Manufacturing order ID was not found");
       }
 
-      try {
-        setIsStartingManufacturing(
-          true,
-        );
+      const currentStatus = currentManufacturingOrder.status;
 
-        setManufacturingError("");
+      if (
+        currentStatus !== "in_progress" &&
+        currentStatus !== "manufacturing" &&
+        currentStatus !== "completed" &&
+        currentStatus !== "cancelled"
+      ) {
+        const startResponse = await startManufacturing(manufacturingId);
+        const startedOrder = startResponse?.data ?? startResponse;
 
-        let currentManufacturingOrder =
-          manufacturingOrder;
-
-        if (
-          !currentManufacturingOrder
-        ) {
-          const createResponse =
-            await createManufacturingOrder(
-              id,
-            );
-
-          currentManufacturingOrder =
-            createResponse?.data ??
-            createResponse;
-
-          setManufacturingOrder(
-            currentManufacturingOrder,
-          );
-        }
-
-        const manufacturingId =
-          currentManufacturingOrder?._id;
-
-        if (!manufacturingId) {
-          throw new Error(
-            "Manufacturing order ID was not found",
-          );
-        }
-
-        const currentStatus =
-          currentManufacturingOrder.status;
-
-        if (
-          currentStatus !==
-            "in_progress" &&
-          currentStatus !==
-            "manufacturing" &&
-          currentStatus !==
-            "completed" &&
-          currentStatus !==
-            "cancelled"
-        ) {
-          const startResponse =
-            await startManufacturing(
-              manufacturingId,
-            );
-
-          const startedOrder =
-            startResponse?.data ??
-            startResponse;
-
-          setManufacturingOrder(
-            startedOrder,
-          );
-        }
-      } catch (error) {
-        console.error(
-          "START MANUFACTURING ERROR:",
-          error,
-        );
-
-        setManufacturingError(
-          error?.response?.data
-            ?.message ||
-            error?.message ||
-            "Unable to start manufacturing",
-        );
-      } finally {
-        setIsStartingManufacturing(
-          false,
-        );
+        setManufacturingOrder(startedOrder);
       }
-    };
+    } catch (error) {
+      console.error("START MANUFACTURING ERROR:", error);
+
+      setManufacturingError(
+        error?.response?.data?.message ||
+          error?.message ||
+          t("adminOrderDetails.unableToStartManufacturing"),
+      );
+    } finally {
+      setIsStartingManufacturing(false);
+    }
+  };
 
   const totalQuantity = useMemo(() => {
     return (
       order?.items?.reduce(
-        (total, item) =>
-          total +
-          Number(
-            item.quantity || 0,
-          ),
+        (total, item) => total + Number(item.quantity || 0),
         0,
       ) || 0
     );
@@ -587,14 +453,13 @@ const AdminOrderDetailsPage = () => {
         <div className="relative text-center">
           <div className="relative mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-champagne-gold/25 bg-midnight-navy shadow-[0_12px_30px_rgba(18,38,58,0.15)]">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-champagne-gold/20 border-t-champagne-gold" />
-
             <span className="absolute text-[6px] text-champagne-gold">
               ✦
             </span>
           </div>
 
           <p className="text-[9px] font-semibold uppercase tracking-[0.28em] text-slate-gray">
-            Loading order...
+            {t("adminOrderDetails.loadingOrder")}
           </p>
         </div>
       </div>
@@ -609,15 +474,14 @@ const AdminOrderDetailsPage = () => {
         </div>
 
         <p className="mt-5 text-sm text-red-600">
-          {error ||
-            "Order not found"}
+          {error || t("adminOrderDetails.orderNotFound")}
         </p>
 
         <Link
           to="/admin/orders"
           className="mt-5 inline-flex rounded-full bg-midnight-navy px-5 py-2.5 text-sm font-medium text-soft-white transition hover:bg-rich-navy"
         >
-          Back to Orders
+          {t("adminOrderDetails.backToOrders")}
         </Link>
       </div>
     );
@@ -625,51 +489,30 @@ const AdminOrderDetailsPage = () => {
 
   const completedUnits =
     manufacturingOrder?.units?.filter(
-      (unit) =>
-        unit.status === "completed" ||
-        unit.status === "ready",
+      (unit) => unit.status === "completed" || unit.status === "ready",
     ).length || 0;
 
-  const totalUnits =
-    manufacturingOrder?.units?.length ||
-    0;
+  const totalUnits = manufacturingOrder?.units?.length || 0;
 
   const productionProgress =
-    totalUnits > 0
-      ? Math.round(
-          (completedUnits /
-            totalUnits) *
-            100,
-        )
-      : 0;
+    totalUnits > 0 ? Math.round((completedUnits / totalUnits) * 100) : 0;
 
-  const shippingAreaName =
-    order.shippingAreaName ||
+ const shippingAreaName = getLocalizedText(
+  order.shippingAreaName ||
     order.shippingArea?.name ||
-    order.shippingAddress?.city ||
-    "N/A";
+    order.shippingAddress?.city,
+  activeLanguage,
+  "N/A",
+);
 
   const shippingAreaId =
     order.shippingArea?._id ||
-    (typeof order.shippingArea ===
-    "string"
-      ? order.shippingArea
-      : "");
+    (typeof order.shippingArea === "string" ? order.shippingArea : "");
 
-  const shippingCost = Number(
-    order.shippingCost || 0,
-  );
-
-  const subtotal = Number(
-    order.subtotal || 0,
-  );
-
-  const orderTotal = Number(
-    order.total || 0,
-  );
-
-  const canStartManufacturing =
-    order.orderStatus === "confirmed";
+  const shippingCost = Number(order.shippingCost || 0);
+  const subtotal = Number(order.subtotal || 0);
+  const orderTotal = Number(order.total || 0);
+  const canStartManufacturing = order.orderStatus === "confirmed";
 
   return (
     <div className="min-h-screen bg-warm-ivory">
@@ -682,14 +525,12 @@ const AdminOrderDetailsPage = () => {
             ←
           </span>
 
-          Back to Orders
+          {t("adminOrderDetails.backToOrders")}
         </Link>
 
         <div className="relative mt-5 overflow-hidden rounded-[28px] border border-champagne-gold/15 bg-midnight-navy px-7 py-8 shadow-[0_24px_65px_rgba(7,19,31,0.16)] sm:px-9">
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-rich-navy via-midnight-navy to-luxury-black" />
-
           <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full border border-champagne-gold/10" />
-
           <div className="pointer-events-none absolute -bottom-28 -left-20 h-60 w-60 rounded-full bg-champagne-gold/[0.06] blur-[75px]" />
 
           <div className="relative flex flex-col justify-between gap-7 xl:flex-row xl:items-end">
@@ -698,12 +539,10 @@ const AdminOrderDetailsPage = () => {
                 <span className="h-px w-9 bg-classic-gold/70" />
 
                 <span className="text-[8px] font-semibold uppercase tracking-[0.32em] text-champagne-gold">
-                  Order Details
+                  {t("adminOrderDetails.orderDetails")}
                 </span>
 
-                <span className="text-[7px] text-classic-gold">
-                  ✦
-                </span>
+                <span className="text-[7px] text-classic-gold">✦</span>
               </div>
 
               <h1 className="font-serif text-[2.25rem] font-normal tracking-[-0.035em] text-soft-white sm:text-[2.8rem]">
@@ -711,51 +550,38 @@ const AdminOrderDetailsPage = () => {
               </h1>
 
               <p className="mt-3 text-[11px] text-premium-silver/60">
-                Placed on{" "}
-                {formatDate(
-                  order.createdAt,
-                )}
+                {t("adminOrderDetails.placedOn")} {formatDate(order.createdAt)}
               </p>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">
               <select
                 value={status}
-                onChange={(event) =>
-                  setStatus(
-                    event.target.value,
-                  )
-                }
+                onChange={(event) => setStatus(event.target.value)}
                 className="min-h-[48px] rounded-[13px] border border-soft-white/15 bg-soft-white/[0.06] px-4 text-[10px] font-medium capitalize text-soft-white outline-none backdrop-blur-sm"
               >
-                {statuses.map(
-                  (item) => (
-                    <option
-                      key={item}
-                      value={item}
-                      className="bg-midnight-navy text-soft-white"
-                    >
-                      {formatLabel(item)}
-                    </option>
-                  ),
-                )}
+                {statuses.map((item) => (
+                  <option
+                    key={item}
+                    value={item}
+                    className="bg-midnight-navy text-soft-white"
+                  >
+                    {t(`adminOrderDetails.orderStatuses.${item}`, {
+                      defaultValue: formatLabel(item),
+                    })}
+                  </option>
+                ))}
               </select>
 
               <button
                 type="button"
-                onClick={
-                  handleStatusUpdate
-                }
-                disabled={
-                  isUpdating ||
-                  status ===
-                    order.orderStatus
-                }
+                onClick={handleStatusUpdate}
+                disabled={isUpdating || status === order.orderStatus}
                 className="min-h-[48px] rounded-[13px] bg-soft-white px-6 text-[8px] font-semibold uppercase tracking-[0.12em] text-midnight-navy transition hover:bg-warm-ivory disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {isUpdating
-                  ? "Updating..."
-                  : "Update Status"}
+                  ? t("adminOrderDetails.updating")
+                  : t("adminOrderDetails.updateStatus")}
               </button>
             </div>
           </div>
@@ -769,23 +595,23 @@ const AdminOrderDetailsPage = () => {
       )}
 
       <div className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <SummaryCard label="Order Status">
+        <SummaryCard label={t("adminOrderDetails.orderStatus")}>
           <span
             className={`mt-3 inline-flex rounded-full border px-3 py-1.5 text-[8px] font-semibold uppercase tracking-[0.08em] ${getOrderStatusClass(
               order.orderStatus,
             )}`}
           >
-            {formatLabel(
-              order.orderStatus,
-            )}
+            {t(`adminOrderDetails.orderStatuses.${order.orderStatus}`, {
+              defaultValue: formatLabel(order.orderStatus),
+            })}
           </span>
         </SummaryCard>
 
-        <SummaryCard label="Payment">
+        <SummaryCard label={t("adminOrderDetails.payment")}>
           <p className="mt-3 text-[11px] font-semibold text-midnight-navy">
-            {formatLabel(
-              order.paymentMethod,
-            )}
+            {t(`adminOrderDetails.paymentMethods.${order.paymentMethod}`, {
+              defaultValue: formatLabel(order.paymentMethod),
+            })}
           </p>
 
           <span
@@ -793,35 +619,27 @@ const AdminOrderDetailsPage = () => {
               order.paymentStatus,
             )}`}
           >
-            {formatLabel(
-              order.paymentStatus,
-            )}
+            {t(`adminOrderDetails.paymentStatuses.${order.paymentStatus}`, {
+              defaultValue: formatLabel(order.paymentStatus),
+            })}
           </span>
         </SummaryCard>
 
         <SummaryCard
-          label="Items"
-          value={String(
-            totalQuantity,
-          )}
-          description="Total product quantity"
+          label={t("adminOrderDetails.items")}
+          value={String(totalQuantity)}
+          description={t("adminOrderDetails.totalProductQuantity")}
         />
 
         <SummaryCard
-          label="Shipping"
-          value={formatMoney(
-            shippingCost,
-          )}
-          description={
-            shippingAreaName
-          }
+          label={t("adminOrderDetails.shipping")}
+          value={formatMoney(shippingCost)}
+          description={shippingAreaName}
         />
 
         <SummaryCard
-          label="Order Total"
-          value={formatMoney(
-            orderTotal,
-          )}
+          label={t("adminOrderDetails.orderTotal")}
+          value={formatMoney(orderTotal)}
           dark
         />
       </div>
@@ -829,30 +647,32 @@ const AdminOrderDetailsPage = () => {
       <section className="mb-8 overflow-hidden rounded-[24px] border border-champagne-gold/20 bg-soft-white/90 shadow-[0_12px_38px_rgba(7,19,31,0.04)]">
         <div className="border-b border-light-champagne/80 bg-soft-cream/55 px-6 py-5">
           <SectionTitle
-            eyebrow="Customer Input"
-            title="Manufacturing Brief"
-            description="Customer-provided information saved with this order for production."
+            eyebrow={t("adminOrderDetails.customerInput")}
+            title={t("adminOrderDetails.manufacturingBrief")}
+            description={t("adminOrderDetails.manufacturingBriefDescription")}
           />
         </div>
 
         <div className="grid gap-5 p-6 md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
           <div className="rounded-[18px] border border-champagne-gold/20 bg-warm-ivory/60 p-5">
             <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-              Name for Manufacturing
+              {t("adminOrderDetails.nameForManufacturing")}
             </p>
 
             <p className="mt-3 font-serif text-[1.45rem] text-midnight-navy">
-              {order.manufacturingName || "Not provided"}
+              {order.manufacturingName ||
+                t("adminOrderDetails.notProvided")}
             </p>
           </div>
 
           <div className="rounded-[18px] border border-light-champagne bg-warm-ivory/60 p-5">
             <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-              Manufacturing Notes
+              {t("adminOrderDetails.manufacturingNotes")}
             </p>
 
             <p className="mt-3 whitespace-pre-wrap text-[11px] leading-6 text-slate-gray">
-              {order.manufacturingNotes || "No notes were added by the customer."}
+              {order.manufacturingNotes ||
+                t("adminOrderDetails.noCustomerNotes")}
             </p>
           </div>
         </div>
@@ -861,59 +681,48 @@ const AdminOrderDetailsPage = () => {
       <section className="mb-8 rounded-[24px] border border-light-champagne/90 bg-soft-white/85 p-6 shadow-[0_12px_38px_rgba(7,19,31,0.04)]">
         <div className="flex flex-col justify-between gap-5 md:flex-row md:items-start">
           <SectionTitle
-            eyebrow="Production"
-            title="Manufacturing"
-            description="Manage production and smart unit preparation for this order."
+            eyebrow={t("adminOrderDetails.production")}
+            title={t("adminOrderDetails.manufacturing")}
+            description={t("adminOrderDetails.manufacturingDescription")}
           />
 
           {!manufacturingOrder ? (
             <button
               type="button"
-              onClick={
-                handleStartManufacturing
-              }
-              disabled={
-                isStartingManufacturing ||
-                !canStartManufacturing
-              }
+              onClick={handleStartManufacturing}
+              disabled={isStartingManufacturing || !canStartManufacturing}
               className="min-h-[44px] rounded-full bg-midnight-navy px-6 text-[8px] font-semibold uppercase tracking-[0.12em] text-soft-white transition hover:bg-rich-navy disabled:cursor-not-allowed disabled:opacity-40"
             >
               {isStartingManufacturing
-                ? "Starting..."
+                ? t("adminOrderDetails.starting")
                 : canStartManufacturing
-                  ? "Start Manufacturing"
-                  : "Confirm Order First"}
+                  ? t("adminOrderDetails.startManufacturing")
+                  : t("adminOrderDetails.confirmOrderFirst")}
             </button>
-          ) : manufacturingOrder.status ===
-            "pending" ? (
+          ) : manufacturingOrder.status === "pending" ? (
             <button
               type="button"
-              onClick={
-                handleStartManufacturing
-              }
-              disabled={
-                isStartingManufacturing ||
-                !canStartManufacturing
-              }
+              onClick={handleStartManufacturing}
+              disabled={isStartingManufacturing || !canStartManufacturing}
               className="min-h-[44px] rounded-full bg-midnight-navy px-6 text-[8px] font-semibold uppercase tracking-[0.12em] text-soft-white transition hover:bg-rich-navy disabled:cursor-not-allowed disabled:opacity-40"
             >
               {isStartingManufacturing
-                ? "Starting..."
+                ? t("adminOrderDetails.starting")
                 : canStartManufacturing
-                  ? "Start Manufacturing"
-                  : "Confirm Order First"}
+                  ? t("adminOrderDetails.startManufacturing")
+                  : t("adminOrderDetails.confirmOrderFirst")}
             </button>
           ) : null}
         </div>
 
         {!canStartManufacturing &&
-          (!manufacturingOrder ||
-            manufacturingOrder.status === "pending") && (
+          (!manufacturingOrder || manufacturingOrder.status === "pending") && (
             <div className="mb-5 rounded-[14px] border border-champagne-gold/25 bg-soft-cream/75 px-4 py-3 text-[10px] leading-5 text-antique-gold">
-              Manufacturing can only be started while the order status is
-              <strong className="ml-1">Confirmed</strong>. If the order is moved
-              back to Pending or forward to another status before manufacturing
-              starts, this action stays disabled.
+              {t("adminOrderDetails.manufacturingDisabledMessage")}{" "}
+              <strong className="ml-1">
+                {t("adminOrderDetails.confirmed")}
+              </strong>
+              {t("adminOrderDetails.manufacturingDisabledMessageAfter")}
             </div>
           )}
 
@@ -925,47 +734,44 @@ const AdminOrderDetailsPage = () => {
 
         {isManufacturingLoading ? (
           <div className="rounded-[16px] bg-warm-ivory p-6 text-center text-[10px] text-slate-gray">
-            Loading manufacturing
-            information...
+            {t("adminOrderDetails.loadingManufacturing")}
           </div>
         ) : manufacturingOrder ? (
           <div>
             <div className="grid gap-4 md:grid-cols-4">
               <ManufacturingStat
-                label="Status"
+                label={t("adminOrderDetails.status")}
                 content={
                   <span
                     className={`inline-flex rounded-full border px-3 py-1.5 text-[8px] font-semibold uppercase tracking-[0.06em] ${getManufacturingStatusClass(
                       manufacturingOrder.status,
                     )}`}
                   >
-                    {formatLabel(
-                      manufacturingOrder.status,
+                    {t(
+                      `adminOrderDetails.manufacturingStatuses.${manufacturingOrder.status}`,
+                      {
+                        defaultValue: formatLabel(
+                          manufacturingOrder.status,
+                        ),
+                      },
                     )}
                   </span>
                 }
               />
 
               <ManufacturingStat
-                label="Manufacturing No."
-                content={
-                  manufacturingOrder.orderNumber ||
-                  "N/A"
-                }
+                label={t("adminOrderDetails.manufacturingNo")}
+                content={manufacturingOrder.orderNumber || "N/A"}
               />
 
               <ManufacturingStat
-                label="Production Units"
-                content={String(
-                  totalUnits,
-                )}
+                label={t("adminOrderDetails.productionUnits")}
+                content={String(totalUnits)}
               />
 
               <ManufacturingStat
-                label="Started At"
-                content={formatDate(
-                  manufacturingOrder.startedAt,
-                )}
+                label={t("adminOrderDetails.startedAt")}
+                content={formatDate(manufacturingOrder.startedAt)}
               />
             </div>
 
@@ -976,22 +782,17 @@ const AdminOrderDetailsPage = () => {
                 <div className="flex items-center justify-between gap-5">
                   <div>
                     <p className="text-[7px] font-semibold uppercase tracking-[0.2em] text-premium-silver/45">
-                      Production
-                      Progress
+                      {t("adminOrderDetails.productionProgress")}
                     </p>
 
                     <p className="mt-2 text-[10px] text-soft-white">
-                      {completedUnits} of{" "}
-                      {totalUnits} units
-                      completed
+                      {completedUnits} {t("adminOrderDetails.of")} {totalUnits}{" "}
+                      {t("adminOrderDetails.unitsCompleted")}
                     </p>
                   </div>
 
                   <span className="font-serif text-[1.5rem] text-champagne-gold">
-                    {
-                      productionProgress
-                    }
-                    %
+                    {productionProgress}%
                   </span>
                 </div>
 
@@ -1009,122 +810,97 @@ const AdminOrderDetailsPage = () => {
             <div className="mt-8">
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="font-serif text-[1.2rem] text-midnight-navy">
-                  Production Units
+                  {t("adminOrderDetails.productionUnits")}
                 </h3>
 
                 <span className="text-[9px] text-slate-gray">
-                  {completedUnits} /{" "}
-                  {totalUnits} completed
+                  {completedUnits} / {totalUnits}{" "}
+                  {t("adminOrderDetails.completed")}
                 </span>
               </div>
 
               <div className="space-y-4">
-                {manufacturingOrder
-                  .units?.length > 0 ? (
-                  manufacturingOrder.units.map(
-                    (
-                      unit,
-                      index,
-                    ) => (
-                      <div
-                        key={
-                          unit._id ||
-                          index
-                        }
-                        className="rounded-[18px] border border-light-champagne bg-warm-ivory/60 p-5"
-                      >
-                        <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
-                          <div>
-                            <h4 className="font-serif text-[1rem] text-midnight-navy">
-                              Production
-                              Unit #
-                              {unit.unitNumber ||
-                                index +
-                                  1}
-                            </h4>
+                {manufacturingOrder.units?.length > 0 ? (
+                  manufacturingOrder.units.map((unit, index) => (
+                    <div
+                      key={unit._id || index}
+                      className="rounded-[18px] border border-light-champagne bg-warm-ivory/60 p-5"
+                    >
+                      <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
+                        <div>
+                          <h4 className="font-serif text-[1rem] text-midnight-navy">
+                            {t("adminOrderDetails.productionUnit")} #
+                            {unit.unitNumber || index + 1}
+                          </h4>
 
-                            <p className="mt-1 break-all text-[8px] text-steel-gray">
-                              Unit ID:{" "}
-                              {unit._id ||
-                                "N/A"}
-                            </p>
-                          </div>
-
-                          <span
-                            className={`inline-flex w-fit rounded-full border px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.06em] ${getUnitStatusClass(
-                              unit.status,
-                            )}`}
-                          >
-                            {formatLabel(
-                              unit.status,
-                            )}
-                          </span>
+                          <p className="mt-1 break-all text-[8px] text-steel-gray">
+                            {t("adminOrderDetails.unitId")}:{" "}
+                            {unit._id || "N/A"}
+                          </p>
                         </div>
 
-                        <div className="mt-5 grid gap-4 md:grid-cols-3">
-                          <MiniInfoBox
-                            label="Serial Number"
-                            value={
-                              unit.serialNumber ||
-                              "Not assigned"
-                            }
-                          />
-
-                          <MiniInfoBox
-                            label="Smart Unit"
-                            value={
-                              unit
-                                .smartUnit
-                                ?.serialNumber ||
-                              unit
-                                .smartUnit
-                                ?._id ||
-                              (typeof unit.smartUnit ===
-                              "string"
-                                ? unit.smartUnit
-                                : "Not assigned")
-                            }
-                          />
-
-                          <MiniInfoBox
-                            label="Experience"
-                            value={
-                              unit
-                                .experience
-                                ?.slug ||
-                              unit
-                                .experience
-                                ?._id ||
-                              (typeof unit.experience ===
-                              "string"
-                                ? unit.experience
-                                : "Not created")
-                            }
-                          />
-                        </div>
-
-                        <div className="mt-4 grid gap-4 border-t border-light-champagne pt-4 md:grid-cols-2">
-                          <InfoRow
-                            label="Started"
-                            value={formatDate(
-                              unit.startedAt,
-                            )}
-                          />
-
-                          <InfoRow
-                            label="Completed"
-                            value={formatDate(
-                              unit.completedAt,
-                            )}
-                          />
-                        </div>
+                        <span
+                          className={`inline-flex w-fit rounded-full border px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.06em] ${getUnitStatusClass(
+                            unit.status,
+                          )}`}
+                        >
+                          {t(
+                            `adminOrderDetails.unitStatuses.${unit.status}`,
+                            {
+                              defaultValue: formatLabel(unit.status),
+                            },
+                          )}
+                        </span>
                       </div>
-                    ),
-                  )
+
+                      <div className="mt-5 grid gap-4 md:grid-cols-3">
+                        <MiniInfoBox
+                          label={t("adminOrderDetails.serialNumber")}
+                          value={
+                            unit.serialNumber ||
+                            t("adminOrderDetails.notAssigned")
+                          }
+                        />
+
+                        <MiniInfoBox
+                          label={t("adminOrderDetails.smartUnit")}
+                          value={
+                            unit.smartUnit?.serialNumber ||
+                            unit.smartUnit?._id ||
+                            (typeof unit.smartUnit === "string"
+                              ? unit.smartUnit
+                              : t("adminOrderDetails.notAssigned"))
+                          }
+                        />
+
+                        <MiniInfoBox
+                          label={t("adminOrderDetails.experience")}
+                          value={
+                            unit.experience?.slug ||
+                            unit.experience?._id ||
+                            (typeof unit.experience === "string"
+                              ? unit.experience
+                              : t("adminOrderDetails.notCreated"))
+                          }
+                        />
+                      </div>
+
+                      <div className="mt-4 grid gap-4 border-t border-light-champagne pt-4 md:grid-cols-2">
+                        <InfoRow
+                          label={t("adminOrderDetails.started")}
+                          value={formatDate(unit.startedAt)}
+                        />
+
+                        <InfoRow
+                          label={t("adminOrderDetails.completed")}
+                          value={formatDate(unit.completedAt)}
+                        />
+                      </div>
+                    </div>
+                  ))
                 ) : (
                   <div className="rounded-[16px] border border-dashed border-light-champagne bg-warm-ivory/60 p-8 text-center text-[10px] text-slate-gray">
-                    No production units
-                    found.
+                    {t("adminOrderDetails.noProductionUnits")}
                   </div>
                 )}
               </div>
@@ -1137,14 +913,11 @@ const AdminOrderDetailsPage = () => {
             </div>
 
             <p className="mt-4 font-serif text-[1.15rem] text-midnight-navy">
-              Manufacturing has not
-              started yet.
+              {t("adminOrderDetails.manufacturingNotStarted")}
             </p>
 
             <p className="mt-2 text-[10px] text-slate-gray">
-              Start manufacturing to
-              create the production
-              order.
+              {t("adminOrderDetails.startManufacturingToCreate")}
             </p>
           </div>
         )}
@@ -1153,391 +926,319 @@ const AdminOrderDetailsPage = () => {
       <div className="grid gap-6 lg:grid-cols-3">
         <section className="rounded-[24px] border border-light-champagne/90 bg-soft-white/85 p-6 shadow-[0_12px_38px_rgba(7,19,31,0.04)] lg:col-span-2">
           <SectionTitle
-            eyebrow="Products"
-            title="Order Items"
-            description="Product snapshots, selected variants, technology models and stored order pricing."
+            eyebrow={t("adminOrderDetails.products")}
+            title={t("adminOrderDetails.orderItems")}
+            description={t("adminOrderDetails.orderItemsDescription")}
           />
 
           <div className="space-y-8">
-            {order.items?.map(
-              (item, index) => {
-                const variant =
-                  item.variant || null;
+            {order.items?.map((item, index) => {
+              const variant = item.variant || null;
+              const technology = item.technologyModel || null;
 
-                const technology =
-                  item.technologyModel ||
-                  null;
+              const productPrice = Number(item.price || 0);
+              const variantPrice = Number(item.variantPrice || 0);
+              const technologyPrice = Number(item.technologyPrice || 0);
+              const unitPrice = Number(item.unitPrice || 0);
+              const quantity = Number(item.quantity || 1);
 
-                const productPrice =
-                  Number(
-                    item.price || 0,
-                  );
+              const calculatedItemTotal = unitPrice * quantity;
+              const itemTotal = Number(
+                item.itemTotal ?? calculatedItemTotal,
+              );
 
-                const variantPrice =
-                  Number(
-                    item.variantPrice ||
-                      0,
-                  );
+              const localizedItemName = getLocalizedText(
+                item.name,
+                activeLanguage,
+                t("adminOrderDetails.unnamedProduct"),
+              );
 
-                const technologyPrice =
-                  Number(
-                    item.technologyPrice ||
-                      0,
-                  );
+              const technologyModelName =
+                technology?.modelName ||
+                technology?.name ||
+                t("adminOrderDetails.noTechnologyModelSelected");
 
-                const unitPrice =
-                  Number(
-                    item.unitPrice || 0,
-                  );
-
-                const quantity =
-                  Number(
-                    item.quantity || 1,
-                  );
-
-                const calculatedItemTotal =
-                  unitPrice *
-                  quantity;
-
-                const itemTotal =
-                  Number(
-                    item.itemTotal ??
-                      calculatedItemTotal,
-                  );
-
-                const technologyModelName =
-                  technology?.modelName ||
-                  technology?.name ||
-                  "No Technology Model Selected";
-
-                return (
-                  <div
-                    key={
-                      item._id ||
-                      index
-                    }
-                    className="border-b border-light-champagne pb-8 last:border-b-0 last:pb-0"
-                  >
-                    <div className="flex flex-col gap-5 sm:flex-row">
-                      <div className="h-28 w-28 shrink-0 overflow-hidden rounded-[18px] border border-light-champagne bg-soft-cream">
-                        {item.image ? (
-                          <img
-                            src={getImageUrl(
-                              item.image,
-                            )}
-                            alt={
-                              item.name ||
-                              "Product"
-                            }
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-full items-center justify-center text-[8px] uppercase tracking-[0.12em] text-steel-gray">
-                            No Image
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[8px] font-semibold uppercase tracking-[0.2em] text-antique-gold">
-                          Product
-                        </p>
-
-                        <h3 className="mt-1 font-serif text-[1.45rem] text-midnight-navy">
-                          {item.name ||
-                            "Unnamed Product"}
-                        </h3>
-
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          <span className="rounded-full bg-midnight-navy px-3 py-1.5 text-[8px] text-soft-white">
-                            Qty:{" "}
-                            {quantity}
-                          </span>
-
-                          <span className="rounded-full border border-champagne-gold/20 bg-soft-cream px-3 py-1.5 text-[8px] text-antique-gold">
-                            Stored Base:{" "}
-                            {formatMoney(
-                              productPrice,
-                            )}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="sm:text-right">
-                        <p className="text-[7px] font-semibold uppercase tracking-[0.2em] text-steel-gray">
-                          Item Total
-                        </p>
-
-                        <p className="mt-2 font-serif text-[1.35rem] text-midnight-navy">
-                          {formatMoney(
-                            itemTotal,
-                          )}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-6 rounded-[18px] border border-light-champagne bg-warm-ivory/60 p-5">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-[7px] font-semibold uppercase tracking-[0.2em] text-antique-gold">
-                            Selected Option
-                          </p>
-
-                          <h4 className="mt-1 font-serif text-[1.05rem] text-midnight-navy">
-                            Variant
-                            Details
-                          </h4>
-                        </div>
-
-                        <span className="text-classic-gold">
-                          ✦
-                        </span>
-                      </div>
-
-                      {variant ? (
-                        <div className="mt-4 grid gap-x-6 md:grid-cols-2">
-                          <InfoRow
-                            label="Variant Name"
-                            value={
-                              variant.name
-                            }
-                          />
-
-                          <InfoRow
-                            label="Color"
-                            value={
-                              variant.color
-                            }
-                          />
-
-                          <InfoRow
-                            label="Size"
-                            value={
-                              variant.size
-                            }
-                          />
-
-                          <InfoRow
-                            label="Material"
-                            value={
-                              variant.material
-                            }
-                          />
-
-                          <InfoRow
-                            label="Finish"
-                            value={
-                              variant.finish
-                            }
-                          />
-
-                          <InfoRow
-                            label="SKU"
-                            value={
-                              variant.sku
-                            }
-                          />
-
-                          <InfoRow
-                            label="Stored Variant Price"
-                            value={formatMoney(
-                              variantPrice,
-                            )}
-                            gold
-                          />
-
-                          {variant.image && (
-                            <div className="mt-3 md:col-span-2">
-                              <p className="mb-2 text-[8px] font-semibold uppercase tracking-[0.15em] text-steel-gray">
-                                Variant
-                                Image
-                              </p>
-
-                              <img
-                                src={getImageUrl(
-                                  variant.image,
-                                )}
-                                alt={
-                                  variant.name ||
-                                  "Variant"
-                                }
-                                className="h-28 w-28 rounded-[14px] object-cover"
-                              />
-                            </div>
-                          )}
-                        </div>
+              return (
+                <div
+                  key={item._id || index}
+                  className="border-b border-light-champagne pb-8 last:border-b-0 last:pb-0"
+                >
+                  <div className="flex flex-col gap-5 sm:flex-row">
+                    <div className="h-28 w-28 shrink-0 overflow-hidden rounded-[18px] border border-light-champagne bg-soft-cream">
+                      {item.image ? (
+                        <img
+                          src={getImageUrl(item.image)}
+                          alt={localizedItemName}
+                          className="h-full w-full object-cover"
+                        />
                       ) : (
-                        <p className="mt-4 text-[10px] text-slate-gray">
-                          No variant
-                          selected.
-                        </p>
+                        <div className="flex h-full items-center justify-center text-[8px] uppercase tracking-[0.12em] text-steel-gray">
+                          {t("adminOrderDetails.noImage")}
+                        </div>
                       )}
                     </div>
 
-                    <div className="relative mt-4 overflow-hidden rounded-[18px] border border-champagne-gold/15 bg-midnight-navy p-5 text-soft-white">
-                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-rich-navy via-midnight-navy to-luxury-black" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[8px] font-semibold uppercase tracking-[0.2em] text-antique-gold">
+                        {t("adminOrderDetails.product")}
+                      </p>
 
-                      <div className="pointer-events-none absolute -right-14 -top-14 h-32 w-32 rounded-full bg-champagne-gold/10 blur-[45px]" />
+                      <h3 className="mt-1 font-serif text-[1.45rem] text-midnight-navy">
+                        {localizedItemName}
+                      </h3>
 
-                      <div className="relative">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-[7px] font-semibold uppercase tracking-[0.2em] text-champagne-gold">
-                              Selected
-                              Technology
-                            </p>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <span className="rounded-full bg-midnight-navy px-3 py-1.5 text-[8px] text-soft-white">
+                          {t("adminOrderDetails.qty")}: {quantity}
+                        </span>
 
-                            <h4 className="mt-1 font-serif text-[1.15rem] text-soft-white">
-                              {
-                                technologyModelName
-                              }
-                            </h4>
-                          </div>
-
-                          <span className="text-champagne-gold">
-                            ✦
-                          </span>
-                        </div>
-
-                        {technology ? (
-                          <>
-                            <div className="mt-5 grid gap-x-6 md:grid-cols-2">
-                              <DarkInfoRow
-                                label="Technology Model"
-                                value={
-                                  technology.modelName ||
-                                  technology.name
-                                }
-                              />
-
-                              <DarkInfoRow
-                                label="Technology"
-                                value={
-                                  technology
-                                    .technology
-                                    ?.name
-                                }
-                              />
-
-                              <DarkInfoRow
-                                label="Model Code"
-                                value={
-                                  technology.modelCode
-                                }
-                              />
-
-                              <DarkInfoRow
-                                label="Technology Code"
-                                value={
-                                  technology
-                                    .technology
-                                    ?.code
-                                }
-                              />
-
-                              <DarkInfoRow
-                                label="Stored Technology Price"
-                                value={formatMoney(
-                                  technologyPrice,
-                                )}
-                                gold
-                              />
-
-                              <DarkInfoRow
-                                label="Status"
-                                value={formatLabel(
-                                  technology.status,
-                                )}
-                              />
-                            </div>
-
-                            {technology.description && (
-                              <div className="mt-4 border-t border-soft-white/10 pt-4">
-                                <p className="text-[7px] font-semibold uppercase tracking-[0.15em] text-premium-silver/45">
-                                  Description
-                                </p>
-
-                                <p className="mt-2 text-[10px] leading-6 text-premium-silver/70">
-                                  {
-                                    technology.description
-                                  }
-                                </p>
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <p className="mt-4 rounded-[12px] border border-soft-white/10 bg-soft-white/[0.04] p-4 text-[10px] text-premium-silver/55">
-                            No technology
-                            model selected
-                            for this
-                            product.
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="mt-4 rounded-[18px] border border-light-champagne bg-soft-white p-5">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-serif text-[1.05rem] text-midnight-navy">
-                          Stored Price
-                          Breakdown
-                        </h4>
-
-                        <span className="text-classic-gold">
-                          ✦
+                        <span className="rounded-full border border-champagne-gold/20 bg-soft-cream px-3 py-1.5 text-[8px] text-antique-gold">
+                          {t("adminOrderDetails.storedBase")}:{" "}
+                          {formatMoney(productPrice)}
                         </span>
                       </div>
+                    </div>
 
-                      <div className="mt-4 space-y-3 text-[10px]">
-                        <PriceRow
-                          label="Product Base Price"
-                          value={formatMoney(
-                            productPrice,
-                          )}
-                        />
+                    <div className="sm:text-right">
+                      <p className="text-[7px] font-semibold uppercase tracking-[0.2em] text-steel-gray">
+                        {t("adminOrderDetails.itemTotal")}
+                      </p>
 
-                        <PriceRow
-                          label="Variant Snapshot"
-                          value={formatMoney(
-                            variantPrice,
-                          )}
-                        />
-
-                        <PriceRow
-                          label="Technology Snapshot"
-                          value={formatMoney(
-                            technologyPrice,
-                          )}
-                        />
-
-                        <PriceRow
-                          label="Final Unit Price"
-                          value={formatMoney(
-                            unitPrice,
-                          )}
-                          highlight
-                        />
-
-                        <PriceRow
-                          label="Quantity"
-                          value={`× ${quantity}`}
-                        />
-
-                        <div className="h-px bg-light-champagne" />
-
-                        <PriceRow
-                          label="Item Total"
-                          value={formatMoney(
-                            itemTotal,
-                          )}
-                          strong
-                        />
-                      </div>
+                      <p className="mt-2 font-serif text-[1.35rem] text-midnight-navy">
+                        {formatMoney(itemTotal)}
+                      </p>
                     </div>
                   </div>
-                );
-              },
-            )}
+
+                  <div className="mt-6 rounded-[18px] border border-light-champagne bg-warm-ivory/60 p-5">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-[7px] font-semibold uppercase tracking-[0.2em] text-antique-gold">
+                          {t("adminOrderDetails.selectedOption")}
+                        </p>
+
+                        <h4 className="mt-1 font-serif text-[1.05rem] text-midnight-navy">
+                          {t("adminOrderDetails.variantDetails")}
+                        </h4>
+                      </div>
+
+                      <span className="text-classic-gold">✦</span>
+                    </div>
+
+                    {variant ? (
+                      <div className="mt-4 grid gap-x-6 md:grid-cols-2">
+                        <InfoRow
+                          label={t("adminOrderDetails.variantName")}
+                          value={getLocalizedText(
+                            variant.name,
+                            activeLanguage,
+                          )}
+                        />
+
+                        <InfoRow
+                          label={t("adminOrderDetails.color")}
+                          value={getLocalizedText(
+                            variant.color,
+                            activeLanguage,
+                          )}
+                        />
+
+                        <InfoRow
+                          label={t("adminOrderDetails.size")}
+                          value={getLocalizedText(
+                            variant.size,
+                            activeLanguage,
+                          )}
+                        />
+
+                        <InfoRow
+                          label={t("adminOrderDetails.material")}
+                          value={getLocalizedText(
+                            variant.material,
+                            activeLanguage,
+                          )}
+                        />
+
+                        <InfoRow
+                          label={t("adminOrderDetails.finish")}
+                          value={getLocalizedText(
+                            variant.finish,
+                            activeLanguage,
+                          )}
+                        />
+
+                        <InfoRow
+                          label={t("adminOrderDetails.sku")}
+                          value={variant.sku}
+                        />
+
+                        <InfoRow
+                          label={t("adminOrderDetails.storedVariantPrice")}
+                          value={formatMoney(variantPrice)}
+                          gold
+                        />
+
+                        {variant.image && (
+                          <div className="mt-3 md:col-span-2">
+                            <p className="mb-2 text-[8px] font-semibold uppercase tracking-[0.15em] text-steel-gray">
+                              {t("adminOrderDetails.variantImage")}
+                            </p>
+
+                            <img
+                              src={getImageUrl(variant.image)}
+                              alt={getLocalizedText(
+                                variant.name,
+                                activeLanguage,
+                                "Variant",
+                              )}
+                              className="h-28 w-28 rounded-[14px] object-cover"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="mt-4 text-[10px] text-slate-gray">
+                        {t("adminOrderDetails.noVariantSelected")}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="relative mt-4 overflow-hidden rounded-[18px] border border-champagne-gold/15 bg-midnight-navy p-5 text-soft-white">
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-rich-navy via-midnight-navy to-luxury-black" />
+
+                    <div className="pointer-events-none absolute -right-14 -top-14 h-32 w-32 rounded-full bg-champagne-gold/10 blur-[45px]" />
+
+                    <div className="relative">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-[7px] font-semibold uppercase tracking-[0.2em] text-champagne-gold">
+                            {t("adminOrderDetails.selectedTechnology")}
+                          </p>
+
+                          <h4 className="mt-1 font-serif text-[1.15rem] text-soft-white">
+                            {technologyModelName}
+                          </h4>
+                        </div>
+
+                        <span className="text-champagne-gold">✦</span>
+                      </div>
+
+                      {technology ? (
+                        <>
+                          <div className="mt-5 grid gap-x-6 md:grid-cols-2">
+                            <DarkInfoRow
+                              label={t("adminOrderDetails.technologyModel")}
+                              value={
+                                technology.modelName || technology.name
+                              }
+                            />
+
+                            <DarkInfoRow
+                              label={t("adminOrderDetails.technology")}
+                              value={technology.technology?.name}
+                            />
+
+                            <DarkInfoRow
+                              label={t("adminOrderDetails.modelCode")}
+                              value={technology.modelCode}
+                            />
+
+                            <DarkInfoRow
+                              label={t("adminOrderDetails.technologyCode")}
+                              value={technology.technology?.code}
+                            />
+
+                            <DarkInfoRow
+                              label={t(
+                                "adminOrderDetails.storedTechnologyPrice",
+                              )}
+                              value={formatMoney(technologyPrice)}
+                              gold
+                            />
+
+                            <DarkInfoRow
+                              label={t("adminOrderDetails.status")}
+                              value={t(
+                                `adminOrderDetails.technologyStatuses.${technology.status}`,
+                                {
+                                  defaultValue: formatLabel(
+                                    technology.status,
+                                  ),
+                                },
+                              )}
+                            />
+                          </div>
+
+                          {technology.description && (
+                            <div className="mt-4 border-t border-soft-white/10 pt-4">
+                              <p className="text-[7px] font-semibold uppercase tracking-[0.15em] text-premium-silver/45">
+                                {t("adminOrderDetails.description")}
+                              </p>
+
+                              <p className="mt-2 text-[10px] leading-6 text-premium-silver/70">
+                                {technology.description}
+                              </p>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <p className="mt-4 rounded-[12px] border border-soft-white/10 bg-soft-white/[0.04] p-4 text-[10px] text-premium-silver/55">
+                          {t(
+                            "adminOrderDetails.noTechnologyModelSelectedForProduct",
+                          )}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 rounded-[18px] border border-light-champagne bg-soft-white p-5">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-serif text-[1.05rem] text-midnight-navy">
+                        {t("adminOrderDetails.storedPriceBreakdown")}
+                      </h4>
+
+                      <span className="text-classic-gold">✦</span>
+                    </div>
+
+                    <div className="mt-4 space-y-3 text-[10px]">
+                      <PriceRow
+                        label={t("adminOrderDetails.productBasePrice")}
+                        value={formatMoney(productPrice)}
+                      />
+
+                      <PriceRow
+                        label={t("adminOrderDetails.variantSnapshot")}
+                        value={formatMoney(variantPrice)}
+                      />
+
+                      <PriceRow
+                        label={t("adminOrderDetails.technologySnapshot")}
+                        value={formatMoney(technologyPrice)}
+                      />
+
+                      <PriceRow
+                        label={t("adminOrderDetails.finalUnitPrice")}
+                        value={formatMoney(unitPrice)}
+                        highlight
+                      />
+
+                      <PriceRow
+                        label={t("adminOrderDetails.quantity")}
+                        value={`× ${quantity}`}
+                      />
+
+                      <div className="h-px bg-light-champagne" />
+
+                      <PriceRow
+                        label={t("adminOrderDetails.itemTotal")}
+                        value={formatMoney(itemTotal)}
+                        strong
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           <div className="ml-auto mt-8 max-w-md">
@@ -1551,8 +1252,7 @@ const AdminOrderDetailsPage = () => {
                   <span className="h-px flex-1 bg-soft-white/10" />
 
                   <span className="text-[7px] font-semibold uppercase tracking-[0.24em] text-champagne-gold">
-                    Order Financial
-                    Snapshot
+                    {t("adminOrderDetails.orderFinancialSnapshot")}
                   </span>
 
                   <span className="h-px flex-1 bg-soft-white/10" />
@@ -1560,68 +1260,58 @@ const AdminOrderDetailsPage = () => {
 
                 <div className="space-y-4">
                   <FinancialRow
-                    label="Products Subtotal"
-                    value={formatMoney(
-                      subtotal,
-                    )}
+                    label={t("adminOrderDetails.productsSubtotal")}
+                    value={formatMoney(subtotal)}
                   />
 
                   <FinancialRow
-                    label="Shipping Area"
-                    value={
-                      shippingAreaName
-                    }
+                    label={t("adminOrderDetails.shippingArea")}
+                    value={shippingAreaName}
                     gold
                   />
 
                   <FinancialRow
-                    label="Shipping Fee"
-                    value={formatMoney(
-                      shippingCost,
+                    label={t("adminOrderDetails.shippingFee")}
+                    value={formatMoney(shippingCost)}
+                  />
+
+                  <FinancialRow
+                    label={t("adminOrderDetails.paymentMethod")}
+                    value={t(
+                      `adminOrderDetails.paymentMethods.${order.paymentMethod}`,
+                      {
+                        defaultValue: formatLabel(order.paymentMethod),
+                      },
                     )}
                   />
 
                   <FinancialRow
-                    label="Payment Method"
-                    value={formatLabel(
-                      order.paymentMethod,
+                    label={t("adminOrderDetails.paymentStatus")}
+                    value={t(
+                      `adminOrderDetails.paymentStatuses.${order.paymentStatus}`,
+                      {
+                        defaultValue: formatLabel(order.paymentStatus),
+                      },
                     )}
-                  />
-
-                  <FinancialRow
-                    label="Payment Status"
-                    value={formatLabel(
-                      order.paymentStatus,
-                    )}
-                    gold={
-                      order.paymentStatus ===
-                      "paid"
-                    }
+                    gold={order.paymentStatus === "paid"}
                   />
 
                   <div className="h-px bg-soft-white/10" />
 
                   <div className="flex items-end justify-between gap-4">
                     <span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-soft-white">
-                      Order Total
+                      {t("adminOrderDetails.orderTotal")}
                     </span>
 
                     <span className="font-serif text-[1.8rem] text-champagne-gold">
-                      {formatMoney(
-                        orderTotal,
-                      )}
+                      {formatMoney(orderTotal)}
                     </span>
                   </div>
                 </div>
 
                 <div className="mt-5 rounded-[12px] border border-soft-white/10 bg-soft-white/[0.04] px-4 py-3">
                   <p className="text-[8px] leading-5 text-premium-silver/45">
-                    These amounts are
-                    stored with the
-                    order and represent
-                    the pricing at the
-                    time the customer
-                    placed it.
+                    {t("adminOrderDetails.storedAmountsDescription")}
                   </p>
                 </div>
               </div>
@@ -1631,18 +1321,14 @@ const AdminOrderDetailsPage = () => {
 
         <div className="space-y-6">
           <SidebarSection
-            eyebrow="Customer"
-            title="Customer Information"
+            eyebrow={t("adminOrderDetails.customer")}
+            title={t("adminOrderDetails.customerInformation")}
           >
             <InfoRow
-              label="Customer Name"
+              label={t("adminOrderDetails.customerName")}
               value={[
-                order
-                  .shippingAddress
-                  ?.firstName,
-                order
-                  .shippingAddress
-                  ?.lastName,
+                order.shippingAddress?.firstName,
+                order.shippingAddress?.lastName,
               ]
                 .filter(Boolean)
                 .join(" ")}
@@ -1650,42 +1336,31 @@ const AdminOrderDetailsPage = () => {
             />
 
             <InfoRow
-              label="Email"
-              value={
-                order.user?.email ||
-                "Unknown"
-              }
+              label={t("adminOrderDetails.email")}
+              value={order.user?.email || "Unknown"}
             />
 
             <InfoRow
-              label="User ID"
+              label={t("adminOrderDetails.userId")}
               value={
                 order.user?._id ||
-                (typeof order.user ===
-                "string"
-                  ? order.user
-                  : "")
+                (typeof order.user === "string" ? order.user : "")
               }
             />
 
             <InfoRow
-              label="Phone"
-              value={
-                order
-                  .shippingAddress
-                  ?.phone
-              }
+              label={t("adminOrderDetails.phone")}
+              value={order.shippingAddress?.phone}
             />
           </SidebarSection>
 
           <SidebarSection
-            eyebrow="Delivery"
-            title="Shipping Details"
+            eyebrow={t("adminOrderDetails.delivery")}
+            title={t("adminOrderDetails.shippingDetails")}
           >
             <div className="mb-4 rounded-[16px] border border-champagne-gold/20 bg-soft-cream/70 p-4">
               <p className="text-[7px] font-semibold uppercase tracking-[0.18em] text-antique-gold">
-                Selected Shipping
-                Area
+                {t("adminOrderDetails.selectedShippingArea")}
               </p>
 
               <div className="mt-2 flex items-end justify-between gap-4">
@@ -1694,15 +1369,13 @@ const AdminOrderDetailsPage = () => {
                 </p>
 
                 <p className="text-[11px] font-semibold text-antique-gold">
-                  {formatMoney(
-                    shippingCost,
-                  )}
+                  {formatMoney(shippingCost)}
                 </p>
               </div>
             </div>
 
             <InfoRow
-              label="Shipping Area Snapshot"
+              label={t("adminOrderDetails.shippingAreaSnapshot")}
               value={shippingAreaName}
               gold
               noBreak
@@ -1710,31 +1383,23 @@ const AdminOrderDetailsPage = () => {
 
             {shippingAreaId && (
               <InfoRow
-                label="Shipping Area ID"
-                value={
-                  shippingAreaId
-                }
+                label={t("adminOrderDetails.shippingAreaId")}
+                value={shippingAreaId}
               />
             )}
 
             <InfoRow
-              label="Shipping Fee Snapshot"
-              value={formatMoney(
-                shippingCost,
-              )}
+              label={t("adminOrderDetails.shippingFeeSnapshot")}
+              value={formatMoney(shippingCost)}
               gold
               noBreak
             />
 
             <InfoRow
-              label="Recipient"
+              label={t("adminOrderDetails.recipient")}
               value={[
-                order
-                  .shippingAddress
-                  ?.firstName,
-                order
-                  .shippingAddress
-                  ?.lastName,
+                order.shippingAddress?.firstName,
+                order.shippingAddress?.lastName,
               ]
                 .filter(Boolean)
                 .join(" ")}
@@ -1742,60 +1407,47 @@ const AdminOrderDetailsPage = () => {
             />
 
             <InfoRow
-              label="Phone"
-              value={
-                order
-                  .shippingAddress
-                  ?.phone
-              }
+              label={t("adminOrderDetails.phone")}
+              value={order.shippingAddress?.phone}
             />
 
             <InfoRow
-              label="Address"
-              value={
-                order
-                  .shippingAddress
-                  ?.address
-              }
+              label={t("adminOrderDetails.address")}
+              value={order.shippingAddress?.address}
               noBreak
             />
 
             <InfoRow
-              label="City / Area"
-              value={
-                order
-                  .shippingAddress
-                  ?.city
-              }
+              label={t("adminOrderDetails.cityArea")}
+              value={order.shippingAddress?.city}
               noBreak
             />
 
             <InfoRow
-              label="Country"
-              value={
-                order
-                  .shippingAddress
-                  ?.country
-              }
+              label={t("adminOrderDetails.country")}
+              value={order.shippingAddress?.country}
               noBreak
             />
           </SidebarSection>
 
           <SidebarSection
-            eyebrow="Payment"
-            title="Payment Details"
+            eyebrow={t("adminOrderDetails.payment")}
+            title={t("adminOrderDetails.paymentDetails")}
           >
             <InfoRow
-              label="Method"
-              value={formatLabel(
-                order.paymentMethod,
+              label={t("adminOrderDetails.method")}
+              value={t(
+                `adminOrderDetails.paymentMethods.${order.paymentMethod}`,
+                {
+                  defaultValue: formatLabel(order.paymentMethod),
+                },
               )}
               noBreak
             />
 
             <div className="border-b border-light-champagne/75 py-3">
               <p className="text-[8px] font-semibold uppercase tracking-[0.16em] text-steel-gray">
-                Payment Status
+                {t("adminOrderDetails.paymentStatus")}
               </p>
 
               <span
@@ -1803,82 +1455,73 @@ const AdminOrderDetailsPage = () => {
                   order.paymentStatus,
                 )}`}
               >
-                {formatLabel(
-                  order.paymentStatus,
+                {t(
+                  `adminOrderDetails.paymentStatuses.${order.paymentStatus}`,
+                  {
+                    defaultValue: formatLabel(order.paymentStatus),
+                  },
                 )}
               </span>
             </div>
 
             <InfoRow
-              label="Subtotal"
-              value={formatMoney(
-                subtotal,
-              )}
+              label={t("adminOrderDetails.subtotal")}
+              value={formatMoney(subtotal)}
               noBreak
             />
 
             <InfoRow
-              label="Shipping"
-              value={formatMoney(
-                shippingCost,
-              )}
+              label={t("adminOrderDetails.shipping")}
+              value={formatMoney(shippingCost)}
               noBreak
             />
 
             <InfoRow
-              label="Total"
-              value={formatMoney(
-                orderTotal,
-              )}
+              label={t("adminOrderDetails.total")}
+              value={formatMoney(orderTotal)}
               gold
               noBreak
             />
           </SidebarSection>
 
           <SidebarSection
-            eyebrow="Tracking"
-            title="Order Status"
+            eyebrow={t("adminOrderDetails.tracking")}
+            title={t("adminOrderDetails.orderStatus")}
           >
             <span
               className={`inline-flex rounded-full border px-4 py-2 text-[8px] font-semibold uppercase tracking-[0.08em] ${getOrderStatusClass(
                 order.orderStatus,
               )}`}
             >
-              {formatLabel(
-                order.orderStatus,
-              )}
+              {t(`adminOrderDetails.orderStatuses.${order.orderStatus}`, {
+                defaultValue: formatLabel(order.orderStatus),
+              })}
             </span>
           </SidebarSection>
 
           <SidebarSection
-            eyebrow="Information"
-            title="Order Information"
+            eyebrow={t("adminOrderDetails.information")}
+            title={t("adminOrderDetails.orderInformation")}
           >
             <InfoRow
-              label="Order Number"
-              value={
-                order.orderNumber
-              }
+              label={t("adminOrderDetails.orderNumber")}
+              value={order.orderNumber}
             />
 
             <InfoRow
-              label="Created"
-              value={formatDate(
-                order.createdAt,
-              )}
+              label={t("adminOrderDetails.created")}
+              value={formatDate(order.createdAt)}
               noBreak
             />
 
             <InfoRow
-              label="Updated"
-              value={formatDate(
-                order.updatedAt,
-              )}
+              label={t("adminOrderDetails.updated")}
+              value={formatDate(order.updatedAt)}
               noBreak
             />
 
             <InfoRow
-              label="Order ID"
+              label={t("adminOrderDetails.orderId")}
               value={order._id}
             />
           </SidebarSection>
@@ -1888,10 +1531,7 @@ const AdminOrderDetailsPage = () => {
   );
 };
 
-const ManufacturingStat = ({
-  label,
-  content,
-}) => {
+const ManufacturingStat = ({ label, content }) => {
   return (
     <div className="rounded-[16px] border border-light-champagne bg-warm-ivory/60 p-4">
       <p className="text-[7px] font-semibold uppercase tracking-[0.16em] text-steel-gray">
@@ -1905,10 +1545,7 @@ const ManufacturingStat = ({
   );
 };
 
-const MiniInfoBox = ({
-  label,
-  value,
-}) => {
+const MiniInfoBox = ({ label, value }) => {
   return (
     <div className="rounded-[14px] border border-light-champagne/70 bg-soft-white/80 p-4">
       <p className="text-[7px] font-semibold uppercase tracking-[0.15em] text-steel-gray">
@@ -1922,15 +1559,8 @@ const MiniInfoBox = ({
   );
 };
 
-const DarkInfoRow = ({
-  label,
-  value,
-  gold = false,
-}) => {
-  const hasValue =
-    value !== undefined &&
-    value !== null &&
-    value !== "";
+const DarkInfoRow = ({ label, value, gold = false }) => {
+  const hasValue = value !== undefined && value !== null && value !== "";
 
   return (
     <div className="border-b border-soft-white/10 py-3 last:border-b-0">
@@ -1940,9 +1570,7 @@ const DarkInfoRow = ({
 
       <p
         className={`mt-1.5 break-all text-[10px] font-medium ${
-          gold
-            ? "text-champagne-gold"
-            : "text-soft-white"
+          gold ? "text-champagne-gold" : "text-soft-white"
         }`}
       >
         {hasValue ? value : "N/A"}
@@ -1951,19 +1579,12 @@ const DarkInfoRow = ({
   );
 };
 
-const PriceRow = ({
-  label,
-  value,
-  highlight = false,
-  strong = false,
-}) => {
+const PriceRow = ({ label, value, highlight = false, strong = false }) => {
   return (
     <div className="flex items-center justify-between gap-4">
       <span
         className={
-          strong
-            ? "font-semibold text-midnight-navy"
-            : "text-slate-gray"
+          strong ? "font-semibold text-midnight-navy" : "text-slate-gray"
         }
       >
         {label}
@@ -1984,22 +1605,14 @@ const PriceRow = ({
   );
 };
 
-const FinancialRow = ({
-  label,
-  value,
-  gold = false,
-}) => {
+const FinancialRow = ({ label, value, gold = false }) => {
   return (
     <div className="flex items-start justify-between gap-5 text-[10px]">
-      <span className="text-premium-silver/50">
-        {label}
-      </span>
+      <span className="text-premium-silver/50">{label}</span>
 
       <span
         className={`max-w-[220px] text-right font-semibold ${
-          gold
-            ? "text-champagne-gold"
-            : "text-soft-white"
+          gold ? "text-champagne-gold" : "text-soft-white"
         }`}
       >
         {value}
@@ -2008,20 +1621,13 @@ const FinancialRow = ({
   );
 };
 
-const SidebarSection = ({
-  eyebrow,
-  title,
-  children,
-}) => {
+const SidebarSection = ({ eyebrow, title, children }) => {
   return (
     <section className="relative overflow-hidden rounded-[22px] border border-light-champagne/90 bg-soft-white/85 p-6 shadow-[0_10px_30px_rgba(7,19,31,0.035)]">
       <div className="pointer-events-none absolute -right-16 -top-16 h-36 w-36 rounded-full bg-soft-cream blur-[55px]" />
 
       <div className="relative">
-        <SectionTitle
-          eyebrow={eyebrow}
-          title={title}
-        />
+        <SectionTitle eyebrow={eyebrow} title={title} />
 
         {children}
       </div>

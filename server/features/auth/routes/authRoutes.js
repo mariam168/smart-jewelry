@@ -7,6 +7,8 @@ import {
   getMe,
   logout,
   getAdminUsersController,
+   verifyWhatsappOtpController,
+  resendWhatsappOtpController,
   updateUserRoleController,
 } from "../controllers/authController.js";
 
@@ -46,11 +48,7 @@ router.post(
   logout,
 );
 
-/*
-|--------------------------------------------------------------------------
-| ADMIN USERS
-|--------------------------------------------------------------------------
-*/
+
 
 router.get(
   "/admin/users",
@@ -64,6 +62,16 @@ router.patch(
   protect,
   adminMiddleware,
   updateUserRoleController,
+);
+
+router.post(
+  "/verify-otp",
+  verifyWhatsappOtpController,
+);
+
+router.post(
+  "/resend-otp",
+  resendWhatsappOtpController,
 );
 
 export default router;

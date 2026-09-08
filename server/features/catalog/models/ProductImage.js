@@ -1,39 +1,67 @@
 import mongoose from "mongoose";
 
-const productImageSchema = new mongoose.Schema(
+const localizedAltSchema = new mongoose.Schema(
   {
-    product: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Product",
-      required: true,
-    },
-
-    imageUrl: {
+    en: {
       type: String,
-      required: true,
+      default: "",
       trim: true,
     },
 
-    alt: {
+    ar: {
       type: String,
       default: "",
-    },
-
-    isPrimary: {
-      type: Boolean,
-      default: false,
-    },
-
-    sortOrder: {
-      type: Number,
-      default: 0,
+      trim: true,
     },
   },
   {
-    timestamps: true,
+    _id: false,
   },
 );
 
-const ProductImage = mongoose.model("ProductImage", productImageSchema);
+const productImageSchema =
+  new mongoose.Schema(
+    {
+      product: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product",
+        required: true,
+      },
+
+      imageUrl: {
+        type: String,
+        required: true,
+        trim: true,
+      },
+
+      alt: {
+        type: localizedAltSchema,
+        default: () => ({
+          en: "",
+          ar: "",
+        }),
+      },
+
+      isPrimary: {
+        type: Boolean,
+        default: false,
+      },
+
+      sortOrder: {
+        type: Number,
+        default: 0,
+      },
+    },
+    {
+      timestamps: true,
+    },
+  );
+
+const ProductImage =
+  mongoose.models.ProductImage ||
+  mongoose.model(
+    "ProductImage",
+    productImageSchema,
+  );
 
 export default ProductImage;

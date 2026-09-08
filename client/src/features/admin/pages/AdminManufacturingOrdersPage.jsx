@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import {
   getManufacturingOrders,
@@ -54,11 +55,29 @@ const formatDate = (value) => {
   return new Date(value).toLocaleDateString("en-GB");
 };
 
+const getLocalizedText = (value, language, fallback = "") => {
+  if (!value) return fallback;
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (typeof value === "object") {
+    return value[language] || value.en || value.ar || fallback;
+  }
+
+  return String(value);
+};
+
 const AdminManufacturingOrdersPage = () => {
+  const { t, i18n } = useTranslation();
+
   const [manufacturingOrders, setManufacturingOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState("");
+
+  const activeLanguage = i18n.language === "ar" ? "ar" : "en";
 
   const loadManufacturingOrders = async () => {
     try {
@@ -79,7 +98,7 @@ const AdminManufacturingOrdersPage = () => {
 
       setError(
         error?.response?.data?.message ||
-          "Unable to load manufacturing orders",
+          t("adminManufacturingOrders.unableToLoadManufacturingOrders"),
       );
     } finally {
       setIsLoading(false);
@@ -92,7 +111,9 @@ const AdminManufacturingOrdersPage = () => {
 
   const handleDelete = async (manufacturingOrder) => {
     const confirmed = window.confirm(
-      `Are you sure you want to permanently delete manufacturing order #${manufacturingOrder.orderNumber}?`,
+      t("adminManufacturingOrders.deleteConfirmation", {
+        orderNumber: manufacturingOrder.orderNumber,
+      }),
     );
 
     if (!confirmed) {
@@ -103,25 +124,17 @@ const AdminManufacturingOrdersPage = () => {
       setDeletingId(manufacturingOrder._id);
       setError("");
 
-      await deleteManufacturingOrder(
-        manufacturingOrder._id,
-      );
+      await deleteManufacturingOrder(manufacturingOrder._id);
 
       setManufacturingOrders((previous) =>
-        previous.filter(
-          (item) =>
-            item._id !== manufacturingOrder._id,
-        ),
+        previous.filter((item) => item._id !== manufacturingOrder._id),
       );
     } catch (error) {
-      console.error(
-        "Unable to delete manufacturing order:",
-        error,
-      );
+      console.error("Unable to delete manufacturing order:", error);
 
       setError(
         error?.response?.data?.message ||
-          "Unable to delete manufacturing order",
+          t("adminManufacturingOrders.unableToDeleteManufacturingOrder"),
       );
     } finally {
       setDeletingId("");
@@ -140,7 +153,7 @@ const AdminManufacturingOrdersPage = () => {
             </div>
 
             <p className="mt-6 text-[9px] font-semibold uppercase tracking-[0.25em] text-slate-gray">
-              Loading manufacturing orders...
+              {t("adminManufacturingOrders.loading")}
             </p>
           </div>
         </div>
@@ -164,32 +177,32 @@ const AdminManufacturingOrdersPage = () => {
             <span className="h-px w-8 bg-classic-gold/65" />
 
             <span className="text-[8px] font-semibold uppercase tracking-[0.34em] text-champagne-gold">
-              Production
+              {t("adminManufacturingOrders.production")}
             </span>
 
             <span className="h-px w-8 bg-classic-gold/65" />
           </div>
 
           <h1 className="font-serif text-[2.6rem] font-normal leading-none tracking-[-0.04em] text-soft-white sm:text-[3.2rem]">
-            Manufacturing Orders
+            {t("adminManufacturingOrders.manufacturingOrders")}
           </h1>
 
           <p className="mt-4 text-[12px] leading-7 text-premium-silver/70 sm:text-[13px]">
-            Smart unit assembly, production and packaging workflow.
+            {t("adminManufacturingOrders.description")}
           </p>
         </div>
       </div>
 
       {error && (
         <div className="rounded-[20px] border border-antique-gold/25 bg-soft-cream p-5 text-[11px] text-antique-gold">
-          {error}
+          {getLocalizedText(error, activeLanguage, error)}
 
           <button
             type="button"
             onClick={loadManufacturingOrders}
             className="ml-4 font-semibold underline"
           >
-            Retry
+            {t("adminManufacturingOrders.retry")}
           </button>
         </div>
       )}
@@ -201,11 +214,11 @@ const AdminManufacturingOrdersPage = () => {
           </div>
 
           <h2 className="mt-6 font-serif text-[1.8rem] text-midnight-navy">
-            No Manufacturing Orders
+            {t("adminManufacturingOrders.noManufacturingOrders")}
           </h2>
 
           <p className="mt-3 text-[11px] text-slate-gray">
-            There are no manufacturing orders yet.
+            {t("adminManufacturingOrders.noOrdersYet")}
           </p>
         </div>
       ) : (
@@ -215,31 +228,31 @@ const AdminManufacturingOrdersPage = () => {
               <thead>
                 <tr className="bg-midnight-navy">
                   <th className="px-6 py-5 text-[7px] font-semibold uppercase tracking-[0.2em] text-champagne-gold">
-                    Order
+                    {t("adminManufacturingOrders.order")}
                   </th>
 
                   <th className="px-6 py-5 text-[7px] font-semibold uppercase tracking-[0.2em] text-champagne-gold">
-                    Product
+                    {t("adminManufacturingOrders.product")}
                   </th>
 
                   <th className="px-6 py-5 text-[7px] font-semibold uppercase tracking-[0.2em] text-champagne-gold">
-                    Smart Unit
+                    {t("adminManufacturingOrders.smartUnit")}
                   </th>
 
                   <th className="px-6 py-5 text-[7px] font-semibold uppercase tracking-[0.2em] text-champagne-gold">
-                    Units
+                    {t("adminManufacturingOrders.units")}
                   </th>
 
                   <th className="px-6 py-5 text-[7px] font-semibold uppercase tracking-[0.2em] text-champagne-gold">
-                    Status
+                    {t("adminManufacturingOrders.status")}
                   </th>
 
                   <th className="px-6 py-5 text-[7px] font-semibold uppercase tracking-[0.2em] text-champagne-gold">
-                    Created
+                    {t("adminManufacturingOrders.created")}
                   </th>
 
                   <th className="px-6 py-5 text-right text-[7px] font-semibold uppercase tracking-[0.2em] text-champagne-gold">
-                    Action
+                    {t("adminManufacturingOrders.action")}
                   </th>
                 </tr>
               </thead>
@@ -250,22 +263,25 @@ const AdminManufacturingOrdersPage = () => {
 
                   const product = unit?.product || null;
 
-                  const productName =
-                    product?.name || "Unknown Product";
+                  const productName = getLocalizedText(
+                    product?.name,
+                    activeLanguage,
+                    t("adminManufacturingOrders.unknownProduct"),
+                  );
 
                   const unitName =
                     unit?.smartUnitInstance?.serialNumber ||
                     unit?.serialNumber ||
-                    unit?.smartUnit?.name ||
-                    "Not Assigned";
+                    getLocalizedText(
+                      unit?.smartUnit?.name,
+                      activeLanguage,
+                      t("adminManufacturingOrders.notAssigned"),
+                    );
 
                   const status =
-                    unit?.status ||
-                    manufacturingOrder?.status ||
-                    "pending";
+                    unit?.status || manufacturingOrder?.status || "pending";
 
-                  const isDeleting =
-                    deletingId === manufacturingOrder._id;
+                  const isDeleting = deletingId === manufacturingOrder._id;
 
                   return (
                     <tr
@@ -308,7 +324,13 @@ const AdminManufacturingOrdersPage = () => {
                             status,
                           )}`}
                         >
-                          {statusLabels[status] || status}
+                          {t(
+                            `adminManufacturingOrders.statusLabels.${status}`,
+                            {
+                              defaultValue:
+                                statusLabels[status] || status,
+                            },
+                          )}
                         </span>
                       </td>
 
@@ -324,24 +346,19 @@ const AdminManufacturingOrdersPage = () => {
                             to={`/admin/manufacturing/${manufacturingOrder._id}`}
                             className="inline-flex min-h-[38px] items-center justify-center gap-3 rounded-full bg-midnight-navy px-5 text-[7px] font-semibold uppercase tracking-[0.1em] text-soft-white transition hover:bg-rich-navy"
                           >
-                            Manage
-
-                            <span className="text-champagne-gold">
-                              →
-                            </span>
+                            {t("adminManufacturingOrders.manage")}
+                            <span className="text-champagne-gold">→</span>
                           </Link>
 
                           <button
                             type="button"
                             disabled={isDeleting}
-                            onClick={() =>
-                              handleDelete(manufacturingOrder)
-                            }
+                            onClick={() => handleDelete(manufacturingOrder)}
                             className="inline-flex min-h-[38px] items-center justify-center rounded-full border border-antique-gold/30 bg-soft-white px-5 text-[7px] font-semibold uppercase tracking-[0.1em] text-antique-gold transition-all duration-300 hover:-translate-y-0.5 hover:border-antique-gold/60 hover:bg-soft-cream hover:text-midnight-navy disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
                           >
                             {isDeleting
-                              ? "Deleting..."
-                              : "Delete"}
+                              ? t("adminManufacturingOrders.deleting")
+                              : t("adminManufacturingOrders.delete")}
                           </button>
                         </div>
                       </td>
@@ -355,9 +372,7 @@ const AdminManufacturingOrdersPage = () => {
           <div className="flex items-center justify-center gap-3 border-t border-light-champagne px-6 py-4">
             <span className="h-px w-8 bg-classic-gold/30" />
 
-            <span className="text-classic-gold">
-              ✦
-            </span>
+            <span className="text-classic-gold">✦</span>
 
             <span className="h-px w-8 bg-classic-gold/30" />
           </div>

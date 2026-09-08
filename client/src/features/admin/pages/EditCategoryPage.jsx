@@ -1,13 +1,6 @@
-import {
-  useEffect,
-  useState,
-} from "react";
+import { useEffect, useState } from "react";
 
-import {
-  Link,
-  useNavigate,
-  useParams,
-} from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import {
   getCategory,
@@ -15,121 +8,67 @@ import {
   uploadImage,
 } from "../services/categoryApi";
 
+import { useTranslation } from "react-i18next";
+
 const getBackendOrigin = () => {
-  const backendUrl =
-    import.meta.env.VITE_BACKEND_URL;
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   if (backendUrl) {
-    return String(
-      backendUrl,
-    ).replace(/\/+$/, "");
+    return String(backendUrl).replace(/\/+$/, "");
   }
 
-  const apiUrl =
-    import.meta.env.VITE_API_URL;
+  const apiUrl = import.meta.env.VITE_API_URL;
 
-  if (
-    apiUrl &&
-    /^https?:\/\//i.test(
-      apiUrl,
-    )
-  ) {
+  if (apiUrl && /^https?:\/\//i.test(apiUrl)) {
     return String(apiUrl)
-      .replace(
-        /\/api\/?$/i,
-        "",
-      )
-      .replace(
-        /\/+$/,
-        "",
-      );
+      .replace(/\/api\/?$/i, "")
+      .replace(/\/+$/, "");
   }
 
-  if (
-    typeof window !==
-    "undefined"
-  ) {
+  if (typeof window !== "undefined") {
     return window.location.origin;
   }
 
   return "";
 };
 
-const BACKEND_URL =
-  getBackendOrigin();
+const BACKEND_URL = getBackendOrigin();
 
-const getImageUrl = (
-  value,
-) => {
+const getImageUrl = (value) => {
   if (!value) {
     return "";
   }
 
   let image =
-    typeof value ===
-    "string"
+    typeof value === "string"
       ? value.trim()
-      : value.imageUrl ||
-        value.url ||
-        value.path ||
-        value.image ||
-        "";
+      : value.imageUrl || value.url || value.path || value.image || "";
 
   if (!image) {
     return "";
   }
 
-  if (
-    image.startsWith(
-      "blob:",
-    ) ||
-    image.startsWith(
-      "data:",
-    )
-  ) {
+  if (image.startsWith("blob:") || image.startsWith("data:")) {
     return image;
   }
 
   if (
-    /^https?:\/\/localhost:5000/i.test(
-      image,
-    ) ||
-    /^https?:\/\/127\.0\.0\.1:5000/i.test(
-      image,
-    )
+    /^https?:\/\/localhost:5000/i.test(image) ||
+    /^https?:\/\/127\.0\.0\.1:5000/i.test(image)
   ) {
     image = image.replace(
       /^https?:\/\/(?:localhost|127\.0\.0\.1):5000/i,
       "",
     );
-  } else if (
-    image.startsWith(
-      "http://",
-    ) ||
-    image.startsWith(
-      "https://",
-    )
-  ) {
+  } else if (image.startsWith("http://") || image.startsWith("https://")) {
     return image;
   }
 
-  if (
-    image.startsWith(
-      "/api/uploads/",
-    )
-  ) {
-    image =
-      image.replace(
-        /^\/api/,
-        "",
-      );
+  if (image.startsWith("/api/uploads/")) {
+    image = image.replace(/^\/api/, "");
   }
 
-  if (
-    !image.startsWith(
-      "/",
-    )
-  ) {
+  if (!image.startsWith("/")) {
     image = `/${image}`;
   }
 
@@ -137,188 +76,111 @@ const getImageUrl = (
 };
 
 const EditCategoryPage = () => {
-  const { id } =
-    useParams();
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
 
-  const navigate =
-    useNavigate();
-
-  const [
-    formData,
-    setFormData,
-  ] = useState({
-    name: "",
-    description: "",
+  const [formData, setFormData] = useState({
+    nameEn: "",
+    nameAr: "",
+    descriptionEn: "",
+    descriptionAr: "",
     image: "",
     sortOrder: 0,
   });
 
-  const [image, setImage] =
-    useState(null);
+  const [image, setImage] = useState(null);
 
-  const [
-    preview,
-    setPreview,
-  ] = useState("");
+  const [preview, setPreview] = useState("");
 
-  const [
-    removeImage,
-    setRemoveImage,
-  ] = useState(false);
+  const [removeImage, setRemoveImage] = useState(false);
 
-  const [
-    isLoading,
-    setIsLoading,
-  ] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [
-    isSaving,
-    setIsSaving,
-  ] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
-  const generateSlug = (
-    text,
-  ) => {
+  const generateSlug = (text) => {
     return text
       .trim()
       .toLowerCase()
       .replace(/\s+/g, "-")
-      .replace(
-        /[^\w-]+/g,
-        "",
-      )
-      .replace(
-        /--+/g,
-        "-",
-      )
-      .replace(
-        /^-+|-+$/g,
-        "",
-      );
+      .replace(/[^\w-]+/g, "")
+      .replace(/--+/g, "-")
+      .replace(/^-+|-+$/g, "");
   };
 
   useEffect(() => {
-    const loadCategory =
-      async () => {
-        try {
-          setIsLoading(
-            true,
-          );
+    const loadCategory = async () => {
+      try {
+        setIsLoading(true);
+        setError("");
 
-          setError("");
+        const response = await getCategory(id);
 
-          const response =
-            await getCategory(
-              id,
-            );
+        const category =
+          response?.data?.category || response?.category || response?.data;
 
-          const category =
-            response?.data
-              ?.category ||
-            response?.category ||
-            response?.data;
-
-          if (!category) {
-            throw new Error(
-              "Category not found.",
-            );
-          }
-
-          setFormData({
-            name:
-              category.name ||
-              "",
-
-            description:
-              category.description ||
-              "",
-
-            image:
-              category.image ||
-              "",
-
-            sortOrder:
-              category.sortOrder ??
-              0,
-          });
-
-          if (
-            category.image
-          ) {
-            setPreview(
-              getImageUrl(
-                category.image,
-              ),
-            );
-          } else {
-            setPreview("");
-          }
-
-          setRemoveImage(
-            false,
-          );
-        } catch (error) {
-          console.error(
-            "Load category error:",
-            error,
-          );
-
-          setError(
-            error?.response
-              ?.data?.message ||
-              error?.message ||
-              "Failed to load category.",
-          );
-        } finally {
-          setIsLoading(
-            false,
-          );
+        if (!category) {
+          throw new Error(t("editCategory.categoryNotFound"));
         }
-      };
+
+        setFormData({
+          nameEn: category.name?.en || "",
+          nameAr: category.name?.ar || "",
+          descriptionEn: category.description?.en || "",
+          descriptionAr: category.description?.ar || "",
+          image: category.image || "",
+          sortOrder: category.sortOrder ?? 0,
+        });
+
+        if (category.image) {
+          setPreview(getImageUrl(category.image));
+        } else {
+          setPreview("");
+        }
+
+        setRemoveImage(false);
+      } catch (error) {
+        console.error("Load category error:", error);
+
+        setError(
+          error?.response?.data?.message ||
+            error?.message ||
+            t("editCategory.failedToLoadCategory"),
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
     if (id) {
       loadCategory();
     }
   }, [id]);
 
-  const handleChange = (
-    event,
-  ) => {
-    const {
-      name,
-      value,
-    } = event.target;
+  const handleChange = (event) => {
+    const { name, value } = event.target;
 
-    setFormData(
-      (previousData) => ({
-        ...previousData,
-        [name]: value,
-      }),
-    );
+    setFormData((previousData) => ({
+      ...previousData,
+      [name]: value,
+    }));
 
     setError("");
   };
 
-  const handleImageChange = (
-    event,
-  ) => {
-    const file =
-      event.target.files?.[0];
+  const handleImageChange = (event) => {
+    const file = event.target.files?.[0];
 
     if (!file) {
       return;
     }
 
-    if (
-      !file.type.startsWith(
-        "image/",
-      )
-    ) {
+    if (!file.type.startsWith("image/")) {
       setError(
-        "Please select a valid image file.",
+        t("editCategory.validImageFile"),
       );
 
       event.target.value = "";
@@ -326,15 +188,11 @@ const EditCategoryPage = () => {
       return;
     }
 
-    const maxSize =
-      5 * 1024 * 1024;
+    const maxSize = 5 * 1024 * 1024;
 
-    if (
-      file.size >
-      maxSize
-    ) {
+    if (file.size > maxSize) {
       setError(
-        "Image size must be less than 5MB.",
+        t("editCategory.imageSizeLimit"),
       );
 
       event.target.value = "";
@@ -344,211 +202,150 @@ const EditCategoryPage = () => {
 
     setError("");
 
-    if (
-      preview?.startsWith(
-        "blob:",
-      )
-    ) {
-      URL.revokeObjectURL(
-        preview,
-      );
+    if (preview?.startsWith("blob:")) {
+      URL.revokeObjectURL(preview);
     }
 
-    const newPreview =
-      URL.createObjectURL(
-        file,
-      );
+    const newPreview = URL.createObjectURL(file);
 
     setImage(file);
 
-    setPreview(
-      newPreview,
-    );
+    setPreview(newPreview);
 
-    setRemoveImage(
-      false,
-    );
+    setRemoveImage(false);
   };
 
-  const handleRemoveImage =
-    () => {
+  const handleRemoveImage = () => {
+    if (image) {
+      if (preview?.startsWith("blob:")) {
+        URL.revokeObjectURL(preview);
+      }
+
+      setImage(null);
+
+      if (formData.image) {
+        setPreview(getImageUrl(formData.image));
+      } else {
+        setPreview("");
+      }
+
+      return;
+    }
+
+    setRemoveImage(true);
+
+    setPreview("");
+  };
+
+  const handleRestoreImage = () => {
+    setRemoveImage(false);
+
+    if (formData.image) {
+      setPreview(getImageUrl(formData.image));
+    }
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    setError("");
+
+    const nameEn = formData.nameEn.trim();
+
+    const nameAr = formData.nameAr.trim();
+
+    if (!nameEn) {
+      setError(
+        t("editCategory.englishNameRequired"),
+      );
+
+      return;
+    }
+
+    if (!nameAr) {
+      setError(
+        t("editCategory.arabicNameRequired"),
+      );
+
+      return;
+    }
+
+    const slug = generateSlug(nameEn);
+
+    if (!slug) {
+      setError(
+        t("editCategory.unableToGenerateSlug"),
+      );
+
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      let imageUrl = formData.image || "";
+
+      if (removeImage) {
+        imageUrl = "";
+      }
+
       if (image) {
-        if (
-          preview?.startsWith(
-            "blob:",
-          )
-        ) {
-          URL.revokeObjectURL(
-            preview,
-          );
-        }
+        const uploadData = new FormData();
 
-        setImage(null);
+        uploadData.append("image", image);
 
-        if (
-          formData.image
-        ) {
-          setPreview(
-            getImageUrl(
-              formData.image,
-            ),
-          );
-        } else {
-          setPreview("");
-        }
+        const uploadResponse = await uploadImage(uploadData);
 
-        return;
-      }
-
-      setRemoveImage(
-        true,
-      );
-
-      setPreview("");
-  };
-
-  const handleRestoreImage =
-    () => {
-      setRemoveImage(
-        false,
-      );
-
-      if (
-        formData.image
-      ) {
-        setPreview(
-          getImageUrl(
-            formData.image,
-          ),
-        );
-      }
-    };
-
-  const handleSubmit =
-    async (event) => {
-      event.preventDefault();
-
-      setError("");
-
-      const categoryName =
-        formData.name.trim();
-
-      if (!categoryName) {
-        setError(
-          "Category name is required.",
-        );
-
-        return;
-      }
-
-      setIsSaving(true);
-
-      try {
-        let imageUrl =
-          formData.image ||
+        imageUrl =
+          uploadResponse?.image ||
+          uploadResponse?.data?.image ||
+          uploadResponse?.imageUrl ||
+          uploadResponse?.data?.imageUrl ||
+          uploadResponse?.url ||
+          uploadResponse?.data?.url ||
+          uploadResponse?.path ||
+          uploadResponse?.data?.path ||
           "";
 
-        if (removeImage) {
-          imageUrl = "";
-        }
-
-        if (image) {
-          const uploadData =
-            new FormData();
-
-          uploadData.append(
-            "image",
-            image,
-          );
-
-          const uploadResponse =
-            await uploadImage(
-              uploadData,
-            );
-
-          imageUrl =
-            uploadResponse
-              ?.image ||
-            uploadResponse
-              ?.data?.image ||
-            uploadResponse
-              ?.imageUrl ||
-            uploadResponse
-              ?.data
-              ?.imageUrl ||
-            uploadResponse
-              ?.url ||
-            uploadResponse
-              ?.data?.url ||
-            uploadResponse
-              ?.path ||
-            uploadResponse
-              ?.data?.path ||
-            "";
-
-          if (!imageUrl) {
-            throw new Error(
-              "Image uploaded successfully, but the image URL was not returned.",
-            );
-          }
-        }
-
-        const slug =
-          generateSlug(
-            categoryName,
-          );
-
-        if (!slug) {
+        if (!imageUrl) {
           throw new Error(
-            "Unable to generate category slug.",
+            t("editCategory.imageUrlNotReturned"),
           );
         }
-
-        await updateCategory(
-          id,
-          {
-            name:
-              categoryName,
-
-            slug,
-
-            description:
-              formData.description.trim(),
-
-            image:
-              imageUrl,
-
-            sortOrder:
-              Number(
-                formData.sortOrder ||
-                  0,
-              ),
-          },
-        );
-
-        navigate(
-          "/admin/categories",
-        );
-      } catch (error) {
-        console.error(
-          "Update category error:",
-          error,
-        );
-
-        setError(
-          error?.response
-            ?.data?.message ||
-            error?.response
-              ?.data?.error ||
-            error?.message ||
-            "Failed to update category.",
-        );
-      } finally {
-        setIsSaving(
-          false,
-        );
       }
-    };
+
+      await updateCategory(id, {
+        name: {
+          en: nameEn,
+          ar: nameAr,
+        },
+
+        slug,
+
+        description: {
+          en: formData.descriptionEn.trim(),
+          ar: formData.descriptionAr.trim(),
+        },
+
+        image: imageUrl,
+
+        sortOrder: Number(formData.sortOrder || 0),
+      });
+
+      navigate("/admin/categories");
+    } catch (error) {
+      console.error("Update category error:", error);
+
+      setError(
+        error?.response?.data?.message ||
+          error?.response?.data?.error ||
+          error?.message ||
+          t("editCategory.failedToUpdateCategory"),
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -559,7 +356,7 @@ const EditCategoryPage = () => {
           </div>
 
           <p className="mt-5 text-[9px] font-semibold uppercase tracking-[0.24em] text-slate-gray">
-            Loading Category...
+            {t("editCategory.loadingCategory")}
           </p>
         </div>
       </div>
@@ -575,16 +372,16 @@ const EditCategoryPage = () => {
               <span className="h-px w-8 bg-classic-gold/60" />
 
               <div className="text-[8px] font-semibold uppercase tracking-[0.25em] text-antique-gold">
-                Category Management
+                {t("editCategory.categoryManagement")}
               </div>
             </div>
 
             <h1 className="font-serif text-[2.5rem] font-normal leading-none tracking-[-0.04em]">
-              Edit Category
+              {t("editCategory.editCategory")}
             </h1>
 
             <p className="mt-3 text-[11px] text-slate-gray">
-              Update category information
+              {t("editCategory.updateCategoryInformation")}
             </p>
           </div>
 
@@ -592,7 +389,7 @@ const EditCategoryPage = () => {
             to="/admin/categories"
             className="inline-flex min-h-[46px] w-fit items-center justify-center rounded-full border border-champagne-gold/30 bg-soft-white px-5 text-[8px] font-semibold uppercase"
           >
-            ← Back
+            ← {t("editCategory.back")}
           </Link>
         </div>
       </header>
@@ -607,74 +404,90 @@ const EditCategoryPage = () => {
         <div className="overflow-hidden rounded-[28px] border border-light-champagne bg-soft-white">
           <div className="border-b border-light-champagne bg-warm-ivory/50 px-7 py-6">
             <h2 className="font-serif text-[1.5rem]">
-              Category Information
+              {t("editCategory.categoryInformation")}
             </h2>
           </div>
 
           <form
-            onSubmit={
-              handleSubmit
-            }
+            onSubmit={handleSubmit}
             className="space-y-8 p-7 sm:p-9"
           >
-            <div>
-              <label className="mb-2 block text-[9px] font-semibold uppercase">
-                Category Name
-              </label>
+            <div className="grid gap-6 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-[9px] font-semibold uppercase">
+                  {t("editCategory.categoryNameEnglish")}
+                </label>
 
-              <input
-                name="name"
-                value={
-                  formData.name
-                }
-                onChange={
-                  handleChange
-                }
-                required
-                className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5"
-              />
+                <input
+                  name="nameEn"
+                  value={formData.nameEn}
+                  onChange={handleChange}
+                  required
+                  className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-[9px] font-semibold">
+                  {t("editCategory.categoryNameArabic")}
+                </label>
+
+                <input
+                  name="nameAr"
+                  value={formData.nameAr}
+                  onChange={handleChange}
+                  required
+                  dir="rtl"
+                  className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5"
+                />
+              </div>
             </div>
 
             <div>
               <label className="mb-2 block text-[9px] font-semibold uppercase">
-                Description
+                {t("editCategory.slug")}
               </label>
 
-              <textarea
-                rows={5}
-                name="description"
-                value={
-                  formData.description
-                }
-                onChange={
-                  handleChange
-                }
-                className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-4"
-              />
+              <div className="rounded-[14px] border border-light-champagne bg-soft-cream px-5 py-4 font-mono text-[10px] text-slate-gray">
+                {generateSlug(formData.nameEn) ||
+                  t("editCategory.categorySlug")}
+              </div>
             </div>
 
-            <div>
-              <label className="mb-2 block text-[9px] font-semibold uppercase">
-                Sort Order
-              </label>
+            <div className="grid gap-6 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-[9px] font-semibold uppercase">
+                  {t("editCategory.descriptionEnglish")}
+                </label>
 
-              <input
-                type="number"
-                name="sortOrder"
-                min="0"
-                value={
-                  formData.sortOrder
-                }
-                onChange={
-                  handleChange
-                }
-                className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5"
-              />
+                <textarea
+                  rows={5}
+                  name="descriptionEn"
+                  value={formData.descriptionEn}
+                  onChange={handleChange}
+                  className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-4"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-[9px] font-semibold">
+                  {t("editCategory.descriptionArabic")}
+                </label>
+
+                <textarea
+                  rows={5}
+                  name="descriptionAr"
+                  value={formData.descriptionAr}
+                  onChange={handleChange}
+                  dir="rtl"
+                  className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-4"
+                />
+              </div>
             </div>
 
             <div className="rounded-[20px] border border-light-champagne bg-warm-ivory/55 p-6">
               <h3 className="font-serif text-[1.25rem]">
-                Category Image
+                {t("editCategory.categoryImage")}
               </h3>
 
               {!preview ? (
@@ -685,15 +498,13 @@ const EditCategoryPage = () => {
                     </span>
 
                     <span className="mt-3 text-[10px] font-semibold">
-                      Upload Image
+                      {t("editCategory.uploadImage")}
                     </span>
 
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={
-                        handleImageChange
-                      }
+                      onChange={handleImageChange}
                       className="hidden"
                     />
                   </label>
@@ -701,12 +512,10 @@ const EditCategoryPage = () => {
                   {removeImage && (
                     <button
                       type="button"
-                      onClick={
-                        handleRestoreImage
-                      }
+                      onClick={handleRestoreImage}
                       className="mt-4 rounded-full border border-light-champagne px-4 py-2 text-[8px]"
                     >
-                      Undo Remove
+                      {t("editCategory.undoRemove")}
                     </button>
                   )}
                 </>
@@ -714,18 +523,14 @@ const EditCategoryPage = () => {
                 <div className="mt-5 rounded-[18px] border border-light-champagne bg-soft-white p-4">
                   <div className="relative">
                     <img
-                      src={
-                        preview
-                      }
-                      alt="Category"
+                      src={preview}
+                      alt={t("editCategory.category")}
                       className="h-72 w-full rounded-[15px] object-contain"
                     />
 
                     <button
                       type="button"
-                      onClick={
-                        handleRemoveImage
-                      }
+                      onClick={handleRemoveImage}
                       className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-midnight-navy text-white"
                     >
                       ×
@@ -733,14 +538,12 @@ const EditCategoryPage = () => {
                   </div>
 
                   <label className="mt-4 inline-flex cursor-pointer rounded-full border border-light-champagne px-4 py-2 text-[8px]">
-                    Change Image
+                    {t("editCategory.changeImage")}
 
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={
-                        handleImageChange
-                      }
+                      onChange={handleImageChange}
                       className="hidden"
                     />
                   </label>
@@ -753,19 +556,17 @@ const EditCategoryPage = () => {
                 to="/admin/categories"
                 className="rounded-[13px] border border-light-champagne px-7 py-4 text-[8px] font-semibold uppercase"
               >
-                Cancel
+                {t("editCategory.cancel")}
               </Link>
 
               <button
                 type="submit"
-                disabled={
-                  isSaving
-                }
+                disabled={isSaving}
                 className="rounded-[13px] bg-midnight-navy px-7 py-4 text-[8px] font-semibold uppercase text-white disabled:opacity-50"
               >
                 {isSaving
-                  ? "Saving..."
-                  : "Update Category"}
+                  ? t("editCategory.saving")
+                  : t("editCategory.updateCategory")}
               </button>
             </div>
           </form>

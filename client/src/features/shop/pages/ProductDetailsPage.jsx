@@ -1,6 +1,9 @@
+
 import { useEffect, useMemo, useState } from "react";
 
 import { Link, useParams, useSearchParams } from "react-router-dom";
+
+import { useTranslation } from "react-i18next";
 
 import {
   getShopProduct,
@@ -110,33 +113,38 @@ const getImageUrl = (value) => {
   return `${API_URL}${image.startsWith("/") ? "" : "/"}${image}`;
 };
 
+const getLocalizedText = (value, language = "en") => {
+  if (
+    value &&
+    typeof value === "object" &&
+    !Array.isArray(value)
+  ) {
+    return value[language] || value.en || value.ar || "";
+  }
+
+  return value || "";
+};
+
 const ProductDetailsPage = () => {
   const { id } = useParams();
-
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const { t, i18n } = useTranslation();
+
+  const activeLanguage =
+    i18n.language === "ar" ? "ar" : "en";
+
   const [product, setProduct] = useState(null);
-
   const [images, setImages] = useState([]);
-
   const [variants, setVariants] = useState([]);
-
   const [productTechnologies, setProductTechnologies] = useState([]);
-
   const [selectedTechnology, setSelectedTechnology] = useState(null);
-
   const [selectedVariant, setSelectedVariant] = useState(null);
-
   const [selectedColor, setSelectedColor] = useState("");
-
   const [selectedSize, setSelectedSize] = useState("");
-
   const [selectedImage, setSelectedImage] = useState("");
-
   const [quantity, setQuantity] = useState(1);
-
   const [isLoading, setIsLoading] = useState(true);
-
   const [error, setError] = useState("");
 
   const { addToCart, isLoading: isCartLoading } = useCart();
@@ -153,23 +161,14 @@ const ProductDetailsPage = () => {
     const loadProduct = async () => {
       try {
         setIsLoading(true);
-
         setError("");
-
         setQuantity(1);
-
         setAddedToCart(false);
-
         setSelectedColor("");
-
         setSelectedSize("");
-
         setSelectedVariant(null);
-
         setSelectedImage("");
-
         setSelectedTechnology(null);
-
         setProductTechnologies([]);
 
         const [
@@ -179,11 +178,8 @@ const ProductDetailsPage = () => {
           technologiesResponse,
         ] = await Promise.all([
           getShopProduct(id),
-
           getProductImages(id).catch(() => []),
-
           getProductVariants(id).catch(() => []),
-
           getProductTechnologies(id).catch(() => []),
         ]);
 
@@ -194,7 +190,7 @@ const ProductDetailsPage = () => {
           productResponse;
 
         if (!currentProduct) {
-          throw new Error("Product not found.");
+          throw new Error(t("productDetails.productNotFound"));
         }
 
         setProduct(currentProduct);
@@ -205,20 +201,29 @@ const ProductDetailsPage = () => {
           imagesResponse ||
           [];
 
-        const safeImages = Array.isArray(loadedImages) ? loadedImages : [];
+        const safeImages = Array.isArray(loadedImages)
+          ? loadedImages
+          : [];
 
         setImages(safeImages);
 
         if (safeImages.length > 0) {
-          const primaryImage = safeImages.find((image) => image.isPrimary);
+          const primaryImage = safeImages.find(
+            (image) => image.isPrimary,
+          );
 
           setSelectedImage(
-            getImageUrl(primaryImage?.imageUrl || safeImages[0]?.imageUrl),
+            getImageUrl(
+              primaryImage?.imageUrl ||
+                safeImages[0]?.imageUrl,
+            ),
           );
         } else {
           setSelectedImage(
             getImageUrl(
-              currentProduct.primaryImage || currentProduct.image || "",
+              currentProduct.primaryImage ||
+                currentProduct.image ||
+                "",
             ),
           );
         }
@@ -230,15 +235,14 @@ const ProductDetailsPage = () => {
           [];
 
         const activeVariants = Array.isArray(loadedVariants)
-          ? loadedVariants.filter((variant) => variant.isActive !== false)
+          ? loadedVariants.filter(
+              (variant) => variant.isActive !== false,
+            )
           : [];
 
         setVariants(activeVariants);
-
         setSelectedVariant(null);
-
         setSelectedColor("");
-
         setSelectedSize("");
 
         const loadedTechnologies =
@@ -249,7 +253,9 @@ const ProductDetailsPage = () => {
           technologiesResponse ||
           [];
 
-        const safeTechnologies = Array.isArray(loadedTechnologies)
+        const safeTechnologies = Array.isArray(
+          loadedTechnologies,
+        )
           ? loadedTechnologies.filter(
               (technology) =>
                 technology?.status !== "inactive" &&
@@ -269,7 +275,9 @@ const ProductDetailsPage = () => {
 
         const requestedWithoutTechnology =
           new URLSearchParams(
-            typeof window !== "undefined" ? window.location.search : "",
+            typeof window !== "undefined"
+              ? window.location.search
+              : "",
           ).get("technology") === "none";
 
         const startWithoutTechnology =
@@ -278,7 +286,9 @@ const ProductDetailsPage = () => {
             : requestedWithoutTechnology;
 
         setSelectedTechnology(
-          startWithoutTechnology ? null : defaultTechnology,
+          startWithoutTechnology
+            ? null
+            : defaultTechnology,
         );
 
         if (
@@ -286,7 +296,9 @@ const ProductDetailsPage = () => {
           requestedWithoutTechnology
         ) {
           const nextParams = new URLSearchParams(
-            typeof window !== "undefined" ? window.location.search : "",
+            typeof window !== "undefined"
+              ? window.location.search
+              : "",
           );
 
           nextParams.delete("technology");
@@ -301,7 +313,7 @@ const ProductDetailsPage = () => {
         setError(
           error?.response?.data?.message ||
             error?.message ||
-            "Failed to load product.",
+            t("productDetails.loadError"),
         );
       } finally {
         setIsLoading(false);
@@ -315,11 +327,16 @@ const ProductDetailsPage = () => {
 
   const technologyModels = product?.technologyModels || [];
 
-  const technologyRequired = product?.technologyRequired === true;
+  const technologyRequired =
+    product?.technologyRequired === true;
 
   const colors = useMemo(() => {
     return [
-      ...new Set(variants.map((variant) => variant.color).filter(Boolean)),
+      ...new Set(
+        variants
+          .map((variant) => variant.color)
+          .filter(Boolean),
+      ),
     ];
   }, [variants]);
 
@@ -331,7 +348,10 @@ const ProductDetailsPage = () => {
     return [
       ...new Set(
         variants
-          .filter((variant) => variant.color === selectedColor)
+          .filter(
+            (variant) =>
+              variant.color === selectedColor,
+          )
           .map((variant) => variant.size)
           .filter(Boolean),
       ),
@@ -341,25 +361,31 @@ const ProductDetailsPage = () => {
   const handleColorChange = (color) => {
     setSelectedColor(color);
 
-    const colorVariants = variants.filter((variant) => variant.color === color);
+    const colorVariants = variants.filter(
+      (variant) => variant.color === color,
+    );
 
     if (colorVariants.length === 0) {
       return;
     }
 
     setSelectedVariant(null);
-
     setSelectedSize("");
-
     setQuantity(1);
 
     const firstColorVariant = colorVariants[0];
 
     if (firstColorVariant.image) {
-      setSelectedImage(getImageUrl(firstColorVariant.image));
+      setSelectedImage(
+        getImageUrl(firstColorVariant.image),
+      );
     } else {
       setSelectedImage(
-        getImageUrl(product?.primaryImage || product?.image || ""),
+        getImageUrl(
+          product?.primaryImage ||
+            product?.image ||
+            "",
+        ),
       );
     }
   };
@@ -368,7 +394,9 @@ const ProductDetailsPage = () => {
     setSelectedSize(size);
 
     const variant = variants.find(
-      (item) => item.color === selectedColor && item.size === size,
+      (item) =>
+        item.color === selectedColor &&
+        item.size === size,
     );
 
     if (!variant) {
@@ -378,35 +406,47 @@ const ProductDetailsPage = () => {
     setSelectedVariant(variant);
 
     if (variant.image) {
-      setSelectedImage(getImageUrl(variant.image));
+      setSelectedImage(
+        getImageUrl(variant.image),
+      );
     } else {
       setSelectedImage(
-        getImageUrl(product?.primaryImage || product?.image || ""),
+        getImageUrl(
+          product?.primaryImage ||
+            product?.image ||
+            "",
+        ),
       );
     }
 
     setQuantity(1);
   };
 
-  const setTechnologyPreferenceInUrl = (withoutTechnology) => {
+  const setTechnologyPreferenceInUrl = (
+    withoutTechnology,
+  ) => {
     const nextParams = new URLSearchParams(searchParams);
 
-    if (withoutTechnology && !technologyRequired) {
+    if (
+      withoutTechnology &&
+      !technologyRequired
+    ) {
       nextParams.set("technology", "none");
     } else {
       nextParams.delete("technology");
     }
 
-    setSearchParams(nextParams, { replace: true });
+    setSearchParams(nextParams, {
+      replace: true,
+    });
   };
 
-  const handleTechnologyChange = (productTechnology) => {
+  const handleTechnologyChange = (
+    productTechnology,
+  ) => {
     setSelectedTechnology(productTechnology);
-
     setTechnologyPreferenceInUrl(false);
-
     setQuantity(1);
-
     setAddedToCart(false);
   };
 
@@ -416,24 +456,27 @@ const ProductDetailsPage = () => {
     }
 
     setSelectedTechnology(null);
-
     setTechnologyPreferenceInUrl(true);
-
     setQuantity(1);
-
     setAddedToCart(false);
   };
 
   const technologyExtraPrice = Number(
-    selectedTechnology?.extraPrice ?? selectedTechnology?.additionalPrice ?? 0,
+    selectedTechnology?.extraPrice ??
+      selectedTechnology?.additionalPrice ??
+      0,
   );
 
   const baseSellingPrice = Number(
-    selectedVariant?.price ?? product?.price ?? 0,
+    selectedVariant?.price ??
+      product?.price ??
+      0,
   );
 
   const baseComparePrice = Number(
-    selectedVariant?.compareAtPrice ?? product?.comparePrice ?? 0,
+    selectedVariant?.compareAtPrice ??
+      product?.comparePrice ??
+      0,
   );
 
   const hasDiscount =
@@ -441,42 +484,58 @@ const ProductDetailsPage = () => {
     baseSellingPrice > 0 &&
     baseComparePrice > baseSellingPrice;
 
-  const currentPrice = baseSellingPrice + technologyExtraPrice;
+  const currentPrice =
+    baseSellingPrice + technologyExtraPrice;
 
   const comparePrice = hasDiscount
     ? baseComparePrice + technologyExtraPrice
     : 0;
 
-  const saving = hasDiscount ? comparePrice - currentPrice : 0;
+  const saving = hasDiscount
+    ? comparePrice - currentPrice
+    : 0;
 
   const discountPercentage =
     hasDiscount && comparePrice > 0
       ? Math.round((saving / comparePrice) * 100)
       : 0;
 
-  const currentStock = selectedVariant?.stock ?? product?.stock ?? 0;
+  const currentStock =
+    selectedVariant?.stock ??
+    product?.stock ??
+    0;
 
   const currentImage =
     selectedImage ||
     getImageUrl(
-      selectedVariant?.image || product?.primaryImage || product?.image || "",
+      selectedVariant?.image ||
+        product?.primaryImage ||
+        product?.image ||
+        "",
     );
 
-  const isOutOfStock = Number(currentStock || 0) <= 0;
+  const isOutOfStock =
+    Number(currentStock || 0) <= 0;
 
-  const isInactive = product?.status !== "active";
+  const isInactive =
+    product?.status !== "active";
 
-  const isUnavailable = isOutOfStock || isInactive;
+  const isUnavailable =
+    isOutOfStock || isInactive;
 
   const increaseQuantity = () => {
     if (quantity < currentStock) {
-      setQuantity((previous) => previous + 1);
+      setQuantity(
+        (previous) => previous + 1,
+      );
     }
   };
 
   const decreaseQuantity = () => {
     if (quantity > 1) {
-      setQuantity((previous) => previous - 1);
+      setQuantity(
+        (previous) => previous - 1,
+      );
     }
   };
 
@@ -485,15 +544,25 @@ const ProductDetailsPage = () => {
       return;
     }
 
-    if (variants.length > 0 && !selectedVariant) {
-      alert("Please select a variant.");
+    if (
+      variants.length > 0 &&
+      !selectedVariant
+    ) {
+      alert(
+        t("productDetails.selectVariant"),
+      );
 
       return;
     }
 
-    if (technologyRequired && !selectedTechnology) {
+    if (
+      technologyRequired &&
+      !selectedTechnology
+    ) {
       alert(
-        "Smart Technology is required for this product. Please select a technology option.",
+        t(
+          "productDetails.technologyRequiredAlert",
+        ),
       );
 
       return;
@@ -509,9 +578,66 @@ const ProductDetailsPage = () => {
 
       setAddedToCart(true);
     } catch (error) {
-      console.error("Add To Cart Error:", error);
+      console.error(
+        "Add To Cart Error:",
+        error,
+      );
     }
   };
+
+  const localizedProductName =
+    getLocalizedText(
+      product?.name,
+      activeLanguage,
+    );
+
+  const localizedShortDescription =
+    getLocalizedText(
+      product?.shortDescription,
+      activeLanguage,
+    );
+
+  const localizedDescription =
+    getLocalizedText(
+      product?.description,
+      activeLanguage,
+    );
+
+  const localizedCareInstructions =
+    getLocalizedText(
+      product?.careInstructions,
+      activeLanguage,
+    );
+
+  const localizedSeoDescription =
+    getLocalizedText(
+      product?.seoDescription,
+      activeLanguage,
+    );
+
+  const localizedCategoryName =
+    getLocalizedText(
+      product?.category?.name,
+      activeLanguage,
+    );
+
+  const localizedProductMaterial =
+    getLocalizedText(
+      product?.material,
+      activeLanguage,
+    );
+
+  const localizedProductColor =
+    getLocalizedText(
+      product?.color,
+      activeLanguage,
+    );
+
+  const localizedProductTags =
+    getLocalizedText(
+      product?.tags,
+      activeLanguage,
+    );
 
   if (isLoading) {
     return (
@@ -520,11 +646,13 @@ const ProductDetailsPage = () => {
 
         <div className="relative text-center">
           <div className="relative mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-champagne-gold/30 bg-midnight-navy text-lg text-champagne-gold shadow-[0_14px_35px_rgba(18,38,58,0.18)]">
-            <span className="animate-pulse">✦</span>
+            <span className="animate-pulse">
+              ✦
+            </span>
           </div>
 
           <p className="mt-6 text-[9px] font-semibold uppercase tracking-[0.35em] text-slate-gray">
-            Loading Product
+            {t("productDetails.loading")}
           </p>
         </div>
       </div>
@@ -541,7 +669,10 @@ const ProductDetailsPage = () => {
             !
           </div>
 
-          <p className="mt-6 text-[13px] leading-7 text-antique-gold">
+          <p
+            className="mt-6 text-[13px] leading-7 text-antique-gold"
+            dir={activeLanguage === "ar" ? "rtl" : "ltr"}
+          >
             {error}
           </p>
 
@@ -549,7 +680,7 @@ const ProductDetailsPage = () => {
             to="/shop"
             className="mt-7 inline-flex min-h-[48px] items-center justify-center rounded-[12px] bg-midnight-navy px-7 text-[9px] font-semibold uppercase tracking-[0.16em] text-soft-white shadow-[0_10px_25px_rgba(18,38,58,0.16)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-rich-navy"
           >
-            Back To Shop
+            {t("productDetails.backToShop")}
           </Link>
         </div>
       </div>
@@ -559,13 +690,16 @@ const ProductDetailsPage = () => {
   if (!product) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-warm-ivory font-serif text-2xl text-midnight-navy">
-        Product Not Found
+        {t("productDetails.productNotFound")}
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-warm-ivory text-midnight-navy">
+    <div
+      className="relative min-h-screen overflow-hidden bg-warm-ivory text-midnight-navy"
+      dir={activeLanguage === "ar" ? "rtl" : "ltr"}
+    >
       <div className="pointer-events-none fixed -left-48 top-1/3 h-[500px] w-[500px] rounded-full bg-light-champagne/50 blur-[130px]" />
 
       <div className="pointer-events-none fixed -right-48 top-10 h-[500px] w-[500px] rounded-full bg-champagne-gold/[0.07] blur-[130px]" />
@@ -576,13 +710,15 @@ const ProductDetailsPage = () => {
             to="/shop"
             className="text-steel-gray transition-colors duration-300 hover:text-classic-gold"
           >
-            Shop
+            {t("productDetails.shop")}
           </Link>
 
-          <span className="text-classic-gold">/</span>
+          <span className="text-classic-gold">
+            /
+          </span>
 
           <span className="max-w-[220px] truncate text-midnight-navy">
-            {product.name}
+            {localizedProductName}
           </span>
         </div>
       </div>
@@ -600,7 +736,8 @@ const ProductDetailsPage = () => {
               {hasDiscount && (
                 <div className="absolute right-6 top-6 z-30">
                   <span className="inline-flex rounded-full border border-champagne-gold/60 bg-midnight-navy/95 px-4 py-2 text-[9px] font-semibold uppercase tracking-[0.15em] text-champagne-gold shadow-lg backdrop-blur-md">
-                    {discountPercentage}% OFF
+                    {discountPercentage}%{" "}
+                    {t("productDetails.off")}
                   </span>
                 </div>
               )}
@@ -608,20 +745,22 @@ const ProductDetailsPage = () => {
               {currentImage ? (
                 <img
                   src={currentImage}
-                  alt={product.name}
+                  alt={localizedProductName}
                   className="relative h-[500px] w-full object-contain p-3 transition-transform duration-700 hover:scale-[1.015] sm:h-[610px] sm:p-5 lg:h-[650px]"
                 />
               ) : (
                 <div className="flex h-[500px] items-center justify-center bg-soft-cream text-[9px] font-semibold uppercase tracking-[0.24em] text-steel-gray sm:h-[610px] lg:h-[650px]">
-                  No Image
+                  {t("productDetails.noImage")}
                 </div>
               )}
 
               <div className="pointer-events-none absolute bottom-6 left-6 z-20 flex items-center gap-2 rounded-full border border-soft-white/70 bg-soft-white/75 px-4 py-2 backdrop-blur-md">
-                <span className="text-[8px] text-classic-gold">✦</span>
+                <span className="text-[8px] text-classic-gold">
+                  ✦
+                </span>
 
                 <span className="text-[8px] font-semibold uppercase tracking-[0.18em] text-midnight-navy">
-                  Smart Jewelry
+                  {t("productDetails.smartJewelry")}
                 </span>
               </div>
             </div>
@@ -629,13 +768,19 @@ const ProductDetailsPage = () => {
             {images.length > 0 && (
               <div className="mt-4 grid grid-cols-5 gap-2.5 sm:gap-3">
                 {images.map((image) => {
-                  const imageUrl = getImageUrl(image.imageUrl);
+                  const imageUrl = getImageUrl(
+                    image.imageUrl,
+                  );
 
                   return (
                     <button
                       type="button"
                       key={image._id}
-                      onClick={() => setSelectedImage(imageUrl)}
+                      onClick={() =>
+                        setSelectedImage(
+                          imageUrl,
+                        )
+                      }
                       className={`group relative overflow-hidden rounded-[14px] border bg-soft-white p-1 transition-all duration-300 ${
                         selectedImage === imageUrl
                           ? "border-classic-gold shadow-[0_8px_22px_rgba(201,162,77,0.14)]"
@@ -645,7 +790,13 @@ const ProductDetailsPage = () => {
                       <div className="overflow-hidden rounded-[10px] bg-soft-cream">
                         <img
                           src={imageUrl}
-                          alt={image.alt || product.name}
+                          alt={
+                            getLocalizedText(
+                              image.alt,
+                              activeLanguage,
+                            ) ||
+                            localizedProductName
+                          }
                           className="h-16 w-full object-cover transition-transform duration-500 group-hover:scale-105 sm:h-20 lg:h-24"
                         />
                       </div>
@@ -661,19 +812,36 @@ const ProductDetailsPage = () => {
               <span className="h-px w-10 bg-classic-gold/60" />
 
               <p className="text-[9px] font-semibold uppercase tracking-[0.32em] text-antique-gold">
-                {product.category?.name || "Collection"}
+                {localizedCategoryName ||
+                  t("productDetails.collection")}
               </p>
 
-              <span className="text-[8px] text-classic-gold">✦</span>
+              <span className="text-[8px] text-classic-gold">
+                ✦
+              </span>
             </div>
 
-            <h1 className="mt-5 max-w-[620px] font-serif text-[3rem] font-normal leading-[0.98] tracking-[-0.04em] text-midnight-navy sm:text-[3.8rem] lg:text-[4.2rem]">
-              {product.name}
+            <h1
+              className="mt-5 max-w-[620px] font-serif text-[3rem] font-normal leading-[0.98] tracking-[-0.04em] text-midnight-navy sm:text-[3.8rem] lg:text-[4.2rem]"
+              dir={
+                activeLanguage === "ar"
+                  ? "rtl"
+                  : "ltr"
+              }
+            >
+              {localizedProductName}
             </h1>
 
-            {product.shortDescription && (
-              <p className="mt-6 max-w-xl text-[13px] leading-7 text-slate-gray sm:text-[14px] sm:leading-8">
-                {product.shortDescription}
+            {localizedShortDescription && (
+              <p
+                className="mt-6 max-w-xl text-[13px] leading-7 text-slate-gray sm:text-[14px] sm:leading-8"
+                dir={
+                  activeLanguage === "ar"
+                    ? "rtl"
+                    : "ltr"
+                }
+              >
+                {localizedShortDescription}
               </p>
             )}
 
@@ -683,39 +851,55 @@ const ProductDetailsPage = () => {
               {hasDiscount && (
                 <div className="relative mb-3 flex items-center gap-2">
                   <span className="inline-flex rounded-full bg-midnight-navy px-3.5 py-1.5 text-[8px] font-semibold uppercase tracking-[0.14em] text-champagne-gold">
-                    Sale
+                    {t("productDetails.sale")}
                   </span>
 
                   <span className="text-[9px] font-semibold uppercase tracking-[0.13em] text-antique-gold">
-                    {discountPercentage}% OFF
+                    {discountPercentage}%{" "}
+                    {t("productDetails.off")}
                   </span>
                 </div>
               )}
 
               <div className="relative flex flex-wrap items-end gap-x-4 gap-y-2">
                 <h2 className="font-serif text-[2.65rem] font-normal tracking-[-0.035em] text-midnight-navy">
-                  {formatMoney(currentPrice)} EGP
+                  {formatMoney(currentPrice)}{" "}
+                  EGP
                 </h2>
 
                 {hasDiscount && (
                   <span className="pb-1.5 text-[15px] text-steel-gray line-through">
-                    {formatMoney(comparePrice)} EGP
+                    {formatMoney(comparePrice)}{" "}
+                    EGP
                   </span>
                 )}
               </div>
 
               {technologyExtraPrice > 0 && (
                 <p className="relative mt-3 text-[10px] tracking-[0.02em] text-slate-gray">
-                  Base price: {formatMoney(baseSellingPrice)} EGP
+                  {t(
+                    "productDetails.basePrice",
+                  )}
+                  :{" "}
+                  {formatMoney(baseSellingPrice)}{" "}
+                  EGP
                   {" + "}
-                  Technology: {formatMoney(technologyExtraPrice)} EGP
+                  {t(
+                    "productDetails.technology",
+                  )}
+                  :{" "}
+                  {formatMoney(
+                    technologyExtraPrice,
+                  )}{" "}
+                  EGP
                 </p>
               )}
 
               {hasDiscount && (
                 <div className="relative mt-4 flex flex-wrap items-center gap-3">
                   <div className="inline-flex rounded-full border border-champagne-gold/25 bg-soft-cream px-4 py-2 text-[9px] font-semibold uppercase tracking-[0.12em] text-antique-gold">
-                    You Save {formatMoney(saving)} EGP
+                    {t("productDetails.youSave")}{" "}
+                    {formatMoney(saving)} EGP
                   </div>
                 </div>
               )}
@@ -731,13 +915,27 @@ const ProductDetailsPage = () => {
 
                     <div>
                       <h2 className="font-serif text-[1.45rem] font-normal text-midnight-navy">
-                        Smart Technology
+                        {t(
+                          "productDetails.smartTechnology",
+                        )}
                       </h2>
 
-                      <p className="mt-1 text-[10px] leading-5 text-steel-gray">
+                      <p
+                        className="mt-1 text-[10px] leading-5 text-steel-gray"
+                        dir={
+                          activeLanguage ===
+                          "ar"
+                            ? "rtl"
+                            : "ltr"
+                        }
+                      >
                         {technologyRequired
-                          ? "Smart Technology is required for this piece. You can change the technology model, but it cannot be removed."
-                          : "Technology is included by default. You can change it or remove it."}
+                          ? t(
+                              "productDetails.requiredDescription",
+                            )
+                          : t(
+                              "productDetails.includedDescription",
+                            )}
                       </p>
                     </div>
                   </div>
@@ -750,22 +948,40 @@ const ProductDetailsPage = () => {
 
                       <div>
                         <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-antique-gold">
-                          Technology Required
+                          {t(
+                            "productDetails.technologyRequired",
+                          )}
                         </p>
 
-                        <p className="mt-1.5 text-[10px] leading-5 text-slate-gray">
-                          This jewelry piece must be ordered with Smart
-                          Technology. You may choose another available
-                          technology model, but the technology cannot be
-                          removed.
+                        <p
+                          className="mt-1.5 text-[10px] leading-5 text-slate-gray"
+                          dir={
+                            activeLanguage ===
+                            "ar"
+                              ? "rtl"
+                              : "ltr"
+                          }
+                        >
+                          {t(
+                            "productDetails.requiredPieceDescription",
+                          )}
                         </p>
                       </div>
                     </div>
                   ) : (
                     !selectedTechnology && (
-                      <div className="mt-5 rounded-[14px] border border-dashed border-champagne-gold/40 bg-warm-ivory/75 px-4 py-3 text-[10px] leading-5 text-slate-gray">
-                        Technology has been removed. The base jewelry price is
-                        currently shown.
+                      <div
+                        className="mt-5 rounded-[14px] border border-dashed border-champagne-gold/40 bg-warm-ivory/75 px-4 py-3 text-[10px] leading-5 text-slate-gray"
+                        dir={
+                          activeLanguage ===
+                          "ar"
+                            ? "rtl"
+                            : "ltr"
+                        }
+                      >
+                        {t(
+                          "productDetails.technologyRemoved",
+                        )}
                       </div>
                     )
                   )}
@@ -775,7 +991,9 @@ const ProductDetailsPage = () => {
                   {!technologyRequired && (
                     <button
                       type="button"
-                      onClick={handleRemoveTechnology}
+                      onClick={
+                        handleRemoveTechnology
+                      }
                       className={`group relative overflow-hidden rounded-[18px] border p-4 text-left transition-all duration-300 sm:p-5 ${
                         !selectedTechnology
                           ? "border-classic-gold bg-midnight-navy text-soft-white shadow-[0_14px_32px_rgba(18,38,58,0.16)]"
@@ -791,7 +1009,9 @@ const ProductDetailsPage = () => {
                                 : "text-midnight-navy"
                             }`}
                           >
-                            Without Technology
+                            {t(
+                              "productDetails.withoutTechnology",
+                            )}
                           </h3>
 
                           <p
@@ -801,8 +1021,9 @@ const ProductDetailsPage = () => {
                                 : "text-slate-gray"
                             }`}
                           >
-                            Remove the smart unit and pay the base jewelry
-                            price.
+                            {t(
+                              "productDetails.removeTechnologyDescription",
+                            )}
                           </p>
                         </div>
 
@@ -813,18 +1034,26 @@ const ProductDetailsPage = () => {
                               : "bg-soft-cream text-antique-gold"
                           }`}
                         >
-                          Base Price
+                          {t(
+                            "productDetails.basePriceLabel",
+                          )}
                         </span>
                       </div>
                     </button>
                   )}
 
                   {productTechnologies.map(
-                    (productTechnology, technologyIndex) => {
+                    (
+                      productTechnology,
+                      technologyIndex,
+                    ) => {
                       const technologyModel =
-                        productTechnology.technologyModel || {};
+                        productTechnology.technologyModel ||
+                        {};
 
-                      const technology = technologyModel.technology || {};
+                      const technology =
+                        technologyModel.technology ||
+                        {};
 
                       const extraPrice = Number(
                         productTechnology.extraPrice ??
@@ -833,14 +1062,19 @@ const ProductDetailsPage = () => {
                       );
 
                       const isSelected =
-                        selectedTechnology?._id === productTechnology._id;
+                        selectedTechnology?._id ===
+                        productTechnology._id;
 
                       return (
                         <button
                           type="button"
-                          key={productTechnology._id}
+                          key={
+                            productTechnology._id
+                          }
                           onClick={() =>
-                            handleTechnologyChange(productTechnology)
+                            handleTechnologyChange(
+                              productTechnology,
+                            )
                           }
                           className={`group relative overflow-hidden rounded-[18px] border p-4 text-left transition-all duration-300 sm:p-5 ${
                             isSelected
@@ -865,7 +1099,13 @@ const ProductDetailsPage = () => {
                                     : "text-midnight-navy"
                                 }`}
                               >
-                                {technology.name || "Technology"}
+                                {getLocalizedText(
+                                  technology.name,
+                                  activeLanguage,
+                                ) ||
+                                  t(
+                                    "productDetails.technology",
+                                  )}
                               </h3>
 
                               {technologyModel.modelName && (
@@ -876,13 +1116,17 @@ const ProductDetailsPage = () => {
                                       : "text-slate-gray"
                                   }`}
                                 >
-                                  {technologyModel.modelName}
+                                  {getLocalizedText(
+                                    technologyModel.modelName,
+                                    activeLanguage,
+                                  )}
                                 </p>
                               )}
                             </div>
 
                             <div className="shrink-0 text-right">
-                              {technologyIndex === 0 && (
+                              {technologyIndex ===
+                                0 && (
                                 <span
                                   className={`mb-1.5 block text-[7px] font-semibold uppercase tracking-[0.12em] ${
                                     isSelected
@@ -890,7 +1134,9 @@ const ProductDetailsPage = () => {
                                       : "text-steel-gray"
                                   }`}
                                 >
-                                  Default
+                                  {t(
+                                    "productDetails.default",
+                                  )}
                                 </span>
                               )}
 
@@ -902,7 +1148,11 @@ const ProductDetailsPage = () => {
                                       : "text-antique-gold"
                                   }`}
                                 >
-                                  +{formatMoney(extraPrice)} EGP
+                                  +
+                                  {formatMoney(
+                                    extraPrice,
+                                  )}{" "}
+                                  EGP
                                 </span>
                               ) : (
                                 <span
@@ -912,7 +1162,9 @@ const ProductDetailsPage = () => {
                                       : "text-slate-gray"
                                   }`}
                                 >
-                                  Included
+                                  {t(
+                                    "productDetails.included",
+                                  )}
                                 </span>
                               )}
                             </div>
@@ -927,7 +1179,9 @@ const ProductDetailsPage = () => {
                                     : "bg-soft-cream text-antique-gold"
                                 }`}
                               >
-                                Battery
+                                {t(
+                                  "productDetails.battery",
+                                )}
                               </span>
                             )}
 
@@ -939,7 +1193,9 @@ const ProductDetailsPage = () => {
                                     : "bg-soft-cream text-slate-gray"
                                 }`}
                               >
-                                Activation
+                                {t(
+                                  "productDetails.activation",
+                                )}
                               </span>
                             )}
 
@@ -951,7 +1207,9 @@ const ProductDetailsPage = () => {
                                     : "bg-soft-cream text-antique-gold"
                                 }`}
                               >
-                                Subscription
+                                {t(
+                                  "productDetails.subscription",
+                                )}
                               </span>
                             )}
                           </div>
@@ -963,19 +1221,29 @@ const ProductDetailsPage = () => {
               </div>
             )}
 
-            {technologyRequired && productTechnologies.length === 0 && (
-              <div className="mt-7 rounded-[20px] border border-red-200 bg-red-50 p-5">
-                <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-red-700">
-                  Technology Configuration Required
-                </p>
+            {technologyRequired &&
+              productTechnologies.length === 0 && (
+                <div className="mt-7 rounded-[20px] border border-red-200 bg-red-50 p-5">
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-red-700">
+                    {t(
+                      "productDetails.technologyConfigurationRequired",
+                    )}
+                  </p>
 
-                <p className="mt-2 text-[10px] leading-6 text-red-600">
-                  This product requires Smart Technology, but no selectable
-                  technology option is currently available. Please contact us
-                  before ordering this piece.
-                </p>
-              </div>
-            )}
+                  <p
+                    className="mt-2 text-[10px] leading-6 text-red-600"
+                    dir={
+                      activeLanguage === "ar"
+                        ? "rtl"
+                        : "ltr"
+                    }
+                  >
+                    {t(
+                      "productDetails.noTechnologyAvailable",
+                    )}
+                  </p>
+                </div>
+              )}
 
             {variants.length > 0 && (
               <div className="mt-7 rounded-[24px] border border-light-champagne/90 bg-soft-white/85 p-5 shadow-[0_10px_32px_rgba(7,19,31,0.04)] backdrop-blur-sm sm:p-6">
@@ -988,20 +1256,32 @@ const ProductDetailsPage = () => {
                         </span>
 
                         <h2 className="font-serif text-[1.45rem] font-normal text-midnight-navy">
-                          Choose Your Variant
+                          {t(
+                            "productDetails.chooseVariant",
+                          )}
                         </h2>
                       </div>
 
                       <p className="ml-[54px] mt-1.5 text-[10px] text-steel-gray">
-                        Select your preferred color and size.
+                        {t(
+                          "productDetails.selectColorSize",
+                        )}
                       </p>
                     </div>
                   </div>
 
                   {!selectedVariant && (
-                    <div className="mt-5 rounded-[14px] border border-dashed border-champagne-gold/40 bg-warm-ivory/75 px-4 py-3 text-[10px] leading-5 text-slate-gray">
-                      Please select your variant before adding the product to
-                      your cart.
+                    <div
+                      className="mt-5 rounded-[14px] border border-dashed border-champagne-gold/40 bg-warm-ivory/75 px-4 py-3 text-[10px] leading-5 text-slate-gray"
+                      dir={
+                        activeLanguage === "ar"
+                          ? "rtl"
+                          : "ltr"
+                      }
+                    >
+                      {t(
+                        "productDetails.selectVariantBeforeCart",
+                      )}
                     </div>
                   )}
                 </div>
@@ -1010,29 +1290,50 @@ const ProductDetailsPage = () => {
                   <div>
                     <div className="mb-3 flex items-center justify-between">
                       <h3 className="text-[9px] font-semibold uppercase tracking-[0.18em] text-midnight-navy">
-                        Color
+                        {t(
+                          "productDetails.color",
+                        )}
                       </h3>
 
                       {selectedColor && (
                         <span className="text-[10px] text-slate-gray">
-                          {selectedColor}
+                          {getLocalizedText(
+                            selectedColor,
+                            activeLanguage,
+                          )}
                         </span>
                       )}
                     </div>
 
                     <div className="flex flex-wrap gap-2.5">
-                      {colors.map((color) => (
+                      {colors.map((color, index) => (
                         <button
                           type="button"
-                          key={color}
-                          onClick={() => handleColorChange(color)}
+                          key={
+                            typeof color ===
+                            "object"
+                              ? `${getLocalizedText(
+                                  color,
+                                  activeLanguage,
+                                )}-${index}`
+                              : color
+                          }
+                          onClick={() =>
+                            handleColorChange(
+                              color,
+                            )
+                          }
                           className={`min-h-[44px] rounded-full border px-5 text-[11px] font-medium transition-all duration-300 ${
-                            selectedColor === color
+                            selectedColor ===
+                            color
                               ? "border-midnight-navy bg-midnight-navy text-soft-white shadow-[0_8px_20px_rgba(18,38,58,0.14)]"
                               : "border-light-champagne bg-warm-ivory/70 text-midnight-navy hover:border-classic-gold hover:bg-soft-white"
                           }`}
                         >
-                          {color}
+                          {getLocalizedText(
+                            color,
+                            activeLanguage,
+                          )}
                         </button>
                       ))}
                     </div>
@@ -1043,29 +1344,50 @@ const ProductDetailsPage = () => {
                   <div className="mt-6">
                     <div className="mb-3 flex items-center justify-between">
                       <h3 className="text-[9px] font-semibold uppercase tracking-[0.18em] text-midnight-navy">
-                        Size
+                        {t(
+                          "productDetails.size",
+                        )}
                       </h3>
 
                       {selectedSize && (
                         <span className="text-[10px] text-slate-gray">
-                          {selectedSize}
+                          {getLocalizedText(
+                            selectedSize,
+                            activeLanguage,
+                          )}
                         </span>
                       )}
                     </div>
 
                     <div className="flex flex-wrap gap-2.5">
-                      {sizes.map((size) => (
+                      {sizes.map((size, index) => (
                         <button
                           type="button"
-                          key={size}
-                          onClick={() => handleSizeChange(size)}
+                          key={
+                            typeof size ===
+                            "object"
+                              ? `${getLocalizedText(
+                                  size,
+                                  activeLanguage,
+                                )}-${index}`
+                              : size
+                          }
+                          onClick={() =>
+                            handleSizeChange(
+                              size,
+                            )
+                          }
                           className={`min-h-[44px] min-w-20 rounded-[12px] border px-5 text-[11px] font-medium transition-all duration-300 ${
-                            selectedSize === size
+                            selectedSize ===
+                            size
                               ? "border-midnight-navy bg-midnight-navy text-soft-white shadow-[0_8px_20px_rgba(18,38,58,0.14)]"
                               : "border-light-champagne bg-warm-ivory/70 text-midnight-navy hover:border-classic-gold hover:bg-soft-white"
                           }`}
                         >
-                          {size}
+                          {getLocalizedText(
+                            size,
+                            activeLanguage,
+                          )}
                         </button>
                       ))}
                     </div>
@@ -1075,10 +1397,14 @@ const ProductDetailsPage = () => {
                 {selectedVariant && (
                   <div className="mt-6 rounded-[18px] border border-light-champagne/70 bg-warm-ivory/75 p-5">
                     <div className="mb-4 flex items-center gap-2">
-                      <span className="text-[9px] text-classic-gold">✦</span>
+                      <span className="text-[9px] text-classic-gold">
+                        ✦
+                      </span>
 
                       <span className="text-[8px] font-semibold uppercase tracking-[0.2em] text-antique-gold">
-                        Selected Variant
+                        {t(
+                          "productDetails.selectedVariant",
+                        )}
                       </span>
                     </div>
 
@@ -1098,11 +1424,16 @@ const ProductDetailsPage = () => {
                       {selectedVariant.material && (
                         <div>
                           <span className="text-[9px] uppercase tracking-[0.12em] text-steel-gray">
-                            Material
+                            {t(
+                              "productDetails.material",
+                            )}
                           </span>
 
                           <p className="mt-1 text-[12px] font-semibold text-midnight-navy">
-                            {selectedVariant.material}
+                            {getLocalizedText(
+                              selectedVariant.material,
+                              activeLanguage,
+                            )}
                           </p>
                         </div>
                       )}
@@ -1110,18 +1441,25 @@ const ProductDetailsPage = () => {
                       {selectedVariant.finish && (
                         <div>
                           <span className="text-[9px] uppercase tracking-[0.12em] text-steel-gray">
-                            Finish
+                            {t(
+                              "productDetails.finish",
+                            )}
                           </span>
 
                           <p className="mt-1 text-[12px] font-semibold text-midnight-navy">
-                            {selectedVariant.finish}
+                            {getLocalizedText(
+                              selectedVariant.finish,
+                              activeLanguage,
+                            )}
                           </p>
                         </div>
                       )}
 
                       <div>
                         <span className="text-[9px] uppercase tracking-[0.12em] text-steel-gray">
-                          Available Stock
+                          {t(
+                            "productDetails.availableStock",
+                          )}
                         </span>
 
                         <p className="mt-1 text-[12px] font-semibold text-midnight-navy">
@@ -1134,15 +1472,24 @@ const ProductDetailsPage = () => {
                       <div className="mt-5 border-t border-light-champagne/80 pt-4">
                         <div className="flex flex-wrap items-center gap-3">
                           <span className="text-[11px] font-semibold text-midnight-navy">
-                            {formatMoney(currentPrice)} EGP
+                            {formatMoney(
+                              currentPrice,
+                            )}{" "}
+                            EGP
                           </span>
 
                           <span className="text-[10px] text-steel-gray line-through">
-                            {formatMoney(comparePrice)} EGP
+                            {formatMoney(
+                              comparePrice,
+                            )}{" "}
+                            EGP
                           </span>
 
                           <span className="rounded-full bg-midnight-navy px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.1em] text-champagne-gold">
-                            {discountPercentage}% OFF
+                            {discountPercentage}%{" "}
+                            {t(
+                              "productDetails.off",
+                            )}
                           </span>
                         </div>
                       </div>
@@ -1156,46 +1503,64 @@ const ProductDetailsPage = () => {
               technologyModels.length > 0 && (
                 <div className="mt-7 rounded-[24px] border border-light-champagne/90 bg-soft-white/85 p-5 shadow-[0_10px_32px_rgba(7,19,31,0.04)] backdrop-blur-sm sm:p-6">
                   <h2 className="mb-5 font-serif text-[1.45rem] font-normal text-midnight-navy">
-                    Technology Models
+                    {t(
+                      "productDetails.technologyModels",
+                    )}
                   </h2>
 
                   <div className="grid gap-3 sm:grid-cols-2">
-                    {technologyModels.map((model) => (
-                      <div
-                        key={model._id}
-                        className="rounded-[18px] border border-light-champagne bg-warm-ivory/60 p-5"
-                      >
-                        <h3 className="text-[12px] font-semibold text-midnight-navy">
-                          {model.modelName}
-                        </h3>
+                    {technologyModels.map(
+                      (model) => (
+                        <div
+                          key={model._id}
+                          className="rounded-[18px] border border-light-champagne bg-warm-ivory/60 p-5"
+                        >
+                          <h3 className="text-[12px] font-semibold text-midnight-navy">
+                            {getLocalizedText(
+                              model.modelName,
+                              activeLanguage,
+                            )}
+                          </h3>
 
-                        {model.technology?.name && (
-                          <p className="mt-1.5 text-[10px] text-slate-gray">
-                            {model.technology.name}
-                          </p>
-                        )}
-
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          {model.requiresBattery && (
-                            <span className="rounded-full bg-soft-cream px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.14em] text-antique-gold">
-                              Battery
-                            </span>
+                          {model.technology
+                            ?.name && (
+                            <p className="mt-1.5 text-[10px] text-slate-gray">
+                              {getLocalizedText(
+                                model.technology
+                                  .name,
+                                activeLanguage,
+                              )}
+                            </p>
                           )}
 
-                          {model.requiresActivation && (
-                            <span className="rounded-full bg-soft-cream px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.14em] text-slate-gray">
-                              Activation
-                            </span>
-                          )}
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            {model.requiresBattery && (
+                              <span className="rounded-full bg-soft-cream px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.14em] text-antique-gold">
+                                {t(
+                                  "productDetails.battery",
+                                )}
+                              </span>
+                            )}
 
-                          {model.requiresSubscription && (
-                            <span className="rounded-full bg-soft-cream px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.14em] text-antique-gold">
-                              Subscription
-                            </span>
-                          )}
+                            {model.requiresActivation && (
+                              <span className="rounded-full bg-soft-cream px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.14em] text-slate-gray">
+                                {t(
+                                  "productDetails.activation",
+                                )}
+                              </span>
+                            )}
+
+                            {model.requiresSubscription && (
+                              <span className="rounded-full bg-soft-cream px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.14em] text-antique-gold">
+                                {t(
+                                  "productDetails.subscription",
+                                )}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ),
+                    )}
                   </div>
                 </div>
               )}
@@ -1207,36 +1572,48 @@ const ProductDetailsPage = () => {
                 </span>
 
                 <h2 className="font-serif text-[1.4rem] font-normal text-midnight-navy">
-                  Product Specifications
+                  {t(
+                    "productDetails.productSpecifications",
+                  )}
                 </h2>
               </div>
 
               <div className="divide-y divide-light-champagne/70">
-                {product.material && (
+                {localizedProductMaterial && (
                   <div className="flex justify-between gap-5 py-3.5">
                     <span className="text-[10px] text-steel-gray">
-                      Material
+                      {t(
+                        "productDetails.material",
+                      )}
                     </span>
 
                     <strong className="text-right text-[11px] font-semibold text-midnight-navy">
-                      {product.material}
+                      {localizedProductMaterial}
                     </strong>
                   </div>
                 )}
 
-                {product.color && (
+                {localizedProductColor && (
                   <div className="flex justify-between gap-5 py-3.5">
-                    <span className="text-[10px] text-steel-gray">Color</span>
+                    <span className="text-[10px] text-steel-gray">
+                      {t(
+                        "productDetails.color",
+                      )}
+                    </span>
 
                     <strong className="text-right text-[11px] font-semibold text-midnight-navy">
-                      {product.color}
+                      {localizedProductColor}
                     </strong>
                   </div>
                 )}
 
                 {product.weight > 0 && (
                   <div className="flex justify-between gap-5 py-3.5">
-                    <span className="text-[10px] text-steel-gray">Weight</span>
+                    <span className="text-[10px] text-steel-gray">
+                      {t(
+                        "productDetails.weight",
+                      )}
+                    </span>
 
                     <strong className="text-right text-[11px] font-semibold text-midnight-navy">
                       {product.weight} g
@@ -1246,16 +1623,23 @@ const ProductDetailsPage = () => {
 
                 {product.sku && (
                   <div className="flex justify-between gap-5 py-3.5">
-                    <span className="text-[10px] text-steel-gray">SKU</span>
+                    <span className="text-[10px] text-steel-gray">
+                      SKU
+                    </span>
 
                     <strong className="text-right text-[11px] font-semibold text-midnight-navy">
-                      {selectedVariant?.sku || product.sku}
+                      {selectedVariant?.sku ||
+                        product.sku}
                     </strong>
                   </div>
                 )}
 
                 <div className="flex justify-between gap-5 py-3.5">
-                  <span className="text-[10px] text-steel-gray">Stock</span>
+                  <span className="text-[10px] text-steel-gray">
+                    {t(
+                      "productDetails.stock",
+                    )}
+                  </span>
 
                   <strong className="text-right text-[11px] font-semibold text-midnight-navy">
                     {currentStock}
@@ -1263,10 +1647,18 @@ const ProductDetailsPage = () => {
                 </div>
 
                 <div className="flex justify-between gap-5 py-3.5">
-                  <span className="text-[10px] text-steel-gray">Status</span>
+                  <span className="text-[10px] text-steel-gray">
+                    {t(
+                      "productDetails.status",
+                    )}
+                  </span>
 
                   <strong className="text-right text-[11px] font-semibold capitalize text-midnight-navy">
-                    {isOutOfStock ? "Out Of Stock" : product.status}
+                    {isOutOfStock
+                      ? t(
+                          "productDetails.outOfStock",
+                        )
+                      : product.status}
                   </strong>
                 </div>
               </div>
@@ -1275,13 +1667,17 @@ const ProductDetailsPage = () => {
             {!isUnavailable && (
               <div className="mt-7">
                 <h3 className="mb-3 text-[8px] font-semibold uppercase tracking-[0.22em] text-antique-gold">
-                  Quantity
+                  {t(
+                    "productDetails.quantity",
+                  )}
                 </h3>
 
                 <div className="flex w-fit items-center overflow-hidden rounded-full border border-light-champagne bg-soft-white shadow-[0_7px_20px_rgba(7,19,31,0.04)]">
                   <button
                     type="button"
-                    onClick={decreaseQuantity}
+                    onClick={
+                      decreaseQuantity
+                    }
                     disabled={quantity <= 1}
                     className="flex h-12 w-14 items-center justify-center text-lg text-midnight-navy transition-colors duration-300 hover:bg-soft-cream disabled:opacity-30"
                   >
@@ -1294,8 +1690,12 @@ const ProductDetailsPage = () => {
 
                   <button
                     type="button"
-                    onClick={increaseQuantity}
-                    disabled={quantity >= currentStock}
+                    onClick={
+                      increaseQuantity
+                    }
+                    disabled={
+                      quantity >= currentStock
+                    }
                     className="flex h-12 w-14 items-center justify-center text-lg text-midnight-navy transition-colors duration-300 hover:bg-soft-cream disabled:opacity-30"
                   >
                     +
@@ -1310,29 +1710,50 @@ const ProductDetailsPage = () => {
                 disabled={
                   isUnavailable ||
                   isCartLoading ||
-                  (technologyRequired && !selectedTechnology)
+                  (technologyRequired &&
+                    !selectedTechnology)
                 }
-                onClick={handleAddToCart}
+                onClick={
+                  handleAddToCart
+                }
                 className="group flex min-h-[58px] w-full items-center justify-center gap-4 rounded-[14px] bg-midnight-navy px-8 text-[10px] font-semibold uppercase tracking-[0.1em] text-soft-white shadow-[0_15px_35px_rgba(18,38,58,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-rich-navy hover:shadow-[0_20px_42px_rgba(18,38,58,0.23)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
               >
                 {isCartLoading ? (
-                  "Adding..."
+                  t(
+                    "productDetails.adding",
+                  )
                 ) : isOutOfStock ? (
-                  "Out Of Stock"
-                ) : technologyRequired && !selectedTechnology ? (
-                  "Technology Required"
+                  t(
+                    "productDetails.outOfStock",
+                  )
+                ) : technologyRequired &&
+                  !selectedTechnology ? (
+                  t(
+                    "productDetails.technologyRequiredShort",
+                  )
                 ) : (
                   <>
-                    Add To Cart
+                    {t(
+                      "productDetails.addToCart",
+                    )}
+
                     <span className="text-[16px] text-champagne-gold transition-transform duration-300 group-hover:translate-x-1">
                       →
                     </span>
+
                     <span className="font-serif text-[14px] font-normal text-champagne-gold">
-                      {formatMoney(currentPrice)} EGP
+                      {formatMoney(
+                        currentPrice,
+                      )}{" "}
+                      EGP
                     </span>
+
                     {hasDiscount && (
                       <span className="text-[9px] font-normal text-premium-silver/55 line-through">
-                        {formatMoney(comparePrice)} EGP
+                        {formatMoney(
+                          comparePrice,
+                        )}{" "}
+                        EGP
                       </span>
                     )}
                   </>
@@ -1341,76 +1762,111 @@ const ProductDetailsPage = () => {
 
               {addedToCart && (
                 <div className="mt-3 rounded-[14px] border border-champagne-gold/30 bg-soft-cream px-4 py-3 text-center text-[10px] font-medium text-antique-gold">
-                  Product added successfully.
+                  {t(
+                    "productDetails.addedSuccessfully",
+                  )}
                 </div>
               )}
             </div>
 
-            {product.description && (
+            {localizedDescription && (
               <div className="mt-10 border-t border-light-champagne pt-8">
                 <div className="mb-4 flex items-center gap-3">
                   <span className="h-px w-8 bg-classic-gold/60" />
 
                   <h2 className="text-[8px] font-semibold uppercase tracking-[0.28em] text-antique-gold">
-                    Description
+                    {t(
+                      "productDetails.description",
+                    )}
                   </h2>
                 </div>
 
-                <p className="text-[13px] leading-8 text-slate-gray">
-                  {product.description}
+                <p
+                  className="text-[13px] leading-8 text-slate-gray"
+                  dir={
+                    activeLanguage === "ar"
+                      ? "rtl"
+                      : "ltr"
+                  }
+                >
+                  {localizedDescription}
                 </p>
               </div>
             )}
 
-            {product.careInstructions && (
+            {localizedCareInstructions && (
               <div className="mt-8 border-t border-light-champagne pt-8">
                 <div className="mb-4 flex items-center gap-3">
                   <span className="h-px w-8 bg-classic-gold/60" />
 
                   <h2 className="text-[8px] font-semibold uppercase tracking-[0.28em] text-antique-gold">
-                    Care Instructions
+                    {t(
+                      "productDetails.careInstructions",
+                    )}
                   </h2>
                 </div>
 
-                <p className="text-[13px] leading-8 text-slate-gray">
-                  {product.careInstructions}
+                <p
+                  className="text-[13px] leading-8 text-slate-gray"
+                  dir={
+                    activeLanguage === "ar"
+                      ? "rtl"
+                      : "ltr"
+                  }
+                >
+                  {localizedCareInstructions}
                 </p>
               </div>
             )}
 
-            {product.tags?.length > 0 && (
-              <div className="mt-8 border-t border-light-champagne pt-8">
-                <div className="mb-4 flex items-center gap-3">
-                  <span className="h-px w-8 bg-classic-gold/60" />
+            {Array.isArray(
+              localizedProductTags,
+            ) &&
+              localizedProductTags.length > 0 && (
+                <div className="mt-8 border-t border-light-champagne pt-8">
+                  <div className="mb-4 flex items-center gap-3">
+                    <span className="h-px w-8 bg-classic-gold/60" />
 
-                  <h2 className="text-[8px] font-semibold uppercase tracking-[0.28em] text-antique-gold">
-                    Tags
-                  </h2>
-                </div>
+                    <h2 className="text-[8px] font-semibold uppercase tracking-[0.28em] text-antique-gold">
+                      {t(
+                        "productDetails.tags",
+                      )}
+                    </h2>
+                  </div>
 
-                <div className="flex flex-wrap gap-2">
-                  {product.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-full border border-light-champagne bg-soft-white px-4 py-2 text-[9px] font-medium text-slate-gray shadow-[0_4px_12px_rgba(7,19,31,0.025)]"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
+                  <div className="flex flex-wrap gap-2">
+                    {localizedProductTags.map(
+                      (tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full border border-light-champagne bg-soft-white px-4 py-2 text-[9px] font-medium text-slate-gray shadow-[0_4px_12px_rgba(7,19,31,0.025)]"
+                        >
+                          #{tag}
+                        </span>
+                      ),
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {product.preparationDays > 0 && (
               <div className="mt-8 rounded-[20px] border border-champagne-gold/30 bg-soft-cream/80 p-5">
                 <h3 className="font-serif text-[1.2rem] font-normal text-midnight-navy">
-                  Preparation Time
+                  {t(
+                    "productDetails.preparationTime",
+                  )}
                 </h3>
 
                 <p className="mt-2 text-[11px] leading-6 text-slate-gray">
-                  Estimated preparation:
+                  {t(
+                    "productDetails.estimatedPreparation",
+                  )}
+
                   <strong className="ml-1 font-semibold text-antique-gold">
-                    {product.preparationDays} day(s)
+                    {product.preparationDays}{" "}
+                    {t(
+                      "productDetails.days",
+                    )}
                   </strong>
                 </p>
               </div>
@@ -1419,29 +1875,45 @@ const ProductDetailsPage = () => {
             {product.isCustomizable && (
               <div className="mt-7 rounded-[20px] border border-champagne-gold/30 bg-soft-cream/80 p-5">
                 <h3 className="font-serif text-[1.2rem] font-normal text-midnight-navy">
-                  ✨ Customizable Product
+                  ✨{" "}
+                  {t(
+                    "productDetails.customizableProduct",
+                  )}
                 </h3>
 
                 <p className="mt-2 text-[11px] leading-6 text-slate-gray">
-                  This product can be customized before manufacturing.
+                  {t(
+                    "productDetails.customizableDescription",
+                  )}
                 </p>
               </div>
             )}
 
-            {product.seoDescription && (
+            {localizedSeoDescription && (
               <div className="relative mt-8 overflow-hidden rounded-[24px] bg-midnight-navy p-6 text-soft-white shadow-[0_18px_45px_rgba(18,38,58,0.18)]">
                 <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-champagne-gold/10 blur-[55px]" />
 
                 <div className="relative flex items-center gap-3">
-                  <span className="text-[10px] text-champagne-gold">✦</span>
+                  <span className="text-[10px] text-champagne-gold">
+                    ✦
+                  </span>
 
                   <h2 className="font-serif text-[1.35rem] font-normal">
-                    About This Product
+                    {t(
+                      "productDetails.aboutProduct",
+                    )}
                   </h2>
                 </div>
 
-                <p className="relative mt-4 text-[12px] leading-7 text-premium-silver/75">
-                  {product.seoDescription}
+                <p
+                  className="relative mt-4 text-[12px] leading-7 text-premium-silver/75"
+                  dir={
+                    activeLanguage === "ar"
+                      ? "rtl"
+                      : "ltr"
+                  }
+                >
+                  {localizedSeoDescription}
                 </p>
               </div>
             )}
@@ -1453,7 +1925,10 @@ const ProductDetailsPage = () => {
               <span className="transition-transform duration-300 group-hover:-translate-x-1">
                 ←
               </span>
-              Continue Shopping
+
+              {t(
+                "productDetails.continueShopping",
+              )}
             </Link>
           </div>
         </div>

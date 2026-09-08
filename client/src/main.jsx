@@ -4,17 +4,15 @@ import ReactDOM from "react-dom/client";
 import App from "./app/App";
 
 import {
-  AuthProvider,
+AuthProvider,
 } from "./features/auth/context/AuthContext";
 
+import "./i18n";
 import "./index.css";
 
 ReactDOM.createRoot(
-  document.getElementById("root")
+document.getElementById("root")
 ).render(
-  <React.StrictMode>
-    <AuthProvider>
-      <App />
-    </AuthProvider>
-  </React.StrictMode>
+<React.StrictMode> <AuthProvider> <App /> </AuthProvider>
+</React.StrictMode>
 );

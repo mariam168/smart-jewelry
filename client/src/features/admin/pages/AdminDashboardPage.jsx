@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { getDashboardStats } from "../services/dashboardApi";
 
 const AdminDashboardPage = () => {
+  const { t } = useTranslation();
+
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalOrders: 0,
@@ -29,7 +32,7 @@ const AdminDashboardPage = () => {
 
         setError(
           error?.response?.data?.message ||
-            "Failed to load dashboard statistics.",
+            t("adminDashboard.failedToLoadStatistics"),
         );
       } finally {
         setIsLoading(false);
@@ -41,30 +44,30 @@ const AdminDashboardPage = () => {
 
   const dashboardStats = [
     {
-      title: "Total Products",
+      title: t("adminDashboard.totalProducts"),
       value: stats.totalProducts,
-      description: "Products in your catalog",
+      description: t("adminDashboard.productsInCatalog"),
       icon: "◇",
       accent: "gold",
     },
     {
-      title: "Total Orders",
+      title: t("adminDashboard.totalOrders"),
       value: stats.totalOrders,
-      description: "Orders placed by customers",
+      description: t("adminDashboard.ordersPlacedByCustomers"),
       icon: "✦",
       accent: "dark",
     },
     {
-      title: "Total Customers",
+      title: t("adminDashboard.totalCustomers"),
       value: stats.totalCustomers,
-      description: "Registered customers",
+      description: t("adminDashboard.registeredCustomers"),
       icon: "♢",
       accent: "gold",
     },
     {
-      title: "Pending Orders",
+      title: t("adminDashboard.pendingOrders"),
       value: stats.pendingOrders,
-      description: "Orders waiting for action",
+      description: t("adminDashboard.ordersWaitingForAction"),
       icon: "○",
       accent: "dark",
     },
@@ -88,31 +91,30 @@ const AdminDashboardPage = () => {
             <span className="h-px w-9 bg-classic-gold/70" />
 
             <span className="text-[8px] font-semibold uppercase tracking-[0.32em] text-champagne-gold">
-              Administration
+              {t("adminDashboard.administration")}
             </span>
 
             <span className="text-[7px] text-classic-gold">✦</span>
           </div>
 
           <h1 className="font-serif text-[2.6rem] font-normal leading-none tracking-[-0.04em] text-soft-white sm:text-[3.25rem]">
-            Dashboard
+            {t("adminDashboard.dashboard")}
           </h1>
 
           <p className="mt-4 max-w-[620px] text-[12px] leading-7 text-premium-silver/70 sm:text-[13px]">
-            Welcome to your Smart Jewelry administration panel. Manage your
-            products, orders, customers and store activity from one place.
+            {t("adminDashboard.welcomeDescription")}
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3 text-[7px] font-semibold uppercase tracking-[0.24em] text-premium-silver/35">
-            <span>Elegant</span>
+            <span>{t("adminDashboard.elegant")}</span>
 
             <span className="text-classic-gold/75">✦</span>
 
-            <span>Personal</span>
+            <span>{t("adminDashboard.personal")}</span>
 
             <span className="text-classic-gold/75">✦</span>
 
-            <span>Smart</span>
+            <span>{t("adminDashboard.smart")}</span>
           </div>
         </div>
       </div>
@@ -128,7 +130,7 @@ const AdminDashboardPage = () => {
 
             <div>
               <p className="text-[12px] font-semibold text-midnight-navy">
-                Something went wrong
+                {t("adminDashboard.somethingWentWrong")}
               </p>
 
               <p className="mt-1.5 text-[10px] leading-5 text-slate-gray">
@@ -145,23 +147,24 @@ const AdminDashboardPage = () => {
             <span className="h-px w-7 bg-classic-gold/60" />
 
             <span className="text-[8px] font-semibold uppercase tracking-[0.3em] text-steel-gray">
-              Overview
+              {t("adminDashboard.overview")}
             </span>
           </div>
 
           <h2 className="font-serif text-[1.6rem] font-normal tracking-[-0.025em] text-midnight-navy">
-            Store Statistics
+            {t("adminDashboard.storeStatistics")}
           </h2>
         </div>
 
         <div className="hidden items-center gap-2 rounded-full border border-light-champagne bg-soft-white/75 px-4 py-2 sm:flex">
           <span className="relative flex h-2 w-2">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-classic-gold/30" />
+
             <span className="relative inline-flex h-2 w-2 rounded-full bg-classic-gold" />
           </span>
 
           <span className="text-[7px] font-semibold uppercase tracking-[0.18em] text-antique-gold">
-            Live Data
+            {t("adminDashboard.liveData")}
           </span>
         </div>
       </div>
@@ -179,31 +182,31 @@ const AdminDashboardPage = () => {
             <div className="relative flex items-start justify-between">
               <div
                 className={`
-                    flex h-12 w-12 items-center justify-center
-                    rounded-full border text-[16px]
-                    shadow-[0_7px_18px_rgba(7,19,31,0.06)]
-                    transition-all duration-300
-                    group-hover:scale-105
+                    flex h-12 w-12 items-center justify-center 
+                    rounded-full border text-[16px] 
+                    shadow-[0_7px_18px_rgba(7,19,31,0.06)] 
+                    transition-all duration-300 
+                    group-hover:scale-105 
                     ${
                       stat.accent === "gold"
-                        ? `
-                          border-champagne-gold/30
-                          bg-soft-cream
-                          text-antique-gold
+                        ? ` 
+                          border-champagne-gold/30 
+                          bg-soft-cream 
+                          text-antique-gold 
                         `
-                        : `
-                          border-champagne-gold/15
-                          bg-midnight-navy
-                          text-champagne-gold
+                        : ` 
+                          border-champagne-gold/15 
+                          bg-midnight-navy 
+                          text-champagne-gold 
                         `
-                    }
+                    } 
                   `}
               >
                 {stat.icon}
               </div>
 
               <span className="text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray/70">
-                Smart
+                {t("adminDashboard.smart")}
               </span>
             </div>
 
@@ -252,25 +255,23 @@ const AdminDashboardPage = () => {
             </div>
 
             <h2 className="mt-6 font-serif text-[1.9rem] font-normal tracking-[-0.025em] text-soft-white">
-              Welcome, Admin
+              {t("adminDashboard.welcomeAdmin")}
               <span className="ml-2">👋</span>
             </h2>
 
             <p className="mt-3 max-w-2xl text-[12px] leading-7 text-premium-silver/70">
-              From here you can manage your Smart Jewelry store, organize your
-              products, monitor orders, and keep your entire catalog under
-              control.
+              {t("adminDashboard.manageStoreDescription")}
             </p>
 
             <div className="mt-7 flex flex-wrap items-center gap-3">
               <span className="text-[7px] font-semibold uppercase tracking-[0.24em] text-premium-silver/35">
-                Your Store
+                {t("adminDashboard.yourStore")}
               </span>
 
               <span className="text-[7px] text-classic-gold">✦</span>
 
               <span className="text-[7px] font-semibold uppercase tracking-[0.24em] text-premium-silver/35">
-                Your Control
+                {t("adminDashboard.yourControl")}
               </span>
             </div>
           </div>
@@ -282,11 +283,11 @@ const AdminDashboardPage = () => {
           <div className="relative flex items-center justify-between">
             <div>
               <p className="text-[7px] font-semibold uppercase tracking-[0.25em] text-steel-gray">
-                System
+                {t("adminDashboard.system")}
               </p>
 
               <h3 className="mt-1.5 font-serif text-[1.4rem] font-normal text-midnight-navy">
-                Store Status
+                {t("adminDashboard.storeStatus")}
               </h3>
             </div>
 
@@ -300,16 +301,17 @@ const AdminDashboardPage = () => {
               <div className="flex items-center gap-3">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-classic-gold/20" />
+
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-classic-gold" />
                 </span>
 
                 <span className="text-[11px] text-slate-gray">
-                  Product Catalog
+                  {t("adminDashboard.productCatalog")}
                 </span>
               </div>
 
               <span className="text-[7px] font-semibold uppercase tracking-[0.15em] text-antique-gold">
-                Active
+                {t("adminDashboard.active")}
               </span>
             </div>
 
@@ -317,16 +319,17 @@ const AdminDashboardPage = () => {
               <div className="flex items-center gap-3">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-classic-gold/20" />
+
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-classic-gold" />
                 </span>
 
                 <span className="text-[11px] text-slate-gray">
-                  Order System
+                  {t("adminDashboard.orderSystem")}
                 </span>
               </div>
 
               <span className="text-[7px] font-semibold uppercase tracking-[0.15em] text-antique-gold">
-                Active
+                {t("adminDashboard.active")}
               </span>
             </div>
 
@@ -334,14 +337,17 @@ const AdminDashboardPage = () => {
               <div className="flex items-center gap-3">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-classic-gold/20" />
+
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-classic-gold" />
                 </span>
 
-                <span className="text-[11px] text-slate-gray">Dashboard</span>
+                <span className="text-[11px] text-slate-gray">
+                  {t("adminDashboard.dashboard")}
+                </span>
               </div>
 
               <span className="text-[7px] font-semibold uppercase tracking-[0.15em] text-antique-gold">
-                Online
+                {t("adminDashboard.online")}
               </span>
             </div>
           </div>

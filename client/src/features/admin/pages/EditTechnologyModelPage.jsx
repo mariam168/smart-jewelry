@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import {
@@ -8,6 +9,8 @@ import {
 } from "../services/technologyModelApi";
 
 import { getTechnologies } from "../services/technologyApi";
+
+import { useTranslation } from "react-i18next";
 
 const getImageUrl = (image) => {
   if (!image) return "";
@@ -48,6 +51,8 @@ const EditTechnologyModelPage = () => {
 
   const navigate = useNavigate();
 
+  const { t } = useTranslation();
+
   const [technologies, setTechnologies] = useState([]);
 
   const [formData, setFormData] = useState({
@@ -64,8 +69,11 @@ const EditTechnologyModelPage = () => {
   });
 
   const [isLoading, setIsLoading] = useState(true);
+
   const [isSaving, setIsSaving] = useState(false);
+
   const [isUploading, setIsUploading] = useState(false);
+
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -75,6 +83,7 @@ const EditTechnologyModelPage = () => {
   const loadPage = async () => {
     try {
       setIsLoading(true);
+
       setError("");
 
       const [technologiesResponse, technologyModelResponse] =
@@ -139,7 +148,7 @@ const EditTechnologyModelPage = () => {
       setError(
         error?.response?.data?.message ||
           error?.message ||
-          "Failed to load technology model.",
+          t("editTechnologyModel.failedToLoadTechnologyModel"),
       );
     } finally {
       setIsLoading(false);
@@ -156,7 +165,6 @@ const EditTechnologyModelPage = () => {
 
     setFormData((previous) => ({
       ...previous,
-
       [name]:
         type === "checkbox"
           ? checked
@@ -188,7 +196,6 @@ const EditTechnologyModelPage = () => {
 
       setFormData((previous) => ({
         ...previous,
-
         image:
           response.image,
       }));
@@ -196,7 +203,7 @@ const EditTechnologyModelPage = () => {
       console.error(error);
 
       alert(
-        "Failed to upload image.",
+        t("editTechnologyModel.failedToUploadImage"),
       );
     } finally {
       setIsUploading(false);
@@ -207,6 +214,7 @@ const EditTechnologyModelPage = () => {
     event.preventDefault();
 
     setError("");
+
     setIsSaving(true);
 
     try {
@@ -228,7 +236,7 @@ const EditTechnologyModelPage = () => {
 
       setError(
         error?.response?.data?.message ||
-          "Failed to update technology model.",
+          t("editTechnologyModel.failedToUpdateTechnologyModel"),
       );
     } finally {
       setIsSaving(false);
@@ -247,7 +255,7 @@ const EditTechnologyModelPage = () => {
             </div>
 
             <p className="text-[9px] font-semibold uppercase tracking-[0.24em] text-slate-gray">
-              Loading Technology Model...
+              {t("editTechnologyModel.loadingTechnologyModel")}
             </p>
           </div>
         </div>
@@ -264,16 +272,16 @@ const EditTechnologyModelPage = () => {
               <span className="h-px w-8 bg-classic-gold/60" />
 
               <span className="text-[8px] font-semibold uppercase tracking-[0.3em] text-antique-gold">
-                Smart Jewelry
+                {t("editTechnologyModel.smartJewelry")}
               </span>
             </div>
 
             <h1 className="font-serif text-[2.5rem] font-normal leading-none tracking-[-0.04em] sm:text-[3rem]">
-              Edit Technology Model
+              {t("editTechnologyModel.editTechnologyModel")}
             </h1>
 
             <p className="mt-4 text-[12px] leading-7 text-slate-gray">
-              Update technology model information.
+              {t("editTechnologyModel.updateTechnologyModelInformation")}
             </p>
           </div>
 
@@ -281,7 +289,7 @@ const EditTechnologyModelPage = () => {
             to="/admin/technology-models"
             className="inline-flex min-h-[46px] items-center justify-center gap-3 rounded-full border border-champagne-gold/30 bg-soft-white px-5 text-[8px] font-semibold uppercase text-slate-gray"
           >
-            ← Back
+            ← {t("editTechnologyModel.back")}
           </Link>
         </div>
       </header>
@@ -290,7 +298,7 @@ const EditTechnologyModelPage = () => {
         <div className="overflow-hidden rounded-[28px] border border-light-champagne/90 bg-soft-white/85 shadow-[0_20px_60px_rgba(7,19,31,0.055)]">
           <div className="border-b border-light-champagne/80 px-7 py-7 sm:px-10">
             <h2 className="font-serif text-[1.45rem]">
-              Update Technology Model
+              {t("editTechnologyModel.updateTechnologyModel")}
             </h2>
           </div>
 
@@ -307,7 +315,7 @@ const EditTechnologyModelPage = () => {
             <div className="space-y-8">
               <div>
                 <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em]">
-                  Technology
+                  {t("editTechnologyModel.technology")}
                 </label>
 
                 <select
@@ -318,7 +326,7 @@ const EditTechnologyModelPage = () => {
                   className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/65 px-5 text-[12px] outline-none focus:border-classic-gold"
                 >
                   <option value="">
-                    Select Technology
+                    {t("editTechnologyModel.selectTechnology")}
                   </option>
 
                   {technologies.map(
@@ -337,7 +345,7 @@ const EditTechnologyModelPage = () => {
               <div className="grid gap-7 md:grid-cols-2">
                 <div>
                   <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em]">
-                    Model Name
+                    {t("editTechnologyModel.modelName")}
                   </label>
 
                   <input
@@ -352,11 +360,11 @@ const EditTechnologyModelPage = () => {
 
                 <div>
                   <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em]">
-                    Model Code
+                    {t("editTechnologyModel.modelCode")}
                   </label>
 
                   <p className="mb-3 text-[10px] text-steel-gray">
-                    Generated automatically and cannot be changed.
+                    {t("editTechnologyModel.modelCodeDescription")}
                   </p>
 
                   <input
@@ -370,7 +378,7 @@ const EditTechnologyModelPage = () => {
 
               <div>
                 <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em]">
-                  Description
+                  {t("editTechnologyModel.description")}
                 </label>
 
                 <textarea
@@ -384,7 +392,7 @@ const EditTechnologyModelPage = () => {
 
               <div>
                 <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em]">
-                  Manufacturer
+                  {t("editTechnologyModel.manufacturer")}
                 </label>
 
                 <input
@@ -398,7 +406,7 @@ const EditTechnologyModelPage = () => {
 
               <div>
                 <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em]">
-                  Model Image
+                  {t("editTechnologyModel.modelImage")}
                 </label>
 
                 <input
@@ -410,7 +418,7 @@ const EditTechnologyModelPage = () => {
 
                 {isUploading && (
                   <p className="mt-3 text-[10px] text-slate-gray">
-                    Uploading image...
+                    {t("editTechnologyModel.uploadingImage")}
                   </p>
                 )}
 
@@ -418,7 +426,7 @@ const EditTechnologyModelPage = () => {
                   <div className="mt-5 h-40 w-40 overflow-hidden rounded-[18px] border border-light-champagne bg-soft-white">
                     <img
                       src={getImageUrl(formData.image)}
-                      alt="Technology Model"
+                      alt={t("editTechnologyModel.technologyModel")}
                       className="h-full w-full object-cover"
                     />
                   </div>
@@ -427,7 +435,7 @@ const EditTechnologyModelPage = () => {
 
               <div>
                 <label className="mb-4 block text-[9px] font-semibold uppercase tracking-[0.14em]">
-                  Model Features
+                  {t("editTechnologyModel.modelFeatures")}
                 </label>
 
                 <div className="grid gap-4 md:grid-cols-3">
@@ -441,7 +449,7 @@ const EditTechnologyModelPage = () => {
                     />
 
                     <span className="text-[11px] font-semibold">
-                      Battery
+                      {t("editTechnologyModel.battery")}
                     </span>
                   </label>
 
@@ -455,7 +463,7 @@ const EditTechnologyModelPage = () => {
                     />
 
                     <span className="text-[11px] font-semibold">
-                      Activation
+                      {t("editTechnologyModel.activation")}
                     </span>
                   </label>
 
@@ -469,7 +477,7 @@ const EditTechnologyModelPage = () => {
                     />
 
                     <span className="text-[11px] font-semibold">
-                      Subscription
+                      {t("editTechnologyModel.subscription")}
                     </span>
                   </label>
                 </div>
@@ -477,7 +485,7 @@ const EditTechnologyModelPage = () => {
 
               <div>
                 <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em]">
-                  Status
+                  {t("editTechnologyModel.status")}
                 </label>
 
                 <select
@@ -487,11 +495,11 @@ const EditTechnologyModelPage = () => {
                   className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/65 px-5 text-[12px] outline-none focus:border-classic-gold"
                 >
                   <option value="active">
-                    Active
+                    {t("editTechnologyModel.active")}
                   </option>
 
                   <option value="inactive">
-                    Inactive
+                    {t("editTechnologyModel.inactive")}
                   </option>
                 </select>
               </div>
@@ -502,7 +510,7 @@ const EditTechnologyModelPage = () => {
                 to="/admin/technology-models"
                 className="inline-flex min-h-[48px] items-center justify-center rounded-[13px] border border-light-champagne bg-soft-white px-7 text-[8px] font-semibold uppercase"
               >
-                Cancel
+                {t("editTechnologyModel.cancel")}
               </Link>
 
               <button
@@ -511,8 +519,8 @@ const EditTechnologyModelPage = () => {
                 className="inline-flex min-h-[48px] items-center justify-center gap-3 rounded-[13px] bg-midnight-navy px-8 text-[8px] font-semibold uppercase text-soft-white disabled:opacity-50"
               >
                 {isSaving
-                  ? "Updating..."
-                  : "Update Technology Model"}
+                  ? t("editTechnologyModel.updating")
+                  : t("editTechnologyModel.updateTechnologyModel")}
               </button>
             </div>
           </form>

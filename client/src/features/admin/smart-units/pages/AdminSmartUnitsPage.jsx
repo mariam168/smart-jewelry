@@ -2,6 +2,8 @@ import { Fragment, useEffect, useState } from "react";
 
 import { Link } from "react-router-dom";
 
+import { useTranslation } from "react-i18next";
+
 import {
   getSmartUnits,
   getSmartUnitInstances,
@@ -11,6 +13,8 @@ import {
 } from "../services/smartUnitApi";
 
 const AdminSmartUnitsPage = () => {
+  const { t } = useTranslation();
+
   const [smartUnits, setSmartUnits] = useState([]);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -64,7 +68,7 @@ const AdminSmartUnitsPage = () => {
       setError(
         error?.response?.data?.message ||
           error?.message ||
-          "Failed to load Smart Units.",
+          t("adminSmartUnits.failedToLoadSmartUnits"),
       );
     } finally {
       setIsLoading(false);
@@ -114,7 +118,7 @@ const AdminSmartUnitsPage = () => {
         [smartUnitId]:
           error?.response?.data?.message ||
           error?.message ||
-          "Failed to load instances.",
+          t("adminSmartUnits.failedToLoadInstances"),
       }));
     } finally {
       setLoadingInstances((previous) => ({
@@ -150,7 +154,9 @@ const AdminSmartUnitsPage = () => {
   // =============================
 
   const handleDelete = async (id) => {
-    const confirmed = window.confirm("Delete this Smart Unit?");
+    const confirmed = window.confirm(
+      t("adminSmartUnits.deleteSmartUnitConfirmation"),
+    );
 
     if (!confirmed) return;
 
@@ -159,7 +165,10 @@ const AdminSmartUnitsPage = () => {
 
       setSmartUnits((previous) => previous.filter((item) => item._id !== id));
     } catch (error) {
-      alert(error?.response?.data?.message || "Delete failed");
+      alert(
+        error?.response?.data?.message ||
+          t("adminSmartUnits.deleteFailed"),
+      );
     }
   };
 
@@ -213,7 +222,10 @@ const AdminSmartUnitsPage = () => {
     } catch (error) {
       console.error("Update Instance Error:", error);
 
-      alert(error?.response?.data?.message || "Update failed");
+      alert(
+        error?.response?.data?.message ||
+          t("adminSmartUnits.updateFailed"),
+      );
     }
   };
 
@@ -222,7 +234,11 @@ const AdminSmartUnitsPage = () => {
   // =============================
 
   const handleDeleteInstance = async (instance) => {
-    const confirmed = window.confirm(`Delete ${instance.serialNumber}?`);
+    const confirmed = window.confirm(
+      t("adminSmartUnits.deleteInstanceConfirmation", {
+        serialNumber: instance.serialNumber,
+      }),
+    );
 
     if (!confirmed) return;
 
@@ -235,7 +251,10 @@ const AdminSmartUnitsPage = () => {
     } catch (error) {
       console.error("Delete Instance Error:", error);
 
-      alert(error?.response?.data?.message || "Delete instance failed");
+      alert(
+        error?.response?.data?.message ||
+          t("adminSmartUnits.deleteInstanceFailed"),
+      );
     }
   };
 
@@ -343,7 +362,7 @@ const AdminSmartUnitsPage = () => {
               text-antique-gold
             "
             >
-              Smart Jewelry Inventory
+              {t("adminSmartUnits.smartJewelryInventory")}
             </p>
 
             <h1
@@ -353,7 +372,7 @@ const AdminSmartUnitsPage = () => {
               text-[3rem]
             "
             >
-              Smart Units
+              {t("adminSmartUnits.smartUnits")}
             </h1>
 
             <p
@@ -363,7 +382,7 @@ const AdminSmartUnitsPage = () => {
               text-slate-gray
             "
             >
-              Manage smart units and physical serial devices.
+              {t("adminSmartUnits.manageDescription")}
             </p>
           </div>
 
@@ -380,7 +399,7 @@ const AdminSmartUnitsPage = () => {
             "
           >
             <span className="text-champagne-gold">+</span>
-            Add Smart Unit
+            {t("adminSmartUnits.addSmartUnit")}
           </Link>
         </div>
       </header>
@@ -418,7 +437,7 @@ const AdminSmartUnitsPage = () => {
             text-center
           "
           >
-            Loading Smart Units...
+            {t("adminSmartUnits.loadingSmartUnits")}
           </div>
         ) : (
           <div
@@ -450,7 +469,7 @@ const AdminSmartUnitsPage = () => {
                     text-xs
                   "
                   >
-                    Smart Unit
+                    {t("adminSmartUnits.smartUnit")}
                   </th>
 
                   <th
@@ -461,7 +480,7 @@ const AdminSmartUnitsPage = () => {
                     text-xs
                   "
                   >
-                    Technology
+                    {t("adminSmartUnits.technology")}
                   </th>
 
                   <th
@@ -472,7 +491,7 @@ const AdminSmartUnitsPage = () => {
                     text-xs
                   "
                   >
-                    Stock
+                    {t("adminSmartUnits.stock")}
                   </th>
 
                   <th
@@ -483,7 +502,7 @@ const AdminSmartUnitsPage = () => {
                     text-xs
                   "
                   >
-                    Status
+                    {t("adminSmartUnits.status")}
                   </th>
 
                   <th
@@ -494,7 +513,7 @@ const AdminSmartUnitsPage = () => {
                     text-xs
                   "
                   >
-                    Actions
+                    {t("adminSmartUnits.actions")}
                   </th>
                 </tr>
               </thead>
@@ -550,7 +569,8 @@ const AdminSmartUnitsPage = () => {
                                   text-slate-gray
                                 "
                             >
-                              {smartUnit.description || "No description"}
+                              {smartUnit.description ||
+                                t("adminSmartUnits.noDescription")}
                             </p>
                           </div>
                         </div>
@@ -597,7 +617,7 @@ const AdminSmartUnitsPage = () => {
                                 text-slate-gray
                               "
                           >
-                            Units
+                            {t("adminSmartUnits.units")}
                           </span>
                         </button>
                       </td>
@@ -610,24 +630,21 @@ const AdminSmartUnitsPage = () => {
                       >
                         <span
                           className={`
-
                                 rounded-full
-
                                 border
-
                                 px-3
-
                                 py-1
-
                                 text-xs
-
                                 capitalize
-
                                 ${getStatusStyle(smartUnit.status)}
-
                               `}
                         >
-                          {smartUnit.status}
+                          {t(
+                            `adminSmartUnits.statuses.${smartUnit.status}`,
+                            {
+                              defaultValue: smartUnit.status,
+                            },
+                          )}
                         </span>
                       </td>
 
@@ -655,7 +672,7 @@ const AdminSmartUnitsPage = () => {
                                   text-xs
                                 "
                           >
-                            Edit
+                            {t("adminSmartUnits.edit")}
                           </Link>
 
                           <button
@@ -670,7 +687,7 @@ const AdminSmartUnitsPage = () => {
                                   text-red-600
                                 "
                           >
-                            Delete
+                            {t("adminSmartUnits.delete")}
                           </button>
                         </div>
                       </td>
@@ -716,7 +733,7 @@ const AdminSmartUnitsPage = () => {
                                         text-antique-gold
                                       "
                                 >
-                                  Physical Inventory
+                                  {t("adminSmartUnits.physicalInventory")}
                                 </p>
 
                                 <h3
@@ -726,7 +743,8 @@ const AdminSmartUnitsPage = () => {
                                         text-2xl
                                       "
                                 >
-                                  {smartUnit.name} Units
+                                  {smartUnit.name}{" "}
+                                  {t("adminSmartUnits.units")}
                                 </h3>
                               </div>
 
@@ -740,7 +758,8 @@ const AdminSmartUnitsPage = () => {
                                       text-xs
                                     "
                               >
-                                {getCounts(smartUnit).total} Devices
+                                {getCounts(smartUnit).total}{" "}
+                                {t("adminSmartUnits.devices")}
                               </div>
                             </div>
                             {loadingInstances[smartUnit._id] ? (
@@ -752,7 +771,7 @@ const AdminSmartUnitsPage = () => {
                                       text-slate-gray
                                     "
                               >
-                                Loading devices...
+                                {t("adminSmartUnits.loadingDevices")}
                               </div>
                             ) : instanceErrors[smartUnit._id] ? (
                               <div
@@ -780,7 +799,7 @@ const AdminSmartUnitsPage = () => {
                                       text-slate-gray
                                     "
                               >
-                                No serial numbers found.
+                                {t("adminSmartUnits.noSerialNumbersFound")}
                               </div>
                             ) : (
                               <div
@@ -821,7 +840,9 @@ const AdminSmartUnitsPage = () => {
                                                     text-antique-gold
                                                   "
                                           >
-                                            Serial Number
+                                            {t(
+                                              "adminSmartUnits.serialNumber",
+                                            )}
                                           </p>
 
                                           <p
@@ -839,28 +860,28 @@ const AdminSmartUnitsPage = () => {
 
                                         <span
                                           className={`
-
                                                     rounded-full
-
                                                     border
-
                                                     px-3
-
                                                     py-1
-
                                                     text-[10px]
-
                                                     capitalize
-
                                                     ${getStatusStyle(
                                                       getInstanceStatus(
                                                         instance,
                                                       ),
                                                     )}
-
                                                   `}
                                         >
-                                          {getInstanceStatus(instance)}
+                                          {t(
+                                            `adminSmartUnits.statuses.${getInstanceStatus(
+                                              instance,
+                                            )}`,
+                                            {
+                                              defaultValue:
+                                                getInstanceStatus(instance),
+                                            },
+                                          )}
                                         </span>
                                       </div>
 
@@ -885,7 +906,7 @@ const AdminSmartUnitsPage = () => {
                                                     text-slate-gray
                                                   "
                                           >
-                                            Unique Code
+                                            {t("adminSmartUnits.uniqueCode")}
                                           </span>
 
                                           <span
@@ -909,7 +930,7 @@ const AdminSmartUnitsPage = () => {
                                                     text-slate-gray
                                                   "
                                           >
-                                            Added Date
+                                            {t("adminSmartUnits.addedDate")}
                                           </span>
 
                                           <span>
@@ -933,7 +954,7 @@ const AdminSmartUnitsPage = () => {
                                                     text-slate-gray
                                                   "
                                           >
-                                            Firmware
+                                            {t("adminSmartUnits.firmware")}
                                           </span>
 
                                           <span>
@@ -966,7 +987,7 @@ const AdminSmartUnitsPage = () => {
                                                     text-xs
                                                   "
                                         >
-                                          Edit
+                                          {t("adminSmartUnits.edit")}
                                         </button>
 
                                         <button
@@ -985,7 +1006,7 @@ const AdminSmartUnitsPage = () => {
                                                     text-red-600
                                                   "
                                         >
-                                          Delete
+                                          {t("adminSmartUnits.delete")}
                                         </button>
                                       </div>
                                     </div>
@@ -1034,7 +1055,7 @@ const AdminSmartUnitsPage = () => {
                 text-2xl
               "
             >
-              Edit Physical Unit
+              {t("adminSmartUnits.editPhysicalUnit")}
             </h2>
 
             <form
@@ -1073,17 +1094,29 @@ const AdminSmartUnitsPage = () => {
                     py-3
                   "
               >
-                <option value="available">Available</option>
+                <option value="available">
+                  {t("adminSmartUnits.statuses.available")}
+                </option>
 
-                <option value="reserved">Reserved</option>
+                <option value="reserved">
+                  {t("adminSmartUnits.statuses.reserved")}
+                </option>
 
-                <option value="assigned">Assigned</option>
+                <option value="assigned">
+                  {t("adminSmartUnits.statuses.assigned")}
+                </option>
 
-                <option value="activated">Activated</option>
+                <option value="activated">
+                  {t("adminSmartUnits.statuses.activated")}
+                </option>
 
-                <option value="inactive">Inactive</option>
+                <option value="inactive">
+                  {t("adminSmartUnits.statuses.inactive")}
+                </option>
 
-                <option value="damaged">Damaged</option>
+                <option value="damaged">
+                  {t("adminSmartUnits.statuses.damaged")}
+                </option>
               </select>
 
               {instanceForm.status === "damaged" && (
@@ -1097,7 +1130,7 @@ const AdminSmartUnitsPage = () => {
                       damagedReason: e.target.value,
                     }))
                   }
-                  placeholder="Damage reason"
+                  placeholder={t("adminSmartUnits.damageReason")}
                   className="
                       w-full
                       rounded-xl
@@ -1117,7 +1150,7 @@ const AdminSmartUnitsPage = () => {
                     firmwareVersion: e.target.value,
                   }))
                 }
-                placeholder="Firmware Version"
+                placeholder={t("adminSmartUnits.firmwareVersion")}
                 className="
                     w-full
                     rounded-xl
@@ -1137,7 +1170,7 @@ const AdminSmartUnitsPage = () => {
                     notes: e.target.value,
                   }))
                 }
-                placeholder="Notes"
+                placeholder={t("adminSmartUnits.notes")}
                 className="
                     w-full
                     rounded-xl
@@ -1164,7 +1197,7 @@ const AdminSmartUnitsPage = () => {
                       py-3
                     "
                 >
-                  Cancel
+                  {t("adminSmartUnits.cancel")}
                 </button>
 
                 <button
@@ -1178,7 +1211,7 @@ const AdminSmartUnitsPage = () => {
                       text-white
                     "
                 >
-                  Save
+                  {t("adminSmartUnits.save")}
                 </button>
               </div>
             </form>

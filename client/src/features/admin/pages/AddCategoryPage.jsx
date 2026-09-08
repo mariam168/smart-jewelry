@@ -1,72 +1,51 @@
-import {
-  useEffect,
-  useState,
-} from "react";
+import { useEffect, useState } from "react";
 
-import {
-  Link,
-  useNavigate,
-} from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
-import {
-  createCategory,
-  uploadImage,
-} from "../services/categoryApi";
+import { createCategory, uploadImage } from "../services/categoryApi";
+
+import { useTranslation } from "react-i18next";
 
 const AddCategoryPage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
-  const [formData, setFormData] =
-    useState({
-      name: "",
-      description: "",
-    });
+  const [formData, setFormData] = useState({
+    nameEn: "",
+    nameAr: "",
+    descriptionEn: "",
+    descriptionAr: "",
+  });
 
-  const [image, setImage] =
-    useState(null);
+  const [image, setImage] = useState(null);
 
-  const [preview, setPreview] =
-    useState("");
+  const [preview, setPreview] = useState("");
 
-  const [isLoading, setIsLoading] =
-    useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
   const handleChange = (event) => {
-    const {
-      name,
-      value,
-    } = event.target;
+    const { name, value } = event.target;
 
-    setFormData(
-      (previousData) => ({
-        ...previousData,
-        [name]: value,
-      }),
-    );
+    setFormData((previousData) => ({
+      ...previousData,
+      [name]: value,
+    }));
 
     setError("");
   };
 
-  const handleImageChange = (
-    event,
-  ) => {
-    const file =
-      event.target.files?.[0];
+  const handleImageChange = (event) => {
+    const file = event.target.files?.[0];
 
     if (!file) {
       return;
     }
 
-    if (
-      !file.type.startsWith(
-        "image/",
-      )
-    ) {
+    if (!file.type.startsWith("image/")) {
       setError(
-        "Please select a valid image file.",
+        t("addCategory.validImageFile"),
       );
 
       event.target.value = "";
@@ -74,15 +53,11 @@ const AddCategoryPage = () => {
       return;
     }
 
-    const maxSize =
-      5 * 1024 * 1024;
+    const maxSize = 5 * 1024 * 1024;
 
-    if (
-      file.size >
-      maxSize
-    ) {
+    if (file.size > maxSize) {
       setError(
-        "Image size must be less than 5MB.",
+        t("addCategory.imageSizeLimit"),
       );
 
       event.target.value = "";
@@ -93,28 +68,19 @@ const AddCategoryPage = () => {
     setError("");
 
     if (preview) {
-      URL.revokeObjectURL(
-        preview,
-      );
+      URL.revokeObjectURL(preview);
     }
 
     setImage(file);
 
-    const imagePreview =
-      URL.createObjectURL(
-        file,
-      );
+    const imagePreview = URL.createObjectURL(file);
 
-    setPreview(
-      imagePreview,
-    );
+    setPreview(imagePreview);
   };
 
   const handleRemoveImage = () => {
     if (preview) {
-      URL.revokeObjectURL(
-        preview,
-      );
+      URL.revokeObjectURL(preview);
     }
 
     setImage(null);
@@ -124,149 +90,115 @@ const AddCategoryPage = () => {
   useEffect(() => {
     return () => {
       if (preview) {
-        URL.revokeObjectURL(
-          preview,
-        );
+        URL.revokeObjectURL(preview);
       }
     };
   }, [preview]);
 
-  const generateSlug = (
-    text,
-  ) => {
+  const generateSlug = (text) => {
     return text
       .trim()
       .toLowerCase()
-      .replace(
-        /\s+/g,
-        "-",
-      )
-      .replace(
-        /[^\w-]+/g,
-        "",
-      )
-      .replace(
-        /--+/g,
-        "-",
-      )
-      .replace(
-        /^-+|-+$/g,
-        "",
-      );
+      .replace(/\s+/g, "-")
+      .replace(/[^\w-]+/g, "")
+      .replace(/--+/g, "-")
+      .replace(/^-+|-+$/g, "");
   };
 
-  const handleSubmit =
-    async (event) => {
-      event.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
-      setError("");
+    setError("");
 
-      const categoryName =
-        formData.name.trim();
+    const nameEn = formData.nameEn.trim();
+    const nameAr = formData.nameAr.trim();
 
-      if (!categoryName) {
-        setError(
-          "Category name is required.",
-        );
+    if (!nameEn) {
+      setError(
+        t("addCategory.englishNameRequired"),
+      );
 
-        return;
-      }
+      return;
+    }
 
-      const slug =
-        generateSlug(
-          categoryName,
-        );
+    if (!nameAr) {
+      setError(
+        t("addCategory.arabicNameRequired"),
+      );
 
-      if (!slug) {
-        setError(
-          "Please enter a valid category name.",
-        );
+      return;
+    }
 
-        return;
-      }
+    const slug = generateSlug(nameEn);
 
-      setIsLoading(true);
+    if (!slug) {
+      setError(
+        t("addCategory.validEnglishName"),
+      );
 
-      try {
-        let imageUrl = "";
+      return;
+    }
 
-        if (image) {
-          const imageFormData =
-            new FormData();
+    setIsLoading(true);
 
-          imageFormData.append(
-            "image",
-            image,
+    try {
+      let imageUrl = "";
+
+      if (image) {
+        const imageFormData = new FormData();
+
+        imageFormData.append("image", image);
+
+        const uploadResponse = await uploadImage(imageFormData);
+
+        imageUrl =
+          uploadResponse?.image ||
+          uploadResponse?.data?.image ||
+          uploadResponse?.imageUrl ||
+          uploadResponse?.data?.imageUrl ||
+          uploadResponse?.url ||
+          uploadResponse?.data?.url ||
+          uploadResponse?.path ||
+          uploadResponse?.data?.path ||
+          "";
+
+        if (!imageUrl) {
+          throw new Error(
+            t("addCategory.imageUrlNotReturned"),
           );
-
-          const uploadResponse =
-            await uploadImage(
-              imageFormData,
-            );
-
-          imageUrl =
-            uploadResponse
-              ?.image ||
-            uploadResponse
-              ?.data?.image ||
-            uploadResponse
-              ?.imageUrl ||
-            uploadResponse
-              ?.data
-              ?.imageUrl ||
-            uploadResponse
-              ?.url ||
-            uploadResponse
-              ?.data?.url ||
-            uploadResponse
-              ?.path ||
-            uploadResponse
-              ?.data?.path ||
-            "";
-
-          if (!imageUrl) {
-            throw new Error(
-              "Image uploaded successfully, but the image URL was not returned by the server.",
-            );
-          }
         }
-
-        await createCategory({
-          name:
-            categoryName,
-
-          slug,
-
-          description:
-            formData.description.trim(),
-
-          image:
-            imageUrl,
-        });
-
-        navigate(
-          "/admin/categories",
-        );
-      } catch (error) {
-        console.error(
-          "Create category error:",
-          error,
-        );
-
-        setError(
-          error?.response
-            ?.data?.message ||
-            error?.response
-              ?.data?.error ||
-            error?.message ||
-            "Failed to create category.",
-        );
-      } finally {
-        setIsLoading(
-          false,
-        );
       }
-    };
+
+      await createCategory({
+        name: {
+          en: nameEn,
+          ar: nameAr,
+        },
+
+        slug,
+
+        description: {
+          en: formData.descriptionEn.trim(),
+          ar: formData.descriptionAr.trim(),
+        },
+
+        image: imageUrl,
+      });
+
+      navigate("/admin/categories");
+    } catch (error) {
+      console.error("Create category error:", error);
+
+      setError(
+        error?.response?.data?.message ||
+          error?.response?.data?.error ||
+          error?.message ||
+          t("addCategory.failedToCreateCategory"),
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-warm-ivory text-midnight-navy">
@@ -281,16 +213,16 @@ const AddCategoryPage = () => {
               <span className="h-px w-8 bg-classic-gold/60" />
 
               <div className="text-[8px] font-semibold uppercase tracking-[0.25em] text-antique-gold">
-                Category Management
+                {t("addCategory.categoryManagement")}
               </div>
             </div>
 
             <h1 className="font-serif text-[2.5rem] font-normal leading-none tracking-[-0.04em] text-midnight-navy sm:text-[3rem]">
-              Add Category
+              {t("addCategory.addCategory")}
             </h1>
 
             <p className="mt-3 text-[11px] leading-6 text-slate-gray sm:text-[12px]">
-              Create a new product category
+              {t("addCategory.createNewProductCategory")}
             </p>
           </div>
 
@@ -302,7 +234,7 @@ const AddCategoryPage = () => {
               ←
             </span>
 
-            Back
+            {t("addCategory.back")}
           </Link>
         </div>
       </header>
@@ -316,112 +248,130 @@ const AddCategoryPage = () => {
 
             <div>
               <p className="font-semibold text-midnight-navy">
-                Something went wrong
+                {t("addCategory.somethingWentWrong")}
               </p>
 
-              <p className="mt-1">
-                {error}
-              </p>
+              <p className="mt-1">{error}</p>
             </div>
           </div>
         )}
 
         <div className="relative overflow-hidden rounded-[28px] border border-light-champagne/90 bg-soft-white/85 shadow-[0_20px_60px_rgba(7,19,31,0.055)] backdrop-blur-sm">
-          <div className="pointer-events-none absolute -right-28 -top-28 h-72 w-72 rounded-full border border-champagne-gold/10" />
-
-          <div className="pointer-events-none absolute -bottom-28 -left-28 h-72 w-72 rounded-full border border-champagne-gold/[0.08]" />
-
-          <div className="pointer-events-none absolute right-0 top-0 h-64 w-64 rounded-full bg-soft-cream blur-[90px]" />
-
           <div className="relative border-b border-light-champagne/80 bg-warm-ivory/50 px-7 py-6 sm:px-9">
             <h2 className="font-serif text-[1.5rem] font-normal tracking-[-0.02em] text-midnight-navy">
-              Category Information
+              {t("addCategory.categoryInformation")}
             </h2>
 
             <p className="mt-2 text-[10px] leading-5 text-slate-gray">
-              Add the basic information and image for your category.
+              {t("addCategory.addInformationBothLanguages")}
             </p>
           </div>
 
           <form
-            onSubmit={
-              handleSubmit
-            }
+            onSubmit={handleSubmit}
             className="relative space-y-8 p-7 sm:p-9"
           >
-            <div>
-              <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                Category Name
-                <span className="ml-1 text-antique-gold">
-                  *
-                </span>
-              </label>
+            <div className="grid gap-6 md:grid-cols-2">
+              <div>
+                <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+                  {t("addCategory.categoryNameEnglish")}
+                  <span className="ml-1 text-antique-gold">*</span>
+                </label>
 
-              <input
-                type="text"
-                name="name"
-                value={
-                  formData.name
-                }
-                onChange={
-                  handleChange
-                }
-                placeholder="Enter category name"
-                required
-                disabled={
-                  isLoading
-                }
-                className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 text-[12px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10 disabled:cursor-not-allowed disabled:bg-silver-mist/60 disabled:text-steel-gray"
-              />
+                <input
+                  type="text"
+                  name="nameEn"
+                  value={formData.nameEn}
+                  onChange={handleChange}
+                  placeholder={t(
+                    "addCategory.enterEnglishCategoryName",
+                  )}
+                  required
+                  disabled={isLoading}
+                  className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 text-[12px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10 disabled:cursor-not-allowed disabled:bg-silver-mist/60"
+                />
+              </div>
 
-              <p className="mt-2 text-[9px] leading-5 text-steel-gray">
-                Choose a clear name that describes the products in this category.
-              </p>
-            </div>
+              <div>
+                <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+                  {t("addCategory.categoryNameArabic")}
+                  <span className="ml-1 text-antique-gold">*</span>
+                </label>
 
-            <div>
-              <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                Slug
-              </label>
-
-              <div className="rounded-[14px] border border-light-champagne bg-soft-cream/65 px-5 py-4 font-mono text-[10px] tracking-[0.05em] text-slate-gray">
-                {generateSlug(
-                  formData.name,
-                ) ||
-                  "category-slug"}
+                <input
+                  type="text"
+                  name="nameAr"
+                  value={formData.nameAr}
+                  onChange={handleChange}
+                  placeholder={t(
+                    "addCategory.enterArabicCategoryName",
+                  )}
+                  dir="rtl"
+                  required
+                  disabled={isLoading}
+                  className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 text-[12px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10 disabled:cursor-not-allowed disabled:bg-silver-mist/60"
+                />
               </div>
             </div>
 
             <div>
               <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                Description
+                {t("addCategory.slug")}
               </label>
 
-              <textarea
-                rows={5}
-                name="description"
-                value={
-                  formData.description
-                }
-                onChange={
-                  handleChange
-                }
-                placeholder="Write a short description for this category..."
-                disabled={
-                  isLoading
-                }
-                className="w-full resize-none rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-4 text-[12px] leading-6 text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
-              />
+              <div className="rounded-[14px] border border-light-champagne bg-soft-cream/65 px-5 py-4 font-mono text-[10px] tracking-[0.05em] text-slate-gray">
+                {generateSlug(formData.nameEn) ||
+                  t("addCategory.categorySlug")}
+              </div>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              <div>
+                <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+                  {t("addCategory.descriptionEnglish")}
+                </label>
+
+                <textarea
+                  rows={5}
+                  name="descriptionEn"
+                  value={formData.descriptionEn}
+                  onChange={handleChange}
+                  placeholder={t(
+                    "addCategory.writeEnglishDescription",
+                  )}
+                  disabled={isLoading}
+                  className="w-full resize-none rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-4 text-[12px] leading-6 text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+                  {t("addCategory.descriptionArabic")}
+                </label>
+
+                <textarea
+                  rows={5}
+                  name="descriptionAr"
+                  value={formData.descriptionAr}
+                  onChange={handleChange}
+                  placeholder={t(
+                    "addCategory.writeArabicDescription",
+                  )}
+                  dir="rtl"
+                  disabled={isLoading}
+                  className="w-full resize-none rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-4 text-[12px] leading-6 text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
+                />
+              </div>
             </div>
 
             <div className="relative overflow-hidden rounded-[20px] border border-light-champagne/90 bg-warm-ivory/55 p-6">
               <div className="relative mb-5">
                 <h3 className="font-serif text-[1.25rem] font-normal text-midnight-navy">
-                  Category Image
+                  {t("addCategory.categoryImage")}
                 </h3>
 
                 <p className="mt-1.5 text-[10px] leading-5 text-slate-gray">
-                  Upload an image that represents this category.
+                  {t("addCategory.uploadCategoryImage")}
                 </p>
               </div>
 
@@ -432,7 +382,7 @@ const AddCategoryPage = () => {
                   </div>
 
                   <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-midnight-navy">
-                    Click to upload an image
+                    {t("addCategory.clickToUploadImage")}
                   </span>
 
                   <span className="mt-2 text-[9px] text-slate-gray">
@@ -440,18 +390,14 @@ const AddCategoryPage = () => {
                   </span>
 
                   <span className="mt-1 text-[9px] text-steel-gray">
-                    Maximum size: 5MB
+                    {t("addCategory.maximumSize")}
                   </span>
 
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={
-                      handleImageChange
-                    }
-                    disabled={
-                      isLoading
-                    }
+                    onChange={handleImageChange}
+                    disabled={isLoading}
                     className="hidden"
                   />
                 </label>
@@ -459,21 +405,15 @@ const AddCategoryPage = () => {
                 <div className="rounded-[18px] border border-light-champagne bg-soft-white/90 p-4">
                   <div className="relative overflow-hidden rounded-[15px] border border-light-champagne/70 bg-soft-cream">
                     <img
-                      src={
-                        preview
-                      }
-                      alt="Category Preview"
+                      src={preview}
+                      alt={t("addCategory.categoryPreview")}
                       className="mx-auto h-72 w-full object-contain p-3"
                     />
 
                     <button
                       type="button"
-                      onClick={
-                        handleRemoveImage
-                      }
-                      disabled={
-                        isLoading
-                      }
+                      onClick={handleRemoveImage}
+                      disabled={isLoading}
                       className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-light-champagne bg-soft-white text-antique-gold"
                     >
                       ×
@@ -488,26 +428,18 @@ const AddCategoryPage = () => {
 
                       <p className="mt-1 text-[9px] text-steel-gray">
                         {image
-                          ? `${(
-                              image.size /
-                              1024 /
-                              1024
-                            ).toFixed(
-                              2,
-                            )} MB`
+                          ? `${(image.size / 1024 / 1024).toFixed(2)} MB`
                           : ""}
                       </p>
                     </div>
 
                     <label className="cursor-pointer rounded-full border border-light-champagne px-4 py-2 text-[8px]">
-                      Change Image
+                      {t("addCategory.changeImage")}
 
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={
-                          handleImageChange
-                        }
+                        onChange={handleImageChange}
                         className="hidden"
                       />
                     </label>
@@ -521,19 +453,17 @@ const AddCategoryPage = () => {
                 to="/admin/categories"
                 className="inline-flex min-h-[48px] items-center justify-center rounded-[13px] border border-light-champagne bg-soft-white px-7 text-[8px] font-semibold uppercase"
               >
-                Cancel
+                {t("addCategory.cancel")}
               </Link>
 
               <button
                 type="submit"
-                disabled={
-                  isLoading
-                }
+                disabled={isLoading}
                 className="inline-flex min-h-[48px] items-center justify-center rounded-[13px] bg-midnight-navy px-7 text-[8px] font-semibold uppercase text-soft-white disabled:opacity-50"
               >
                 {isLoading
-                  ? "Creating..."
-                  : "Create Category"}
+                  ? t("addCategory.creating")
+                  : t("addCategory.createCategory")}
               </button>
             </div>
           </form>

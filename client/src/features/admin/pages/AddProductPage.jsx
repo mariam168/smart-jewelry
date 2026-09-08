@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { getCategories } from "../services/categoryApi";
 
@@ -24,52 +25,67 @@ const sanitizeMoneyInput = (value) => {
   const parts = cleanValue.split(".");
 
   if (parts.length > 1) {
-    cleanValue = `${parts[0]}.${parts
-      .slice(1)
-      .join("")
-      .slice(0, 2)}`;
+    cleanValue = `${parts[0]}.${parts.slice(1).join("").slice(0, 2)}`;
   }
 
   return cleanValue;
 };
 
+const createLocalizedValue = () => ({
+  en: "",
+  ar: "",
+});
+
 const AddProductPage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [categories, setCategories] = useState([]);
   const [technologyModels, setTechnologyModels] = useState([]);
   const [smartUnits, setSmartUnits] = useState([]);
 
-  const [selectedTechnologyModels, setSelectedTechnologyModels] =
-    useState([]);
+  const [selectedTechnologyModels, setSelectedTechnologyModels] = useState([]);
 
   const [images, setImages] = useState([]);
   const [previewImages, setPreviewImages] = useState([]);
 
   const [formData, setFormData] = useState({
-    name: "",
-    shortDescription: "",
-    description: "",
+    name: createLocalizedValue(),
+    shortDescription: createLocalizedValue(),
+    description: createLocalizedValue(),
+
     category: "",
+
     price: "",
     costPrice: "",
     comparePrice: "",
     stock: "",
-    material: "",
-    color: "",
+
+    material: createLocalizedValue(),
+    color: createLocalizedValue(),
+
     weight: "",
+
     featured: false,
     bestSeller: false,
     newArrival: false,
-    tags: "",
-    seoTitle: "",
-    seoDescription: "",
-    seoSlug: "",
+
+    tags: {
+      en: "",
+      ar: "",
+    },
+
+    seoTitle: createLocalizedValue(),
+    seoDescription: createLocalizedValue(),
+    seoSlug: createLocalizedValue(),
+
     preparationDays: "",
-    careInstructions: "",
+
+    careInstructions: createLocalizedValue(),
+
     isCustomizable: false,
 
-    // NEW BUSINESS RULE
+    // BUSINESS RULE
     technologyRequired: false,
 
     status: "active",
@@ -78,22 +94,27 @@ const AddProductPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  /*
+   * Language used for the localized product fields.
+   *
+   * en = English
+   * ar = Arabic
+   */
+  const [language, setLanguage] = useState("en");
+
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [
-          categoryResponse,
-          technologyResponse,
-          smartUnitsResponse,
-        ] = await Promise.all([
-          getCategories(),
-          getTechnologyModels(),
-          getSmartUnits().catch(() => ({
-            data: {
-              smartUnits: [],
-            },
-          })),
-        ]);
+        const [categoryResponse, technologyResponse, smartUnitsResponse] =
+          await Promise.all([
+            getCategories(),
+            getTechnologyModels(),
+            getSmartUnits().catch(() => ({
+              data: {
+                smartUnits: [],
+              },
+            })),
+          ]);
 
         let categoryData = [];
 
@@ -105,9 +126,7 @@ const AddProductPage = () => {
           categoryData = categoryResponse;
         }
 
-        setCategories(
-          Array.isArray(categoryData) ? categoryData : [],
-        );
+        setCategories(Array.isArray(categoryData) ? categoryData : []);
 
         if (categoryData.length > 0) {
           setFormData((previous) => ({
@@ -122,9 +141,7 @@ const AddProductPage = () => {
           [];
 
         setTechnologyModels(
-          Array.isArray(loadedTechnologyModels)
-            ? loadedTechnologyModels
-            : [],
+          Array.isArray(loadedTechnologyModels) ? loadedTechnologyModels : [],
         );
 
         const loadedSmartUnits =
@@ -132,17 +149,11 @@ const AddProductPage = () => {
           smartUnitsResponse?.smartUnits ||
           [];
 
-        setSmartUnits(
-          Array.isArray(loadedSmartUnits)
-            ? loadedSmartUnits
-            : [],
-        );
+        setSmartUnits(Array.isArray(loadedSmartUnits) ? loadedSmartUnits : []);
       } catch (loadError) {
         console.error(loadError);
 
-        setError(
-          "Failed to load categories or technology models.",
-        );
+        setError(t("addProduct.failedToLoadCategoriesOrTechnologyModels"));
       }
     };
 
@@ -157,12 +168,51 @@ const AddProductPage = () => {
     };
   }, [previewImages]);
 
+  /*
+   * Handles normal fields:
+   * price, category, stock, checkbox fields, etc.
+   */
   const handleChange = (event) => {
     const { name, value, type, checked } = event.target;
 
     setFormData((previous) => ({
       ...previous,
       [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  /*
+   * Handles localized fields:
+   *
+   * name.en
+   * name.ar
+   * description.en
+   * description.ar
+   * etc.
+   */
+  const handleLocalizedChange = (fieldName, value) => {
+    setFormData((previous) => ({
+      ...previous,
+      [fieldName]: {
+        ...previous[fieldName],
+        [language]: value,
+      },
+    }));
+  };
+
+  /*
+   * Handles localized tags.
+   *
+   * UI stores tags as a comma-separated string.
+   * Before sending to backend they become arrays.
+   */
+  const handleTagsChange = (value) => {
+    setFormData((previous) => ({
+      ...previous,
+      tags: {
+        ...previous.tags,
+        [language]: value,
+      },
     }));
   };
 
@@ -173,9 +223,7 @@ const AddProductPage = () => {
       );
 
       if (alreadySelected) {
-        return previous.filter(
-          (item) => item.technologyModel !== modelId,
-        );
+        return previous.filter((item) => item.technologyModel !== modelId);
       }
 
       return [
@@ -204,31 +252,23 @@ const AddProductPage = () => {
   };
 
   const isTechnologySelected = (modelId) =>
-    selectedTechnologyModels.some(
-      (item) => item.technologyModel === modelId,
-    );
+    selectedTechnologyModels.some((item) => item.technologyModel === modelId);
 
   const getTechnologyPrice = (modelId) => {
     const item = selectedTechnologyModels.find(
-      (technologyItem) =>
-        technologyItem.technologyModel === modelId,
+      (technologyItem) => technologyItem.technologyModel === modelId,
     );
 
     return item?.extraPrice ?? "";
   };
 
   const getSmartUnitPriceInfo = (modelId) => {
-    const relatedSmartUnits = smartUnits.filter(
-      (smartUnit) => {
-        const technologyModelId =
-          smartUnit?.technologyModel?._id ||
-          smartUnit?.technologyModel;
+    const relatedSmartUnits = smartUnits.filter((smartUnit) => {
+      const technologyModelId =
+        smartUnit?.technologyModel?._id || smartUnit?.technologyModel;
 
-        return (
-          String(technologyModelId || "") === String(modelId)
-        );
-      },
-    );
+      return String(technologyModelId || "") === String(modelId);
+    });
 
     const costs = relatedSmartUnits
       .map((smartUnit) => Number(smartUnit.costPrice))
@@ -236,10 +276,7 @@ const AddProductPage = () => {
 
     const availableStock = relatedSmartUnits.reduce(
       (total, smartUnit) =>
-        total +
-        Number(
-          smartUnit.availableStock ?? smartUnit.stock ?? 0,
-        ),
+        total + Number(smartUnit.availableStock ?? smartUnit.stock ?? 0),
       0,
     );
 
@@ -274,9 +311,7 @@ const AddProductPage = () => {
     });
 
     setImages(files);
-    setPreviewImages(
-      files.map((file) => URL.createObjectURL(file)),
-    );
+    setPreviewImages(files.map((file) => URL.createObjectURL(file)));
   };
 
   const handleSubmit = async (event) => {
@@ -284,18 +319,38 @@ const AddProductPage = () => {
 
     setError("");
 
-    if (!formData.name.trim()) {
-      setError("Product name is required.");
+    /*
+     * Required localized fields.
+     *
+     * Both English and Arabic are required because the backend
+     * expects the product name and description to contain both.
+     */
+    if (!formData.name.en.trim()) {
+      setError(t("addProduct.productNameEnglishRequired"));
+      setLanguage("en");
       return;
     }
 
-    if (!formData.description.trim()) {
-      setError("Product description is required.");
+    if (!formData.name.ar.trim()) {
+      setError(t("addProduct.productNameArabicRequired"));
+      setLanguage("ar");
+      return;
+    }
+
+    if (!formData.description.en.trim()) {
+      setError(t("addProduct.productDescriptionEnglishRequired"));
+      setLanguage("en");
+      return;
+    }
+
+    if (!formData.description.ar.trim()) {
+      setError(t("addProduct.productDescriptionArabicRequired"));
+      setLanguage("ar");
       return;
     }
 
     if (!formData.category) {
-      setError("Category is required.");
+      setError(t("addProduct.categoryRequired"));
       return;
     }
 
@@ -303,7 +358,7 @@ const AddProductPage = () => {
       !Number.isFinite(Number(formData.price)) ||
       Number(formData.price) < 0
     ) {
-      setError("Selling price must be a valid number.");
+      setError(t("addProduct.sellingPriceValidNumber"));
       return;
     }
 
@@ -311,54 +366,117 @@ const AddProductPage = () => {
       !Number.isFinite(Number(formData.costPrice)) ||
       Number(formData.costPrice) < 0
     ) {
-      setError("Product cost must be a valid number.");
+      setError(t("addProduct.productCostValidNumber"));
       return;
     }
 
-    if (
-      formData.technologyRequired &&
-      selectedTechnologyModels.length === 0
-    ) {
-      setError(
-        "This product is marked as Technology Required. Select at least one technology model before creating the product.",
-      );
+    if (formData.technologyRequired && selectedTechnologyModels.length === 0) {
+      setError(t("addProduct.technologyRequiredSelection"));
       return;
     }
 
     setIsLoading(true);
 
     try {
+      /*
+       * Convert tags from:
+       *
+       * "gold, ring, gift"
+       *
+       * into:
+       *
+       * {
+       *   en: ["gold", "ring", "gift"],
+       *   ar: [...]
+       * }
+       */
+      const localizedTags = {
+        en: formData.tags.en
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+
+        ar: formData.tags.ar
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+      };
+
       const productResponse = await createProduct({
-        name: formData.name.trim(),
-        shortDescription: formData.shortDescription.trim(),
-        description: formData.description.trim(),
+        /*
+         * LOCALIZED FIELDS
+         */
+        name: {
+          en: formData.name.en.trim(),
+          ar: formData.name.ar.trim(),
+        },
+
+        shortDescription: {
+          en: formData.shortDescription.en.trim(),
+          ar: formData.shortDescription.ar.trim(),
+        },
+
+        description: {
+          en: formData.description.en.trim(),
+          ar: formData.description.ar.trim(),
+        },
+
+        material: {
+          en: formData.material.en.trim(),
+          ar: formData.material.ar.trim(),
+        },
+
+        color: {
+          en: formData.color.en.trim(),
+          ar: formData.color.ar.trim(),
+        },
+
+        tags: localizedTags,
+
+        seoTitle: {
+          en: formData.seoTitle.en.trim(),
+          ar: formData.seoTitle.ar.trim(),
+        },
+
+        seoDescription: {
+          en: formData.seoDescription.en.trim(),
+          ar: formData.seoDescription.ar.trim(),
+        },
+
+        seoSlug: {
+          en: formData.seoSlug.en.trim(),
+          ar: formData.seoSlug.ar.trim(),
+        },
+
+        careInstructions: {
+          en: formData.careInstructions.en.trim(),
+          ar: formData.careInstructions.ar.trim(),
+        },
+
+        /*
+         * NON-LOCALIZED FIELDS
+         */
         category: formData.category,
+
         price: Number(formData.price),
         costPrice: Number(formData.costPrice),
         comparePrice: Number(formData.comparePrice) || 0,
         stock: Number(formData.stock),
-        material: formData.material.trim(),
-        color: formData.color.trim(),
+
         weight: Number(formData.weight) || 0,
+
         featured: formData.featured,
         bestSeller: formData.bestSeller,
         newArrival: formData.newArrival,
-        tags: formData.tags
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter(Boolean),
-        seoTitle: formData.seoTitle.trim(),
-        seoDescription: formData.seoDescription.trim(),
-        seoSlug: formData.seoSlug.trim(),
-        preparationDays:
-          Number(formData.preparationDays) || 0,
-        careInstructions: formData.careInstructions.trim(),
+
+        preparationDays: Number(formData.preparationDays) || 0,
+
         isCustomizable: formData.isCustomizable,
 
-        // NEW FIELD SAVED IN PRODUCT
         technologyRequired: formData.technologyRequired,
 
         status: formData.status,
+
         technologyModels: selectedTechnologyModels.map(
           (item) => item.technologyModel,
         ),
@@ -371,15 +489,14 @@ const AddProductPage = () => {
 
       if (!product?._id) {
         throw new Error(
-          "Product was created but the API did not return a product ID.",
+          t("addProduct.productCreatedWithoutId"),
         );
       }
 
-      for (
-        let index = 0;
-        index < selectedTechnologyModels.length;
-        index += 1
-      ) {
+      /*
+       * CREATE PRODUCT TECHNOLOGY RELATIONS
+       */
+      for (let index = 0; index < selectedTechnologyModels.length; index += 1) {
         const item = selectedTechnologyModels[index];
 
         await createProductTechnology({
@@ -387,10 +504,7 @@ const AddProductPage = () => {
           technologyModel: item.technologyModel,
           extraPrice: Number(item.extraPrice || 0),
 
-          // If technology is mandatory, the first selected model
-          // becomes the logical default relation.
-          isDefault:
-            formData.technologyRequired && index === 0,
+          isDefault: formData.technologyRequired && index === 0,
 
           isSelectable: true,
           displayOrder: index,
@@ -398,10 +512,14 @@ const AddProductPage = () => {
         });
       }
 
+      /*
+       * UPLOAD PRODUCT IMAGES
+       */
       let primaryImage = "";
 
       for (let i = 0; i < images.length; i += 1) {
         const imageForm = new FormData();
+
         imageForm.append("image", images[i]);
 
         const upload = await uploadImage(imageForm);
@@ -414,7 +532,9 @@ const AddProductPage = () => {
 
         if (!uploadedImage) {
           throw new Error(
-            `Image ${i + 1} was uploaded but no image path was returned.`,
+            t("addProduct.imageUploadedWithoutPath", {
+              number: i + 1,
+            }),
           );
         }
 
@@ -427,6 +547,17 @@ const AddProductPage = () => {
           imageUrl: uploadedImage,
           isPrimary: i === 0,
           sortOrder: i,
+
+          /*
+           * ProductImage.alt is now localized in the backend.
+           *
+           * We leave it empty for now because the current Add Product
+           * page does not have dedicated Alt Text fields.
+           */
+          alt: {
+            en: "",
+            ar: "",
+          },
         });
       }
 
@@ -444,11 +575,52 @@ const AddProductPage = () => {
       setError(
         submitError?.response?.data?.message ||
           submitError?.message ||
-          "Failed to create product.",
+          t("addProduct.failedToCreateProduct"),
       );
     } finally {
       setIsLoading(false);
     }
+  };
+
+  /*
+   * Reusable language switcher.
+   */
+  const LanguageSwitcher = () => (
+    <div className="mb-4 inline-flex overflow-hidden rounded-full border border-light-champagne bg-warm-ivory p-1">
+      <button
+        type="button"
+        onClick={() => setLanguage("en")}
+        className={`rounded-full px-5 py-2 text-[8px] font-semibold uppercase tracking-[0.12em] transition ${
+          language === "en"
+            ? "bg-midnight-navy text-champagne-gold"
+            : "text-steel-gray"
+        }`}
+      >
+        {t("addProduct.english")}
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setLanguage("ar")}
+        className={`rounded-full px-5 py-2 text-[8px] font-semibold uppercase tracking-[0.12em] transition ${
+          language === "ar"
+            ? "bg-midnight-navy text-champagne-gold"
+            : "text-steel-gray"
+        }`}
+      >
+        {t("addProduct.arabic")}
+      </button>
+    </div>
+  );
+
+  const getCategoryName = (category) => {
+    if (!category?.name) return "";
+
+    if (typeof category.name === "string") {
+      return category.name;
+    }
+
+    return category.name.en || category.name.ar || "";
   };
 
   return (
@@ -463,13 +635,14 @@ const AddProductPage = () => {
             <div>
               <div className="flex items-center gap-3">
                 <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-antique-gold">
-                  Collection
+                  {t("addProduct.collection")}
                 </span>
+
                 <span className="h-px w-7 bg-antique-gold" />
               </div>
 
               <h1 className="mt-1 font-serif text-[2rem] font-normal tracking-[-0.03em] text-midnight-navy">
-                Add Product
+                {t("addProduct.addProduct")}
               </h1>
             </div>
           </div>
@@ -478,7 +651,7 @@ const AddProductPage = () => {
             to="/admin/products"
             className="inline-flex min-h-[46px] items-center gap-3 rounded-full border border-champagne-gold/30 bg-soft-white px-5 text-[8px] font-semibold uppercase tracking-[0.11em] text-slate-gray"
           >
-            ← Back to Products
+            ← {t("addProduct.backToProducts")}
           </Link>
         </div>
       </header>
@@ -506,67 +679,107 @@ const AddProductPage = () => {
                 <div className="border-b border-light-champagne/80 bg-warm-ivory/50 px-7 py-6 sm:px-9">
                   <div className="flex items-center gap-3">
                     <span className="text-antique-gold">01</span>
+
                     <span className="h-px w-8 bg-antique-gold" />
+
                     <span className="text-[8px] font-semibold uppercase tracking-[0.24em] text-steel-gray">
-                      Product Details
+                      {t("addProduct.productDetails")}
                     </span>
                   </div>
 
                   <h2 className="mt-3 font-serif text-[1.65rem] text-midnight-navy">
-                    Tell us about your piece
+                    {t("addProduct.tellUsAboutYourPiece")}
                   </h2>
                 </div>
 
                 <div className="space-y-6 p-7 sm:p-9">
+                  <LanguageSwitcher />
+
+                  {/* PRODUCT NAME */}
                   <div>
                     <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.14em]">
-                      Product Name
+                      {t("addProduct.productName")} —{" "}
+                      {language === "en"
+                        ? t("addProduct.english")
+                        : t("addProduct.arabic")}
                     </label>
 
                     <input
                       type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
+                      dir={language === "ar" ? "rtl" : "ltr"}
+                      value={formData.name[language]}
+                      onChange={(event) =>
+                        handleLocalizedChange("name", event.target.value)
+                      }
                       required
-                      placeholder="e.g. Aurelia Gold Ring"
+                      placeholder={
+                        language === "en"
+                          ? t("addProduct.aureliaGoldRing")
+                          : t("addProduct.aureliaGoldRingArabic")
+                      }
                       className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5 text-[12px] outline-none focus:border-classic-gold"
                     />
                   </div>
 
+                  {/* SHORT DESCRIPTION */}
                   <div>
                     <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.14em]">
-                      Short Description
+                      {t("addProduct.shortDescription")} —{" "}
+                      {language === "en"
+                        ? t("addProduct.english")
+                        : t("addProduct.arabic")}
                     </label>
 
                     <input
                       type="text"
-                      name="shortDescription"
-                      value={formData.shortDescription}
-                      onChange={handleChange}
+                      dir={language === "ar" ? "rtl" : "ltr"}
+                      value={formData.shortDescription[language]}
+                      onChange={(event) =>
+                        handleLocalizedChange(
+                          "shortDescription",
+                          event.target.value,
+                        )
+                      }
+                      placeholder={
+                        language === "en"
+                          ? t("addProduct.shortProductDescription")
+                          : t("addProduct.shortProductDescriptionArabic")
+                      }
                       className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5 text-[12px] outline-none focus:border-classic-gold"
                     />
                   </div>
 
+                  {/* DESCRIPTION */}
                   <div>
                     <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.14em]">
-                      Description
+                      {t("addProduct.description")} —{" "}
+                      {language === "en"
+                        ? t("addProduct.english")
+                        : t("addProduct.arabic")}
                     </label>
 
                     <textarea
                       rows={6}
-                      name="description"
-                      value={formData.description}
-                      onChange={handleChange}
+                      dir={language === "ar" ? "rtl" : "ltr"}
+                      value={formData.description[language]}
+                      onChange={(event) =>
+                        handleLocalizedChange("description", event.target.value)
+                      }
                       required
+                      placeholder={
+                        language === "en"
+                          ? t("addProduct.describeTheProduct")
+                          : t("addProduct.writeProductDescription")
+                      }
                       className="w-full resize-none rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5 text-[12px] outline-none focus:border-classic-gold"
                     />
                   </div>
 
                   <div className="grid gap-5 md:grid-cols-2">
+                    {/* CATEGORY */}
                     <div>
                       <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.14em]">
-                        Category
+                        {t("addProduct.category")}
                       </label>
 
                       <select
@@ -576,32 +789,32 @@ const AddProductPage = () => {
                         required
                         className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5 text-[12px]"
                       >
-                        <option value="">Select Category</option>
+                        <option value="">
+                          {t("addProduct.selectCategory")}
+                        </option>
 
                         {categories.map((category) => (
-                          <option
-                            key={category._id}
-                            value={category._id}
-                          >
-                            {category.name}
+                          <option key={category._id} value={category._id}>
+                            {getCategoryName(category)}
                           </option>
                         ))}
                       </select>
                     </div>
 
+                    {/* SKU */}
                     <div>
                       <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.14em]">
-                        SKU
+                        {t("addProduct.sku")}
                       </label>
 
                       <div className="flex min-h-[49px] items-center rounded-[14px] border border-dashed border-champagne-gold/40 bg-soft-cream px-5">
                         <div>
                           <p className="text-[10px] font-semibold text-midnight-navy">
-                            Generated Automatically
+                            {t("addProduct.generatedAutomatically")}
                           </p>
 
                           <p className="mt-1 text-[8px] text-steel-gray">
-                            A unique SKU will be created when the product is saved.
+                            {t("addProduct.uniqueSkuCreated")}
                           </p>
                         </div>
                       </div>
@@ -615,18 +828,20 @@ const AddProductPage = () => {
                 <div className="border-b border-light-champagne/80 bg-warm-ivory/50 px-7 py-6 sm:px-9">
                   <div className="flex items-center gap-3">
                     <span className="text-antique-gold">02</span>
+
                     <span className="h-px w-8 bg-antique-gold" />
+
                     <span className="text-[8px] font-semibold uppercase tracking-[0.24em] text-steel-gray">
-                      Pricing & Inventory
+                      {t("addProduct.pricingInventory")}
                     </span>
                   </div>
 
                   <h2 className="mt-3 font-serif text-[1.65rem] text-midnight-navy">
-                    Pricing & availability
+                    {t("addProduct.pricingAvailability")}
                   </h2>
 
                   <p className="mt-2 text-[10px] leading-6 text-slate-gray">
-                    Selling Price is the jewelry price before a selected Smart Technology extra price is added.
+                    {t("addProduct.sellingPriceDescription")}
                   </p>
                 </div>
 
@@ -634,30 +849,30 @@ const AddProductPage = () => {
                   {[
                     {
                       name: "price",
-                      label: "Selling Price",
+                      label: t("addProduct.sellingPrice"),
                       required: true,
                       suffix: "EGP",
                     },
                     {
                       name: "costPrice",
-                      label: "Product Cost",
+                      label: t("addProduct.productCost"),
                       required: true,
                       suffix: "EGP",
                     },
                     {
                       name: "comparePrice",
-                      label: "Compare Price",
+                      label: t("addProduct.comparePrice"),
                       suffix: "EGP",
                     },
                     {
                       name: "stock",
-                      label: "Stock",
+                      label: t("addProduct.stock"),
                       step: "1",
                       required: true,
                     },
                     {
                       name: "weight",
-                      label: "Weight",
+                      label: t("addProduct.weight"),
                       suffix: "g",
                     },
                   ].map((field) => (
@@ -689,71 +904,142 @@ const AddProductPage = () => {
                 </div>
               </section>
 
-              {/* 03 DETAILS + REQUIRED TECHNOLOGY FLAG */}
+              {/* 03 DETAILS */}
               <section className="overflow-hidden rounded-[28px] border border-light-champagne/90 bg-soft-white/90">
                 <div className="border-b border-light-champagne/80 bg-warm-ivory/50 px-7 py-6 sm:px-9">
                   <span className="text-[8px] font-semibold uppercase tracking-[0.24em] text-steel-gray">
-                    03 · Product Rules & Details
+                    {t("addProduct.productRulesDetailsNumbered")}
                   </span>
                 </div>
 
                 <div className="space-y-6 p-7 sm:p-9">
-                  <div className="grid gap-5 md:grid-cols-3">
-                    <input
-                      type="text"
-                      name="material"
-                      value={formData.material}
-                      onChange={handleChange}
-                      placeholder="Material"
-                      className="rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
-                    />
+                  <LanguageSwitcher />
 
-                    <input
-                      type="text"
-                      name="color"
-                      value={formData.color}
-                      onChange={handleChange}
-                      placeholder="Color"
-                      className="rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
-                    />
+                  {/* MATERIAL + COLOR */}
+                  <div className="grid gap-5 md:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.14em]">
+                        {t("addProduct.material")} —{" "}
+                        {language === "en"
+                          ? t("addProduct.english")
+                          : t("addProduct.arabic")}
+                      </label>
 
-                    <input
-                      type="number"
-                      min="0"
-                      name="preparationDays"
-                      value={formData.preparationDays}
-                      onChange={handleChange}
-                      placeholder="Preparation Days"
-                      className="rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
-                    />
+                      <input
+                        type="text"
+                        dir={language === "ar" ? "rtl" : "ltr"}
+                        value={formData.material[language]}
+                        onChange={(event) =>
+                          handleLocalizedChange("material", event.target.value)
+                        }
+                        placeholder={
+                          language === "en"
+                            ? t("addProduct.gold")
+                            : t("addProduct.goldArabic")
+                        }
+                        className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.14em]">
+                        {t("addProduct.color")} —{" "}
+                        {language === "en"
+                          ? t("addProduct.english")
+                          : t("addProduct.arabic")}
+                      </label>
+
+                      <input
+                        type="text"
+                        dir={language === "ar" ? "rtl" : "ltr"}
+                        value={formData.color[language]}
+                        onChange={(event) =>
+                          handleLocalizedChange("color", event.target.value)
+                        }
+                        placeholder={
+                          language === "en"
+                            ? t("addProduct.gold")
+                            : t("addProduct.goldenArabic")
+                        }
+                        className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
+                      />
+                    </div>
                   </div>
 
                   <input
-                    type="text"
-                    name="tags"
-                    value={formData.tags}
+                    type="number"
+                    min="0"
+                    name="preparationDays"
+                    value={formData.preparationDays}
                     onChange={handleChange}
-                    placeholder="gold, ring, gift"
+                    placeholder={t("addProduct.preparationDays")}
                     className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
                   />
 
-                  <textarea
-                    rows={4}
-                    name="careInstructions"
-                    value={formData.careInstructions}
-                    onChange={handleChange}
-                    placeholder="Care instructions"
-                    className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
-                  />
+                  {/* TAGS */}
+                  <div>
+                    <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.14em]">
+                      {t("addProduct.tags")} —{" "}
+                      {language === "en"
+                        ? t("addProduct.english")
+                        : t("addProduct.arabic")}
+                    </label>
 
+                    <input
+                      type="text"
+                      dir={language === "ar" ? "rtl" : "ltr"}
+                      value={formData.tags[language]}
+                      onChange={(event) => handleTagsChange(event.target.value)}
+                      placeholder={
+                        language === "en"
+                          ? t("addProduct.goldRingGift")
+                          : t("addProduct.goldRingGiftArabic")
+                      }
+                      className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
+                    />
+
+                    <p className="mt-2 text-[8px] text-steel-gray">
+                      {t("addProduct.separateTagsWithCommas")}
+                    </p>
+                  </div>
+
+                  {/* CARE INSTRUCTIONS */}
+                  <div>
+                    <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.14em]">
+                      {t("addProduct.careInstructions")} —{" "}
+                      {language === "en"
+                        ? t("addProduct.english")
+                        : t("addProduct.arabic")}
+                    </label>
+
+                    <textarea
+                      rows={4}
+                      dir={language === "ar" ? "rtl" : "ltr"}
+                      value={formData.careInstructions[language]}
+                      onChange={(event) =>
+                        handleLocalizedChange(
+                          "careInstructions",
+                          event.target.value,
+                        )
+                      }
+                      placeholder={
+                        language === "en"
+                          ? t("addProduct.careInstructionsPlaceholder")
+                          : t("addProduct.careInstructionsArabic")
+                      }
+                      className="w-full resize-none rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
+                    />
+                  </div>
+
+                  {/* CUSTOMIZABLE */}
                   <label className="flex items-center justify-between rounded-[18px] border border-light-champagne bg-warm-ivory/55 p-5">
                     <div>
                       <p className="text-[10px] font-semibold text-midnight-navy">
-                        Customizable Product
+                        {t("addProduct.customizableProduct")}
                       </p>
 
                       <p className="mt-1 text-[8px] text-steel-gray">
-                        Allow customers to personalize this piece.
+                        {t("addProduct.allowCustomersToPersonalize")}
                       </p>
                     </div>
 
@@ -766,7 +1052,7 @@ const AddProductPage = () => {
                     />
                   </label>
 
-                  {/* NEW OPTION */}
+                  {/* TECHNOLOGY REQUIRED */}
                   <label
                     className={`flex cursor-pointer items-center justify-between rounded-[20px] border p-5 transition-all duration-300 ${
                       formData.technologyRequired
@@ -782,22 +1068,22 @@ const AddProductPage = () => {
 
                         <div>
                           <p className="text-[10px] font-semibold text-midnight-navy">
-                            Technology Required for Order
+                            {t("addProduct.technologyRequiredForOrder")}
                           </p>
 
                           <p className="mt-1 text-[7px] font-semibold uppercase tracking-[0.15em] text-antique-gold">
-                            Product Business Rule
+                            {t("addProduct.productBusinessRule")}
                           </p>
                         </div>
                       </div>
 
                       <p className="mt-3 max-w-2xl text-[9px] leading-5 text-slate-gray">
-                        Enable this when the jewelry piece must always be ordered with a Smart Technology selection. The flag is stored now; later we can enforce it in Product Details, Cart, Checkout and backend order validation.
+                        {t("addProduct.technologyRequiredDescription")}
                       </p>
 
                       {formData.technologyRequired && (
                         <p className="mt-2 text-[8px] font-semibold text-antique-gold">
-                          At least one Technology Model must be selected below.
+                          {t("addProduct.atLeastOneTechnologyModel")}
                         </p>
                       )}
                     </div>
@@ -817,11 +1103,11 @@ const AddProductPage = () => {
               <section className="overflow-hidden rounded-[28px] border border-light-champagne/90 bg-soft-white/90">
                 <div className="border-b border-light-champagne/80 bg-warm-ivory/50 px-7 py-6 sm:px-9">
                   <span className="text-[8px] font-semibold uppercase tracking-[0.24em] text-steel-gray">
-                    04 · Technology Models
+                    {t("addProduct.technologyModelsNumbered")}
                   </span>
 
                   <p className="mt-3 max-w-2xl text-[10px] leading-6 text-slate-gray">
-                    Select the supported technology models and enter the customer-facing extra price for each one.
+                    {t("addProduct.selectTechnologyModelsDescription")}
                   </p>
                 </div>
 
@@ -829,13 +1115,13 @@ const AddProductPage = () => {
                   {formData.technologyRequired &&
                     selectedTechnologyModels.length === 0 && (
                       <div className="rounded-[16px] border border-champagne-gold/40 bg-soft-cream px-4 py-3 text-[9px] text-antique-gold">
-                        This product requires technology. Select at least one model.
+                        {t("addProduct.productRequiresTechnology")}
                       </div>
                     )}
 
                   {technologyModels.length === 0 ? (
                     <div className="rounded-[18px] border border-dashed border-light-champagne p-8 text-center text-[10px] text-steel-gray">
-                      No technology models available.
+                      {t("addProduct.noTechnologyModelsAvailable")}
                     </div>
                   ) : (
                     technologyModels.map((model) => {
@@ -877,7 +1163,8 @@ const AddProductPage = () => {
 
                                   {model.technology?.name && (
                                     <p className="mt-2 text-[8px] text-steel-gray">
-                                      Technology: {model.technology.name}
+                                      {t("addProduct.technology")}:{" "}
+                                      {model.technology.name}
                                     </p>
                                   )}
                                 </div>
@@ -896,43 +1183,52 @@ const AddProductPage = () => {
                               <div className="mt-4 flex flex-wrap gap-2">
                                 {model.requiresBattery && (
                                   <span className="rounded-full border border-champagne-gold/40 bg-soft-cream px-3 py-1 text-[8px] font-semibold text-antique-gold">
-                                    Battery
+                                    {t("addProduct.battery")}
                                   </span>
                                 )}
 
                                 {model.requiresActivation && (
                                   <span className="rounded-full border border-champagne-gold/40 bg-soft-cream px-3 py-1 text-[8px] font-semibold text-antique-gold">
-                                    Activation
+                                    {t("addProduct.activation")}
                                   </span>
                                 )}
 
                                 {model.requiresSubscription && (
                                   <span className="rounded-full border border-champagne-gold/40 bg-soft-cream px-3 py-1 text-[8px] font-semibold text-antique-gold">
-                                    Subscription
+                                    {t("addProduct.subscription")}
                                   </span>
                                 )}
                               </div>
 
                               <div className="mt-4 rounded-[14px] border border-dashed border-champagne-gold/35 bg-warm-ivory/70 p-4">
                                 <p className="text-[7px] font-semibold uppercase tracking-[0.17em] text-antique-gold">
-                                  Smart Unit Cost Reference
+                                  {t("addProduct.smartUnitCostReference")}
                                 </p>
 
                                 {smartUnitInfo.min !== null ? (
                                   <>
                                     <p className="mt-2 font-serif text-[1.1rem] text-midnight-navy">
                                       {smartUnitInfo.min === smartUnitInfo.max
-                                        ? `${formatMoney(smartUnitInfo.min)} EGP`
-                                        : `${formatMoney(smartUnitInfo.min)} – ${formatMoney(smartUnitInfo.max)} EGP`}
+                                        ? `${formatMoney(
+                                            smartUnitInfo.min,
+                                          )} EGP`
+                                        : `${formatMoney(
+                                            smartUnitInfo.min,
+                                          )} – ${formatMoney(
+                                            smartUnitInfo.max,
+                                          )} EGP`}
                                     </p>
 
                                     <p className="mt-1 text-[8px] leading-5 text-steel-gray">
-                                      {smartUnitInfo.count} Smart Unit type(s) · {smartUnitInfo.availableStock} available physical unit(s)
+                                      {smartUnitInfo.count}{" "}
+                                      {t("addProduct.smartUnitTypes")} ·{" "}
+                                      {smartUnitInfo.availableStock}{" "}
+                                      {t("addProduct.availablePhysicalUnits")}
                                     </p>
                                   </>
                                 ) : (
                                   <p className="mt-2 text-[9px] text-steel-gray">
-                                    No Smart Unit cost has been registered for this technology model yet.
+                                    {t("addProduct.noSmartUnitCost")}
                                   </p>
                                 )}
                               </div>
@@ -940,7 +1236,7 @@ const AddProductPage = () => {
                               {selected && (
                                 <div className="mt-5 rounded-[16px] border border-champagne-gold/30 bg-soft-white p-4">
                                   <label className="mb-2.5 block text-[8px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                                    Extra Price
+                                    {t("addProduct.extraPrice")}
                                   </label>
 
                                   <div className="relative">
@@ -954,7 +1250,9 @@ const AddProductPage = () => {
                                           event.target.value,
                                         )
                                       }
-                                      placeholder="e.g. 1500"
+                                      placeholder={t(
+                                        "addProduct.extraPricePlaceholder",
+                                      )}
                                       className="w-full rounded-xl border border-light-champagne bg-soft-white px-4 py-3 pr-14 text-sm outline-none focus:border-classic-gold focus:ring-4 focus:ring-classic-gold/10"
                                     />
 
@@ -965,17 +1263,28 @@ const AddProductPage = () => {
 
                                   <div className="mt-4 rounded-xl bg-soft-cream/75 p-4">
                                     <div className="flex justify-between text-[8px] text-steel-gray">
-                                      <span>Product Price</span>
-                                      <span>{formatMoney(formData.price)} EGP</span>
+                                      <span>
+                                        {t("addProduct.productPrice")}
+                                      </span>
+
+                                      <span>
+                                        {formatMoney(formData.price)} EGP
+                                      </span>
                                     </div>
 
                                     <div className="mt-2 flex justify-between text-[8px] text-steel-gray">
-                                      <span>Extra Price</span>
+                                      <span>
+                                        {t("addProduct.extraPrice")}
+                                      </span>
+
                                       <span>{formatMoney(extraPrice)} EGP</span>
                                     </div>
 
                                     <div className="mt-3 flex justify-between border-t border-light-champagne pt-3 text-[10px] font-semibold text-midnight-navy">
-                                      <span>Final Price</span>
+                                      <span>
+                                        {t("addProduct.finalPrice")}
+                                      </span>
+
                                       <span className="text-antique-gold">
                                         {formatMoney(
                                           Number(formData.price || 0) +
@@ -1000,18 +1309,20 @@ const AddProductPage = () => {
               <section className="overflow-hidden rounded-[28px] border border-light-champagne/90 bg-soft-white/90">
                 <div className="border-b border-light-champagne/80 bg-warm-ivory/50 px-7 py-6 sm:px-9">
                   <span className="text-[8px] font-semibold uppercase tracking-[0.24em] text-steel-gray">
-                    05 · Product Images
+                    {t("addProduct.productImagesNumbered")}
                   </span>
                 </div>
 
                 <div className="p-7 sm:p-9">
                   <label className="flex cursor-pointer flex-col items-center justify-center rounded-[18px] border border-dashed border-classic-gold/50 bg-warm-ivory/55 px-6 py-12 transition hover:bg-soft-cream">
                     <div className="text-2xl text-antique-gold">+</div>
+
                     <p className="mt-4 text-sm font-semibold">
-                      Upload Product Images
+                      {t("addProduct.uploadProductImages")}
                     </p>
+
                     <p className="mt-2 text-[8px] text-steel-gray">
-                      The first uploaded image becomes the primary image.
+                      {t("addProduct.firstImagePrimary")}
                     </p>
 
                     <input
@@ -1033,13 +1344,15 @@ const AddProductPage = () => {
                           <div className="relative aspect-square">
                             <img
                               src={image}
-                              alt={`Product preview ${index + 1}`}
+                              alt={`${t("addProduct.productPreview")} ${
+                                index + 1
+                              }`}
                               className="h-full w-full object-cover"
                             />
 
                             {index === 0 && (
                               <span className="absolute left-3 top-3 rounded-full bg-midnight-navy px-3 py-1 text-[7px] font-semibold uppercase text-champagne-gold">
-                                Primary
+                                {t("addProduct.primary")}
                               </span>
                             )}
                           </div>
@@ -1054,36 +1367,59 @@ const AddProductPage = () => {
               <section className="overflow-hidden rounded-[28px] border border-light-champagne/90 bg-soft-white/90">
                 <div className="border-b border-light-champagne/80 bg-warm-ivory/50 px-7 py-6 sm:px-9">
                   <span className="text-[8px] font-semibold uppercase tracking-[0.24em] text-steel-gray">
-                    06 · SEO
+                    {t("addProduct.seoNumbered")}
                   </span>
                 </div>
 
                 <div className="space-y-5 p-7 sm:p-9">
+                  <LanguageSwitcher />
+
                   <input
                     type="text"
-                    name="seoTitle"
-                    value={formData.seoTitle}
-                    onChange={handleChange}
-                    placeholder="SEO Title"
+                    dir={language === "ar" ? "rtl" : "ltr"}
+                    value={formData.seoTitle[language]}
+                    onChange={(event) =>
+                      handleLocalizedChange("seoTitle", event.target.value)
+                    }
+                    placeholder={
+                      language === "en"
+                        ? t("addProduct.seoTitle")
+                        : t("addProduct.seoTitleArabic")
+                    }
                     className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
                   />
 
                   <input
                     type="text"
-                    name="seoSlug"
-                    value={formData.seoSlug}
-                    onChange={handleChange}
-                    placeholder="SEO Slug"
+                    dir={language === "ar" ? "rtl" : "ltr"}
+                    value={formData.seoSlug[language]}
+                    onChange={(event) =>
+                      handleLocalizedChange("seoSlug", event.target.value)
+                    }
+                    placeholder={
+                      language === "en"
+                        ? t("addProduct.seoSlug")
+                        : t("addProduct.seoSlugArabic")
+                    }
                     className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
                   />
 
                   <textarea
                     rows={4}
-                    name="seoDescription"
-                    value={formData.seoDescription}
-                    onChange={handleChange}
-                    placeholder="SEO Description"
-                    className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
+                    dir={language === "ar" ? "rtl" : "ltr"}
+                    value={formData.seoDescription[language]}
+                    onChange={(event) =>
+                      handleLocalizedChange(
+                        "seoDescription",
+                        event.target.value,
+                      )
+                    }
+                    placeholder={
+                      language === "en"
+                        ? t("addProduct.seoDescription")
+                        : t("addProduct.seoDescriptionArabic")
+                    }
+                    className="w-full resize-none rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
                   />
                 </div>
               </section>
@@ -1093,7 +1429,7 @@ const AddProductPage = () => {
             <aside className="space-y-6 xl:sticky xl:top-28 xl:self-start">
               <div className="overflow-hidden rounded-[28px] bg-midnight-navy p-7 text-soft-white">
                 <p className="text-[9px] uppercase tracking-[0.3em] text-champagne-gold">
-                  Product Status
+                  {t("addProduct.productStatus")}
                 </p>
 
                 <select
@@ -1102,19 +1438,25 @@ const AddProductPage = () => {
                   onChange={handleChange}
                   className="mt-5 w-full rounded-xl border border-champagne-gold/20 bg-rich-navy px-4 py-3"
                 >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
+                  <option value="active">
+                    {t("addProduct.active")}
+                  </option>
+                  <option value="inactive">
+                    {t("addProduct.inactive")}
+                  </option>
                 </select>
               </div>
 
               <div className="rounded-[24px] border border-light-champagne bg-soft-white p-6">
-                <h3 className="font-semibold">Marketing</h3>
+                <h3 className="font-semibold">
+                  {t("addProduct.marketing")}
+                </h3>
 
                 <div className="mt-5 space-y-3">
                   {[
-                    ["featured", "Featured"],
-                    ["bestSeller", "Best Seller"],
-                    ["newArrival", "New Arrival"],
+                    ["featured", t("addProduct.featured")],
+                    ["bestSeller", t("addProduct.bestSeller")],
+                    ["newArrival", t("addProduct.newArrival")],
                   ].map(([name, label]) => (
                     <label
                       key={name}
@@ -1136,13 +1478,13 @@ const AddProductPage = () => {
 
               <div className="rounded-[24px] border border-light-champagne bg-soft-white p-6">
                 <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-steel-gray">
-                  Product Rules
+                  {t("addProduct.productRules")}
                 </p>
 
                 <div className="mt-5 space-y-4">
                   <div className="flex justify-between border-b border-light-champagne pb-4">
                     <span className="text-[10px] text-slate-gray">
-                      Technology Required
+                      {t("addProduct.technologyRequired")}
                     </span>
 
                     <span
@@ -1152,14 +1494,17 @@ const AddProductPage = () => {
                           : "bg-soft-cream text-steel-gray"
                       }`}
                     >
-                      {formData.technologyRequired ? "Yes" : "No"}
+                      {formData.technologyRequired
+                        ? t("addProduct.yes")
+                        : t("addProduct.no")}
                     </span>
                   </div>
 
                   <div className="flex justify-between border-b border-light-champagne pb-4">
                     <span className="text-[10px] text-slate-gray">
-                      Selected Technology Models
+                      {t("addProduct.selectedTechnologyModels")}
                     </span>
+
                     <span className="font-semibold text-midnight-navy">
                       {selectedTechnologyModels.length}
                     </span>
@@ -1167,8 +1512,9 @@ const AddProductPage = () => {
 
                   <div className="flex justify-between border-b border-light-champagne pb-4">
                     <span className="text-[10px] text-slate-gray">
-                      Selling Price
+                      {t("addProduct.sellingPrice")}
                     </span>
+
                     <span className="font-semibold text-antique-gold">
                       {formData.price
                         ? `${formatMoney(formData.price)} EGP`
@@ -1178,8 +1524,9 @@ const AddProductPage = () => {
 
                   <div className="flex justify-between">
                     <span className="text-[10px] text-slate-gray">
-                      Product Cost
+                      {t("addProduct.productCost")}
                     </span>
+
                     <span className="font-semibold text-midnight-navy">
                       {formData.costPrice !== ""
                         ? `${formatMoney(formData.costPrice)} EGP`
@@ -1196,7 +1543,7 @@ const AddProductPage = () => {
               to="/admin/products"
               className="inline-flex items-center justify-center rounded-[13px] border border-light-champagne bg-soft-white px-7 py-3.5 text-[8px] font-semibold uppercase"
             >
-              Cancel
+              {t("addProduct.cancel")}
             </Link>
 
             <button
@@ -1204,7 +1551,9 @@ const AddProductPage = () => {
               disabled={isLoading}
               className="inline-flex min-w-[180px] items-center justify-center rounded-[13px] bg-midnight-navy px-8 py-3.5 text-[8px] font-semibold uppercase text-soft-white disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isLoading ? "Creating Product..." : "Create Product"}
+              {isLoading
+                ? t("addProduct.creatingProduct")
+                : t("addProduct.createProduct")}
             </button>
           </div>
         </form>

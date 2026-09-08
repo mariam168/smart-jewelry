@@ -1,6 +1,10 @@
+import { useTranslation } from "react-i18next";
+
 import ProductCard from "./ProductCard";
 
 const ProductGrid = ({ products = [] }) => {
+  const { t } = useTranslation();
+
   if (!Array.isArray(products) || products.length === 0) {
     return (
       <div className="relative overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85 px-6 py-20 text-center shadow-[0_12px_35px_rgba(7,19,31,0.04)] backdrop-blur-sm sm:px-10 sm:py-24">
@@ -17,18 +21,18 @@ const ProductGrid = ({ products = [] }) => {
             <span className="h-px w-8 bg-classic-gold/40" />
 
             <span className="text-[8px] font-semibold uppercase tracking-[0.28em] text-steel-gray">
-              Collection
+              {t("productGrid.collection")}
             </span>
 
             <span className="h-px w-8 bg-classic-gold/40" />
           </div>
 
           <h3 className="mt-4 font-serif text-[1.8rem] font-normal tracking-[-0.025em] text-midnight-navy sm:text-[2rem]">
-            No products found
+            {t("productGrid.noProducts")}
           </h3>
 
           <p className="mx-auto mt-3 max-w-sm text-[12px] leading-7 text-slate-gray sm:text-[13px]">
-            Try changing your search or category filter.
+            {t("productGrid.changeFilters")}
           </p>
         </div>
       </div>

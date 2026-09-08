@@ -8,6 +8,7 @@ import {
   useAuth,
 } from "../context/AuthContext";
 
+
 const ProtectedRoute = () => {
   const {
     isAuthenticated,

@@ -1,5 +1,7 @@
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import {
   FaEye,
@@ -31,38 +33,38 @@ const COLORS = {
 
 const orderStatusConfig = {
   pending: {
-    label: "Pending",
+    label: "pending",
     className:
       "border-champagne-gold/30 bg-champagne-gold/10 text-antique-gold",
     icon: <FaClock />,
   },
 
   confirmed: {
-    label: "Confirmed",
+    label: "confirmed",
     className: "border-premium-silver/60 bg-silver-mist/80 text-midnight-navy",
     icon: <FaCircleCheck />,
   },
 
   processing: {
-    label: "Processing",
+    label: "processing",
     className: "border-light-champagne bg-soft-cream text-slate-gray",
     icon: <FaBoxOpen />,
   },
 
   shipped: {
-    label: "Shipped",
+    label: "shipped",
     className: "border-navy-soft/20 bg-silver-mist/80 text-navy-soft",
     icon: <FaTruck />,
   },
 
   delivered: {
-    label: "Delivered",
+    label: "delivered",
     className: "border-classic-gold/30 bg-soft-cream text-antique-gold",
     icon: <FaCircleCheck />,
   },
 
   cancelled: {
-    label: "Cancelled",
+    label: "cancelled",
     className: "border-antique-gold/25 bg-warm-ivory text-antique-gold",
     icon: <FaBan />,
   },
@@ -70,18 +72,18 @@ const orderStatusConfig = {
 
 const paymentStatusConfig = {
   pending: {
-    label: "Pending",
+    label: "pending",
     className:
       "border-champagne-gold/30 bg-champagne-gold/10 text-antique-gold",
   },
 
   paid: {
-    label: "Paid",
+    label: "paid",
     className: "border-classic-gold/30 bg-soft-cream text-antique-gold",
   },
 
   failed: {
-    label: "Failed",
+    label: "failed",
     className: "border-antique-gold/25 bg-warm-ivory text-antique-gold",
   },
 };
@@ -101,6 +103,8 @@ const formatPrice = (price) => {
 };
 
 const AdminOrdersPage = () => {
+  const { t } = useTranslation();
+
   const [orders, setOrders] = useState([]);
 
   const [loading, setLoading] = useState(true);
@@ -120,7 +124,9 @@ const AdminOrdersPage = () => {
     } catch (error) {
       console.error("Failed to fetch orders:", error);
 
-      setError(error?.response?.data?.message || "Failed to load orders");
+      setError(
+        error?.response?.data?.message || t("adminOrders.failedToLoad"),
+      );
     } finally {
       setLoading(false);
     }
@@ -132,7 +138,9 @@ const AdminOrdersPage = () => {
 
   const handleDeleteOrder = async (order) => {
     const confirmed = window.confirm(
-      `Are you sure you want to delete order #${order.orderNumber}?`,
+      t("adminOrders.confirmDelete", {
+        orderNumber: order.orderNumber,
+      }),
     );
 
     if (!confirmed) {
@@ -144,21 +152,16 @@ const AdminOrdersPage = () => {
 
       setError("");
 
-      await api.delete(
-        `/orders/admin/${order._id}`,
-      );
+      await api.delete(`/orders/admin/${order._id}`);
 
       setOrders((previousOrders) =>
-        previousOrders.filter(
-          (item) => item._id !== order._id,
-        ),
+        previousOrders.filter((item) => item._id !== order._id),
       );
     } catch (error) {
       console.error("Failed to delete order:", error);
 
       setError(
-        error?.response?.data?.message ||
-          "Failed to delete order",
+        error?.response?.data?.message || t("adminOrders.failedToDelete"),
       );
     } finally {
       setDeletingOrderId("");
@@ -178,7 +181,7 @@ const AdminOrdersPage = () => {
           </div>
 
           <p className="text-[9px] font-semibold uppercase tracking-[0.28em] text-slate-gray">
-            Loading orders...
+            {t("adminOrders.loading")}
           </p>
         </div>
       </div>
@@ -216,18 +219,18 @@ const AdminOrdersPage = () => {
               <span className="h-px w-9 bg-classic-gold/70" />
 
               <span className="text-[8px] font-semibold uppercase tracking-[0.32em] text-champagne-gold">
-                Management
+                {t("adminOrders.management")}
               </span>
 
               <span className="text-[7px] text-classic-gold">✦</span>
             </div>
 
             <h1 className="font-serif text-[2.6rem] font-normal leading-none tracking-[-0.04em] text-soft-white sm:text-[3.2rem]">
-              Orders
+              {t("adminOrders.orders")}
             </h1>
 
             <p className="mt-4 max-w-xl text-[12px] leading-7 text-premium-silver/70 sm:text-[13px]">
-              Manage, review and track all customer orders from one place.
+              {t("adminOrders.description")}
             </p>
           </div>
 
@@ -237,8 +240,7 @@ const AdminOrdersPage = () => {
             className="group inline-flex min-h-[48px] w-fit items-center justify-center gap-3 rounded-[13px] border border-champagne-gold/20 bg-soft-white/[0.05] px-5 text-[9px] font-semibold uppercase tracking-[0.12em] text-soft-white shadow-[0_10px_24px_rgba(0,0,0,0.12)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-champagne-gold/45 hover:bg-soft-white/[0.09]"
           >
             <FaRotate className="text-[11px] text-champagne-gold transition-transform duration-500 group-hover:rotate-180" />
-
-            Refresh
+            {t("adminOrders.refresh")}
           </button>
         </div>
       </div>
@@ -266,7 +268,7 @@ const AdminOrdersPage = () => {
           <div className="relative flex items-start justify-between">
             <div>
               <p className="text-[7px] font-semibold uppercase tracking-[0.23em] text-steel-gray">
-                Total Orders
+                {t("adminOrders.totalOrders")}
               </p>
 
               <p className="mt-4 font-serif text-[2.6rem] font-normal leading-none tracking-[-0.035em] text-midnight-navy">
@@ -274,7 +276,7 @@ const AdminOrdersPage = () => {
               </p>
 
               <p className="mt-2 text-[9px] leading-5 text-slate-gray">
-                All customer orders
+                {t("adminOrders.allCustomerOrders")}
               </p>
             </div>
 
@@ -295,7 +297,7 @@ const AdminOrdersPage = () => {
           <div className="relative flex items-start justify-between">
             <div>
               <p className="text-[7px] font-semibold uppercase tracking-[0.23em] text-steel-gray">
-                Pending
+                {t("adminOrders.pending")}
               </p>
 
               <p className="mt-4 font-serif text-[2.6rem] font-normal leading-none tracking-[-0.035em] text-antique-gold">
@@ -303,7 +305,7 @@ const AdminOrdersPage = () => {
               </p>
 
               <p className="mt-2 text-[9px] leading-5 text-slate-gray">
-                Waiting for confirmation
+                {t("adminOrders.waitingConfirmation")}
               </p>
             </div>
 
@@ -324,7 +326,7 @@ const AdminOrdersPage = () => {
           <div className="relative flex items-start justify-between">
             <div>
               <p className="text-[7px] font-semibold uppercase tracking-[0.23em] text-steel-gray">
-                Processing
+                {t("adminOrders.processing")}
               </p>
 
               <p className="mt-4 font-serif text-[2.6rem] font-normal leading-none tracking-[-0.035em] text-midnight-navy">
@@ -332,7 +334,7 @@ const AdminOrdersPage = () => {
               </p>
 
               <p className="mt-2 text-[9px] leading-5 text-slate-gray">
-                Currently being prepared
+                {t("adminOrders.currentlyPrepared")}
               </p>
             </div>
 
@@ -353,7 +355,7 @@ const AdminOrdersPage = () => {
           <div className="relative flex items-start justify-between">
             <div>
               <p className="text-[7px] font-semibold uppercase tracking-[0.23em] text-steel-gray">
-                Delivered
+                {t("adminOrders.delivered")}
               </p>
 
               <p className="mt-4 font-serif text-[2.6rem] font-normal leading-none tracking-[-0.035em] text-midnight-navy">
@@ -361,7 +363,7 @@ const AdminOrdersPage = () => {
               </p>
 
               <p className="mt-2 text-[9px] leading-5 text-slate-gray">
-                Successfully completed
+                {t("adminOrders.successfullyCompleted")}
               </p>
             </div>
 
@@ -388,17 +390,21 @@ const AdminOrdersPage = () => {
 
             <div>
               <h2 className="font-serif text-[1.35rem] font-normal text-midnight-navy">
-                Customer Orders
+                {t("adminOrders.customerOrders")}
               </h2>
 
               <p className="mt-1 text-[9px] text-slate-gray">
-                {totalOrders} {totalOrders === 1 ? "order" : "orders"} in total
+                {totalOrders}{" "}
+                {totalOrders === 1
+                  ? t("adminOrders.order")
+                  : t("adminOrders.orders")}{" "}
+                {t("adminOrders.inTotal")}
               </p>
             </div>
           </div>
 
           <div className="text-[7px] font-semibold uppercase tracking-[0.25em] text-antique-gold">
-            Smart Jewelry
+            {t("adminOrders.smartJewelry")}
           </div>
         </div>
 
@@ -411,11 +417,11 @@ const AdminOrdersPage = () => {
             </div>
 
             <h2 className="relative mt-6 font-serif text-[1.7rem] font-normal tracking-[-0.025em] text-midnight-navy">
-              No orders found
+              {t("adminOrders.noOrdersFound")}
             </h2>
 
             <p className="relative mt-3 max-w-sm text-[11px] leading-6 text-slate-gray">
-              There are no customer orders yet. New orders will appear here.
+              {t("adminOrders.noCustomerOrders")}
             </p>
           </div>
         ) : (
@@ -424,35 +430,35 @@ const AdminOrdersPage = () => {
               <thead>
                 <tr className="border-b border-light-champagne/80 bg-warm-ivory/55">
                   <th className="px-6 py-4 text-left text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                    Order
+                    {t("adminOrders.order")}
                   </th>
 
                   <th className="px-6 py-4 text-left text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                    Customer
+                    {t("adminOrders.customer")}
                   </th>
 
                   <th className="px-6 py-4 text-left text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                    Items
+                    {t("adminOrders.items")}
                   </th>
 
                   <th className="px-6 py-4 text-left text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                    Total
+                    {t("adminOrders.total")}
                   </th>
 
                   <th className="px-6 py-4 text-left text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                    Payment
+                    {t("adminOrders.payment")}
                   </th>
 
                   <th className="px-6 py-4 text-left text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                    Status
+                    {t("adminOrders.status")}
                   </th>
 
                   <th className="px-6 py-4 text-left text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                    Date
+                    {t("adminOrders.date")}
                   </th>
 
                   <th className="px-6 py-4 text-right text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                    Action
+                    {t("adminOrders.action")}
                   </th>
                 </tr>
               </thead>
@@ -468,8 +474,7 @@ const AdminOrdersPage = () => {
                     paymentStatusConfig.pending;
 
                   const customerEmail =
-                    order.user?.email ||
-                    "Unknown customer";
+                    order.user?.email || t("adminOrders.unknownCustomer");
 
                   const customerName =
                     [
@@ -477,12 +482,9 @@ const AdminOrdersPage = () => {
                       order.shippingAddress?.lastName,
                     ]
                       .filter(Boolean)
-                      .join(" ") ||
-                    "Unknown customer";
+                      .join(" ") || t("adminOrders.unknownCustomer");
 
-                  const isDeleting =
-                    deletingOrderId ===
-                    order._id;
+                  const isDeleting = deletingOrderId === order._id;
 
                   return (
                     <tr
@@ -496,7 +498,7 @@ const AdminOrdersPage = () => {
                           </p>
 
                           <p className="mt-1 max-w-[130px] truncate text-[8px] text-steel-gray">
-                            ID: {order._id}
+                            {t("adminOrders.id")}: {order._id}
                           </p>
                         </div>
                       </td>
@@ -504,9 +506,7 @@ const AdminOrdersPage = () => {
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-3">
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-champagne-gold/15 bg-midnight-navy text-[9px] font-semibold text-champagne-gold shadow-[0_6px_16px_rgba(18,38,58,0.12)]">
-                            {customerName
-                              .charAt(0)
-                              .toUpperCase()}
+                            {customerName.charAt(0).toUpperCase()}
                           </div>
 
                           <div className="min-w-0">
@@ -529,8 +529,8 @@ const AdminOrdersPage = () => {
 
                           <span className="text-[9px] text-slate-gray">
                             {order.items?.length === 1
-                              ? "item"
-                              : "items"}
+                              ? t("adminOrders.item")
+                              : t("adminOrders.items")}
                           </span>
                         </div>
                       </td>
@@ -547,17 +547,18 @@ const AdminOrdersPage = () => {
                             <FaCreditCard className="text-[10px] text-classic-gold" />
 
                             <span>
-                              {order.paymentMethod ===
-                              "cash_on_delivery"
-                                ? "Cash on Delivery"
-                                : "Card"}
+                              {order.paymentMethod === "cash_on_delivery"
+                                ? t("adminOrders.cashOnDelivery")
+                                : t("adminOrders.card")}
                             </span>
                           </div>
 
                           <span
                             className={`inline-flex rounded-full border px-2.5 py-1.5 text-[7px] font-semibold uppercase tracking-[0.08em] ${payment.className}`}
                           >
-                            {payment.label}
+                            {t(
+                              `adminOrders.paymentStatuses.${payment.label}`,
+                            )}
                           </span>
                         </div>
                       </td>
@@ -566,19 +567,17 @@ const AdminOrdersPage = () => {
                         <span
                           className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.08em] ${status.className}`}
                         >
-                          <span className="text-[8px]">
-                            {status.icon}
-                          </span>
+                          <span className="text-[8px]">{status.icon}</span>
 
-                          {status.label}
+                          {t(
+                            `adminOrders.orderStatuses.${status.label}`,
+                          )}
                         </span>
                       </td>
 
                       <td className="px-6 py-5">
                         <p className="text-[9px] text-slate-gray">
-                          {formatDate(
-                            order.createdAt,
-                          )}
+                          {formatDate(order.createdAt)}
                         </p>
                       </td>
 
@@ -589,25 +588,20 @@ const AdminOrdersPage = () => {
                             className="group/view inline-flex min-h-[38px] items-center justify-center gap-2.5 rounded-full bg-midnight-navy px-4 text-[7px] font-semibold uppercase tracking-[0.1em] text-soft-white shadow-[0_7px_18px_rgba(18,38,58,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-rich-navy hover:shadow-[0_10px_22px_rgba(18,38,58,0.18)]"
                           >
                             <FaEye className="text-[9px] text-champagne-gold transition-transform duration-300 group-hover/view:scale-110" />
-
-                            View
+                            {t("adminOrders.view")}
                           </Link>
 
                           <button
                             type="button"
                             disabled={isDeleting}
-                            onClick={() =>
-                              handleDeleteOrder(
-                                order,
-                              )
-                            }
+                            onClick={() => handleDeleteOrder(order)}
                             className="group/delete inline-flex min-h-[38px] items-center justify-center gap-2.5 rounded-full border border-antique-gold/25 bg-soft-white px-4 text-[7px] font-semibold uppercase tracking-[0.1em] text-antique-gold transition-all duration-300 hover:-translate-y-0.5 hover:border-antique-gold/50 hover:bg-soft-cream hover:text-midnight-navy disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
                           >
                             <FaTrash className="text-[9px] transition-transform duration-300 group-hover/delete:scale-110" />
 
                             {isDeleting
-                              ? "Deleting..."
-                              : "Delete"}
+                              ? t("adminOrders.deleting")
+                              : t("adminOrders.delete")}
                           </button>
                         </div>
                       </td>
@@ -622,28 +616,22 @@ const AdminOrdersPage = () => {
         <div className="relative flex items-center justify-center gap-3 border-t border-light-champagne/70 px-6 py-4">
           <span className="h-px w-8 bg-classic-gold/30" />
 
-          <span className="text-[7px] text-classic-gold">
-            ✦
-          </span>
+          <span className="text-[7px] text-classic-gold">✦</span>
 
           <span className="h-px w-8 bg-classic-gold/30" />
         </div>
       </div>
 
       <div className="flex flex-wrap items-center justify-center gap-3 py-2 text-[7px] font-semibold uppercase tracking-[0.28em] text-steel-gray">
-        <span>Elegant</span>
+        <span>{t("adminOrders.elegant")}</span>
 
-        <span className="text-classic-gold">
-          ✦
-        </span>
+        <span className="text-classic-gold">✦</span>
 
-        <span>Personal</span>
+        <span>{t("adminOrders.personal")}</span>
 
-        <span className="text-classic-gold">
-          ✦
-        </span>
+        <span className="text-classic-gold">✦</span>
 
-        <span>Smart</span>
+        <span>{t("adminOrders.smart")}</span>
       </div>
     </div>
   );

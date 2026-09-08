@@ -1,12 +1,22 @@
 import mongoose from "mongoose";
 
+const localizedFieldSchema = {
+  en: {
+    type: String,
+    trim: true,
+    default: "",
+  },
+
+  ar: {
+    type: String,
+    trim: true,
+    default: "",
+  },
+};
+
 const shippingAreaSchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+    name: localizedFieldSchema,
 
     shippingFee: {
       type: Number,
@@ -32,12 +42,16 @@ const shippingAreaSchema = new mongoose.Schema(
 
 shippingAreaSchema.index(
   {
-    name: 1,
+    "name.en": 1,
   },
   {
     unique: true,
   },
 );
+
+shippingAreaSchema.index({
+  "name.ar": 1,
+});
 
 const ShippingArea =
   mongoose.models.ShippingArea ||

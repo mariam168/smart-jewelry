@@ -13,8 +13,56 @@ const createError = (
   return error;
 };
 
-const normalizeName = (name) => {
-  return String(name || "").trim();
+const normalizeLocalizedField = (
+  value,
+) => {
+  if (
+    value &&
+    typeof value === "object" &&
+    !Array.isArray(value)
+  ) {
+    return {
+      en: String(value.en || "").trim(),
+      ar: String(value.ar || "").trim(),
+    };
+  }
+
+  const fallback = String(
+    value || "",
+  ).trim();
+
+  return {
+    en: fallback,
+    ar: fallback,
+  };
+};
+
+const validateLocalizedName = (
+  name,
+) => {
+  const normalized =
+    normalizeLocalizedField(name);
+
+  if (!normalized.en) {
+    throw createError(
+      "Shipping area name is required in English",
+    );
+  }
+
+  if (!normalized.ar) {
+    throw createError(
+      "Shipping area name is required in Arabic",
+    );
+  }
+
+  return normalized;
+};
+
+const escapeRegex = (value) => {
+  return String(value).replace(
+    /[.*+?^${}()|[\]\\]/g,
+    "\\$&",
+  );
 };
 
 export const getPublicShippingAreas =
@@ -24,7 +72,7 @@ export const getPublicShippingAreas =
     })
       .sort({
         sortOrder: 1,
-        name: 1,
+        "name.en": 1,
       })
       .lean();
   };
@@ -34,7 +82,7 @@ export const getAdminShippingAreas =
     return ShippingArea.find()
       .sort({
         sortOrder: 1,
-        name: 1,
+        "name.en": 1,
       })
       .lean();
   };
@@ -47,16 +95,11 @@ export const createShippingArea =
     sortOrder = 0,
   }) => {
     const cleanName =
-      normalizeName(name);
+      validateLocalizedName(name);
 
-    if (!cleanName) {
-      throw createError(
-        "Shipping area name is required",
-      );
-    }
-
-    const fee =
-      Number(shippingFee);
+    const fee = Number(
+      shippingFee,
+    );
 
     if (
       !Number.isFinite(fee) ||
@@ -67,31 +110,47 @@ export const createShippingArea =
       );
     }
 
-    const existing =
+    const existingEnglish =
       await ShippingArea.findOne({
-        name: {
+        "name.en": {
           $regex: new RegExp(
-            `^${cleanName.replace(
-              /[.*+?^${}()|[\]\\]/g,
-              "\\$&",
+            `^${escapeRegex(
+              cleanName.en,
             )}$`,
             "i",
           ),
         },
       });
 
-    if (existing) {
+    if (existingEnglish) {
       throw createError(
-        "This shipping area already exists",
+        "This shipping area already exists in English",
+        409,
+      );
+    }
+
+    const existingArabic =
+      await ShippingArea.findOne({
+        "name.ar":
+          cleanName.ar,
+      });
+
+    if (existingArabic) {
+      throw createError(
+        "This shipping area already exists in Arabic",
         409,
       );
     }
 
     return ShippingArea.create({
       name: cleanName,
+
       shippingFee: fee,
-      isActive:
-        Boolean(isActive),
+
+      isActive: Boolean(
+        isActive,
+      ),
+
       sortOrder:
         Number(sortOrder) || 0,
     });
@@ -128,36 +187,46 @@ export const updateShippingArea =
       payload.name !== undefined
     ) {
       const cleanName =
-        normalizeName(
+        validateLocalizedName(
           payload.name,
         );
 
-      if (!cleanName) {
-        throw createError(
-          "Shipping area name is required",
-        );
-      }
-
-      const duplicate =
+      const duplicateEnglish =
         await ShippingArea.findOne({
           _id: {
             $ne: area._id,
           },
 
-          name: {
+          "name.en": {
             $regex: new RegExp(
-              `^${cleanName.replace(
-                /[.*+?^${}()|[\]\\]/g,
-                "\\$&",
+              `^${escapeRegex(
+                cleanName.en,
               )}$`,
               "i",
             ),
           },
         });
 
-      if (duplicate) {
+      if (duplicateEnglish) {
         throw createError(
-          "This shipping area already exists",
+          "This shipping area already exists in English",
+          409,
+        );
+      }
+
+      const duplicateArabic =
+        await ShippingArea.findOne({
+          _id: {
+            $ne: area._id,
+          },
+
+          "name.ar":
+            cleanName.ar,
+        });
+
+      if (duplicateArabic) {
+        throw createError(
+          "This shipping area already exists in Arabic",
           409,
         );
       }
@@ -170,10 +239,9 @@ export const updateShippingArea =
       payload.shippingFee !==
       undefined
     ) {
-      const fee =
-        Number(
-          payload.shippingFee,
-        );
+      const fee = Number(
+        payload.shippingFee,
+      );
 
       if (
         !Number.isFinite(fee) ||
@@ -184,8 +252,7 @@ export const updateShippingArea =
         );
       }
 
-      area.shippingFee =
-        fee;
+      area.shippingFee = fee;
     }
 
     if (
@@ -214,9 +281,7 @@ export const updateShippingArea =
   };
 
 export const deleteShippingArea =
-  async (
-    areaId,
-  ) => {
+  async (areaId) => {
     if (
       !mongoose.Types.ObjectId.isValid(
         areaId,
@@ -243,9 +308,7 @@ export const deleteShippingArea =
   };
 
 export const getShippingAreaForOrder =
-  async (
-    areaId,
-  ) => {
+  async (areaId) => {
     if (
       !mongoose.Types.ObjectId.isValid(
         areaId,

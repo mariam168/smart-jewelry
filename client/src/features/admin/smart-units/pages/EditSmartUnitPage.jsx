@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 
 import { Link, useNavigate, useParams } from "react-router-dom";
 
+import { useTranslation } from "react-i18next";
+
 import { getSmartUnit, updateSmartUnit } from "../services/smartUnitApi";
 
 import { getTechnologyModels } from "../../services/technologyModelApi";
@@ -10,6 +12,8 @@ const EditSmartUnitPage = () => {
   const { id } = useParams();
 
   const navigate = useNavigate();
+
+  const { t } = useTranslation();
 
   const [technologyModels, setTechnologyModels] = useState([]);
 
@@ -77,7 +81,8 @@ const EditSmartUnitPage = () => {
         console.error(error);
 
         setError(
-          error?.response?.data?.message || "Failed to load Smart Unit.",
+          error?.response?.data?.message ||
+            t("editSmartUnit.failedToLoadSmartUnit"),
         );
       } finally {
         setIsLoading(false);
@@ -116,7 +121,8 @@ const EditSmartUnitPage = () => {
       console.error(error);
 
       setError(
-        error?.response?.data?.message || "Failed to update Smart Unit.",
+        error?.response?.data?.message ||
+          t("editSmartUnit.failedToUpdateSmartUnit"),
       );
     } finally {
       setIsSaving(false);
@@ -130,7 +136,7 @@ const EditSmartUnitPage = () => {
           <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-light-champagne border-t-classic-gold" />
 
           <p className="mt-4 text-[13px] text-slate-gray">
-            Loading Smart Unit...
+            {t("editSmartUnit.loadingSmartUnit")}
           </p>
         </div>
       </div>
@@ -148,19 +154,21 @@ const EditSmartUnitPage = () => {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
           <div>
             <div className="flex items-center gap-2 text-[12px] text-slate-gray">
-              <Link to="/admin/smart-units">Smart Units</Link>
+              <Link to="/admin/smart-units">
+                {t("editSmartUnit.smartUnits")}
+              </Link>
 
               <span>/</span>
 
-              <span>Edit</span>
+              <span>{t("editSmartUnit.edit")}</span>
             </div>
 
             <h1 className="mt-3 font-serif text-[2.4rem] tracking-[-0.04em]">
-              Edit Smart Unit
+              {t("editSmartUnit.editSmartUnit")}
             </h1>
 
             <p className="mt-2 text-[13px] text-slate-gray">
-              Update Smart Unit information and configuration
+              {t("editSmartUnit.updateSmartUnitDescription")}
             </p>
           </div>
 
@@ -168,7 +176,7 @@ const EditSmartUnitPage = () => {
             to="/admin/smart-units"
             className="rounded-[12px] border border-light-champagne bg-soft-white px-5 py-3 text-[11px] font-semibold text-slate-gray"
           >
-            ← Back
+            {t("editSmartUnit.back")}
           </Link>
         </div>
       </header>
@@ -186,13 +194,15 @@ const EditSmartUnitPage = () => {
               <section className="rounded-[24px] border border-light-champagne bg-soft-white">
                 <div className="border-b border-light-champagne px-6 py-5">
                   <h2 className="font-serif text-[1.45rem]">
-                    Basic Information
+                    {t("editSmartUnit.basicInformation")}
                   </h2>
                 </div>
 
                 <div className="space-y-6 p-6">
                   <div>
-                    <label className={labelClass}>Name</label>
+                    <label className={labelClass}>
+                      {t("editSmartUnit.name")}
+                    </label>
 
                     <input
                       type="text"
@@ -205,7 +215,9 @@ const EditSmartUnitPage = () => {
                   </div>
 
                   <div>
-                    <label className={labelClass}>Description</label>
+                    <label className={labelClass}>
+                      {t("editSmartUnit.description")}
+                    </label>
 
                     <textarea
                       rows={4}
@@ -217,7 +229,9 @@ const EditSmartUnitPage = () => {
                   </div>
 
                   <div>
-                    <label className={labelClass}>Technology Model</label>
+                    <label className={labelClass}>
+                      {t("editSmartUnit.technologyModel")}
+                    </label>
 
                     <select
                       name="technologyModel"
@@ -226,7 +240,9 @@ const EditSmartUnitPage = () => {
                       required
                       className={inputClass}
                     >
-                      <option value="">Select Technology Model</option>
+                      <option value="">
+                        {t("editSmartUnit.selectTechnologyModel")}
+                      </option>
 
                       {technologyModels.map((technology) => (
                         <option key={technology._id} value={technology._id}>
@@ -241,13 +257,15 @@ const EditSmartUnitPage = () => {
               <section className="rounded-[24px] border border-light-champagne bg-soft-white">
                 <div className="border-b border-light-champagne px-6 py-5">
                   <h2 className="font-serif text-[1.45rem]">
-                    Inventory Information
+                    {t("editSmartUnit.inventoryInformation")}
                   </h2>
                 </div>
 
                 <div className="grid grid-cols-1 gap-6 p-6 md:grid-cols-2">
                   <div>
-                    <label className={labelClass}>Cost Price</label>
+                    <label className={labelClass}>
+                      {t("editSmartUnit.costPrice")}
+                    </label>
 
                     <input
                       type="number"
@@ -260,7 +278,9 @@ const EditSmartUnitPage = () => {
                   </div>
 
                   <div>
-                    <label className={labelClass}>Stock</label>
+                    <label className={labelClass}>
+                      {t("editSmartUnit.stock")}
+                    </label>
 
                     <input
                       type="number"
@@ -274,7 +294,9 @@ const EditSmartUnitPage = () => {
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className={labelClass}>Production Date</label>
+                    <label className={labelClass}>
+                      {t("editSmartUnit.productionDate")}
+                    </label>
 
                     <input
                       type="date"
@@ -290,7 +312,9 @@ const EditSmartUnitPage = () => {
               <section className="rounded-[24px] border border-light-champagne bg-soft-white">
                 <div className="space-y-6 p-6">
                   <div>
-                    <label className={labelClass}>Manufacturer</label>
+                    <label className={labelClass}>
+                      {t("editSmartUnit.manufacturer")}
+                    </label>
 
                     <input
                       type="text"
@@ -302,7 +326,9 @@ const EditSmartUnitPage = () => {
                   </div>
 
                   <div>
-                    <label className={labelClass}>Notes</label>
+                    <label className={labelClass}>
+                      {t("editSmartUnit.notes")}
+                    </label>
 
                     <textarea
                       rows={4}
@@ -317,7 +343,9 @@ const EditSmartUnitPage = () => {
             </div>
 
             <section className="h-fit rounded-[24px] border border-light-champagne bg-soft-white p-6">
-              <label className={labelClass}>Status</label>
+              <label className={labelClass}>
+                {t("editSmartUnit.status")}
+              </label>
 
               <select
                 name="status"
@@ -325,17 +353,29 @@ const EditSmartUnitPage = () => {
                 onChange={handleChange}
                 className={inputClass}
               >
-                <option value="available">Available</option>
+                <option value="available">
+                  {t("editSmartUnit.statuses.available")}
+                </option>
 
-                <option value="reserved">Reserved</option>
+                <option value="reserved">
+                  {t("editSmartUnit.statuses.reserved")}
+                </option>
 
-                <option value="assigned">Assigned</option>
+                <option value="assigned">
+                  {t("editSmartUnit.statuses.assigned")}
+                </option>
 
-                <option value="activated">Activated</option>
+                <option value="activated">
+                  {t("editSmartUnit.statuses.activated")}
+                </option>
 
-                <option value="inactive">Inactive</option>
+                <option value="inactive">
+                  {t("editSmartUnit.statuses.inactive")}
+                </option>
 
-                <option value="damaged">Damaged</option>
+                <option value="damaged">
+                  {t("editSmartUnit.statuses.damaged")}
+                </option>
               </select>
             </section>
           </div>
@@ -345,7 +385,7 @@ const EditSmartUnitPage = () => {
               to="/admin/smart-units"
               className="rounded-[12px] border border-light-champagne px-6 py-3 text-[11px]"
             >
-              Cancel
+              {t("editSmartUnit.cancel")}
             </Link>
 
             <button
@@ -353,7 +393,9 @@ const EditSmartUnitPage = () => {
               disabled={isSaving}
               className="rounded-[12px] bg-midnight-navy px-7 py-3 text-[11px] font-semibold text-soft-white disabled:opacity-50"
             >
-              {isSaving ? "Updating..." : "Update Smart Unit"}
+              {isSaving
+                ? t("editSmartUnit.updating")
+                : t("editSmartUnit.updateSmartUnit")}
             </button>
           </div>
         </form>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { createVariant, uploadImage } from "../services/productApi";
 
@@ -7,6 +8,10 @@ const AddVariantPage = () => {
   const { id } = useParams();
 
   const navigate = useNavigate();
+
+  const { t } = useTranslation();
+
+  const [activeLanguage, setActiveLanguage] = useState("en");
 
   const [image, setImage] = useState(null);
 
@@ -18,14 +23,38 @@ const AddVariantPage = () => {
 
   const [formData, setFormData] = useState({
     sku: "",
-    name: "",
-    color: "",
-    size: "",
-    material: "",
-    finish: "",
+
+    name: {
+      en: "",
+      ar: "",
+    },
+
+    color: {
+      en: "",
+      ar: "",
+    },
+
+    size: {
+      en: "",
+      ar: "",
+    },
+
+    material: {
+      en: "",
+      ar: "",
+    },
+
+    finish: {
+      en: "",
+      ar: "",
+    },
+
     price: "",
+
     compareAtPrice: "",
+
     stock: "",
+
     isActive: true,
   });
 
@@ -36,6 +65,18 @@ const AddVariantPage = () => {
       ...previous,
 
       [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleLocalizedChange = (field, value) => {
+    setFormData((previous) => ({
+      ...previous,
+
+      [field]: {
+        ...previous[field],
+
+        [activeLanguage]: value,
+      },
     }));
   };
 
@@ -53,6 +94,20 @@ const AddVariantPage = () => {
     event.preventDefault();
 
     setError("");
+
+    // Variant name is required in both languages
+    if (
+      !formData.name.en.trim() ||
+      !formData.name.ar.trim()
+    ) {
+      setError(
+        t("addVariant.variantNameRequired"),
+      );
+
+      setIsLoading(false);
+
+      return;
+    }
 
     setIsLoading(true);
 
@@ -72,21 +127,44 @@ const AddVariantPage = () => {
       await createVariant({
         product: id,
 
-        sku: formData.sku,
+        sku: formData.sku.trim(),
 
-        name: formData.name,
+        name: {
+          en: formData.name.en.trim(),
 
-        color: formData.color,
+          ar: formData.name.ar.trim(),
+        },
 
-        size: formData.size,
+        color: {
+          en: formData.color.en.trim(),
 
-        material: formData.material,
+          ar: formData.color.ar.trim(),
+        },
 
-        finish: formData.finish,
+        size: {
+          en: formData.size.en.trim(),
+
+          ar: formData.size.ar.trim(),
+        },
+
+        material: {
+          en: formData.material.en.trim(),
+
+          ar: formData.material.ar.trim(),
+        },
+
+        finish: {
+          en: formData.finish.en.trim(),
+
+          ar: formData.finish.ar.trim(),
+        },
 
         price: Number(formData.price),
 
-        compareAtPrice: Number(formData.compareAtPrice),
+        compareAtPrice:
+          formData.compareAtPrice === ""
+            ? null
+            : Number(formData.compareAtPrice),
 
         stock: Number(formData.stock),
 
@@ -99,7 +177,10 @@ const AddVariantPage = () => {
     } catch (error) {
       console.log(error);
 
-      setError(error?.response?.data?.message || "Failed to create variant.");
+      setError(
+        error?.response?.data?.message ||
+          t("addVariant.failedToCreateVariant"),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -118,28 +199,58 @@ const AddVariantPage = () => {
               <span className="h-px w-8 bg-classic-gold/60" />
 
               <span className="text-[8px] font-semibold uppercase tracking-[0.3em] text-antique-gold">
-                Product Management
+                {t("addVariant.productManagement")}
               </span>
             </div>
 
             <h1 className="font-serif text-[2.5rem] font-normal leading-none tracking-[-0.04em] text-midnight-navy sm:text-[3rem]">
-              Add Variant
+              {t("addVariant.addVariant")}
             </h1>
 
             <p className="mt-4 text-[11px] leading-6 text-slate-gray sm:text-[12px]">
-              Create a new variation for this product.
+              {t("addVariant.createNewVariation")}
             </p>
           </div>
 
-          <Link
-            to={`/admin/products/${id}/variants`}
-            className="group inline-flex min-h-[46px] w-fit shrink-0 items-center justify-center gap-3 rounded-full border border-champagne-gold/30 bg-soft-white/85 px-5 text-[8px] font-semibold uppercase tracking-[0.11em] text-slate-gray shadow-[0_7px_18px_rgba(7,19,31,0.035)] transition-all duration-300 hover:-translate-y-0.5 hover:border-champagne-gold hover:bg-warm-ivory hover:text-midnight-navy"
-          >
-            <span className="text-[14px] text-classic-gold transition-transform duration-300 group-hover:-translate-x-1">
-              ←
-            </span>
-            Back
-          </Link>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            {/* Language Toggle */}
+            <div className="flex w-fit rounded-full border border-light-champagne bg-soft-white p-1">
+              <button
+                type="button"
+                onClick={() => setActiveLanguage("en")}
+                className={`rounded-full px-4 py-2 text-[8px] font-semibold uppercase tracking-[0.12em] transition ${
+                  activeLanguage === "en"
+                    ? "bg-midnight-navy text-champagne-gold"
+                    : "text-steel-gray hover:bg-warm-ivory"
+                }`}
+              >
+                EN
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveLanguage("ar")}
+                className={`rounded-full px-4 py-2 text-[8px] font-semibold transition ${
+                  activeLanguage === "ar"
+                    ? "bg-midnight-navy text-champagne-gold"
+                    : "text-steel-gray hover:bg-warm-ivory"
+                }`}
+              >
+                {t("addVariant.arabic")}
+              </button>
+            </div>
+
+            <Link
+              to={`/admin/products/${id}/variants`}
+              className="group inline-flex min-h-[46px] w-fit shrink-0 items-center justify-center gap-3 rounded-full border border-champagne-gold/30 bg-soft-white/85 px-5 text-[8px] font-semibold uppercase tracking-[0.11em] text-slate-gray shadow-[0_7px_18px_rgba(7,19,31,0.035)] transition-all duration-300 hover:-translate-y-0.5 hover:border-champagne-gold hover:bg-warm-ivory hover:text-midnight-navy"
+            >
+              <span className="text-[14px] text-classic-gold transition-transform duration-300 group-hover:-translate-x-1">
+                ←
+              </span>
+
+              {t("addVariant.back")}
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -161,11 +272,11 @@ const AddVariantPage = () => {
 
               <div>
                 <h2 className="font-serif text-[1.45rem] font-normal tracking-[-0.02em] text-midnight-navy">
-                  Variant Details
+                  {t("addVariant.variantDetails")}
                 </h2>
 
                 <p className="mt-1.5 text-[10px] leading-5 text-slate-gray">
-                  Add the information and specifications for this variant.
+                  {t("addVariant.variantDetailsDescription")}
                 </p>
               </div>
             </div>
@@ -181,19 +292,21 @@ const AddVariantPage = () => {
               </div>
             )}
 
+            {/* Basic Information */}
             <section>
               <div className="mb-6">
                 <p className="text-[8px] font-semibold uppercase tracking-[0.28em] text-antique-gold">
-                  Basic Information
+                  {t("addVariant.basicInformation")}
                 </p>
 
                 <div className="mt-3 h-px w-full bg-light-champagne/80" />
               </div>
 
               <div className="grid gap-6 lg:grid-cols-2">
+                {/* SKU */}
                 <div className="lg:col-span-2">
                   <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                    SKU
+                    {t("addVariant.sku")}
                     <span className="ml-1 text-antique-gold">*</span>
                   </label>
 
@@ -208,108 +321,226 @@ const AddVariantPage = () => {
                   />
                 </div>
 
+                {/* Variant Name */}
                 <div className="lg:col-span-2">
-                  <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                    Variant Name
-                  </label>
+                  <div className="mb-2.5 flex items-center justify-between">
+                    <label className="block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+                      {t("addVariant.variantName")}
+                      <span className="ml-1 text-antique-gold">*</span>
+                    </label>
+
+                    <span className="text-[8px] font-medium text-antique-gold">
+                      {activeLanguage === "en"
+                        ? t("addVariant.english")
+                        : t("addVariant.arabic")}
+                    </span>
+                  </div>
 
                   <input
                     type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    placeholder="e.g. Classic Gold Ring"
+                    value={formData.name[activeLanguage]}
+                    onChange={(event) =>
+                      handleLocalizedChange(
+                        "name",
+                        event.target.value,
+                      )
+                    }
+                    placeholder={
+                      activeLanguage === "en"
+                        ? "e.g. Classic Gold Ring"
+                        : "مثال: خاتم ذهبي كلاسيكي"
+                    }
+                    dir={
+                      activeLanguage === "ar"
+                        ? "rtl"
+                        : "ltr"
+                    }
+                    className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 text-[12px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
+                  />
+
+                  <p className="mt-2 text-[8px] text-steel-gray">
+                    {t("addVariant.variantNameDescription")}
+                  </p>
+                </div>
+
+                {/* Color */}
+                <div>
+                  <div className="mb-2.5 flex items-center justify-between">
+                    <label className="block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+                      {t("addVariant.color")}
+                    </label>
+
+                    <span className="text-[8px] font-medium text-antique-gold">
+                      {activeLanguage === "en"
+                        ? t("addVariant.english")
+                        : t("addVariant.arabic")}
+                    </span>
+                  </div>
+
+                  <input
+                    type="text"
+                    value={formData.color[activeLanguage]}
+                    onChange={(event) =>
+                      handleLocalizedChange(
+                        "color",
+                        event.target.value,
+                      )
+                    }
+                    placeholder={
+                      activeLanguage === "en"
+                        ? "Gold"
+                        : "ذهبي"
+                    }
+                    dir={
+                      activeLanguage === "ar"
+                        ? "rtl"
+                        : "ltr"
+                    }
                     className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 text-[12px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
                   />
                 </div>
 
+                {/* Size */}
                 <div>
-                  <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                    Color
-                  </label>
+                  <div className="mb-2.5 flex items-center justify-between">
+                    <label className="block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+                      {t("addVariant.size")}
+                    </label>
+
+                    <span className="text-[8px] font-medium text-antique-gold">
+                      {activeLanguage === "en"
+                        ? t("addVariant.english")
+                        : t("addVariant.arabic")}
+                    </span>
+                  </div>
 
                   <input
                     type="text"
-                    name="color"
-                    value={formData.color}
-                    onChange={handleChange}
-                    placeholder="Gold"
-                    className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 text-[12px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                    Size
-                  </label>
-
-                  <input
-                    type="text"
-                    name="size"
-                    value={formData.size}
-                    onChange={handleChange}
-                    placeholder="Medium"
+                    value={formData.size[activeLanguage]}
+                    onChange={(event) =>
+                      handleLocalizedChange(
+                        "size",
+                        event.target.value,
+                      )
+                    }
+                    placeholder={
+                      activeLanguage === "en"
+                        ? "Medium"
+                        : "متوسط"
+                    }
+                    dir={
+                      activeLanguage === "ar"
+                        ? "rtl"
+                        : "ltr"
+                    }
                     className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 text-[12px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
                   />
                 </div>
               </div>
             </section>
 
+            {/* Specifications */}
             <section>
               <div className="mb-6">
                 <p className="text-[8px] font-semibold uppercase tracking-[0.28em] text-antique-gold">
-                  Specifications
+                  {t("addVariant.specifications")}
                 </p>
 
                 <div className="mt-3 h-px w-full bg-light-champagne/80" />
               </div>
 
               <div className="grid gap-6 lg:grid-cols-2">
+                {/* Material */}
                 <div>
-                  <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                    Material
-                  </label>
+                  <div className="mb-2.5 flex items-center justify-between">
+                    <label className="block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+                      {t("addVariant.material")}
+                    </label>
+
+                    <span className="text-[8px] font-medium text-antique-gold">
+                      {activeLanguage === "en"
+                        ? t("addVariant.english")
+                        : t("addVariant.arabic")}
+                    </span>
+                  </div>
 
                   <input
                     type="text"
-                    name="material"
-                    value={formData.material}
-                    onChange={handleChange}
-                    placeholder="18K Gold"
+                    value={formData.material[activeLanguage]}
+                    onChange={(event) =>
+                      handleLocalizedChange(
+                        "material",
+                        event.target.value,
+                      )
+                    }
+                    placeholder={
+                      activeLanguage === "en"
+                        ? "18K Gold"
+                        : "ذهب عيار 18"
+                    }
+                    dir={
+                      activeLanguage === "ar"
+                        ? "rtl"
+                        : "ltr"
+                    }
                     className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 text-[12px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
                   />
                 </div>
 
+                {/* Finish */}
                 <div>
-                  <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                    Finish
-                  </label>
+                  <div className="mb-2.5 flex items-center justify-between">
+                    <label className="block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+                      {t("addVariant.finish")}
+                    </label>
+
+                    <span className="text-[8px] font-medium text-antique-gold">
+                      {activeLanguage === "en"
+                        ? t("addVariant.english")
+                        : t("addVariant.arabic")}
+                    </span>
+                  </div>
 
                   <input
                     type="text"
-                    name="finish"
-                    value={formData.finish}
-                    onChange={handleChange}
-                    placeholder="Polished"
+                    value={formData.finish[activeLanguage]}
+                    onChange={(event) =>
+                      handleLocalizedChange(
+                        "finish",
+                        event.target.value,
+                      )
+                    }
+                    placeholder={
+                      activeLanguage === "en"
+                        ? "Polished"
+                        : "لامع"
+                    }
+                    dir={
+                      activeLanguage === "ar"
+                        ? "rtl"
+                        : "ltr"
+                    }
                     className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 text-[12px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/65 hover:border-champagne-gold/55 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
                   />
                 </div>
               </div>
             </section>
 
+            {/* Pricing & Inventory */}
             <section>
               <div className="mb-6">
                 <p className="text-[8px] font-semibold uppercase tracking-[0.28em] text-antique-gold">
-                  Pricing & Inventory
+                  {t("addVariant.pricingInventory")}
                 </p>
 
                 <div className="mt-3 h-px w-full bg-light-champagne/80" />
               </div>
 
               <div className="grid gap-6 md:grid-cols-3">
+                {/* Price */}
                 <div>
                   <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                    Price
+                    {t("addVariant.price")}
                     <span className="ml-1 text-antique-gold">*</span>
                   </label>
 
@@ -331,9 +562,10 @@ const AddVariantPage = () => {
                   </div>
                 </div>
 
+                {/* Compare Price */}
                 <div>
                   <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                    Compare Price
+                    {t("addVariant.comparePrice")}
                   </label>
 
                   <div className="relative">
@@ -353,9 +585,10 @@ const AddVariantPage = () => {
                   </div>
                 </div>
 
+                {/* Stock */}
                 <div>
                   <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                    Stock
+                    {t("addVariant.stock")}
                     <span className="ml-1 text-antique-gold">*</span>
                   </label>
 
@@ -373,10 +606,11 @@ const AddVariantPage = () => {
               </div>
             </section>
 
+            {/* Product Image */}
             <section>
               <div className="mb-6">
                 <p className="text-[8px] font-semibold uppercase tracking-[0.28em] text-antique-gold">
-                  Product Image
+                  {t("addVariant.productImage")}
                 </p>
 
                 <div className="mt-3 h-px w-full bg-light-champagne/80" />
@@ -385,7 +619,7 @@ const AddVariantPage = () => {
               <div className="grid gap-8 lg:grid-cols-[1fr_220px]">
                 <div>
                   <label className="mb-2.5 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                    Variant Image
+                    {t("addVariant.variantImage")}
                   </label>
 
                   <label className="group relative flex min-h-44 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[18px] border border-dashed border-champagne-gold/35 bg-warm-ivory/55 px-6 py-8 text-center transition-all duration-300 hover:border-champagne-gold/70 hover:bg-soft-white">
@@ -396,7 +630,7 @@ const AddVariantPage = () => {
                     </div>
 
                     <p className="relative text-[10px] font-semibold uppercase tracking-[0.1em] text-midnight-navy">
-                      Choose an image
+                      {t("addVariant.chooseImage")}
                     </p>
 
                     <p className="relative mt-2 text-[9px] text-steel-gray">
@@ -414,22 +648,24 @@ const AddVariantPage = () => {
 
                 <div>
                   <p className="mb-2.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                    Preview
+                    {t("addVariant.preview")}
                   </p>
 
                   <div className="relative flex h-44 w-full items-center justify-center overflow-hidden rounded-[18px] border border-light-champagne bg-soft-cream shadow-[0_8px_22px_rgba(7,19,31,0.035)]">
                     {preview ? (
                       <img
                         src={preview}
-                        alt="Preview"
+                        alt={t("addVariant.preview")}
                         className="h-full w-full object-cover"
                       />
                     ) : (
                       <div className="text-center">
-                        <div className="text-[17px] text-classic-gold">✦</div>
+                        <div className="text-[17px] text-classic-gold">
+                          ✦
+                        </div>
 
                         <p className="mt-2 text-[7px] font-semibold uppercase tracking-[0.2em] text-steel-gray">
-                          No Image
+                          {t("addVariant.noImage")}
                         </p>
                       </div>
                     )}
@@ -438,16 +674,17 @@ const AddVariantPage = () => {
               </div>
             </section>
 
+            {/* Active Variant */}
             <section>
               <div className="rounded-[18px] border border-light-champagne/90 bg-warm-ivory/60 p-5">
                 <label className="flex cursor-pointer items-center justify-between gap-5">
                   <div>
                     <p className="text-[11px] font-semibold text-midnight-navy">
-                      Active Variant
+                      {t("addVariant.activeVariant")}
                     </p>
 
                     <p className="mt-1.5 text-[9px] leading-5 text-steel-gray">
-                      Make this variant available for customers.
+                      {t("addVariant.activeVariantDescription")}
                     </p>
                   </div>
 
@@ -468,12 +705,13 @@ const AddVariantPage = () => {
               </div>
             </section>
 
+            {/* Actions */}
             <div className="flex flex-col-reverse gap-3 border-t border-light-champagne/80 pt-8 sm:flex-row sm:justify-end">
               <Link
                 to={`/admin/products/${id}/variants`}
                 className="inline-flex min-h-[48px] items-center justify-center rounded-[13px] border border-light-champagne bg-soft-white px-8 text-[8px] font-semibold uppercase tracking-[0.11em] text-slate-gray transition-all duration-300 hover:-translate-y-0.5 hover:border-champagne-gold hover:bg-warm-ivory hover:text-midnight-navy"
               >
-                Cancel
+                {t("addVariant.cancel")}
               </Link>
 
               <button
@@ -481,7 +719,9 @@ const AddVariantPage = () => {
                 disabled={isLoading}
                 className="group inline-flex min-h-[48px] items-center justify-center gap-3 rounded-[13px] bg-midnight-navy px-8 text-[8px] font-semibold uppercase tracking-[0.11em] text-soft-white shadow-[0_11px_26px_rgba(18,38,58,0.14)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-rich-navy hover:shadow-[0_15px_32px_rgba(18,38,58,0.2)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
               >
-                {isLoading ? "Saving..." : "Create Variant"}
+                {isLoading
+                  ? t("addVariant.saving")
+                  : t("addVariant.createVariant")}
 
                 {!isLoading && (
                   <span className="text-[12px] text-champagne-gold transition-transform duration-300 group-hover:translate-x-1">

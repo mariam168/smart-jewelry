@@ -3,6 +3,8 @@ import {
   useState,
 } from "react";
 
+import { useTranslation } from "react-i18next";
+
 import {
   createShippingArea,
   deleteShippingArea,
@@ -10,7 +12,51 @@ import {
   updateShippingArea,
 } from "../services/shippingApi";
 
+const normalizeLocalizedField = (
+  value,
+) => {
+  if (
+    value &&
+    typeof value === "object" &&
+    !Array.isArray(value)
+  ) {
+    return {
+      en: value.en || "",
+      ar: value.ar || "",
+    };
+  }
+
+  const fallback = value || "";
+
+  return {
+    en: fallback,
+    ar: fallback,
+  };
+};
+
+const getLocalizedText = (
+  value,
+  language = "en",
+) => {
+  if (
+    value &&
+    typeof value === "object" &&
+    !Array.isArray(value)
+  ) {
+    return (
+      value[language] ||
+      value.en ||
+      value.ar ||
+      ""
+    );
+  }
+
+  return value || "";
+};
+
 const AdminShippingAreasPage = () => {
+  const { t } = useTranslation();
+
   const [
     areas,
     setAreas,
@@ -37,10 +83,18 @@ const AdminShippingAreasPage = () => {
   ] = useState(null);
 
   const [
+    activeLanguage,
+    setActiveLanguage,
+  ] = useState("en");
+
+  const [
     form,
     setForm,
   ] = useState({
-    name: "",
+    name: {
+      en: "",
+      ar: "",
+    },
     shippingFee: "",
     isActive: true,
   });
@@ -62,7 +116,9 @@ const AdminShippingAreasPage = () => {
         setError(
           error?.response?.data
             ?.message ||
-            "Failed to load shipping areas.",
+            t(
+              "adminShippingAreas.failedToLoadShippingAreas",
+            ),
         );
       } finally {
         setLoading(false);
@@ -77,10 +133,15 @@ const AdminShippingAreasPage = () => {
     setEditingId(null);
 
     setForm({
-      name: "",
+      name: {
+        en: "",
+        ar: "",
+      },
       shippingFee: "",
       isActive: true,
     });
+
+    setActiveLanguage("en");
   };
 
   const handleChange =
@@ -106,16 +167,56 @@ const AdminShippingAreasPage = () => {
       );
     };
 
+  const handleNameChange =
+    (event) => {
+      const {
+        value,
+      } = event.target;
+
+      setForm(
+        (previous) => ({
+          ...previous,
+
+          name: {
+            ...previous.name,
+
+            [activeLanguage]:
+              value,
+          },
+        }),
+      );
+    };
+
   const handleSubmit =
     async (event) => {
       event.preventDefault();
 
-      if (
-        !form.name.trim()
-      ) {
+      const englishName =
+        form.name.en.trim();
+
+      const arabicName =
+        form.name.ar.trim();
+
+      if (!englishName) {
         setError(
-          "Shipping place is required.",
+          t(
+            "adminShippingAreas.englishNameRequired",
+          ),
         );
+
+        setActiveLanguage("en");
+
+        return;
+      }
+
+      if (!arabicName) {
+        setError(
+          t(
+            "adminShippingAreas.arabicNameRequired",
+          ),
+        );
+
+        setActiveLanguage("ar");
 
         return;
       }
@@ -128,7 +229,9 @@ const AdminShippingAreasPage = () => {
         ) < 0
       ) {
         setError(
-          "Enter a valid shipping fee.",
+          t(
+            "adminShippingAreas.validShippingFee",
+          ),
         );
 
         return;
@@ -139,8 +242,10 @@ const AdminShippingAreasPage = () => {
         setError("");
 
         const payload = {
-          name:
-            form.name.trim(),
+          name: {
+            en: englishName,
+            ar: arabicName,
+          },
 
           shippingFee:
             Number(
@@ -169,7 +274,9 @@ const AdminShippingAreasPage = () => {
         setError(
           error?.response?.data
             ?.message ||
-            "Failed to save shipping area.",
+            t(
+              "adminShippingAreas.failedToSaveShippingArea",
+            ),
         );
       } finally {
         setSaving(false);
@@ -185,7 +292,9 @@ const AdminShippingAreasPage = () => {
 
     setForm({
       name:
-        area.name || "",
+        normalizeLocalizedField(
+          area.name,
+        ),
 
       shippingFee:
         area.shippingFee ??
@@ -195,6 +304,8 @@ const AdminShippingAreasPage = () => {
         area.isActive !==
         false,
     });
+
+    setActiveLanguage("en");
 
     window.scrollTo({
       top: 0,
@@ -222,7 +333,9 @@ const AdminShippingAreasPage = () => {
         setError(
           error?.response?.data
             ?.message ||
-            "Failed to update area.",
+            t(
+              "adminShippingAreas.failedToUpdateArea",
+            ),
         );
       }
     };
@@ -231,9 +344,17 @@ const AdminShippingAreasPage = () => {
     async (
       area,
     ) => {
+      const areaName =
+        getLocalizedText(
+          area.name,
+          activeLanguage,
+        );
+
       const confirmed =
         window.confirm(
-          `Delete ${area.name}?`,
+          `${t(
+            "adminShippingAreas.delete",
+          )} ${areaName}?`,
         );
 
       if (!confirmed) {
@@ -259,7 +380,9 @@ const AdminShippingAreasPage = () => {
         setError(
           error?.response?.data
             ?.message ||
-            "Failed to delete shipping area.",
+            t(
+              "adminShippingAreas.failedToDeleteShippingArea",
+            ),
         );
       }
     };
@@ -272,17 +395,22 @@ const AdminShippingAreasPage = () => {
             <span className="h-px w-9 bg-classic-gold" />
 
             <p className="text-[9px] font-semibold uppercase tracking-[0.32em] text-antique-gold">
-              Administration
+              {t(
+                "adminShippingAreas.administration",
+              )}
             </p>
           </div>
 
           <h1 className="mt-3 font-serif text-5xl font-normal tracking-[-0.045em]">
-            Shipping Areas
+            {t(
+              "adminShippingAreas.shippingAreas",
+            )}
           </h1>
 
           <p className="mt-3 text-[13px] leading-6 text-slate-gray">
-            Add the places you deliver to and set the shipping fee for each
-            place.
+            {t(
+              "adminShippingAreas.headerDescription",
+            )}
           </p>
         </div>
       </header>
@@ -298,14 +426,22 @@ const AdminShippingAreasPage = () => {
           <div className="border-b border-light-champagne px-6 py-5">
             <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-antique-gold">
               {editingId
-                ? "Edit Location"
-                : "New Location"}
+                ? t(
+                    "adminShippingAreas.editLocation",
+                  )
+                : t(
+                    "adminShippingAreas.newLocation",
+                  )}
             </p>
 
             <h2 className="mt-1 font-serif text-2xl">
               {editingId
-                ? "Update Shipping Area"
-                : "Add Shipping Area"}
+                ? t(
+                    "adminShippingAreas.updateShippingArea",
+                  )
+                : t(
+                    "adminShippingAreas.addShippingArea",
+                  )}
             </h2>
           </div>
 
@@ -316,27 +452,81 @@ const AdminShippingAreasPage = () => {
             className="grid gap-5 p-6 md:grid-cols-[1fr_220px_170px]"
           >
             <label>
-              <span className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                Place
-              </span>
+              <div className="mb-2 flex items-center justify-between">
+                <span className="block text-[9px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
+                  {t(
+                    "adminShippingAreas.place",
+                  )}
+                </span>
+
+                <div className="flex overflow-hidden rounded-full border border-light-champagne bg-warm-ivory">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setActiveLanguage(
+                        "en",
+                      )
+                    }
+                    className={`px-3 py-1.5 text-[8px] font-semibold uppercase tracking-[0.1em] transition ${
+                      activeLanguage ===
+                      "en"
+                        ? "bg-deep-navy text-white"
+                        : "text-slate-gray hover:bg-white"
+                    }`}
+                  >
+                    EN
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setActiveLanguage(
+                        "ar",
+                      )
+                    }
+                    className={`px-3 py-1.5 text-[8px] font-semibold transition ${
+                      activeLanguage ===
+                      "ar"
+                        ? "bg-deep-navy text-white"
+                        : "text-slate-gray hover:bg-white"
+                    }`}
+                  >
+                    العربية
+                  </button>
+                </div>
+              </div>
 
               <input
                 type="text"
-                name="name"
                 value={
-                  form.name
+                  form.name[
+                    activeLanguage
+                  ]
                 }
                 onChange={
-                  handleChange
+                  handleNameChange
                 }
-                placeholder="New Cairo"
+                dir={
+                  activeLanguage ===
+                  "ar"
+                    ? "rtl"
+                    : "ltr"
+                }
+                placeholder={
+                  activeLanguage ===
+                  "ar"
+                    ? "القاهرة الجديدة"
+                    : "New Cairo"
+                }
                 className="h-12 w-full rounded-xl border border-light-champagne bg-white px-4 text-[12px] outline-none transition focus:border-classic-gold focus:ring-4 focus:ring-classic-gold/10"
               />
             </label>
 
             <label>
               <span className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                Shipping Fee
+                {t(
+                  "adminShippingAreas.shippingFee",
+                )}
               </span>
 
               <div className="relative">
@@ -370,10 +560,16 @@ const AdminShippingAreasPage = () => {
                 className="h-12 w-full rounded-xl bg-deep-navy px-5 text-[10px] font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-midnight-navy disabled:opacity-50"
               >
                 {saving
-                  ? "Saving..."
+                  ? t(
+                      "adminShippingAreas.saving",
+                    )
                   : editingId
-                    ? "Save Changes"
-                    : "Add Place"}
+                    ? t(
+                        "adminShippingAreas.saveChanges",
+                      )
+                    : t(
+                        "adminShippingAreas.addPlace",
+                      )}
               </button>
             </div>
 
@@ -392,7 +588,9 @@ const AdminShippingAreasPage = () => {
                 />
 
                 <span className="text-[11px] text-slate-gray">
-                  Available for customers
+                  {t(
+                    "adminShippingAreas.availableForCustomers",
+                  )}
                 </span>
               </label>
             </div>
@@ -406,7 +604,9 @@ const AdminShippingAreasPage = () => {
                   }
                   className="text-[10px] font-semibold text-slate-gray underline"
                 >
-                  Cancel editing
+                  {t(
+                    "adminShippingAreas.cancelEditing",
+                  )}
                 </button>
               </div>
             )}
@@ -417,18 +617,63 @@ const AdminShippingAreasPage = () => {
           <div className="flex items-center justify-between border-b border-light-champagne px-6 py-5">
             <div>
               <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-antique-gold">
-                Delivery
+                {t(
+                  "adminShippingAreas.delivery",
+                )}
               </p>
 
               <h2 className="mt-1 font-serif text-2xl">
-                Shipping Prices
+                {t(
+                  "adminShippingAreas.shippingPrices",
+                )}
               </h2>
             </div>
 
-            <div className="rounded-full border border-light-champagne bg-warm-ivory px-4 py-2">
-              <span className="text-[9px] font-semibold text-slate-gray">
-                {areas.length} Places
-              </span>
+            <div className="flex items-center gap-3">
+              <div className="flex overflow-hidden rounded-full border border-light-champagne bg-warm-ivory">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setActiveLanguage(
+                      "en",
+                    )
+                  }
+                  className={`px-3 py-1.5 text-[8px] font-semibold uppercase tracking-[0.1em] transition ${
+                    activeLanguage ===
+                    "en"
+                      ? "bg-deep-navy text-white"
+                      : "text-slate-gray hover:bg-white"
+                  }`}
+                >
+                  EN
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setActiveLanguage(
+                      "ar",
+                    )
+                  }
+                  className={`px-3 py-1.5 text-[8px] font-semibold transition ${
+                    activeLanguage ===
+                    "ar"
+                      ? "bg-deep-navy text-white"
+                      : "text-slate-gray hover:bg-white"
+                  }`}
+                >
+                  العربية
+                </button>
+              </div>
+
+              <div className="rounded-full border border-light-champagne bg-warm-ivory px-4 py-2">
+                <span className="text-[9px] font-semibold text-slate-gray">
+                  {areas.length}{" "}
+                  {t(
+                    "adminShippingAreas.places",
+                  )}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -440,11 +685,15 @@ const AdminShippingAreasPage = () => {
             0 ? (
             <div className="px-6 py-20 text-center">
               <p className="font-serif text-2xl text-rich-navy">
-                No shipping places yet
+                {t(
+                  "adminShippingAreas.noShippingPlacesYet",
+                )}
               </p>
 
               <p className="mt-2 text-[11px] text-steel-gray">
-                Add your first delivery location above.
+                {t(
+                  "adminShippingAreas.addFirstDeliveryLocation",
+                )}
               </p>
             </div>
           ) : (
@@ -463,10 +712,19 @@ const AdminShippingAreasPage = () => {
                       </div>
 
                       <div>
-                        <p className="text-[13px] font-semibold text-rich-navy">
-                          {
-                            area.name
+                        <p
+                          dir={
+                            activeLanguage ===
+                            "ar"
+                              ? "rtl"
+                              : "ltr"
                           }
+                          className="text-[13px] font-semibold text-rich-navy"
+                        >
+                          {getLocalizedText(
+                            area.name,
+                            activeLanguage,
+                          )}
                         </p>
 
                         <div className="mt-1 flex items-center gap-2">
@@ -480,8 +738,12 @@ const AdminShippingAreasPage = () => {
 
                           <span className="text-[9px] text-steel-gray">
                             {area.isActive
-                              ? "Available"
-                              : "Disabled"}
+                              ? t(
+                                  "adminShippingAreas.available",
+                                )
+                              : t(
+                                  "adminShippingAreas.disabled",
+                                )}
                           </span>
                         </div>
                       </div>
@@ -499,7 +761,9 @@ const AdminShippingAreasPage = () => {
                         </p>
 
                         <p className="text-[8px] font-semibold uppercase tracking-[0.2em] text-steel-gray">
-                          EGP Shipping
+                          {t(
+                            "adminShippingAreas.egpShipping",
+                          )}
                         </p>
                       </div>
 
@@ -513,8 +777,12 @@ const AdminShippingAreasPage = () => {
                         className="rounded-xl border border-light-champagne px-4 py-2.5 text-[9px] font-semibold text-slate-gray transition hover:bg-warm-ivory"
                       >
                         {area.isActive
-                          ? "Disable"
-                          : "Enable"}
+                          ? t(
+                              "adminShippingAreas.disable",
+                            )
+                          : t(
+                              "adminShippingAreas.enable",
+                            )}
                       </button>
 
                       <button
@@ -526,7 +794,9 @@ const AdminShippingAreasPage = () => {
                         }
                         className="rounded-xl border border-light-champagne px-4 py-2.5 text-[9px] font-semibold text-rich-navy transition hover:border-classic-gold"
                       >
-                        Edit
+                        {t(
+                          "adminShippingAreas.edit",
+                        )}
                       </button>
 
                       <button
@@ -538,7 +808,9 @@ const AdminShippingAreasPage = () => {
                         }
                         className="rounded-xl border border-red-200 px-4 py-2.5 text-[9px] font-semibold text-red-600 transition hover:bg-red-50"
                       >
-                        Delete
+                        {t(
+                          "adminShippingAreas.delete",
+                        )}
                       </button>
                     </div>
                   </div>

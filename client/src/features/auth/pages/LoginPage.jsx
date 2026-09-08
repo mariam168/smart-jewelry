@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import AuthLayout from "../components/AuthLayout";
 import AuthInput from "../components/AuthInput";
@@ -16,6 +17,7 @@ const initialValues = {
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const {
     setUser,
@@ -31,11 +33,17 @@ const LoginPage = () => {
   const [serverError, setServerError] =
     useState("");
 
+  const [verificationPhone, setVerificationPhone] =
+    useState("");
+
   const [isLoading, setIsLoading] =
     useState(false);
 
   const handleChange = (event) => {
-    const { name, value } = event.target;
+    const {
+      name,
+      value,
+    } = event.target;
 
     setFormValues((previous) => ({
       ...previous,
@@ -48,6 +56,22 @@ const LoginPage = () => {
     }));
 
     setServerError("");
+    setVerificationPhone("");
+  };
+
+  const handleVerifyWhatsapp = () => {
+    if (!verificationPhone) {
+      return;
+    }
+
+    navigate(
+      `/verify-email?phone=${encodeURIComponent(
+        verificationPhone
+      )}`,
+      {
+        replace: true,
+      }
+    );
   };
 
   const handleSubmit = async (event) => {
@@ -56,14 +80,22 @@ const LoginPage = () => {
     const newErrors = {};
 
     if (!formValues.email.trim()) {
-      newErrors.email = "Email is required";
+      newErrors.email = t(
+        "auth.login.emailRequired",
+        "Email is required"
+      );
     }
 
     if (!formValues.password) {
-      newErrors.password = "Password is required";
+      newErrors.password = t(
+        "auth.login.passwordRequired",
+        "Password is required"
+      );
     }
 
-    if (Object.keys(newErrors).length > 0) {
+    if (
+      Object.keys(newErrors).length > 0
+    ) {
       setErrors(newErrors);
       return;
     }
@@ -73,6 +105,7 @@ const LoginPage = () => {
 
       setErrors({});
       setServerError("");
+      setVerificationPhone("");
 
       const response =
         await loginUser(formValues);
@@ -80,7 +113,7 @@ const LoginPage = () => {
       console.log("LOGIN RESPONSE:");
       console.log(response);
 
-      setUser(response.data.user);
+      setUser(response.user);
 
       console.log("User Saved");
 
@@ -88,40 +121,94 @@ const LoginPage = () => {
 
       console.log("Authenticated");
 
-    const role =
-  response.data.user.role.name;
+      const role =
+        response.user.role.name;
 
-if (
-  role === "admin" ||
-  role === "super_admin"
-) {
-  navigate("/admin");
-} else {
-  navigate("/account");
-}
+      if (
+        role === "admin" ||
+        role === "super_admin"
+      ) {
+        navigate("/admin");
+      } else {
+        navigate("/account");
+      }
 
       console.log("Navigation Done");
-
     } catch (error) {
-
       console.error("LOGIN ERROR:");
       console.error(error);
-      console.error(error.response);
-      console.error(error.message);
+
+      console.log(
+        "ERROR RESPONSE:",
+        error?.response
+      );
+
+      console.log(
+        "ERROR DATA:",
+        error?.response?.data
+      );
+
+      console.log(
+        "ERROR CODE:",
+        error?.response?.data?.code
+      );
+
+      console.log(
+        "ERROR PHONE:",
+        error?.response?.data?.phone
+      );
+
+      console.log(
+        "ERROR MESSAGE:",
+        error?.response?.data?.message
+      );
+
+      console.log(
+        "FULL ERROR OBJECT:",
+        JSON.stringify(
+          error,
+          Object.getOwnPropertyNames(error)
+        )
+      );
 
       const data =
         error?.response?.data;
+
+      if (
+        data?.code ===
+        "WHATSAPP_NOT_VERIFIED"
+      ) {
+        setUser(null);
+        setIsAuthenticated(false);
+
+        const phone =
+          data?.phone ||
+          data?.data?.phone ||
+          "";
+
+        console.log(
+          "WHATSAPP VERIFICATION PHONE:",
+          phone
+        );
+
+        setVerificationPhone(phone);
+        setServerError("");
+
+        return;
+      }
 
       if (data?.errors) {
         setErrors(data.errors);
       } else {
         setServerError(
           data?.message ||
-          error.message ||
-          "Unable to login. Please try again."
+            error.message ||
+            t(
+              "auth.login.unableToLogin",
+              "Unable to login. Please try again."
+            )
         );
       }
-
     } finally {
       setIsLoading(false);
     }
@@ -129,10 +216,62 @@ if (
 
   return (
     <AuthLayout
-      title="Welcome back"
-      subtitle="Login to your Smart Jewelry account"
+      title={t(
+        "auth.login.title",
+        "Welcome back"
+      )}
+      subtitle={t(
+        "auth.login.subtitle",
+        "Login to your Smart Jewelry account"
+      )}
     >
-      {serverError && (
+      {verificationPhone && (
+        <div className="mb-6 rounded-2xl border border-[#C9A24D]/40 bg-[#F8F5EF] p-5">
+          <div className="mb-4 flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0D2235] text-[#E3C47A]">
+              <span className="text-lg">
+                ✓
+              </span>
+            </div>
+
+            <div>
+              <h3 className="text-base font-semibold text-[#0D2235]">
+                {t(
+                  "auth.login.verifyWhatsappTitle",
+                  "Verify your WhatsApp number"
+                )}
+              </h3>
+
+              <p className="mt-1 text-sm leading-6 text-[#5E6B78]">
+                {t(
+                  "auth.login.verifyWhatsappMessage",
+                  "Your account needs WhatsApp verification before you can continue."
+                )}
+              </p>
+            </div>
+          </div>
+
+          <p className="mb-4 text-sm leading-6 text-[#5E6B78]">
+            {t(
+              "auth.login.verifyWhatsappDescription",
+              "We sent a verification code to your WhatsApp number. Verify your number to continue."
+            )}
+          </p>
+
+          <button
+            type="button"
+            onClick={handleVerifyWhatsapp}
+            className="w-full rounded-xl bg-[#0D2235] px-5 py-3.5 text-sm font-semibold text-[#F8F5EF] transition-all duration-300 hover:bg-[#12263A] hover:shadow-lg"
+          >
+            {t(
+              "auth.login.verifyWhatsappButton",
+              "Verify WhatsApp Number"
+            )}
+          </button>
+        </div>
+      )}
+
+      {serverError && !verificationPhone && (
         <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600">
           {serverError}
         </div>
@@ -143,7 +282,10 @@ if (
         className="space-y-5"
       >
         <AuthInput
-          label="Email"
+          label={t(
+            "auth.login.email",
+            "Email"
+          )}
           name="email"
           type="email"
           value={formValues.email}
@@ -154,40 +296,58 @@ if (
         />
 
         <PasswordInput
-          label="Password"
+          label={t(
+            "auth.login.password",
+            "Password"
+          )}
           name="password"
           value={formValues.password}
           onChange={handleChange}
-          placeholder="Enter your password"
+          placeholder={t(
+            "auth.login.enterPassword",
+            "Enter your password"
+          )}
           error={errors.password}
           required
         />
 
         <div className="flex justify-end">
-          <Link
+          {/* <Link
             to="/forgot-password"
-            className="text-sm font-medium text-gray-600 hover:text-black hover:underline"
+            className="text-sm font-medium text-gray-600 transition-colors hover:text-black hover:underline"
           >
-            Forgot Password?
-          </Link>
+            {t(
+              "auth.login.forgotPassword",
+              "Forgot Password?"
+            )}
+          </Link> */}
         </div>
 
         <AuthButton
           loading={isLoading}
           disabled={isLoading}
         >
-          Login
+          {t(
+            "auth.login.login",
+            "Login"
+          )}
         </AuthButton>
       </form>
 
       <p className="mt-6 text-center text-sm text-gray-600">
-        Don't have an account?
+        {t(
+          "auth.login.dontHaveAccount",
+          "Don't have an account?"
+        )}
 
         <Link
           to="/register"
-          className="ml-1 font-semibold text-black hover:underline"
+          className="ml-1 font-semibold text-black transition-colors hover:text-[#9B7428] hover:underline"
         >
-          Create Account
+          {t(
+            "auth.login.createAccount",
+            "Create Account"
+          )}
         </Link>
       </p>
     </AuthLayout>

@@ -59,10 +59,7 @@ export const addToCart = async (req, res, next) => {
 
     const parsedQuantity = Number(quantity);
 
-    if (
-      !Number.isInteger(parsedQuantity) ||
-      parsedQuantity < 1
-    ) {
+    if (!Number.isInteger(parsedQuantity) || parsedQuantity < 1) {
       return res.status(400).json({
         success: false,
         message: "Quantity must be at least 1",
@@ -87,11 +84,7 @@ export const addToCart = async (req, res, next) => {
   }
 };
 
-export const updateCartItem = async (
-  req,
-  res,
-  next,
-) => {
+export const updateCartItem = async (req, res, next) => {
   try {
     const userId = getAuthenticatedUserId(req);
 
@@ -114,21 +107,14 @@ export const updateCartItem = async (
 
     const parsedQuantity = Number(quantity);
 
-    if (
-      !Number.isInteger(parsedQuantity) ||
-      parsedQuantity < 1
-    ) {
+    if (!Number.isInteger(parsedQuantity) || parsedQuantity < 1) {
       return res.status(400).json({
         success: false,
         message: "Quantity must be at least 1",
       });
     }
 
-    const cart = await updateProductInCart(
-      userId,
-      itemId,
-      parsedQuantity,
-    );
+    const cart = await updateProductInCart(userId, itemId, parsedQuantity);
 
     return res.status(200).json({
       success: true,
@@ -140,11 +126,7 @@ export const updateCartItem = async (
   }
 };
 
-export const removeCartItem = async (
-  req,
-  res,
-  next,
-) => {
+export const removeCartItem = async (req, res, next) => {
   try {
     const userId = getAuthenticatedUserId(req);
 
@@ -164,10 +146,7 @@ export const removeCartItem = async (
       });
     }
 
-    const cart = await removeProductFromCart(
-      userId,
-      itemId,
-    );
+    const cart = await removeProductFromCart(userId, itemId);
 
     return res.status(200).json({
       success: true,

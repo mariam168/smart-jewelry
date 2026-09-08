@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 
 const PersonalInfoForm = ({
   form,
@@ -5,6 +6,8 @@ const PersonalInfoForm = ({
   handleSave,
   saving,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <section className="relative overflow-hidden rounded-[28px] border border-light-champagne/90 bg-soft-white/90 shadow-[0_20px_60px_rgba(7,19,31,0.055)]">
       <div className="pointer-events-none absolute -right-28 -top-28 h-72 w-72 rounded-full border border-champagne-gold/[0.08]" />
@@ -16,26 +19,24 @@ const PersonalInfoForm = ({
           <span className="h-px w-8 bg-classic-gold/70" />
 
           <span className="text-[10px] font-semibold uppercase tracking-[0.28em] text-antique-gold">
-            Your Story
+            {t("personalInfo.yourStory")}
           </span>
         </div>
 
         <h2 className="mt-4 font-serif text-[2rem] font-normal leading-tight tracking-[-0.035em] text-rich-navy sm:text-[2.4rem]">
-          Personal Message
+          {t("personalInfo.personalMessage")}
         </h2>
 
         <p className="mt-3 max-w-2xl text-[13px] leading-7 text-slate-gray">
-          Create a personal message to make your jewelry experience feel truly
-          special.
+          {t("personalInfo.description")}
         </p>
       </div>
 
       <div className="relative px-6 py-7 sm:px-8 sm:py-9 lg:px-10 lg:py-10">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          
           <div>
             <label className="mb-2.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-gray">
-              From
+              {t("personalInfo.from")}
             </label>
 
             <input
@@ -62,7 +63,7 @@ const PersonalInfoForm = ({
           {/* To */}
           <div>
             <label className="mb-2.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-gray">
-              To
+              {t("personalInfo.to")}
             </label>
 
             <input
@@ -90,18 +91,18 @@ const PersonalInfoForm = ({
           <div className="md:col-span-2">
             <div className="mb-2.5 flex items-center justify-between gap-4">
               <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-gray">
-                Personal Message
+                {t("personalInfo.personalMessage")}
               </label>
 
               <span className="text-[10px] uppercase tracking-[0.12em] text-steel-gray">
-                Make it meaningful
+                {t("personalInfo.makeItMeaningful")}
               </span>
             </div>
 
             <textarea
               rows={7}
               name="message"
-              placeholder="Write your personal message here..."
+              placeholder={t("personalInfo.placeholder")}
               value={form.message}
               onChange={handleChange}
               className="
@@ -138,8 +139,7 @@ const PersonalInfoForm = ({
             </div>
 
             <p className="max-w-sm text-[12px] leading-5 text-slate-gray">
-              Your message will become part of the recipient's personalized
-              jewelry experience.
+              {t("personalInfo.messageNote")}
             </p>
           </div>
 
@@ -167,7 +167,9 @@ const PersonalInfoForm = ({
               }
             `}
           >
-            {saving ? "Saving..." : "Save Message"}
+            {saving
+              ? t("personalInfo.saving")
+              : t("personalInfo.saveMessage")}
           </button>
         </div>
       </div>

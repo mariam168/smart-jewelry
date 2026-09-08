@@ -5,15 +5,11 @@ import router from "./routes";
 
 import { AuthProvider } from "../features/auth/context/AuthContext";
 import CartProvider from "../context/CartContext";
+import LanguageProvider from "../features/common/components/LanguageProvider";
 
 const App = () => {
-  return (
-    <AuthProvider>
-      <CartProvider>
-        <RouterProvider router={router} />
-      </CartProvider>
-    </AuthProvider>
-  );
+return ( <AuthProvider> <LanguageProvider> <CartProvider> <RouterProvider router={router} /> </CartProvider> </LanguageProvider> </AuthProvider>
+);
 };
 
 export default App;
