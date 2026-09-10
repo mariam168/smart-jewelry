@@ -44,20 +44,16 @@ export const register = async (req, res, next) => {
     const {
       firstName,
       lastName,
-      email,
       password,
       phone,
-      privacyConsent,
       marketingConsent,
     } = req.body;
 
     const result = await registerCustomer({
       firstName,
       lastName,
-      email,
       password,
       phone,
-      privacyConsent,
       marketingConsent,
     });
 
@@ -67,12 +63,12 @@ export const register = async (req, res, next) => {
       data: {
         user: {
           id: result.user._id,
-          email: result.user.email,
         },
         customer: {
           id: result.customer._id,
           firstName: result.customer.firstName,
           lastName: result.customer.lastName,
+          phone: result.customer.phone,
         },
       },
     });
@@ -102,27 +98,33 @@ export const verifyEmailController = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
   try {
-    const errors = validateLoginInput(req.body);
+    const errors = validateLoginInput(
+      req.body,
+    );
 
     if (Object.keys(errors).length > 0) {
       return res.status(400).json({
         success: false,
-        message: "Please fix the validation errors",
+        message:
+          "Please fix the validation errors",
         errors,
       });
     }
 
-    const { email, password } = req.body;
+    const {
+      phone,
+      password,
+    } = req.body;
 
     const result = await loginUser({
-      email,
+      phone,
       password,
     });
 
     res.cookie(
       "accessToken",
       result.accessToken,
-      getCookieOptions()
+      getCookieOptions(),
     );
 
     return res.status(200).json({
@@ -131,16 +133,27 @@ export const login = async (req, res, next) => {
       data: {
         user: {
           id: result.user._id,
-          email: result.user.email,
           role: {
             id: result.user.role._id,
             name: result.user.role.name,
+          },
+          customer: {
+            id: result.user.customer?._id,
+            firstName:
+              result.user.customer?.firstName || "",
+            lastName:
+              result.user.customer?.lastName || "",
+            phone:
+              result.user.customer?.phone || "",
           },
         },
       },
     });
   } catch (error) {
-    if (error?.code === "WHATSAPP_NOT_VERIFIED") {
+    if (
+      error?.code ===
+      "WHATSAPP_NOT_VERIFIED"
+    ) {
       return res.status(403).json({
         success: false,
         message: error.message,

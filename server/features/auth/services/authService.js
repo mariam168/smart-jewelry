@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 import User from "../models/User.js";
 import Customer from "../models/Customer.js";
+
 import Role from "../models/Role.js";
 
 import "../models/Permission.js";
@@ -11,12 +12,15 @@ import { hashPassword, comparePassword } from "../utils/password.js";
 import { generateRandomToken, hashToken } from "../utils/token.js";
 
 import { generateAccessToken } from "../utils/jwt.js";
+
 import normalizePhone from "../utils/normalizePhone.js";
+
 import {
   generateOtp,
   hashOtp,
   verifyOtpHash,
 } from "../utils/otp.js";
+
 import { sendWhatsAppOtp } from "../../whatsapp/services/whatsappService.js";
 
 const createError = (message, statusCode = 400) => {
@@ -30,31 +34,13 @@ const createError = (message, statusCode = 400) => {
 export const registerCustomer = async ({
   firstName,
   lastName,
-  email,
   password,
   phone,
-  privacyConsent,
   marketingConsent,
 }) => {
-  const normalizedEmail =
-    email.trim().toLowerCase();
-
-  const existingUser =
-    await User.findOne({
-      email: normalizedEmail,
-    });
-
-  if (existingUser) {
-    throw createError(
-      "An account with this email already exists",
-      409,
-    );
-  }
-
-  const customerRole =
-    await Role.findOne({
-      name: "customer",
-    });
+  const customerRole = await Role.findOne({
+    name: "customer",
+  });
 
   if (!customerRole) {
     throw createError(
@@ -63,121 +49,65 @@ export const registerCustomer = async ({
     );
   }
 
-  const normalizedPhone =
-    normalizePhone(phone);
+  const normalizedPhone = normalizePhone(phone);
 
-  const passwordHash =
-    await hashPassword(password);
+  const existingCustomer = await Customer.findOne({
+    phone: normalizedPhone,
+  });
 
-  const verificationToken =
-    generateRandomToken();
-
-  const verificationTokenHash =
-    hashToken(
-      verificationToken,
+  if (existingCustomer) {
+    throw createError(
+      "An account with this WhatsApp number already exists",
+      409,
     );
+  }
 
-  const verificationExpiresAt =
-    new Date(
-      Date.now() +
-        24 *
-          60 *
-          60 *
-          1000,
-    );
+  const passwordHash = await hashPassword(password);
 
-  const otp =
-    generateOtp();
+  const otp = generateOtp();
 
-  const otpHash =
-    hashOtp(
-      normalizedPhone,
-      otp,
-    );
+  const otpHash = hashOtp(
+    normalizedPhone,
+    otp,
+  );
 
-  const otpExpiresAt =
-    new Date(
-      Date.now() +
-        10 *
-          60 *
-          1000,
-    );
+  const otpExpiresAt = new Date(
+    Date.now() + 10 * 60 * 1000,
+  );
 
-  const user =
-    await User.create({
-      email:
-        normalizedEmail,
-
-      passwordHash,
-
-      role:
-        customerRole._id,
-
-      emailVerificationTokenHash:
-        verificationTokenHash,
-
-      emailVerificationExpiresAt:
-        verificationExpiresAt,
-
-      whatsappVerifiedAt:
-        null,
-
-      whatsappOtpHash:
-        otpHash,
-
-      whatsappOtpExpiresAt:
-        otpExpiresAt,
-
-      whatsappOtpLastSentAt:
-        new Date(),
-
-      whatsappOtpAttempts:
-        0,
-    });
+  const user = await User.create({
+    passwordHash,
+    role: customerRole._id,
+    whatsappVerifiedAt: null,
+    whatsappOtpHash: otpHash,
+    whatsappOtpExpiresAt: otpExpiresAt,
+    whatsappOtpLastSentAt: new Date(),
+    whatsappOtpAttempts: 0,
+  });
 
   try {
-    const customer =
-      await Customer.create({
-        user:
-          user._id,
-
-        firstName:
-          firstName.trim(),
-
-        lastName:
-          lastName.trim(),
-
-        phone:
-          normalizedPhone,
-
-        privacyConsent,
-
-        marketingConsent:
-          marketingConsent ||
-          false,
-      });
+    const customer = await Customer.create({
+      user: user._id,
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      phone: normalizedPhone,
+      privacyConsent: true,
+      marketingConsent: marketingConsent || false,
+    });
 
     await sendWhatsAppOtp({
-      phone:
-        normalizedPhone,
-
+      phone: normalizedPhone,
       otp,
     });
 
     return {
       user,
-
       customer,
-
-      verificationToken,
-
-      phone:
-        normalizedPhone,
+      phone: normalizedPhone,
     };
   } catch (error) {
     await Customer.deleteOne({
-      user:
-        user._id,
+      user: user._id,
     });
 
     await User.findByIdAndDelete(
@@ -231,53 +161,50 @@ export const verifyEmail = async (token) => {
 };
 
 export const loginUser = async ({
-  email,
+  phone,
   password,
 }) => {
-  const normalizedEmail =
-    String(email || "")
-      .trim()
-      .toLowerCase();
+  const normalizedPhone = normalizePhone(phone);
 
   console.log("LOGIN DEBUG");
+  console.log("PHONE:", normalizedPhone);
+  console.log("PASSWORD RECEIVED:", Boolean(password));
+
+  const customer = await Customer.findOne({
+    phone: normalizedPhone,
+  });
+
   console.log(
-    "EMAIL:",
-    normalizedEmail,
-  );
-  console.log(
-    "PASSWORD RECEIVED:",
-    Boolean(password),
+    "CUSTOMER FOUND:",
+    Boolean(customer),
   );
 
-  const user =
-    await User.findOne({
-      email: normalizedEmail,
-    }).populate({
-      path: "role",
-      populate: {
-        path: "permissions",
-        model: "Permission",
-      },
-    });
+  if (!customer) {
+    throw createError(
+      "Invalid WhatsApp number or password",
+      401,
+    );
+  }
+
+  const user = await User.findById(
+    customer.user,
+  ).populate({
+    path: "role",
+    populate: {
+      path: "permissions",
+      model: "Permission",
+    },
+  });
 
   console.log(
     "USER FOUND:",
     Boolean(user),
   );
 
-  console.log(
-    "PASSWORD HASH EXISTS:",
-    Boolean(user?.passwordHash),
-  );
-
   if (!user) {
-    console.log(
-      "LOGIN FAILED: USER NOT FOUND",
-    );
-
     throw createError(
-      "Invalid email or password",
-      401,
+      "User not found",
+      404,
     );
   }
 
@@ -300,57 +227,43 @@ export const loginUser = async ({
   );
 
   if (!isPasswordValid) {
-    console.log(
-      "LOGIN FAILED: PASSWORD DOES NOT MATCH",
-    );
-
     throw createError(
-      "Invalid email or password",
+      "Invalid WhatsApp number or password",
       401,
     );
   }
 
-  console.log(
-    "PASSWORD MATCHED SUCCESSFULLY",
-  );
-
   if (!user.whatsappVerifiedAt) {
-    const error =
-      createError(
-        "WhatsApp verification is required",
-        403,
-      );
+    const error = createError(
+      "WhatsApp verification is required",
+      403,
+    );
 
     error.code =
       "WHATSAPP_NOT_VERIFIED";
 
-    const customer =
-      await Customer.findOne({
-        user: user._id,
-      });
-
     error.phone =
-      customer?.phone || "";
+      customer.phone || "";
 
     throw error;
   }
 
-  user.lastLoginAt =
-    new Date();
+  user.lastLoginAt = new Date();
 
   await user.save();
 
   const accessToken =
     generateAccessToken({
-      userId:
-        user._id.toString(),
-
-      role:
-        user.role.name,
+      userId: user._id.toString(),
+      role: user.role.name,
     });
 
+  const userData = user.toObject();
+
+  userData.customer = customer.toObject();
+
   return {
-    user,
+    user: userData,
     accessToken,
   };
 };

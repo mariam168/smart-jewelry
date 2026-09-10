@@ -1,44 +1,32 @@
 export const validateRegisterForm = (values) => {
   const errors = {};
 
-  if (!values.firstName.trim()) {
-    errors.firstName =
-      "First name is required";
-  } else if (
-    values.firstName.trim().length < 2
-  ) {
+  if (!values.firstName?.trim()) {
+    errors.firstName = "First name is required";
+  } else if (values.firstName.trim().length < 2) {
     errors.firstName =
       "First name must be at least 2 characters";
   }
 
-  if (!values.lastName.trim()) {
-    errors.lastName =
-      "Last name is required";
-  } else if (
-    values.lastName.trim().length < 2
-  ) {
+  if (!values.lastName?.trim()) {
+    errors.lastName = "Last name is required";
+  } else if (values.lastName.trim().length < 2) {
     errors.lastName =
       "Last name must be at least 2 characters";
   }
 
-  if (!values.email.trim()) {
-    errors.email = "Email is required";
-  } else {
-    const emailRegex =
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!emailRegex.test(values.email)) {
-      errors.email =
-        "Please enter a valid email";
-    }
+  if (!values.phone?.trim()) {
+    errors.phone = "WhatsApp number is required";
+  } else if (
+    !/^01[0125]\d{8}$/.test(values.phone)
+  ) {
+    errors.phone =
+      "Please enter a valid Egyptian WhatsApp number";
   }
 
   if (!values.password) {
-    errors.password =
-      "Password is required";
-  } else if (
-    values.password.length < 8
-  ) {
+    errors.password = "Password is required";
+  } else if (values.password.length < 8) {
     errors.password =
       "Password must be at least 8 characters";
   }
@@ -47,18 +35,94 @@ export const validateRegisterForm = (values) => {
     errors.confirmPassword =
       "Please confirm your password";
   } else if (
-    values.password !==
-    values.confirmPassword
+    values.password !== values.confirmPassword
   ) {
     errors.confirmPassword =
       "Passwords do not match";
   }
 
-  if (
-    !values.privacyConsent
+  return errors;
+};
+
+export const validateRegisterInput = ({
+  firstName,
+  lastName,
+  phone,
+  password,
+}) => {
+  const errors = {};
+
+  if (!firstName || firstName.trim().length < 2) {
+    errors.firstName =
+      "First name must be at least 2 characters";
+  }
+
+  if (!lastName || lastName.trim().length < 2) {
+    errors.lastName =
+      "Last name must be at least 2 characters";
+  }
+
+  if (!phone || !phone.trim()) {
+    errors.phone =
+      "WhatsApp number is required";
+  } else if (
+    !/^\+201[0125]\d{8}$/.test(phone)
   ) {
-    errors.privacyConsent =
-      "You must accept the privacy policy";
+    errors.phone =
+      "Please enter a valid Egyptian WhatsApp number";
+  }
+
+  if (!password) {
+    errors.password =
+      "Password is required";
+  } else if (password.length < 8) {
+    errors.password =
+      "Password must be at least 8 characters";
+  }
+
+  return errors;
+};
+
+export const validateLoginInput = ({
+  phone,
+  password,
+}) => {
+  const errors = {};
+
+  if (!phone || !phone.trim()) {
+    errors.phone =
+      "WhatsApp number is required";
+  } else if (
+    !/^\+201[0125]\d{8}$/.test(phone)
+  ) {
+    errors.phone =
+      "Please enter a valid Egyptian WhatsApp number";
+  }
+
+  if (!password) {
+    errors.password =
+      "Password is required";
+  }
+
+  return errors;
+};
+
+export const validateLoginForm = (values) => {
+  const errors = {};
+
+  if (!values.phone?.trim()) {
+    errors.phone =
+      "WhatsApp number is required";
+  } else if (
+    !/^01[0125]\d{8}$/.test(values.phone)
+  ) {
+    errors.phone =
+      "Please enter a valid Egyptian WhatsApp number";
+  }
+
+  if (!values.password) {
+    errors.password =
+      "Password is required";
   }
 
   return errors;

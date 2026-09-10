@@ -1,22 +1,29 @@
 import { useState } from "react";
+
 import { Link, useNavigate } from "react-router-dom";
+
 import { useTranslation } from "react-i18next";
 
 import AuthLayout from "../components/AuthLayout";
+
 import AuthInput from "../components/AuthInput";
+
 import PasswordInput from "../components/PasswordInput";
+
 import AuthButton from "../components/AuthButton";
 
 import { loginUser } from "../services/authApi";
+
 import { useAuth } from "../context/AuthContext";
 
 const initialValues = {
-  email: "",
+  phone: "",
   password: "",
 };
 
 const LoginPage = () => {
   const navigate = useNavigate();
+
   const { t } = useTranslation();
 
   const {
@@ -45,9 +52,17 @@ const LoginPage = () => {
       value,
     } = event.target;
 
+    let newValue = value;
+
+    if (name === "phone") {
+      newValue = value
+        .replace(/\D/g, "")
+        .slice(0, 11);
+    }
+
     setFormValues((previous) => ({
       ...previous,
-      [name]: value,
+      [name]: newValue,
     }));
 
     setErrors((previous) => ({
@@ -79,10 +94,19 @@ const LoginPage = () => {
 
     const newErrors = {};
 
-    if (!formValues.email.trim()) {
-      newErrors.email = t(
-        "auth.login.emailRequired",
-        "Email is required"
+    if (!formValues.phone.trim()) {
+      newErrors.phone = t(
+        "auth.login.phoneRequired",
+        "WhatsApp number is required"
+      );
+    } else if (
+      !/^01[0125]\d{8}$/.test(
+        formValues.phone
+      )
+    ) {
+      newErrors.phone = t(
+        "auth.login.phoneInvalid",
+        "Please enter a valid Egyptian WhatsApp number"
       );
     }
 
@@ -107,8 +131,14 @@ const LoginPage = () => {
       setServerError("");
       setVerificationPhone("");
 
+      const normalizedPhone =
+        `+20${formValues.phone.substring(1)}`;
+
       const response =
-        await loginUser(formValues);
+        await loginUser({
+          phone: normalizedPhone,
+          password: formValues.password,
+        });
 
       console.log("LOGIN RESPONSE:");
       console.log(response);
@@ -181,10 +211,13 @@ const LoginPage = () => {
         setUser(null);
         setIsAuthenticated(false);
 
+        const normalizedPhone =
+          `+20${formValues.phone.substring(1)}`;
+
         const phone =
           data?.phone ||
           data?.data?.phone ||
-          "";
+          normalizedPhone;
 
         console.log(
           "WHATSAPP VERIFICATION PHONE:",
@@ -260,7 +293,9 @@ const LoginPage = () => {
 
           <button
             type="button"
-            onClick={handleVerifyWhatsapp}
+            onClick={
+              handleVerifyWhatsapp
+            }
             className="w-full rounded-xl bg-[#0D2235] px-5 py-3.5 text-sm font-semibold text-[#F8F5EF] transition-all duration-300 hover:bg-[#12263A] hover:shadow-lg"
           >
             {t(
@@ -271,11 +306,12 @@ const LoginPage = () => {
         </div>
       )}
 
-      {serverError && !verificationPhone && (
-        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600">
-          {serverError}
-        </div>
-      )}
+      {serverError &&
+        !verificationPhone && (
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+            {serverError}
+          </div>
+        )}
 
       <form
         onSubmit={handleSubmit}
@@ -283,15 +319,16 @@ const LoginPage = () => {
       >
         <AuthInput
           label={t(
-            "auth.login.email",
-            "Email"
+            "auth.login.phone",
+            "WhatsApp Number"
           )}
-          name="email"
-          type="email"
-          value={formValues.email}
+          name="phone"
+          type="tel"
+          inputMode="numeric"
+          value={formValues.phone}
           onChange={handleChange}
-          placeholder="you@example.com"
-          error={errors.email}
+          placeholder="01223358023"
+          error={errors.phone}
           required
         />
 
@@ -311,17 +348,7 @@ const LoginPage = () => {
           required
         />
 
-        <div className="flex justify-end">
-          {/* <Link
-            to="/forgot-password"
-            className="text-sm font-medium text-gray-600 transition-colors hover:text-black hover:underline"
-          >
-            {t(
-              "auth.login.forgotPassword",
-              "Forgot Password?"
-            )}
-          </Link> */}
-        </div>
+        <div className="flex justify-end"></div>
 
         <AuthButton
           loading={isLoading}

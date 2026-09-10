@@ -222,7 +222,10 @@ const createExperienceForProductionUnit = async (
       orderItem.experience,
     ).select("+manageToken +publicToken");
 
-    if (existingExperience) {
+    if (
+      existingExperience &&
+      existingExperience.serialNumber === smartUnitInstance.serialNumber
+    ) {
       if (!existingExperience.manageToken) {
         existingExperience.manageToken = generateManageToken();
 
@@ -236,7 +239,9 @@ const createExperienceForProductionUnit = async (
       return existingExperience;
     }
 
-    orderItem.experience = null;
+    if (!existingExperience) {
+      orderItem.experience = null;
+    }
   }
 
   const manageToken = generateManageToken();
@@ -282,10 +287,6 @@ const createExperienceForProductionUnit = async (
       experience: experience._id,
     });
   }
-
-  orderItem.experience = experience._id;
-
-  await order.save();
 
   productionUnit.experience = experience._id;
 
