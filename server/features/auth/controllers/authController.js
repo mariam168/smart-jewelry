@@ -165,7 +165,6 @@ export const login = async (req, res, next) => {
     next(error);
   }
 };
-
 export const getMe = async (req, res, next) => {
   try {
     const result = await getCurrentUser(req.user.userId);
@@ -179,15 +178,24 @@ export const getMe = async (req, res, next) => {
           role: result.user.role,
           isActive: result.user.isActive,
           emailVerifiedAt: result.user.emailVerifiedAt,
+          customer: result.customer
+            ? {
+                id: result.customer._id,
+                firstName:
+                  result.customer.firstName || "",
+                lastName:
+                  result.customer.lastName || "",
+                phone:
+                  result.customer.phone || "",
+              }
+            : null,
         },
-        customer: result.customer,
       },
     });
   } catch (error) {
     next(error);
   }
 };
-
 export const logout = (req, res) => {
   const isProduction = process.env.NODE_ENV === "production";
 
