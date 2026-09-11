@@ -17,12 +17,9 @@ const DEFAULT_LIMITS = {
   audioLimit: 5,
 };
 
-/*
- * 01223358023
- * Egypt international WhatsApp format.
- */
+
 const WHATSAPP_NUMBER =
-  "201223358023";
+  "201554923541";
 
 const buildWhatsAppUrl = ({
   requesterName,

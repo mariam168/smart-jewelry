@@ -125,12 +125,9 @@ const getFrontendOrigin = () => {
 
 const FRONTEND_ORIGIN = getFrontendOrigin();
 
-/*
- * WhatsApp needs the Egyptian number in
- * international format without + or spaces.
- * 01223358023 -> 201223358023
- */
-const WHATSAPP_NUMBER = "201223358023";
+
+
+const WHATSAPP_NUMBER = "201554923541";
 
 const formatSlugInput = (value) => {
   return String(value || "")
