@@ -35,7 +35,7 @@ import NotFoundPage from "../features/common/pages/NotFoundPage";
 import AdminLayout from "../features/admin/components/AdminLayout";
 
 import AdminDashboardPage from "../features/admin/pages/AdminDashboardPage";
-
+import AdminHeroSectionPage from "../features/admin/pages/AdminHeroSectionPage";
 import AdminProductsPage from "../features/admin/pages/AdminProductsPage";
 import AddProductPage from "../features/admin/pages/AddProductPage";
 import EditProductPage from "../features/admin/pages/EditProductPage";
@@ -188,6 +188,10 @@ const router = createBrowserRouter([
                 index: true,
                 element: <AdminDashboardPage />,
               },
+              {
+  path: "hero-section",
+  element: <AdminHeroSectionPage />,
+},
 
              {
   element: <SuperAdminRoute />,

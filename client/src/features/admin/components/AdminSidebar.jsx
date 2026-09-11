@@ -33,6 +33,10 @@ const AdminSidebar = () => {
       label: t("adminSidebar.shipping"),
       path: "/admin/shipping",
     },
+    {
+  label: "Hero Section",
+  path: "/admin/hero-section",
+},
 
     {
       label: t("adminSidebar.technologies"),
