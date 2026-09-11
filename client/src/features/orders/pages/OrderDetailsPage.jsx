@@ -357,10 +357,13 @@ const OrderDetailsPage = () => {
 
                     <p>{order.shippingAddress?.address}</p>
 
-                    <p>
-                      {order.shippingAddress?.city},{" "}
-                      {order.shippingAddress?.country}
-                    </p>
+                  <p>
+  {getLocalizedText(
+    order.shippingAddress?.city,
+    activeLanguage
+  )}
+  , {order.shippingAddress?.country}
+</p>
                   </div>
                 </div>
               </div>
