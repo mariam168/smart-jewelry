@@ -487,10 +487,15 @@ const AdminOrdersPage = () => {
                   const isDeleting = deletingOrderId === order._id;
 
                   return (
-                    <tr
-                      key={order._id}
-                      className="group transition-colors duration-300 hover:bg-warm-ivory/55"
-                    >
+     <tr
+  key={order._id}
+  className={`group transition-colors duration-300 ${
+    order.orderStatus === "pending"
+      ? "bg-[#12263A]/10 hover:bg-[#12263A]/20"
+      : "hover:bg-warm-ivory/55"
+  }`}
+>
+
                       <td className="px-6 py-5">
                         <div>
                           <p className="font-serif text-[1rem] font-normal text-midnight-navy">

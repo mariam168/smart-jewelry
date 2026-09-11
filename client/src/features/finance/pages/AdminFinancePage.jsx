@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 
 import { Link } from "react-router-dom";
@@ -34,6 +35,8 @@ const AdminFinancePage = () => {
 
   const [savingExpense, setSavingExpense] = useState(false);
 
+  const [expandedOrders, setExpandedOrders] = useState({});
+
   const [filters, setFilters] = useState({
     from: "",
     to: "",
@@ -46,13 +49,9 @@ const AdminFinancePage = () => {
 
   const [expenseForm, setExpenseForm] = useState({
     title: "",
-
     category: "other",
-
     amount: "",
-
     expenseDate: new Date().toISOString().slice(0, 10),
-
     note: "",
   });
 
@@ -64,15 +63,23 @@ const AdminFinancePage = () => {
 
       setError("");
 
-      const response = await getFinanceDashboard(appliedFilters);
+      const response =
+        await getFinanceDashboard(
+          appliedFilters,
+        );
 
       setData(response?.data || null);
     } catch (error) {
-      console.error("FINANCE ERROR:", error);
+      console.error(
+        "FINANCE ERROR:",
+        error,
+      );
 
       setError(
         error?.response?.data?.message ||
-          t("adminFinance.failedToLoadDashboard"),
+          t(
+            "adminFinance.failedToLoadDashboard",
+          ),
       );
     } finally {
       setLoading(false);
@@ -81,18 +88,27 @@ const AdminFinancePage = () => {
 
   useEffect(() => {
     loadFinance();
-  }, [appliedFilters.from, appliedFilters.to]);
+  }, [
+    appliedFilters.from,
+    appliedFilters.to,
+  ]);
 
   const formatMoney = (value) => {
-    return Number(value || 0).toLocaleString("en-EG", {
-      maximumFractionDigits: 2,
-    });
+    return Number(value || 0).toLocaleString(
+      "en-EG",
+      {
+        maximumFractionDigits: 2,
+      },
+    );
   };
 
   const formatPercent = (value) => {
-    return `${Number(value || 0).toLocaleString("en-EG", {
-      maximumFractionDigits: 2,
-    })}%`;
+    return `${Number(value || 0).toLocaleString(
+      "en-EG",
+      {
+        maximumFractionDigits: 2,
+      },
+    )}%`;
   };
 
   const formatLabel = (value) => {
@@ -102,11 +118,17 @@ const AdminFinancePage = () => {
 
     const formattedValue = String(value)
       .replaceAll("_", " ")
-      .replace(/\b\w/g, (letter) => letter.toUpperCase());
+      .replace(/\b\w/g, (letter) =>
+        letter.toUpperCase(),
+      );
 
-    return t(`adminFinance.categories.${value}`, {
-      defaultValue: formattedValue,
-    });
+    return t(
+      `adminFinance.categories.${value}`,
+      {
+        defaultValue:
+          formattedValue,
+      },
+    );
   };
 
   const formatProductName = (value) => {
@@ -118,16 +140,21 @@ const AdminFinancePage = () => {
       return String(value);
     }
 
-    const currentLanguage = i18n.language?.startsWith("ar")
-      ? "ar"
-      : "en";
+    const currentLanguage =
+      i18n.language?.startsWith("ar")
+        ? "ar"
+        : "en";
 
     const match = value.match(
       /^\{\s*en:\s*['"]([\s\S]*?)['"]\s*,\s*ar:\s*['"]([\s\S]*?)['"]\s*\}$/,
     );
 
     if (match) {
-      const [, englishName, arabicName] = match;
+      const [
+        ,
+        englishName,
+        arabicName,
+      ] = match;
 
       return currentLanguage === "ar"
         ? arabicName
@@ -142,18 +169,29 @@ const AdminFinancePage = () => {
       return "—";
     }
 
-    return new Date(value).toLocaleDateString("en-GB", {
-      day: "2-digit",
-
-      month: "short",
-
-      year: "numeric",
-    });
+    return new Date(
+      value,
+    ).toLocaleDateString(
+      "en-GB",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      },
+    );
   };
 
   const handleApplyFilters = () => {
-    if (filters.from && filters.to && filters.from > filters.to) {
-      setError(t("adminFinance.fromDateCannotBeAfterToDate"));
+    if (
+      filters.from &&
+      filters.to &&
+      filters.from > filters.to
+    ) {
+      setError(
+        t(
+          "adminFinance.fromDateCannotBeAfterToDate",
+        ),
+      );
 
       return;
     }
@@ -176,27 +214,46 @@ const AdminFinancePage = () => {
     setAppliedFilters(empty);
   };
 
-  const handleExpenseChange = (event) => {
-    const { name, value } = event.target;
+  const handleExpenseChange = (
+    event,
+  ) => {
+    const {
+      name,
+      value,
+    } = event.target;
 
-    setExpenseForm((previous) => ({
-      ...previous,
-
-      [name]: value,
-    }));
+    setExpenseForm(
+      (previous) => ({
+        ...previous,
+        [name]: value,
+      }),
+    );
   };
 
-  const handleAddExpense = async (event) => {
+  const handleAddExpense = async (
+    event,
+  ) => {
     event.preventDefault();
 
     if (!expenseForm.title.trim()) {
-      setError(t("adminFinance.expenseTitleRequired"));
+      setError(
+        t(
+          "adminFinance.expenseTitleRequired",
+        ),
+      );
 
       return;
     }
 
-    if (!expenseForm.amount || Number(expenseForm.amount) <= 0) {
-      setError(t("adminFinance.validExpenseAmount"));
+    if (
+      !expenseForm.amount ||
+      Number(expenseForm.amount) <= 0
+    ) {
+      setError(
+        t(
+          "adminFinance.validExpenseAmount",
+        ),
+      );
 
       return;
     }
@@ -207,26 +264,26 @@ const AdminFinancePage = () => {
       setError("");
 
       await createFinanceExpense({
-        title: expenseForm.title,
-
-        category: expenseForm.category,
-
-        amount: Number(expenseForm.amount),
-
-        expenseDate: expenseForm.expenseDate,
-
+        title:
+          expenseForm.title,
+        category:
+          expenseForm.category,
+        amount: Number(
+          expenseForm.amount,
+        ),
+        expenseDate:
+          expenseForm.expenseDate,
         note: expenseForm.note,
       });
 
       setExpenseForm({
         title: "",
-
         category: "other",
-
         amount: "",
-
-        expenseDate: new Date().toISOString().slice(0, 10),
-
+        expenseDate:
+          new Date()
+            .toISOString()
+            .slice(0, 10),
         note: "",
       });
 
@@ -234,17 +291,24 @@ const AdminFinancePage = () => {
     } catch (error) {
       setError(
         error?.response?.data?.message ||
-          t("adminFinance.failedToSaveExpense"),
+          t(
+            "adminFinance.failedToSaveExpense",
+          ),
       );
     } finally {
       setSavingExpense(false);
     }
   };
 
-  const handleDeleteExpense = async (expenseId) => {
-    const confirmed = window.confirm(
-      t("adminFinance.deleteExpenseConfirmation"),
-    );
+  const handleDeleteExpense = async (
+    expenseId,
+  ) => {
+    const confirmed =
+      window.confirm(
+        t(
+          "adminFinance.deleteExpenseConfirmation",
+        ),
+      );
 
     if (!confirmed) {
       return;
@@ -253,15 +317,31 @@ const AdminFinancePage = () => {
     try {
       setError("");
 
-      await deleteFinanceExpense(expenseId);
+      await deleteFinanceExpense(
+        expenseId,
+      );
 
       await loadFinance();
     } catch (error) {
       setError(
         error?.response?.data?.message ||
-          t("adminFinance.failedToDeleteExpense"),
+          t(
+            "adminFinance.failedToDeleteExpense",
+          ),
       );
     }
+  };
+
+  const toggleOrder = (
+    orderId,
+  ) => {
+    setExpandedOrders(
+      (previous) => ({
+        ...previous,
+        [orderId]:
+          !previous[orderId],
+      }),
+    );
   };
 
   if (loading && !data) {
@@ -271,29 +351,43 @@ const AdminFinancePage = () => {
           <div className="mx-auto h-12 w-12 animate-spin rounded-full border-2 border-light-champagne border-t-classic-gold" />
 
           <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-gray">
-            {t("adminFinance.loadingFinance")}
+            {t(
+              "adminFinance.loadingFinance",
+            )}
           </p>
         </div>
       </div>
     );
   }
 
-  const overview = data?.overview || {};
+  const overview =
+    data?.overview || {};
 
-  const costs = data?.costBreakdown || {};
+  const costs =
+    data?.costBreakdown || {};
 
-  const soldItems = Array.isArray(data?.soldItems) ? data.soldItems : [];
+  const soldItems = Array.isArray(
+    data?.soldItems,
+  )
+    ? data.soldItems
+    : [];
 
-  const expenses = Array.isArray(data?.recentExpenses)
+  const expenses = Array.isArray(
+    data?.recentExpenses,
+  )
     ? data.recentExpenses
     : [];
 
   const recognizedSales = Number(
-    overview.recognizedSales ?? overview.deliveredSales ?? 0,
+    overview.recognizedSales ??
+      overview.deliveredSales ??
+      0,
   );
 
   const recognizedOrders = Number(
-    overview.recognizedOrders ?? overview.deliveredOrders ?? 0,
+    overview.recognizedOrders ??
+      overview.deliveredOrders ??
+      0,
   );
 
   return (
@@ -306,34 +400,49 @@ const AdminFinancePage = () => {
                 <span className="h-px w-9 bg-classic-gold" />
 
                 <p className="text-[9px] font-semibold uppercase tracking-[0.32em] text-antique-gold">
-                  {t("adminFinance.administration")}
+                  {t(
+                    "adminFinance.administration",
+                  )}
                 </p>
               </div>
 
               <h1 className="mt-3 font-serif text-5xl font-normal tracking-[-0.045em]">
-                {t("adminFinance.finance")}
+                {t(
+                  "adminFinance.finance",
+                )}
               </h1>
 
               <p className="mt-3 max-w-xl text-[13px] leading-6 text-slate-gray">
-                {t("adminFinance.financeDescription")}
+                {t(
+                  "adminFinance.financeDescription",
+                )}
               </p>
             </div>
 
             <div className="flex flex-wrap items-end gap-3">
               <div>
                 <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                  {t("adminFinance.from")}
+                  {t(
+                    "adminFinance.from",
+                  )}
                 </label>
 
                 <input
                   type="date"
                   value={filters.from}
-                  onChange={(event) =>
-                    setFilters((previous) => ({
-                      ...previous,
-
-                      from: event.target.value,
-                    }))
+                  onChange={(
+                    event,
+                  ) =>
+                    setFilters(
+                      (
+                        previous,
+                      ) => ({
+                        ...previous,
+                        from: event
+                          .target
+                          .value,
+                      }),
+                    )
                   }
                   className="h-11 rounded-xl border border-light-champagne bg-white px-4 text-[11px] outline-none focus:border-classic-gold"
                 />
@@ -341,18 +450,27 @@ const AdminFinancePage = () => {
 
               <div>
                 <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                  {t("adminFinance.to")}
+                  {t(
+                    "adminFinance.to",
+                  )}
                 </label>
 
                 <input
                   type="date"
                   value={filters.to}
-                  onChange={(event) =>
-                    setFilters((previous) => ({
-                      ...previous,
-
-                      to: event.target.value,
-                    }))
+                  onChange={(
+                    event,
+                  ) =>
+                    setFilters(
+                      (
+                        previous,
+                      ) => ({
+                        ...previous,
+                        to: event
+                          .target
+                          .value,
+                      }),
+                    )
                   }
                   className="h-11 rounded-xl border border-light-champagne bg-white px-4 text-[11px] outline-none focus:border-classic-gold"
                 />
@@ -360,18 +478,26 @@ const AdminFinancePage = () => {
 
               <button
                 type="button"
-                onClick={handleApplyFilters}
+                onClick={
+                  handleApplyFilters
+                }
                 className="h-11 rounded-xl bg-deep-navy px-5 text-[10px] font-semibold text-white transition hover:bg-midnight-navy"
               >
-                {t("adminFinance.apply")}
+                {t(
+                  "adminFinance.apply",
+                )}
               </button>
 
               <button
                 type="button"
-                onClick={handleResetFilters}
+                onClick={
+                  handleResetFilters
+                }
                 className="h-11 rounded-xl border border-light-champagne bg-white px-5 text-[10px] font-semibold text-slate-gray"
               >
-                {t("adminFinance.reset")}
+                {t(
+                  "adminFinance.reset",
+                )}
               </button>
             </div>
           </div>
@@ -387,210 +513,668 @@ const AdminFinancePage = () => {
 
         <section className="grid gap-5 md:grid-cols-3">
           <SummaryCard
-            label={t("adminFinance.confirmedSales")}
-            value={`${formatMoney(recognizedSales)} ${currency}`}
-            helper={t("adminFinance.confirmedOrLaterOrders", {
-              count: recognizedOrders,
-            })}
+            label={t(
+              "adminFinance.confirmedSales",
+            )}
+            value={`${formatMoney(
+              recognizedSales,
+            )} ${currency}`}
+            helper={t(
+              "adminFinance.confirmedOrLaterOrders",
+              {
+                count:
+                  recognizedOrders,
+              },
+            )}
             dark
           />
 
           <SummaryCard
-            label={t("adminFinance.totalProductCost")}
-            value={`${formatMoney(overview.totalDirectCost)} ${currency}`}
-            helper={t("adminFinance.productCostBreakdownHelper")}
+            label={t(
+              "adminFinance.totalProductCost",
+            )}
+            value={`${formatMoney(
+              overview.totalDirectCost,
+            )} ${currency}`}
+            helper={t(
+              "adminFinance.productCostBreakdownHelper",
+            )}
           />
 
           <SummaryCard
-            label={t("adminFinance.profit")}
-            value={`${formatMoney(overview.profit)} ${currency}`}
-            helper={t("adminFinance.margin", {
-              value: formatPercent(overview.profitMargin),
-            })}
-            profit={Number(overview.profit || 0)}
+            label={t(
+              "adminFinance.profit",
+            )}
+            value={`${formatMoney(
+              overview.profit,
+            )} ${currency}`}
+            helper={t(
+              "adminFinance.margin",
+              {
+                value:
+                  formatPercent(
+                    overview.profitMargin,
+                  ),
+              },
+            )}
+            profit={Number(
+              overview.profit || 0,
+            )}
           />
         </section>
 
         <section className="mt-7 rounded-[18px] border border-champagne-gold/25 bg-soft-cream px-5 py-4">
           <p className="text-[9px] font-semibold uppercase tracking-[0.17em] text-antique-gold">
-            {t("adminFinance.financeRecognitionRule")}
+            {t(
+              "adminFinance.financeRecognitionRule",
+            )}
           </p>
 
           <p className="mt-2 text-[10px] leading-6 text-slate-gray">
-            {t("adminFinance.financeRecognitionDescriptionBefore")}{" "}
+            {t(
+              "adminFinance.financeRecognitionDescriptionBefore",
+            )}{" "}
             <strong className="text-rich-navy">
-              {t("adminFinance.confirmed")}
+              {t(
+                "adminFinance.confirmed",
+              )}
             </strong>
-            {t("adminFinance.financeRecognitionDescriptionAfter")}
+            {t(
+              "adminFinance.financeRecognitionDescriptionAfter",
+            )}
           </p>
         </section>
 
         <section className="mt-7 overflow-hidden rounded-[26px] border border-light-champagne bg-soft-white">
           <SectionHeader
-            eyebrow={t("adminFinance.cost")}
-            title={t("adminFinance.productCostBreakdown")}
+            eyebrow={t(
+              "adminFinance.cost",
+            )}
+            title={t(
+              "adminFinance.productCostBreakdown",
+            )}
           />
 
           <div className="grid gap-0 md:grid-cols-4">
             <CostItem
-              label={t("adminFinance.productCost")}
-              value={`${formatMoney(costs.productCost)} ${currency}`}
+              label={t(
+                "adminFinance.productCost",
+              )}
+              value={`${formatMoney(
+                costs.productCost,
+              )} ${currency}`}
             />
 
             <CostItem
-              label={t("adminFinance.smartUnitCost")}
-              value={`${formatMoney(costs.smartUnitCost)} ${currency}`}
+              label={t(
+                "adminFinance.smartUnitCost",
+              )}
+              value={`${formatMoney(
+                costs.smartUnitCost,
+              )} ${currency}`}
             />
 
             <CostItem
-              label={t("adminFinance.smartUnitInstallation")}
-              value={`${formatMoney(costs.installationCost)} ${currency}`}
+              label={t(
+                "adminFinance.smartUnitInstallation",
+              )}
+              value={`${formatMoney(
+                costs.installationCost,
+              )} ${currency}`}
             />
 
             <CostItem
-              label={t("adminFinance.packagingCost")}
-              value={`${formatMoney(costs.packagingCost)} ${currency}`}
+              label={t(
+                "adminFinance.packagingCost",
+              )}
+              value={`${formatMoney(
+                costs.packagingCost,
+              )} ${currency}`}
             />
           </div>
         </section>
 
         <section className="mt-7 overflow-hidden rounded-[26px] border border-light-champagne bg-soft-white">
           <SectionHeader
-            eyebrow={t("adminFinance.confirmedOrders")}
-            title={t("adminFinance.salesAndProfit")}
+            eyebrow={t(
+              "adminFinance.confirmedOrders",
+            )}
+            title={t(
+              "adminFinance.salesAndProfit",
+            )}
           />
 
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1580px]">
               <thead>
                 <tr className="border-b border-light-champagne bg-warm-ivory/60 text-left">
-                  <TableHead text={t("adminFinance.order")} />
-
-                  <TableHead text={t("adminFinance.status")} />
-
-                  <TableHead text={t("adminFinance.product")} />
-
-                  <TableHead text={t("adminFinance.qty")} />
-
-                  <TableHead text={t("adminFinance.sale")} right />
-
-                  <TableHead text={t("adminFinance.productCost")} right />
-
-                  <TableHead text={t("adminFinance.smartUnit")} right />
-
-                  <TableHead text={t("adminFinance.installation")} right />
+                  <TableHead
+                    text={t(
+                      "adminFinance.order",
+                    )}
+                  />
 
                   <TableHead
-                    text={t("adminFinance.packagingCost")}
+                    text={t(
+                      "adminFinance.status",
+                    )}
+                  />
+
+                  <TableHead
+                    text={t(
+                      "adminFinance.product",
+                    )}
+                  />
+
+                  <TableHead
+                    text={t(
+                      "adminFinance.qty",
+                    )}
+                  />
+
+                  <TableHead
+                    text={t(
+                      "adminFinance.sale",
+                    )}
                     right
                   />
 
-                  <TableHead text={t("adminFinance.totalCost")} right />
+                  <TableHead
+                    text={t(
+                      "adminFinance.productCost",
+                    )}
+                    right
+                  />
 
-                  <TableHead text={t("adminFinance.profit")} right />
+                  <TableHead
+                    text={t(
+                      "adminFinance.smartUnit",
+                    )}
+                    right
+                  />
 
-                  <TableHead text={t("adminFinance.margin")} right />
+                  <TableHead
+                    text={t(
+                      "adminFinance.installation",
+                    )}
+                    right
+                  />
 
-                  <TableHead text="" right />
+                  <TableHead
+                    text={t(
+                      "adminFinance.packagingCost",
+                    )}
+                    right
+                  />
+
+                  <TableHead
+                    text={t(
+                      "adminFinance.totalCost",
+                    )}
+                    right
+                  />
+
+                  <TableHead
+                    text={t(
+                      "adminFinance.profit",
+                    )}
+                    right
+                  />
+
+                  <TableHead
+                    text={t(
+                      "adminFinance.margin",
+                    )}
+                    right
+                  />
+
+                  <TableHead
+                    text=""
+                    right
+                  />
                 </tr>
               </thead>
 
               <tbody className="divide-y divide-light-champagne">
                 {soldItems.length > 0 ? (
-                  soldItems.map((item, index) => (
-                    <tr
-                      key={`${item.orderId}-${item.productId}-${index}`}
-                      className="transition hover:bg-warm-ivory/40"
-                    >
-                      <td className="px-5 py-4">
-                        <p className="font-mono text-[10px] font-semibold">
-                          {item.orderNumber}
-                        </p>
+                  soldItems.map(
+                    (
+                      order,
+                    ) => {
+                      const isExpanded =
+                        Boolean(
+                          expandedOrders[
+                            order.orderId
+                          ],
+                        );
 
-                        <p className="mt-1 text-[8px] text-steel-gray">
-                          {formatDate(item.orderDate)}
-                        </p>
-                      </td>
+                      return (
+                        <>
+                          <tr
+                            key={
+                              order.orderId
+                            }
+                            className="transition hover:bg-warm-ivory/40"
+                          >
+                            <td className="px-5 py-4">
+                              <p className="font-mono text-[10px] font-semibold">
+                                {
+                                  order.orderNumber
+                                }
+                              </p>
 
-                      <td className="px-5 py-4">
-                        <OrderStatusBadge status={item.orderStatus} />
-                      </td>
+                              <p className="mt-1 text-[8px] text-steel-gray">
+                                {formatDate(
+                                  order.orderDate,
+                                )}
+                              </p>
 
-                      <td className="px-5 py-4">
-                        <p className="max-w-[220px] truncate text-[11px] font-semibold">
-                          {formatProductName(item.productName)}
-                        </p>
+                              <p className="mt-1 max-w-[180px] truncate text-[8px] text-steel-gray">
+                                {
+                                  order.customer
+                                }
+                              </p>
+                            </td>
 
-                        {item.sku && (
-                          <p className="mt-1 text-[8px] uppercase tracking-[0.08em] text-steel-gray">
-                            {t("adminFinance.sku")} {item.sku}
-                          </p>
-                        )}
+                            <td className="px-5 py-4">
+                              <OrderStatusBadge
+                                status={
+                                  order.orderStatus
+                                }
+                              />
+                            </td>
 
-                        <p className="mt-1 max-w-[220px] truncate text-[8px] text-steel-gray">
-                          {item.customer}
-                        </p>
-                      </td>
+                            <td className="px-5 py-4">
+                              <p className="text-[11px] font-semibold">
+                                {order.productCount ||
+                                  0}{" "}
+                                {order.productCount ===
+                                1
+                                  ? t(
+                                      "adminFinance.product",
+                                    )
+                                  : t(
+                                      "adminFinance.products",
+                                      {
+                                        defaultValue:
+                                          "Products",
+                                      },
+                                    )}
+                              </p>
 
-                      <td className="px-5 py-4 text-[11px]">
-                        {item.quantity}
-                      </td>
+                              <p className="mt-1 text-[8px] text-steel-gray">
+                                {
+                                  order.customerEmail
+                                }
+                              </p>
+                            </td>
 
-                      <MoneyCell
-                        value={item.revenue}
-                        currency={currency}
-                      />
+                            <td className="px-5 py-4 text-[11px]">
+                              {
+                                order.totalQuantity
+                              }
+                            </td>
 
-                      <MoneyCell
-                        value={item.productCost}
-                        currency={currency}
-                      />
+                            <MoneyCell
+                              value={
+                                order.revenue
+                              }
+                              currency={
+                                currency
+                              }
+                            />
 
-                      <MoneyCell
-                        value={item.smartUnitCost}
-                        currency={currency}
-                      />
+                            <MoneyCell
+                              value={
+                                order.productCost
+                              }
+                              currency={
+                                currency
+                              }
+                            />
 
-                      <MoneyCell
-                        value={item.installationCost}
-                        currency={currency}
-                      />
+                            <MoneyCell
+                              value={
+                                order.smartUnitCost
+                              }
+                              currency={
+                                currency
+                              }
+                            />
 
-                      <MoneyCell
-                        value={item.packagingCost}
-                        currency={currency}
-                      />
+                            <MoneyCell
+                              value={
+                                order.installationCost
+                              }
+                              currency={
+                                currency
+                              }
+                            />
 
-                      <MoneyCell
-                        value={item.totalCost}
-                        currency={currency}
-                        strong
-                      />
+                            <MoneyCell
+                              value={
+                                order.packagingCost
+                              }
+                              currency={
+                                currency
+                              }
+                            />
 
-                      <ProfitCell
-                        value={item.profit}
-                        currency={currency}
-                      />
+                            <MoneyCell
+                              value={
+                                order.totalCost
+                              }
+                              currency={
+                                currency
+                              }
+                              strong
+                            />
 
-                      <td className="whitespace-nowrap px-5 py-4 text-right text-[11px] font-semibold">
-                        {formatPercent(item.margin)}
-                      </td>
+                            <ProfitCell
+                              value={
+                                order.profit
+                              }
+                              currency={
+                                currency
+                              }
+                            />
 
-                      <td className="px-5 py-4 text-right">
-                        <Link
-                          to={`/admin/orders/${item.orderId}`}
-                          className="inline-flex rounded-full border border-light-champagne bg-white px-4 py-2 text-[8px] font-semibold uppercase tracking-[0.08em] transition hover:border-classic-gold"
-                        >
-                          {t("adminFinance.open")}
-                        </Link>
-                      </td>
-                    </tr>
-                  ))
+                            <td className="whitespace-nowrap px-5 py-4 text-right text-[11px] font-semibold">
+                              {formatPercent(
+                                order.margin,
+                              )}
+                            </td>
+
+                            <td className="px-5 py-4 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    toggleOrder(
+                                      order.orderId,
+                                    )
+                                  }
+                                  className="inline-flex rounded-full border border-light-champagne bg-white px-4 py-2 text-[8px] font-semibold uppercase tracking-[0.08em] transition hover:border-classic-gold hover:bg-warm-ivory"
+                                >
+                                  {isExpanded
+                                    ? t(
+                                        "adminFinance.hideDetails",
+                                        {
+                                          defaultValue:
+                                            "Hide Details",
+                                        },
+                                      )
+                                    : t(
+                                        "adminFinance.viewDetails",
+                                        {
+                                          defaultValue:
+                                            "View Details",
+                                        },
+                                      )}
+                                </button>
+
+                                <Link
+                                  to={`/admin/orders/${order.orderId}`}
+                                  className="inline-flex rounded-full border border-light-champagne bg-white px-4 py-2 text-[8px] font-semibold uppercase tracking-[0.08em] transition hover:border-classic-gold"
+                                >
+                                  {t(
+                                    "adminFinance.open",
+                                  )}
+                                </Link>
+                              </div>
+                            </td>
+                          </tr>
+
+                          {isExpanded && (
+                            <tr>
+                              <td
+                                colSpan={13}
+                                className="bg-warm-ivory/40 px-6 py-6"
+                              >
+                                <div className="rounded-[20px] border border-light-champagne bg-white p-5">
+                                  <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                                    <div>
+                                      <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-antique-gold">
+                                        {t(
+                                          "adminFinance.orderDetails",
+                                          {
+                                            defaultValue:
+                                              "Order Details",
+                                          },
+                                        )}
+                                      </p>
+
+                                      <p className="mt-1 text-[10px] text-steel-gray">
+                                        {order.orderNumber}{" "}
+                                        ·{" "}
+                                        {formatDate(
+                                          order.orderDate,
+                                        )}
+                                      </p>
+                                    </div>
+
+                                    <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-steel-gray">
+                                      {order.items?.length ||
+                                        0}{" "}
+                                      {order.items?.length ===
+                                      1
+                                        ? t(
+                                            "adminFinance.item",
+                                            {
+                                              defaultValue:
+                                                "Item",
+                                            },
+                                          )
+                                        : t(
+                                            "adminFinance.items",
+                                            {
+                                              defaultValue:
+                                                "Items",
+                                            },
+                                          )}
+                                    </p>
+                                  </div>
+
+                                  <div className="overflow-x-auto rounded-2xl border border-light-champagne">
+                                    <table className="w-full min-w-[1100px]">
+                                      <thead>
+                                        <tr className="border-b border-light-champagne bg-warm-ivory/60 text-left">
+                                          <TableHead
+                                            text={t(
+                                              "adminFinance.product",
+                                            )}
+                                          />
+
+                                          <TableHead
+                                            text={t(
+                                              "adminFinance.qty",
+                                            )}
+                                          />
+
+                                          <TableHead
+                                            text={t(
+                                              "adminFinance.sale",
+                                            )}
+                                            right
+                                          />
+
+                                          <TableHead
+                                            text={t(
+                                              "adminFinance.productCost",
+                                            )}
+                                            right
+                                          />
+
+                                          <TableHead
+                                            text={t(
+                                              "adminFinance.smartUnit",
+                                            )}
+                                            right
+                                          />
+
+                                          <TableHead
+                                            text={t(
+                                              "adminFinance.installation",
+                                            )}
+                                            right
+                                          />
+
+                                          <TableHead
+                                            text={t(
+                                              "adminFinance.packagingCost",
+                                            )}
+                                            right
+                                          />
+
+                                          <TableHead
+                                            text={t(
+                                              "adminFinance.totalCost",
+                                            )}
+                                            right
+                                          />
+
+                                          <TableHead
+                                            text={t(
+                                              "adminFinance.profit",
+                                            )}
+                                            right
+                                          />
+
+                                          <TableHead
+                                            text={t(
+                                              "adminFinance.margin",
+                                            )}
+                                            right
+                                          />
+                                        </tr>
+                                      </thead>
+
+                                      <tbody className="divide-y divide-light-champagne">
+                                        {(order.items ||
+                                          []).map(
+                                          (
+                                            item,
+                                            index,
+                                          ) => (
+                                            <tr
+                                              key={`${order.orderId}-${item.productId || index}`}
+                                              className="transition hover:bg-warm-ivory/40"
+                                            >
+                                              <td className="px-5 py-4">
+                                                <p className="max-w-[260px] truncate text-[11px] font-semibold">
+                                                  {formatProductName(
+                                                    item.productName,
+                                                  )}
+                                                </p>
+
+                                                {item.sku && (
+                                                  <p className="mt-1 text-[8px] uppercase tracking-[0.08em] text-steel-gray">
+                                                    {t(
+                                                      "adminFinance.sku",
+                                                    )}{" "}
+                                                    {
+                                                      item.sku
+                                                    }
+                                                  </p>
+                                                )}
+                                              </td>
+
+                                              <td className="px-5 py-4 text-[11px]">
+                                                {
+                                                  item.quantity
+                                                }
+                                              </td>
+
+                                              <MoneyCell
+                                                value={
+                                                  item.revenue
+                                                }
+                                                currency={
+                                                  currency
+                                                }
+                                              />
+
+                                              <MoneyCell
+                                                value={
+                                                  item.productCost
+                                                }
+                                                currency={
+                                                  currency
+                                                }
+                                              />
+
+                                              <MoneyCell
+                                                value={
+                                                  item.smartUnitCost
+                                                }
+                                                currency={
+                                                  currency
+                                                }
+                                              />
+
+                                              <MoneyCell
+                                                value={
+                                                  item.installationCost
+                                                }
+                                                currency={
+                                                  currency
+                                                }
+                                              />
+
+                                              <MoneyCell
+                                                value={
+                                                  item.packagingCost
+                                                }
+                                                currency={
+                                                  currency
+                                                }
+                                              />
+
+                                              <MoneyCell
+                                                value={
+                                                  item.totalCost
+                                                }
+                                                currency={
+                                                  currency
+                                                }
+                                                strong
+                                              />
+
+                                              <ProfitCell
+                                                value={
+                                                  item.profit
+                                                }
+                                                currency={
+                                                  currency
+                                                }
+                                              />
+
+                                              <td className="whitespace-nowrap px-5 py-4 text-right text-[10px] font-semibold">
+                                                {formatPercent(
+                                                  item.margin,
+                                                )}
+                                              </td>
+                                            </tr>
+                                          ),
+                                        )}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </>
+                      );
+                    },
+                  )
                 ) : (
                   <tr>
                     <td colSpan={13}>
                       <EmptyState
-                        text={t("adminFinance.noConfirmedSalesYet")}
+                        text={t(
+                          "adminFinance.noConfirmedSalesYet",
+                        )}
                       />
                     </td>
                   </tr>
@@ -602,68 +1186,123 @@ const AdminFinancePage = () => {
 
         <section className="mt-7 rounded-[26px] border border-light-champagne bg-soft-white">
           <SectionHeader
-            eyebrow={t("adminFinance.businessExpenses")}
-            title={t("adminFinance.addExpense")}
+            eyebrow={t(
+              "adminFinance.businessExpenses",
+            )}
+            title={t(
+              "adminFinance.addExpense",
+            )}
           />
 
           <div className="border-b border-light-champagne bg-soft-cream/50 px-6 py-4">
             <p className="text-[10px] leading-6 text-slate-gray">
-              {t("adminFinance.expensesDescriptionBefore")}{" "}
+              {t(
+                "adminFinance.expensesDescriptionBefore",
+              )}{" "}
               <strong className="text-rich-navy">
-                {t("adminFinance.notIncluded")}
+                {t(
+                  "adminFinance.notIncluded",
+                )}
               </strong>{" "}
-              {t("adminFinance.expensesDescriptionAfter")}
+              {t(
+                "adminFinance.expensesDescriptionAfter",
+              )}
             </p>
           </div>
 
           <form
-            onSubmit={handleAddExpense}
+            onSubmit={
+              handleAddExpense
+            }
             className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-5"
           >
-            <Field label={t("adminFinance.title")}>
+            <Field
+              label={t(
+                "adminFinance.title",
+              )}
+            >
               <input
                 name="title"
-                value={expenseForm.title}
-                onChange={handleExpenseChange}
-                placeholder={t("adminFinance.marketingCampaign")}
+                value={
+                  expenseForm.title
+                }
+                onChange={
+                  handleExpenseChange
+                }
+                placeholder={t(
+                  "adminFinance.marketingCampaign",
+                )}
                 className="finance-input"
               />
             </Field>
 
-            <Field label={t("adminFinance.category")}>
+            <Field
+              label={t(
+                "adminFinance.category",
+              )}
+            >
               <select
                 name="category"
-                value={expenseForm.category}
-                onChange={handleExpenseChange}
+                value={
+                  expenseForm.category
+                }
+                onChange={
+                  handleExpenseChange
+                }
                 className="finance-input"
               >
-                {expenseCategories.map((category) => (
-                  <option key={category} value={category}>
-                    {formatLabel(category)}
-                  </option>
-                ))}
+                {expenseCategories.map(
+                  (category) => (
+                    <option
+                      key={category}
+                      value={
+                        category
+                      }
+                    >
+                      {formatLabel(
+                        category,
+                      )}
+                    </option>
+                  ),
+                )}
               </select>
             </Field>
 
-            <Field label={t("adminFinance.amount")}>
+            <Field
+              label={t(
+                "adminFinance.amount",
+              )}
+            >
               <input
                 type="number"
                 min="0"
                 step="0.01"
                 name="amount"
-                value={expenseForm.amount}
-                onChange={handleExpenseChange}
+                value={
+                  expenseForm.amount
+                }
+                onChange={
+                  handleExpenseChange
+                }
                 placeholder="0.00"
                 className="finance-input"
               />
             </Field>
 
-            <Field label={t("adminFinance.date")}>
+            <Field
+              label={t(
+                "adminFinance.date",
+              )}
+            >
               <input
                 type="date"
                 name="expenseDate"
-                value={expenseForm.expenseDate}
-                onChange={handleExpenseChange}
+                value={
+                  expenseForm.expenseDate
+                }
+                onChange={
+                  handleExpenseChange
+                }
                 className="finance-input"
               />
             </Field>
@@ -671,23 +1310,39 @@ const AdminFinancePage = () => {
             <div className="flex items-end">
               <button
                 type="submit"
-                disabled={savingExpense}
+                disabled={
+                  savingExpense
+                }
                 className="h-11 w-full rounded-xl bg-deep-navy px-5 text-[10px] font-semibold text-white disabled:opacity-50"
               >
                 {savingExpense
-                  ? t("adminFinance.saving")
-                  : t("adminFinance.addExpense")}
+                  ? t(
+                      "adminFinance.saving",
+                    )
+                  : t(
+                      "adminFinance.addExpense",
+                    )}
               </button>
             </div>
 
             <div className="md:col-span-2 xl:col-span-5">
-              <Field label={t("adminFinance.note")}>
+              <Field
+                label={t(
+                  "adminFinance.note",
+                )}
+              >
                 <textarea
                   name="note"
-                  value={expenseForm.note}
-                  onChange={handleExpenseChange}
+                  value={
+                    expenseForm.note
+                  }
+                  onChange={
+                    handleExpenseChange
+                  }
                   rows={3}
-                  placeholder={t("adminFinance.optionalNote")}
+                  placeholder={t(
+                    "adminFinance.optionalNote",
+                  )}
                   className="finance-input resize-none py-3"
                 />
               </Field>
@@ -697,120 +1352,176 @@ const AdminFinancePage = () => {
 
         <section className="mt-7 overflow-hidden rounded-[26px] border border-light-champagne bg-soft-white">
           <SectionHeader
-            eyebrow={t("adminFinance.expenses")}
-            title={t("adminFinance.recentBusinessExpenses")}
+            eyebrow={t(
+              "adminFinance.expenses",
+            )}
+            title={t(
+              "adminFinance.recentBusinessExpenses",
+            )}
           />
 
           <div className="border-b border-light-champagne bg-warm-ivory/50 px-6 py-4">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <p className="text-[10px] text-slate-gray">
-                {t("adminFinance.recordedExpenses")}
+                {t(
+                  "adminFinance.recordedExpenses",
+                )}
               </p>
 
               <p className="font-serif text-[1.3rem] text-rich-navy">
-                {formatMoney(data?.businessExpenses?.total)} {currency}
+                {formatMoney(
+                  data?.businessExpenses
+                    ?.total,
+                )}{" "}
+                {currency}
               </p>
             </div>
           </div>
 
           {expenses.length > 0 ? (
             <div className="divide-y divide-light-champagne">
-              {expenses.map((expense) => (
-                <div
-                  key={expense._id}
-                  className="flex flex-col gap-4 px-6 py-5 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-[11px] font-semibold">
-                      {expense.title}
-                    </p>
+              {expenses.map(
+                (expense) => (
+                  <div
+                    key={expense._id}
+                    className="flex flex-col gap-4 px-6 py-5 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-[11px] font-semibold">
+                        {
+                          expense.title
+                        }
+                      </p>
 
-                    <div className="mt-1 flex flex-wrap gap-2 text-[9px] text-steel-gray">
-                      <span>{formatLabel(expense.category)}</span>
+                      <div className="mt-1 flex flex-wrap gap-2 text-[9px] text-steel-gray">
+                        <span>
+                          {formatLabel(
+                            expense.category,
+                          )}
+                        </span>
 
-                      <span>·</span>
+                        <span>
+                          ·
+                        </span>
 
-                      <span>{formatDate(expense.expenseDate)}</span>
+                        <span>
+                          {formatDate(
+                            expense.expenseDate,
+                          )}
+                        </span>
+                      </div>
+
+                      {expense.note && (
+                        <p className="mt-2 max-w-xl text-[9px] leading-5 text-slate-gray">
+                          {
+                            expense.note
+                          }
+                        </p>
+                      )}
                     </div>
 
-                    {expense.note && (
-                      <p className="mt-2 max-w-xl text-[9px] leading-5 text-slate-gray">
-                        {expense.note}
+                    <div className="flex shrink-0 items-center gap-4">
+                      <p className="text-[12px] font-semibold text-[#A65353]">
+                        -
+                        {formatMoney(
+                          expense.amount,
+                        )}{" "}
+                        {currency}
                       </p>
-                    )}
-                  </div>
 
-                  <div className="flex shrink-0 items-center gap-4">
-                    <p className="text-[12px] font-semibold text-[#A65353]">
-                      -{formatMoney(expense.amount)} {currency}
-                    </p>
-
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteExpense(expense._id)}
-                      className="rounded-lg border border-red-200 px-3 py-2 text-[9px] font-semibold text-red-600 transition hover:bg-red-50"
-                    >
-                      {t("adminFinance.delete")}
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleDeleteExpense(
+                            expense._id,
+                          )
+                        }
+                        className="rounded-lg border border-red-200 px-3 py-2 text-[9px] font-semibold text-red-600 transition hover:bg-red-50"
+                      >
+                        {t(
+                          "adminFinance.delete",
+                        )}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ),
+              )}
             </div>
           ) : (
-            <EmptyState text={t("adminFinance.noExpensesRecorded")} />
+            <EmptyState
+              text={t(
+                "adminFinance.noExpensesRecorded",
+              )}
+            />
           )}
         </section>
 
         <section className="mt-7 rounded-[22px] border border-champagne-gold/25 bg-soft-cream px-6 py-5">
           <p className="text-[10px] font-semibold uppercase tracking-[0.17em] text-antique-gold">
-            {t("adminFinance.profitFormula")}
+            {t(
+              "adminFinance.profitFormula",
+            )}
           </p>
 
           <p className="mt-3 text-[11px] leading-7 text-slate-gray">
-            {t("adminFinance.profitFormulaDescriptionBefore")}{" "}
+            {t(
+              "adminFinance.profitFormulaDescriptionBefore",
+            )}{" "}
             <strong className="text-rich-navy">
-              {t("adminFinance.productProfit")}
+              {t(
+                "adminFinance.productProfit",
+              )}
             </strong>
           </p>
 
           <p className="mt-2 text-[10px] leading-6 text-steel-gray">
-            {t("adminFinance.profitFormulaNote")}
+            {t(
+              "adminFinance.profitFormulaNote",
+            )}
           </p>
         </section>
       </div>
 
       <style>
         {`
-            .finance-input {
-              height: 44px;
-              width: 100%;
-              border-radius: 12px;
-              border: 1px solid #EDE5D9;
-              background: #FFFFFF;
-              padding-left: 14px;
-              padding-right: 14px;
-              font-size: 11px;
-              color: #12263A;
-              outline: none;
-              transition: 0.2s;
-            }
+          .finance-input {
+            height: 44px;
+            width: 100%;
+            border-radius: 12px;
+            border: 1px solid #EDE5D9;
+            background: #FFFFFF;
+            padding-left: 14px;
+            padding-right: 14px;
+            font-size: 11px;
+            color: #12263A;
+            outline: none;
+            transition: 0.2s;
+          }
 
-            textarea.finance-input {
-              height: auto;
-            }
+          textarea.finance-input {
+            height: auto;
+          }
 
-            .finance-input:focus {
-              border-color: #C9A24D;
-              box-shadow: 0 0 0 4px rgba(201, 162, 77, 0.08);
-            }
-          `}
+          .finance-input:focus {
+            border-color: #C9A24D;
+            box-shadow: 0 0 0 4px rgba(201, 162, 77, 0.08);
+          }
+        `}
       </style>
     </main>
   );
 };
 
-const SummaryCard = ({ label, value, helper, dark = false, profit = null }) => {
-  const negative = profit !== null && Number(profit) < 0;
+const SummaryCard = ({
+  label,
+  value,
+  helper,
+  dark = false,
+  profit = null,
+}) => {
+  const negative =
+    profit !== null &&
+    Number(profit) < 0;
 
   return (
     <div
@@ -826,7 +1537,9 @@ const SummaryCard = ({ label, value, helper, dark = false, profit = null }) => {
 
       <p
         className={`text-[9px] font-semibold uppercase tracking-[0.22em] ${
-          dark ? "text-champagne-gold" : "text-antique-gold"
+          dark
+            ? "text-champagne-gold"
+            : "text-antique-gold"
         }`}
       >
         {label}
@@ -834,7 +1547,9 @@ const SummaryCard = ({ label, value, helper, dark = false, profit = null }) => {
 
       <p
         className={`mt-5 font-serif text-[2.1rem] leading-none ${
-          negative ? "text-red-600" : ""
+          negative
+            ? "text-red-600"
+            : ""
         }`}
       >
         {value}
@@ -842,7 +1557,9 @@ const SummaryCard = ({ label, value, helper, dark = false, profit = null }) => {
 
       <p
         className={`mt-4 text-[9px] leading-5 ${
-          dark ? "text-premium-silver/70" : "text-steel-gray"
+          dark
+            ? "text-premium-silver/70"
+            : "text-steel-gray"
         }`}
       >
         {helper}
@@ -851,19 +1568,27 @@ const SummaryCard = ({ label, value, helper, dark = false, profit = null }) => {
   );
 };
 
-const CostItem = ({ label, value }) => {
+const CostItem = ({
+  label,
+  value,
+}) => {
   return (
     <div className="border-b border-light-champagne px-6 py-6 last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0">
       <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-steel-gray">
         {label}
       </p>
 
-      <p className="mt-3 font-serif text-[1.45rem] text-rich-navy">{value}</p>
+      <p className="mt-3 font-serif text-[1.45rem] text-rich-navy">
+        {value}
+      </p>
     </div>
   );
 };
 
-const SectionHeader = ({ eyebrow, title }) => {
+const SectionHeader = ({
+  eyebrow,
+  title,
+}) => {
   return (
     <div className="border-b border-light-champagne px-6 py-5">
       <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-antique-gold">
@@ -877,7 +1602,10 @@ const SectionHeader = ({ eyebrow, title }) => {
   );
 };
 
-const Field = ({ label, children }) => {
+const Field = ({
+  label,
+  children,
+}) => {
   return (
     <label className="block">
       <span className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.16em] text-steel-gray">
@@ -889,11 +1617,16 @@ const Field = ({ label, children }) => {
   );
 };
 
-const TableHead = ({ text, right = false }) => {
+const TableHead = ({
+  text,
+  right = false,
+}) => {
   return (
     <th
       className={`whitespace-nowrap px-5 py-4 text-[8px] font-semibold uppercase tracking-[0.16em] text-steel-gray ${
-        right ? "text-right" : ""
+        right
+          ? "text-right"
+          : ""
       }`}
     >
       {text}
@@ -901,49 +1634,81 @@ const TableHead = ({ text, right = false }) => {
   );
 };
 
-const MoneyCell = ({ value, currency, strong = false }) => {
+const MoneyCell = ({
+  value,
+  currency,
+  strong = false,
+}) => {
   return (
     <td
       className={`whitespace-nowrap px-5 py-4 text-right text-[10px] ${
-        strong ? "font-semibold text-rich-navy" : "text-slate-gray"
+        strong
+          ? "font-semibold text-rich-navy"
+          : "text-slate-gray"
       }`}
     >
-      {Number(value || 0).toLocaleString("en-EG", {
-        maximumFractionDigits: 2,
-      })}{" "}
-      <span className="text-[7px] text-steel-gray">{currency}</span>
+      {Number(
+        value || 0,
+      ).toLocaleString(
+        "en-EG",
+        {
+          maximumFractionDigits: 2,
+        },
+      )}{" "}
+      <span className="text-[7px] text-steel-gray">
+        {currency}
+      </span>
     </td>
   );
 };
 
-const ProfitCell = ({ value, currency }) => {
-  const positive = Number(value || 0) >= 0;
+const ProfitCell = ({
+  value,
+  currency,
+}) => {
+  const positive =
+    Number(value || 0) >= 0;
 
   return (
     <td
       className={`whitespace-nowrap px-5 py-4 text-right text-[11px] font-semibold ${
-        positive ? "text-antique-gold" : "text-red-600"
+        positive
+          ? "text-antique-gold"
+          : "text-red-600"
       }`}
     >
-      {Number(value || 0).toLocaleString("en-EG", {
-        maximumFractionDigits: 2,
-      })}{" "}
-      <span className="text-[7px] text-steel-gray">{currency}</span>
+      {Number(
+        value || 0,
+      ).toLocaleString(
+        "en-EG",
+        {
+          maximumFractionDigits: 2,
+        },
+      )}{" "}
+      <span className="text-[7px] text-steel-gray">
+        {currency}
+      </span>
     </td>
   );
 };
 
-const OrderStatusBadge = ({ status }) => {
-  const { t } = useTranslation();
+const OrderStatusBadge = ({
+  status,
+}) => {
+  const { t } =
+    useTranslation();
 
-  const normalized = String(status || "confirmed").toLowerCase();
+  const normalized = String(
+    status || "confirmed",
+  ).toLowerCase();
 
   const className =
     normalized === "delivered"
       ? "border-classic-gold/30 bg-soft-cream text-antique-gold"
       : normalized === "shipped"
         ? "border-navy-soft/20 bg-silver-mist/80 text-navy-soft"
-        : normalized === "processing"
+        : normalized ===
+            "processing"
           ? "border-light-champagne bg-warm-ivory text-slate-gray"
           : "border-champagne-gold/30 bg-champagne-gold/10 text-antique-gold";
 
@@ -951,20 +1716,34 @@ const OrderStatusBadge = ({ status }) => {
     <span
       className={`inline-flex rounded-full border px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.08em] ${className}`}
     >
-      {t(`adminFinance.orderStatuses.${normalized}`, {
-        defaultValue: formatStatusLabel(normalized),
-      })}
+      {t(
+        `adminFinance.orderStatuses.${normalized}`,
+        {
+          defaultValue:
+            formatStatusLabel(
+              normalized,
+            ),
+        },
+      )}
     </span>
   );
 };
 
-const formatStatusLabel = (value) => {
+const formatStatusLabel = (
+  value,
+) => {
   return String(value || "")
     .replaceAll("_", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+    .replace(
+      /\b\w/g,
+      (letter) =>
+        letter.toUpperCase(),
+    );
 };
 
-const EmptyState = ({ text }) => {
+const EmptyState = ({
+  text,
+}) => {
   return (
     <div className="px-6 py-12 text-center text-[10px] text-steel-gray">
       {text}
@@ -973,3 +1752,4 @@ const EmptyState = ({ text }) => {
 };
 
 export default AdminFinancePage;
+
