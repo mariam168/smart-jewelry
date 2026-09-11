@@ -11,7 +11,7 @@ subject: "",
 message: "",
 };
 
-const WHATSAPP_NUMBER = "201223358023";
+const WHATSAPP_NUMBER = "201508856789";
 
 const ContactPage = () => {
 const { t, i18n } = useTranslation();
@@ -153,7 +153,7 @@ className="min-h-screen overflow-hidden bg-warm-ivory text-rich-navy"
             <div className="mt-12">
               <ContactItem
                 label={t("contact.details.whatsapp")}
-                value="01223358023"
+                value="01508856789"
                 href={`https://wa.me/${WHATSAPP_NUMBER}`}
               />
             </div>
