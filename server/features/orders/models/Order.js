@@ -333,6 +333,12 @@ const orderSchema = new mongoose.Schema(
       trim: true,
       maxlength: 120,
     },
+    ordererName: {
+  type: String,
+  default: "",
+  trim: true,
+  maxlength: 120,
+},
 
     manufacturingNotes: {
       type: String,

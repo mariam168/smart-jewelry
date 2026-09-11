@@ -39,25 +39,25 @@ const PersonalInfoForm = ({
               {t("personalInfo.from")}
             </label>
 
-            <input
-              type="text"
-              name="receiverName"
-              value={form.receiverName}
-              readOnly
-              className="
-                h-[54px]
-                w-full
-                rounded-[14px]
-                border
-                border-light-champagne
-                bg-warm-ivory/60
-                px-5
-                text-[13px]
-                text-rich-navy
-                outline-none
-                cursor-default
-              "
-            />
+           <input
+  type="text"
+  name="receiverName"
+  value={form.ordererName?.trim() || form.receiverName}
+  readOnly
+  className="
+    h-[54px]
+    w-full
+    rounded-[14px]
+    border
+    border-light-champagne
+    bg-warm-ivory/60
+    px-5
+    text-[13px]
+    text-rich-navy
+    outline-none
+    cursor-default
+  "
+/>
           </div>
 
           {/* To */}

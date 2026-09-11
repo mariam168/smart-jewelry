@@ -425,8 +425,16 @@ const en = {
     subtotal: "Subtotal",
     viewCart: "View Cart",
   },
+   common: {
+      optional: "Optional",
+     
+      
+    },
   checkout: {
     loadingCheckout: "Loading checkout",
+    ordererName: "Orderer Name",
+    ordererNamePlaceholder : "Enter your name",
+    ordererNameHelp: "We'll use this name to contact you about your order.",  
     checkout: "Checkout",
     yourCartIs: "Your cart is",
     stillEmpty: "still empty.",

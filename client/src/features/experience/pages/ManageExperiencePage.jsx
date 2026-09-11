@@ -166,16 +166,18 @@ const ManageExperiencePage = () => {
         order.manufacturingName ||
         "";
 
-      const shippingAddress =
-        order.shippingAddress ||
-        {};
+    const shippingAddress =
+  order.shippingAddress || {};
 
-      const receiverName = [
-        shippingAddress.firstName,
-        shippingAddress.lastName,
-      ]
-        .filter(Boolean)
-        .join(" ");
+const shippingReceiverName = [
+  shippingAddress.firstName,
+  shippingAddress.lastName,
+]
+  .filter(Boolean)
+  .join(" ");
+
+const receiverName =
+  order.ordererName?.trim() || shippingReceiverName;
 
       setForm({
         ownerName:

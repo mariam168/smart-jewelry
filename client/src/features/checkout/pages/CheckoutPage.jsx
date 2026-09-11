@@ -188,6 +188,7 @@ const CheckoutPage = () => {
 
   const [formValues, setFormValues] = useState({
     manufacturingName: "",
+    ordererName: "",
     manufacturingNotes: "",
     firstName: "",
     lastName: "",
@@ -310,6 +311,7 @@ const CheckoutPage = () => {
 
       const response = await createOrder({
         manufacturingName: formValues.manufacturingName.trim(),
+         ordererName: formValues.ordererName.trim(),
         manufacturingNotes: formValues.manufacturingNotes.trim(),
         shippingAreaId: formValues.shippingAreaId,
         shippingAddress: {
@@ -605,6 +607,33 @@ const CheckoutPage = () => {
                   {t("checkout.manufacturingNameHelp")}
                 </p>
               </div>
+              <div>
+  <label
+    htmlFor="ordererName"
+    className="mb-2 block text-sm font-medium text-[#332a22]"
+  >
+    {t("checkout.ordererName")}
+    <span className="ml-1 text-xs font-normal text-[#7f7265]">
+      ({t("common.optional")})
+    </span>
+  </label>
+
+  <input
+    id="ordererName"
+    type="text"
+    name="ordererName"
+    value={formValues.ordererName}
+    onChange={handleChange}
+    maxLength={120}
+    autoComplete="name"
+    placeholder={t("checkout.ordererNamePlaceholder")}
+    className="checkout-input"
+  />
+
+  <p className="mt-2 text-xs leading-5 text-[#7f7265]">
+    {t("checkout.ordererNameHelp")}
+  </p>
+</div>
             </div>
           </section>
 

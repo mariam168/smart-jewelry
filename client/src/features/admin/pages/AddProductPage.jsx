@@ -488,9 +488,7 @@ const AddProductPage = () => {
         productResponse?.data?.data?.product;
 
       if (!product?._id) {
-        throw new Error(
-          t("addProduct.productCreatedWithoutId"),
-        );
+        throw new Error(t("addProduct.productCreatedWithoutId"));
       }
 
       /*
@@ -1273,17 +1271,13 @@ const AddProductPage = () => {
                                     </div>
 
                                     <div className="mt-2 flex justify-between text-[8px] text-steel-gray">
-                                      <span>
-                                        {t("addProduct.extraPrice")}
-                                      </span>
+                                      <span>{t("addProduct.extraPrice")}</span>
 
                                       <span>{formatMoney(extraPrice)} EGP</span>
                                     </div>
 
                                     <div className="mt-3 flex justify-between border-t border-light-champagne pt-3 text-[10px] font-semibold text-midnight-navy">
-                                      <span>
-                                        {t("addProduct.finalPrice")}
-                                      </span>
+                                      <span>{t("addProduct.finalPrice")}</span>
 
                                       <span className="text-antique-gold">
                                         {formatMoney(
@@ -1438,19 +1432,13 @@ const AddProductPage = () => {
                   onChange={handleChange}
                   className="mt-5 w-full rounded-xl border border-champagne-gold/20 bg-rich-navy px-4 py-3"
                 >
-                  <option value="active">
-                    {t("addProduct.active")}
-                  </option>
-                  <option value="inactive">
-                    {t("addProduct.inactive")}
-                  </option>
+                  <option value="active">{t("addProduct.active")}</option>
+                  <option value="inactive">{t("addProduct.inactive")}</option>
                 </select>
               </div>
 
               <div className="rounded-[24px] border border-light-champagne bg-soft-white p-6">
-                <h3 className="font-semibold">
-                  {t("addProduct.marketing")}
-                </h3>
+                <h3 className="font-semibold">{t("addProduct.marketing")}</h3>
 
                 <div className="mt-5 space-y-3">
                   {[

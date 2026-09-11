@@ -427,9 +427,19 @@ const ar = {
     subtotal: "الإجمالي الفرعي",
     viewCart: "عرض السلة",
   },
+    common: {
+      optional: "اختياري",
+     
+      
+    },
   checkout: {
     loadingCheckout: "جاري تحميل صفحة الدفع",
     checkout: "إتمام الطلب",
+    ordererName :"اسم المستخدم",
+    ordererNamePlaceholder : "ادخل اسمك",
+    ordererNameHelp: "سوف نستخدم هذا الاسم للاتصال بكي.",
+
+
     yourCartIs: "سلتك",
     stillEmpty: "لا تزال فارغة.",
     emptyDescription:

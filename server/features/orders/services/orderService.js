@@ -48,6 +48,7 @@ export const createOrder = async (
   userId,
   {
     manufacturingName,
+    ordererName = "",
     manufacturingNotes = "",
     shippingAddress,
     shippingAreaId,
@@ -63,6 +64,11 @@ export const createOrder = async (
     "Name for manufacturing",
     120,
   );
+  const cleanOrdererName = cleanOptionalText(
+  ordererName,
+  "Orderer name",
+  120,
+);
 
   const cleanManufacturingNotes = cleanOptionalText(
     manufacturingNotes,
@@ -297,7 +303,7 @@ export const createOrder = async (
     items: orderItems,
 
     manufacturingName: cleanManufacturingName,
-
+ordererName: cleanOrdererName,
     manufacturingNotes: cleanManufacturingNotes,
 
     shippingAddress: {

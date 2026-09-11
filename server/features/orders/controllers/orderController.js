@@ -12,6 +12,7 @@ export const createOrderController = async (req, res, next) => {
   try {
     const {
       manufacturingName,
+      ordererName = "",
       manufacturingNotes = "",
       shippingAddress,
       shippingAreaId,
@@ -20,6 +21,7 @@ export const createOrderController = async (req, res, next) => {
 
     const order = await createOrder(req.user.userId, {
       manufacturingName,
+      ordererName,
       manufacturingNotes,
       shippingAddress,
       shippingAreaId,
