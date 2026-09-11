@@ -1,3 +1,4 @@
+
 const getRequiredEnvValue = (name) => {
   const value = process.env[name];
 
@@ -5,9 +6,7 @@ const getRequiredEnvValue = (name) => {
     const error = new Error(
       `${name} is not configured in .env file`,
     );
-
     error.statusCode = 500;
-
     throw error;
   }
 
@@ -69,9 +68,7 @@ const logMessageInfo = ({
 export const sendWhatsAppOtp = async ({ phone, otp }) => {
   if (!phone || !otp) {
     const error = new Error("Phone and OTP are required");
-
     error.statusCode = 400;
-
     throw error;
   }
 
@@ -197,9 +194,8 @@ export const sendWhatsAppOtp = async ({ phone, otp }) => {
       console.log("");
       console.log("⚠️ OTP ACCEPTED BY WASL-X");
       console.log("⚠️ OTP IS CURRENTLY QUEUED");
-      console.log(
-        "⚠️ DELIVERY HAS NOT BEEN CONFIRMED",
-      );
+      console.log("⚠️ DELIVERY HAS NOT BEEN CONFIRMED");
+
       console.log(
         "MESSAGE ID:",
         data?.message_id || "N/A",
@@ -209,6 +205,7 @@ export const sendWhatsAppOtp = async ({ phone, otp }) => {
     if (data?.status === "sent") {
       console.log("");
       console.log("✅ OTP SENT BY WASL-X");
+
       console.log(
         "MESSAGE ID:",
         data?.message_id || "N/A",
@@ -218,6 +215,7 @@ export const sendWhatsAppOtp = async ({ phone, otp }) => {
     if (data?.status === "delivered") {
       console.log("");
       console.log("✅ OTP DELIVERED");
+
       console.log(
         "MESSAGE ID:",
         data?.message_id || "N/A",
@@ -227,6 +225,7 @@ export const sendWhatsAppOtp = async ({ phone, otp }) => {
     if (data?.status === "failed") {
       console.log("");
       console.error("❌ OTP DELIVERY FAILED");
+
       console.error(
         "MESSAGE ID:",
         data?.message_id || "N/A",

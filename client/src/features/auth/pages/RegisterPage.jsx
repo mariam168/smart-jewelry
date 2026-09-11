@@ -209,7 +209,7 @@ const RegisterPage = () => {
               name="firstName"
               value={formValues.firstName}
               onChange={handleChange}
-              placeholder="Mariam"
+              placeholder="John"
               error={errors.firstName}
               required
             />
@@ -222,7 +222,7 @@ const RegisterPage = () => {
               name="lastName"
               value={formValues.lastName}
               onChange={handleChange}
-              placeholder="Samuel"
+              placeholder="Doe"
               error={errors.lastName}
               required
             />
@@ -238,7 +238,7 @@ const RegisterPage = () => {
             inputMode="numeric"
             value={formValues.phone}
             onChange={handleChange}
-            placeholder="01223358023"
+            placeholder="01098765432"
             error={errors.phone}
             required
           />

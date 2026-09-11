@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useState } from "react";
 
 import { Link, useNavigate } from "react-router-dom";
@@ -178,8 +179,11 @@ const CheckoutPage = () => {
   const { cart, cartTotal, isLoading: cartLoading, clearCart } = useCart();
 
   const [shippingAreas, setShippingAreas] = useState([]);
+
   const [shippingLoading, setShippingLoading] = useState(true);
+
   const [submitting, setSubmitting] = useState(false);
+
   const [error, setError] = useState("");
 
   const [formValues, setFormValues] = useState({
@@ -195,6 +199,7 @@ const CheckoutPage = () => {
   });
 
   const items = cart?.items || [];
+
   const subtotal = Number(cartTotal || 0);
 
   useEffect(() => {
@@ -294,34 +299,27 @@ const CheckoutPage = () => {
 
     if (validationError) {
       setError(validationError);
+
       return;
     }
 
     try {
       setSubmitting(true);
+
       setError("");
 
       const response = await createOrder({
         manufacturingName: formValues.manufacturingName.trim(),
-
         manufacturingNotes: formValues.manufacturingNotes.trim(),
-
         shippingAreaId: formValues.shippingAreaId,
-
         shippingAddress: {
           firstName: formValues.firstName.trim(),
-
           lastName: formValues.lastName.trim(),
-
           phone: formValues.phone.trim(),
-
           address: formValues.address.trim(),
-
           city: selectedShippingArea.name,
-
           country: formValues.country.trim() || "Egypt",
         },
-
         paymentMethod: formValues.paymentMethod,
       });
 
@@ -415,6 +413,7 @@ const CheckoutPage = () => {
 
               <h1 className="mt-8 font-serif text-[2.7rem] font-normal leading-[1.02] tracking-[-0.035em] text-soft-white sm:text-[3.5rem]">
                 {t("checkout.yourCartIs")}
+
                 <span className="mt-1 block italic text-champagne-gold">
                   {t("checkout.stillEmpty")}
                 </span>
@@ -438,6 +437,12 @@ const CheckoutPage = () => {
       </main>
     );
   }
+
+  const firstProductId =
+    items[0]?.product?._id ||
+    items[0]?.product?.id ||
+    items[0]?.productId ||
+    null;
 
   return (
     <main
@@ -470,13 +475,13 @@ const CheckoutPage = () => {
               <span className="text-[8px] text-classic-gold">✦</span>
             </div>
 
-          
-<h1 className="mt-4 font-serif text-[3rem] font-normal leading-[1.15] tracking-[-0.02em] text-midnight-navy sm:text-[4rem] lg:text-[4.6rem]">
-  {t("checkout.review")}
-  <span className="ml-4 text-navy-soft sm:ml-5">
-    {t("checkout.checkout")}
-  </span>
-</h1>
+            <h1 className="mt-4 font-serif text-[3rem] font-normal leading-[1.15] tracking-[-0.02em] text-midnight-navy sm:text-[4rem] lg:text-[4.6rem]">
+              {t("checkout.review")}
+
+              <span className="ml-4 text-navy-soft sm:ml-5">
+                {t("checkout.checkout")}
+              </span>
+            </h1>
 
             <p className="mt-5 max-w-2xl text-[13px] leading-7 text-slate-gray sm:text-[14px]">
               {t("checkout.reviewDescription")}
@@ -484,630 +489,349 @@ const CheckoutPage = () => {
           </div>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="grid items-start gap-8 xl:grid-cols-[minmax(0,1fr)_390px]"
-        >
-          <div className="space-y-6">
-            <section className="relative overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85 shadow-[0_12px_38px_rgba(7,19,31,0.045)] backdrop-blur-sm">
-              <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-soft-cream blur-[70px]" />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <section className="relative overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85 shadow-[0_12px_38px_rgba(7,19,31,0.045)] backdrop-blur-sm">
+            <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-soft-cream blur-[70px]" />
 
-              <SectionHeader
-                number="01"
-                title={t("checkout.orderDetails")}
-                subtitle={t("checkout.everythingSelected")}
-                action={
-                  <Link
-                    to="/cart"
-                    className="text-[8px] font-semibold uppercase tracking-[0.14em] text-slate-gray transition-colors hover:text-antique-gold"
-                  >
-                    {t("checkout.editCart")}
-                  </Link>
-                }
-              />
+            <SectionHeader
+              number="01"
+              title={t("checkout.orderDetails")}
+              subtitle={t("checkout.everythingSelected")}
+              action={
+                <Link
+                  to="/cart"
+                  className="text-[8px] font-semibold uppercase tracking-[0.14em] text-slate-gray transition-colors hover:text-antique-gold"
+                >
+                  {t("checkout.editCart")}
+                </Link>
+              }
+            />
 
-              <div className="relative space-y-5 p-5 sm:p-7">
-                {items.map((item, index) => {
-                  const product = item.product || null;
-                  const variant = item.variant || null;
+            <div className="relative p-6 sm:p-8">
+              <div className="rounded-[22px] border border-champagne-gold/20 bg-soft-cream/55 p-6 sm:p-7">
+                <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
+                  <div>
+                    <div className="mb-3 flex items-center gap-2.5">
+                      <span className="h-px w-7 bg-classic-gold/60" />
 
-                  const productTechnology = item.productTechnology || null;
+                      <p className="text-[7px] font-semibold uppercase tracking-[0.22em] text-steel-gray">
+                        {t("checkout.orderDetails")}
+                      </p>
+                    </div>
 
-                  const technologyModel =
-                    productTechnology?.technologyModel ||
-                    item.technologyModel ||
-                    null;
+                    <h3 className="font-serif text-[1.7rem] font-normal text-midnight-navy">
+                      {t("checkout.everythingSelected")}
+                    </h3>
 
-                  const productPrice = Number(product?.price || 0);
+                    <p className="mt-2 text-[10px] leading-6 text-slate-gray">
+                      {items.length}{" "}
+                      {activeLanguage === "ar"
+                        ? "منتج في طلبك"
+                        : "item(s) in your order"}
+                    </p>
+                  </div>
 
-                  const variantPrice = Number(variant?.price || 0);
-
-                  const technologyPrice = Number(
-                    productTechnology?.extraPrice ||
-                      technologyModel?.extraPrice ||
-                      0,
-                  );
-
-                  const basePrice =
-                    variantPrice > 0 ? variantPrice : productPrice;
-
-                  const unitPrice = basePrice + technologyPrice;
-
-                  const quantity = Number(item.quantity || 1);
-
-                  const itemTotal = unitPrice * quantity;
-
-                  const image = getCartItemImage(item);
-
-                  const imageUrl = getImageUrl(image);
-
-                  const variantName =
-                    getLocalizedText(variant?.name, activeLanguage) ||
-                    [
-                      getLocalizedText(variant?.color, activeLanguage),
-                      getLocalizedText(variant?.size, activeLanguage),
-                    ]
-                      .filter(Boolean)
-                      .join(" / ");
-
-                  const technologyName =
-                    getLocalizedText(
-                      technologyModel?.modelName,
-                      activeLanguage,
-                    ) ||
-                    getLocalizedText(technologyModel?.name, activeLanguage);
-
-                  const technologyType =
-                    getLocalizedText(
-                      technologyModel?.technology?.name,
-                      activeLanguage,
-                    ) ||
-                    getLocalizedText(
-                      technologyModel?.technology?.title,
-                      activeLanguage,
-                    );
-
-                  return (
-                    <div
-                      key={item._id || `${product?._id}-${index}`}
-                      className="overflow-hidden rounded-[22px] border border-light-champagne/85 bg-warm-ivory/55"
+                  {firstProductId && (
+                    <Link
+                      to={`/shop/products/${firstProductId}`}
+                      className="group inline-flex min-h-[48px] items-center justify-center gap-5 rounded-[13px] border border-champagne-gold/35 bg-midnight-navy px-6 text-[8px] font-semibold uppercase tracking-[0.15em] text-champagne-gold shadow-[0_10px_25px_rgba(18,38,58,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:border-champagne-gold hover:bg-rich-navy"
                     >
-                      <div className="flex flex-col gap-6 p-5 sm:flex-row sm:p-6">
-                        <div className="relative h-52 w-full shrink-0 overflow-hidden rounded-[17px] border border-light-champagne/70 bg-soft-cream sm:h-44 sm:w-44">
-                          {imageUrl ? (
-                            <img
-                              src={imageUrl}
-                              alt={
-                                getLocalizedText(
-                                  product?.name,
-                                  activeLanguage,
-                                ) ||
-                                item.name ||
-                                t("checkout.product")
-                              }
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-[8px] uppercase tracking-[0.16em] text-steel-gray">
-                              {t("checkout.noImage")}
-                            </div>
-                          )}
-                        </div>
+                      {activeLanguage === "ar"
+                        ? "العودة للمنتج"
+                        : "Back to product"}
 
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-start justify-between gap-5">
-                            <div>
-                              <div className="mb-2 flex items-center gap-2.5">
-                                <span className="h-px w-6 bg-classic-gold/60" />
+                      <span className="text-[13px] transition-transform duration-300 group-hover:translate-x-1">
+                        →
+                      </span>
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
 
-                                <p className="text-[7px] font-semibold uppercase tracking-[0.22em] text-steel-gray">
-                                  {t("checkout.product")} {index + 1}
-                                </p>
-                              </div>
+          <section className="relative overflow-hidden rounded-[26px] border border-champagne-gold/20 bg-soft-white/90 shadow-[0_12px_38px_rgba(7,19,31,0.045)] backdrop-blur-sm">
+            <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-champagne-gold/[0.08] blur-[70px]" />
 
-                              <h3 className="font-serif text-[1.55rem] font-normal leading-tight tracking-[-0.02em] text-midnight-navy">
-                                {getLocalizedText(
-                                  product?.name,
-                                  activeLanguage,
-                                ) || item.name}
-                              </h3>
-                            </div>
+            <SectionHeader
+              number="02"
+              title={t("checkout.manufacturingDetails")}
+              subtitle={t("checkout.manufacturingSubtitle")}
+            />
 
-                            <div className="shrink-0 text-right">
-                              <p className="text-[7px] font-semibold uppercase tracking-[0.15em] text-steel-gray">
-                                {t("checkout.itemTotal")}
-                              </p>
+            <div className="relative p-6 sm:p-8">
+              <div className="mb-6 rounded-[18px] border border-champagne-gold/25 bg-soft-cream/70 p-5">
+                <div className="flex items-start gap-4">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-midnight-navy text-[10px] text-champagne-gold">
+                    ✦
+                  </span>
 
-                              <p className="mt-1.5 font-serif text-[1.25rem] text-midnight-navy">
-                                {formatMoney(itemTotal)}{" "}
-                                <span className="font-sans text-[7px] font-semibold uppercase text-slate-gray">
-                                  EGP
-                                </span>
-                              </p>
-                            </div>
+                  <div>
+                    <p className="text-[10px] font-semibold text-midnight-navy">
+                      {t("checkout.manufacturingReference")}
+                    </p>
+
+                    <p className="mt-1.5 max-w-2xl text-[10px] leading-6 text-slate-gray">
+                      {t("checkout.manufacturingReferenceDescription")}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="manufacturingName"
+                  className="mb-2 block text-[8px] font-semibold uppercase tracking-[0.18em] text-midnight-navy"
+                >
+                  {t("checkout.nameForManufacturing")}
+
+                  <span className="ml-1 text-antique-gold">*</span>
+                </label>
+
+                <input
+                  id="manufacturingName"
+                  type="text"
+                  name="manufacturingName"
+                  value={formValues.manufacturingName}
+                  onChange={handleChange}
+                  required
+                  maxLength={120}
+                  autoComplete="off"
+                  placeholder="e.g. Mariam"
+                  className="checkout-input"
+                />
+
+                <p className="mt-2 text-[8px] leading-5 text-steel-gray">
+                  {t("checkout.manufacturingNameHelp")}
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section className="relative overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85 shadow-[0_12px_38px_rgba(7,19,31,0.045)] backdrop-blur-sm">
+            <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-soft-cream blur-[70px]" />
+
+            <SectionHeader
+              number="03"
+              title={t("checkout.shippingInformation")}
+              subtitle={t("checkout.shippingSubtitle")}
+            />
+
+            <div className="relative px-6 py-6 sm:px-8 sm:py-8">
+              {error && (
+                <div className="mb-6 rounded-[14px] border border-antique-gold/25 bg-soft-cream px-4 py-3 text-[11px] leading-6 text-antique-gold">
+                  {error}
+                </div>
+              )}
+
+              <div className="grid gap-5 sm:grid-cols-2">
+                <CheckoutField
+                  label={t("checkout.firstName")}
+                  htmlFor="firstName"
+                >
+                  <input
+                    id="firstName"
+                    name="firstName"
+                    value={formValues.firstName}
+                    onChange={handleChange}
+                    placeholder={t("checkout.firstNamePlaceholder")}
+                    className="checkout-input"
+                    autoComplete="given-name"
+                  />
+                </CheckoutField>
+
+                <CheckoutField
+                  label={t("checkout.lastName")}
+                  htmlFor="lastName"
+                >
+                  <input
+                    id="lastName"
+                    name="lastName"
+                    value={formValues.lastName}
+                    onChange={handleChange}
+                    placeholder={t("checkout.lastNamePlaceholder")}
+                    className="checkout-input"
+                    autoComplete="family-name"
+                  />
+                </CheckoutField>
+
+                <div className="sm:col-span-2">
+                  <CheckoutField
+                    label={t("checkout.phoneNumber")}
+                    htmlFor="phone"
+                  >
+                    <input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      value={formValues.phone}
+                      onChange={handleChange}
+                      placeholder={t("checkout.phonePlaceholder")}
+                      className="checkout-input"
+                      autoComplete="tel"
+                    />
+                  </CheckoutField>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <CheckoutField
+                    label={t("checkout.deliveryAddress")}
+                    htmlFor="address"
+                  >
+                    <textarea
+                      id="address"
+                      name="address"
+                      rows={4}
+                      value={formValues.address}
+                      onChange={handleChange}
+                      placeholder={t("checkout.addressPlaceholder")}
+                      className="checkout-textarea"
+                      autoComplete="street-address"
+                    />
+                  </CheckoutField>
+                </div>
+
+                <CheckoutField
+                  label={t("checkout.shippingArea")}
+                  htmlFor="shippingAreaId"
+                >
+                  <select
+                    id="shippingAreaId"
+                    name="shippingAreaId"
+                    value={formValues.shippingAreaId}
+                    onChange={handleChange}
+                    disabled={shippingLoading}
+                    className="checkout-input cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <option value="">
+                      {shippingLoading
+                        ? t("checkout.loadingShippingAreas")
+                        : t("checkout.selectYourArea")}
+                    </option>
+
+                    {shippingAreas.map((area) => (
+                      <option key={area._id} value={area._id}>
+                        {getLocalizedText(area.name, activeLanguage)} —{" "}
+                        {formatMoney(area.shippingFee)} EGP
+                      </option>
+                    ))}
+                  </select>
+                </CheckoutField>
+
+                <CheckoutField
+                  label={t("checkout.country")}
+                  htmlFor="country"
+                >
+                  <input
+                    id="country"
+                    name="country"
+                    value={formValues.country}
+                    onChange={handleChange}
+                    className="checkout-input"
+                    autoComplete="country-name"
+                  />
+                </CheckoutField>
+
+                {selectedShippingArea && (
+                  <div className="sm:col-span-2">
+                    <div className="relative overflow-hidden rounded-[18px] border border-champagne-gold/20 bg-soft-cream/80 p-5">
+                      <div className="pointer-events-none absolute -right-14 -top-14 h-32 w-32 rounded-full bg-champagne-gold/10 blur-[40px]" />
+
+                      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-midnight-navy text-[10px] text-champagne-gold">
+                            ✦
                           </div>
 
-                          <div className="mt-5 flex flex-wrap gap-2">
-                            <Pill>
-                              {t("checkout.quantity")}: {quantity}
-                            </Pill>
+                          <div>
+                            <p className="text-[7px] font-semibold uppercase tracking-[0.2em] text-antique-gold">
+                              {t("checkout.selectedDeliveryArea")}
+                            </p>
 
-                            <Pill>
-                              {t("checkout.unit")}: {formatMoney(unitPrice)} EGP
-                            </Pill>
+                            <p className="mt-1 font-serif text-[1.25rem] text-midnight-navy">
+                              {getLocalizedText(
+                                selectedShippingArea.name,
+                                activeLanguage,
+                              )}
+                            </p>
                           </div>
-                        </div>
-                      </div>
-
-                      {(variant || technologyModel) && (
-                        <div className="grid gap-4 border-t border-light-champagne/80 bg-soft-white/55 p-5 sm:p-6 lg:grid-cols-2">
-                          {variant && (
-                            <DetailCard
-                              eyebrow={t("checkout.selectedOption")}
-                              title={t("checkout.variant")}
-                            >
-                              {variantName && (
-                                <DetailRow
-                                  label={t("checkout.name")}
-                                  value={variantName}
-                                />
-                              )}
-
-                              {variant.color && (
-                                <DetailRow
-                                  label={t("checkout.color")}
-                                  value={getLocalizedText(
-                                    variant.color,
-                                    activeLanguage,
-                                  )}
-                                />
-                              )}
-
-                              {variant.size && (
-                                <DetailRow
-                                  label={t("checkout.size")}
-                                  value={getLocalizedText(
-                                    variant.size,
-                                    activeLanguage,
-                                  )}
-                                />
-                              )}
-
-                              {variant.material && (
-                                <DetailRow
-                                  label={t("checkout.material")}
-                                  value={getLocalizedText(
-                                    variant.material,
-                                    activeLanguage,
-                                  )}
-                                />
-                              )}
-
-                              {variant.finish && (
-                                <DetailRow
-                                  label={t("checkout.finish")}
-                                  value={getLocalizedText(
-                                    variant.finish,
-                                    activeLanguage,
-                                  )}
-                                />
-                              )}
-
-                              {variant.sku && (
-                                <DetailRow
-                                  label={t("checkout.sku")}
-                                  value={variant.sku}
-                                />
-                              )}
-                            </DetailCard>
-                          )}
-
-                          {technologyModel && (
-                            <div className="relative overflow-hidden rounded-[18px] border border-champagne-gold/15 bg-midnight-navy p-5 text-soft-white">
-                              <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-champagne-gold/10 blur-[45px]" />
-
-                              <div className="relative">
-                                <p className="text-[7px] font-semibold uppercase tracking-[0.2em] text-premium-silver/45">
-                                  {t("checkout.selectedOption")}
-                                </p>
-
-                                <h4 className="mt-1.5 font-serif text-[1.1rem] text-soft-white">
-                                  {t("checkout.technology")}
-                                </h4>
-
-                                <div className="mt-4 space-y-3">
-                                  {technologyType && (
-                                    <DarkDetailRow
-                                      label={t("checkout.type")}
-                                      value={technologyType}
-                                    />
-                                  )}
-
-                                  {technologyName && (
-                                    <DarkDetailRow
-                                      label={t("checkout.model")}
-                                      value={technologyName}
-                                    />
-                                  )}
-
-                                  <DarkDetailRow
-                                    label={t("checkout.extraPrice")}
-                                    value={
-                                      technologyPrice > 0
-                                        ? `+ ${formatMoney(
-                                            technologyPrice,
-                                          )} EGP`
-                                        : t("checkout.included")
-                                    }
-                                    gold
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      <div className="flex flex-col gap-4 border-t border-light-champagne/80 bg-soft-white/90 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                        <div className="flex flex-wrap gap-x-6 gap-y-2 text-[9px]">
-                          <PriceDetail
-                            label={t("checkout.basePrice")}
-                            value={`${formatMoney(basePrice)} EGP`}
-                          />
-
-                          {technologyPrice > 0 && (
-                            <PriceDetail
-                              label={t("checkout.technology")}
-                              value={`+ ${formatMoney(technologyPrice)} EGP`}
-                              gold
-                            />
-                          )}
-
-                          <PriceDetail
-                            label={t("checkout.quantity")}
-                            value={`× ${quantity}`}
-                          />
                         </div>
 
                         <div className="sm:text-right">
-                          <p className="text-[7px] font-semibold uppercase tracking-[0.15em] text-steel-gray">
-                            {t("checkout.total")}
+                          <p className="text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
+                            {t("checkout.shippingFee")}
                           </p>
 
-                          <p className="mt-1 font-serif text-[1.2rem] text-midnight-navy">
-                            {formatMoney(itemTotal)}{" "}
-                            <span className="font-sans text-[7px] font-semibold uppercase text-slate-gray">
+                          <p className="mt-1 font-serif text-[1.5rem] text-antique-gold">
+                            {formatMoney(shippingCost)}{" "}
+                            <span className="font-sans text-[8px] font-semibold">
                               EGP
                             </span>
                           </p>
                         </div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            </section>
-
-            <section className="relative overflow-hidden rounded-[26px] border border-champagne-gold/20 bg-soft-white/90 shadow-[0_12px_38px_rgba(7,19,31,0.045)] backdrop-blur-sm">
-              <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-champagne-gold/[0.08] blur-[70px]" />
-
-              <SectionHeader
-                number="02"
-                title={t("checkout.manufacturingDetails")}
-                subtitle={t("checkout.manufacturingSubtitle")}
-              />
-
-              <div className="relative p-6 sm:p-8">
-                <div className="mb-6 rounded-[18px] border border-champagne-gold/25 bg-soft-cream/70 p-5">
-                  <div className="flex items-start gap-4">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-midnight-navy text-[10px] text-champagne-gold">
-                      ✦
-                    </span>
-
-                    <div>
-                      <p className="text-[10px] font-semibold text-midnight-navy">
-                        {t("checkout.manufacturingReference")}
-                      </p>
-
-                      <p className="mt-1.5 max-w-2xl text-[10px] leading-6 text-slate-gray">
-                        {t("checkout.manufacturingReferenceDescription")}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid gap-5">
-                  <div>
-                    <label
-                      htmlFor="manufacturingName"
-                      className="mb-2 block text-[8px] font-semibold uppercase tracking-[0.18em] text-midnight-navy"
-                    >
-                      {t("checkout.nameForManufacturing")}
-
-                      <span className="ml-1 text-antique-gold">*</span>
-                    </label>
-
-                    <input
-                      id="manufacturingName"
-                      type="text"
-                      name="manufacturingName"
-                      value={formValues.manufacturingName}
-                      onChange={handleChange}
-                      required
-                      maxLength={120}
-                      autoComplete="off"
-                      placeholder="e.g. Mariam"
-                      className="checkout-input"
-                    />
-
-                    <p className="mt-2 text-[8px] leading-5 text-steel-gray">
-                      {t("checkout.manufacturingNameHelp")}
-                    </p>
-                  </div>
-
-                  <div>
-                    <div className="mb-2 flex items-center justify-between gap-3">
-                      <label
-                        htmlFor="manufacturingNotes"
-                        className="block text-[8px] font-semibold uppercase tracking-[0.18em] text-midnight-navy"
-                      >
-                        {t("checkout.manufacturingNotes")}
-                      </label>
-
-                      <span className="text-[7px] font-semibold uppercase tracking-[0.12em] text-steel-gray">
-                        {t("checkout.optional")}
-                      </span>
-                    </div>
-
-                    <textarea
-                      id="manufacturingNotes"
-                      name="manufacturingNotes"
-                      value={formValues.manufacturingNotes}
-                      onChange={handleChange}
-                      maxLength={1000}
-                      rows={4}
-                      placeholder={t("checkout.manufacturingNotesPlaceholder")}
-                      className="w-full resize-none rounded-[14px] border border-light-champagne bg-warm-ivory/65 px-4 py-3.5 text-[12px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray/70 hover:border-champagne-gold/60 hover:bg-soft-white focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
-                    />
-
-                    <div className="mt-2 flex items-center justify-between gap-3">
-                      <p className="text-[8px] leading-5 text-steel-gray">
-                        {t("checkout.manufacturingNotesHelp")}
-                      </p>
-
-                      <span className="shrink-0 text-[8px] text-steel-gray">
-                        {formValues.manufacturingNotes.length}
-                        /1000
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section className="relative overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85 shadow-[0_12px_38px_rgba(7,19,31,0.045)] backdrop-blur-sm">
-              <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-soft-cream blur-[70px]" />
-
-              <SectionHeader
-                number="03"
-                title={t("checkout.shippingInformation")}
-                subtitle={t("checkout.shippingSubtitle")}
-              />
-
-              <div className="relative px-6 py-6 sm:px-8 sm:py-8">
-                {error && (
-                  <div className="mb-6 rounded-[14px] border border-antique-gold/25 bg-soft-cream px-4 py-3 text-[11px] leading-6 text-antique-gold">
-                    {error}
                   </div>
                 )}
 
-                <div className="grid gap-5 sm:grid-cols-2">
-                  <CheckoutField
-                    label={t("checkout.firstName")}
-                    htmlFor="firstName"
-                  >
-                    <input
-                      id="firstName"
-                      name="firstName"
-                      value={formValues.firstName}
-                      onChange={handleChange}
-                      placeholder={t("checkout.firstNamePlaceholder")}
-                      className="checkout-input"
-                      autoComplete="given-name"
-                    />
-                  </CheckoutField>
-
-                  <CheckoutField
-                    label={t("checkout.lastName")}
-                    htmlFor="lastName"
-                  >
-                    <input
-                      id="lastName"
-                      name="lastName"
-                      value={formValues.lastName}
-                      onChange={handleChange}
-                      placeholder={t("checkout.lastNamePlaceholder")}
-                      className="checkout-input"
-                      autoComplete="family-name"
-                    />
-                  </CheckoutField>
-
+                {!shippingLoading && shippingAreas.length === 0 && (
                   <div className="sm:col-span-2">
-                    <CheckoutField
-                      label={t("checkout.phoneNumber")}
-                      htmlFor="phone"
-                    >
-                      <input
-                        id="phone"
-                        name="phone"
-                        type="tel"
-                        value={formValues.phone}
-                        onChange={handleChange}
-                        placeholder={t("checkout.phonePlaceholder")}
-                        className="checkout-input"
-                        autoComplete="tel"
-                      />
-                    </CheckoutField>
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <CheckoutField
-                      label={t("checkout.deliveryAddress")}
-                      htmlFor="address"
-                    >
-                      <textarea
-                        id="address"
-                        name="address"
-                        rows={4}
-                        value={formValues.address}
-                        onChange={handleChange}
-                        placeholder={t("checkout.addressPlaceholder")}
-                        className="checkout-textarea"
-                        autoComplete="street-address"
-                      />
-                    </CheckoutField>
-                  </div>
-
-                  <CheckoutField
-                    label={t("checkout.shippingArea")}
-                    htmlFor="shippingAreaId"
-                  >
-                    <select
-                      id="shippingAreaId"
-                      name="shippingAreaId"
-                      value={formValues.shippingAreaId}
-                      onChange={handleChange}
-                      disabled={shippingLoading}
-                      className="checkout-input cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      <option value="">
-                        {shippingLoading
-                          ? t("checkout.loadingShippingAreas")
-                          : t("checkout.selectYourArea")}
-                      </option>
-
-                      {shippingAreas.map((area) => (
-                        <option key={area._id} value={area._id}>
-                          {getLocalizedText(area.name, activeLanguage)} —{" "}
-                          {formatMoney(area.shippingFee)} EGP
-                        </option>
-                      ))}
-                    </select>
-                  </CheckoutField>
-
-                  <CheckoutField
-                    label={t("checkout.country")}
-                    htmlFor="country"
-                  >
-                    <input
-                      id="country"
-                      name="country"
-                      value={formValues.country}
-                      onChange={handleChange}
-                      className="checkout-input"
-                      autoComplete="country-name"
-                    />
-                  </CheckoutField>
-
-                  {selectedShippingArea && (
-                    <div className="sm:col-span-2">
-                      <div className="relative overflow-hidden rounded-[18px] border border-champagne-gold/20 bg-soft-cream/80 p-5">
-                        <div className="pointer-events-none absolute -right-14 -top-14 h-32 w-32 rounded-full bg-champagne-gold/10 blur-[40px]" />
-
-                        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-midnight-navy text-[10px] text-champagne-gold">
-                              ✦
-                            </div>
-
-                            <div>
-                              <p className="text-[7px] font-semibold uppercase tracking-[0.2em] text-antique-gold">
-                                {t("checkout.selectedDeliveryArea")}
-                              </p>
-
-                              <p className="mt-1 font-serif text-[1.25rem] text-midnight-navy">
-                                {getLocalizedText(
-                                  selectedShippingArea.name,
-                                  activeLanguage,
-                                )}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="sm:text-right">
-                            <p className="text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                              {t("checkout.shippingFee")}
-                            </p>
-
-                            <p className="mt-1 font-serif text-[1.5rem] text-antique-gold">
-                              {formatMoney(shippingCost)}{" "}
-                              <span className="font-sans text-[8px] font-semibold">
-                                EGP
-                              </span>
-                            </p>
-                          </div>
-                        </div>
-                      </div>
+                    <div className="rounded-[14px] border border-antique-gold/25 bg-soft-cream px-4 py-4 text-[11px] text-antique-gold">
+                      {t("checkout.noShippingAreas")}
                     </div>
-                  )}
-
-                  {!shippingLoading && shippingAreas.length === 0 && (
-                    <div className="sm:col-span-2">
-                      <div className="rounded-[14px] border border-antique-gold/25 bg-soft-cream px-4 py-4 text-[11px] text-antique-gold">
-                        {t("checkout.noShippingAreas")}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
-            </section>
+            </div>
+          </section>
 
-            <section className="relative overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85 shadow-[0_12px_38px_rgba(7,19,31,0.045)] backdrop-blur-sm">
-              <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-soft-cream blur-[70px]" />
+          <section className="relative overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85 shadow-[0_12px_38px_rgba(7,19,31,0.045)] backdrop-blur-sm">
+            <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-soft-cream blur-[70px]" />
 
-              <SectionHeader
-                number="04"
-                title={t("checkout.paymentMethod")}
-                subtitle={t("checkout.paymentSubtitle")}
-              />
+            <SectionHeader
+              number="04"
+              title={t("checkout.paymentMethod")}
+              subtitle={t("checkout.paymentSubtitle")}
+            />
 
-              <div className="relative p-6 sm:p-8">
-                <label
-                  className={`group flex cursor-pointer items-center gap-4 rounded-[18px] border p-4 transition-all duration-300 ${
+            <div className="relative p-6 sm:p-8">
+              <label
+                className={`group flex cursor-pointer items-center gap-4 rounded-[18px] border p-4 transition-all duration-300 ${
+                  formValues.paymentMethod === "cash_on_delivery"
+                    ? "border-champagne-gold bg-soft-cream/70 shadow-[0_10px_26px_rgba(7,19,31,0.045)]"
+                    : "border-light-champagne bg-warm-ivory/65"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="cash_on_delivery"
+                  checked={
                     formValues.paymentMethod === "cash_on_delivery"
-                      ? "border-champagne-gold bg-soft-cream/70 shadow-[0_10px_26px_rgba(7,19,31,0.045)]"
-                      : "border-light-champagne bg-warm-ivory/65"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="cash_on_delivery"
-                    checked={formValues.paymentMethod === "cash_on_delivery"}
-                    onChange={handleChange}
-                    className="h-4 w-4 accent-[#12263A]"
-                  />
+                  }
+                  onChange={handleChange}
+                  className="h-4 w-4 accent-[#12263A]"
+                />
 
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-midnight-navy text-champagne-gold">
-                    ✦
-                  </div>
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-midnight-navy text-champagne-gold">
+                  ✦
+                </div>
 
-                  <div>
-                    <p className="text-[12px] font-semibold text-midnight-navy">
-                      {t("checkout.cashOnDelivery")}
-                    </p>
+                <div>
+                  <p className="text-[12px] font-semibold text-midnight-navy">
+                    {t("checkout.cashOnDelivery")}
+                  </p>
 
-                    <p className="mt-1 text-[10px] text-slate-gray">
-                      {t("checkout.payWhenOrderArrives")}
-                    </p>
-                  </div>
-                </label>
-              </div>
-            </section>
-          </div>
+                  <p className="mt-1 text-[10px] text-slate-gray">
+                    {t("checkout.payWhenOrderArrives")}
+                  </p>
+                </div>
+              </label>
+            </div>
+          </section>
 
-          <aside className="xl:sticky xl:top-28">
-            <div className="relative overflow-hidden rounded-[26px] border border-champagne-gold/15 bg-midnight-navy p-6 text-soft-white shadow-[0_25px_65px_rgba(7,19,31,0.18)] sm:p-7">
+          <aside className="w-full">
+            <div className="relative overflow-hidden rounded-[26px] border border-champagne-gold/15 bg-midnight-navy p-6 text-soft-white shadow-[0_25px_65px_rgba(7,19,31,0.18)] sm:p-8 lg:p-10">
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-rich-navy via-midnight-navy to-luxury-black" />
 
               <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full border border-champagne-gold/15" />
@@ -1190,7 +914,9 @@ const CheckoutPage = () => {
                     </p>
                   </div>
 
-                  <span className="mb-1 text-[11px] text-classic-gold">✦</span>
+                  <span className="mb-1 text-[11px] text-classic-gold">
+                    ✦
+                  </span>
                 </div>
 
                 {!selectedShippingArea && (
@@ -1366,74 +1092,6 @@ const CheckoutField = ({ label, htmlFor, children }) => {
       </label>
 
       {children}
-    </div>
-  );
-};
-
-const Pill = ({ children }) => {
-  return (
-    <span className="rounded-full border border-light-champagne bg-soft-white/80 px-3 py-1.5 text-[8px] font-medium uppercase tracking-[0.08em] text-slate-gray">
-      {children}
-    </span>
-  );
-};
-
-const DetailCard = ({ eyebrow, title, children }) => {
-  return (
-    <div className="rounded-[18px] border border-light-champagne/85 bg-soft-white/90 p-5">
-      <p className="text-[7px] font-semibold uppercase tracking-[0.2em] text-steel-gray">
-        {eyebrow}
-      </p>
-
-      <h4 className="mt-1.5 font-serif text-[1.1rem] text-midnight-navy">
-        {title}
-      </h4>
-
-      <div className="mt-4 space-y-3">{children}</div>
-    </div>
-  );
-};
-
-const DetailRow = ({ label, value }) => {
-  return (
-    <div className="flex justify-between gap-4 border-b border-light-champagne/70 pb-2.5 last:border-b-0 last:pb-0">
-      <span className="text-[9px] text-steel-gray">{label}</span>
-
-      <span className="text-right text-[9px] font-semibold text-midnight-navy">
-        {value}
-      </span>
-    </div>
-  );
-};
-
-const DarkDetailRow = ({ label, value, gold = false }) => {
-  return (
-    <div className="flex justify-between gap-4 border-b border-soft-white/10 pb-2.5 last:border-b-0 last:pb-0">
-      <span className="text-[9px] text-premium-silver/50">{label}</span>
-
-      <span
-        className={`text-right text-[9px] font-semibold ${
-          gold ? "text-champagne-gold" : "text-soft-white"
-        }`}
-      >
-        {value}
-      </span>
-    </div>
-  );
-};
-
-const PriceDetail = ({ label, value, gold = false }) => {
-  return (
-    <div>
-      <span className="text-steel-gray">{label}</span>
-
-      <span
-        className={`ml-2 font-semibold ${
-          gold ? "text-antique-gold" : "text-midnight-navy"
-        }`}
-      >
-        {value}
-      </span>
     </div>
   );
 };

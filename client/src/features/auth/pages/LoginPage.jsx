@@ -327,7 +327,7 @@ const LoginPage = () => {
           inputMode="numeric"
           value={formValues.phone}
           onChange={handleChange}
-          placeholder="01223358023"
+          placeholder="01098765432"
           error={errors.phone}
           required
         />
