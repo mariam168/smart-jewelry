@@ -514,14 +514,14 @@ const AdminFinancePage = () => {
                           </td>
 
                           <td className="px-5 py-4">
-                            <p className="text-[11px] font-semibold">
-                              {order.productCount || 0}{" "}
-                              {order.productCount === 1
-                                ? t("adminFinance.product")
-                                : t("adminFinance.products", {
-                                    defaultValue: "Products",
-                                  })}
-                            </p>
+                           <p className="text-[11px] font-semibold">
+  {order.items?.length || 0}{" "}
+  {order.items?.length === 1
+    ? t("adminFinance.product")
+    : t("adminFinance.products", {
+        defaultValue: "Products",
+      })}
+</p>
 
                             <p className="mt-1 text-[8px] text-steel-gray">
                               {order.customerEmail}
