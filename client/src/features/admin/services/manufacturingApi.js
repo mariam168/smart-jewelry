@@ -150,3 +150,17 @@ export const deleteManufacturingOrder = async (
 
   return response.data;
 };
+export const updatePackagingCost = async (
+  manufacturingOrderId,
+  unitId,
+  packagingCost,
+) => {
+  const response = await api.patch(
+    `/manufacturing/${manufacturingOrderId}/units/${unitId}/packaging-cost`,
+    {
+      packagingCost,
+    },
+  );
+
+  return response.data;
+};

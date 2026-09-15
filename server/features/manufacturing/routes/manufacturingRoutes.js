@@ -14,6 +14,7 @@ import {
   completePackagingController,
   cancelManufacturingOrderController,
   deleteManufacturingOrderController,
+  updatePackagingCostController,
 } from "../controllers/manufacturingController.js";
 
 import { protect } from "../../auth/middleware/authMiddleware.js";
@@ -88,5 +89,8 @@ router.delete(
   "/:id",
   deleteManufacturingOrderController,
 );
-
+router.patch(
+  "/:id/units/:unitId/packaging-cost",
+  updatePackagingCostController,
+);
 export default router;

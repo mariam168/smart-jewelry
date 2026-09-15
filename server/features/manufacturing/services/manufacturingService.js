@@ -1302,3 +1302,41 @@ export const deleteManufacturingOrder = async (manufacturingOrderId) => {
 
   return manufacturingOrder;
 };
+
+export const updatePackagingCost = async (
+  manufacturingOrderId,
+  unitId,
+  packagingCost,
+) => {
+  validateObjectId(manufacturingOrderId, "Invalid manufacturing order ID");
+
+  validateObjectId(unitId, "Invalid production unit ID");
+
+  const normalizedPackagingCost = normalizeMoney(
+    packagingCost,
+    "Packaging cost",
+  );
+
+  const manufacturingOrder =
+    await ManufacturingOrder.findById(manufacturingOrderId);
+
+  if (!manufacturingOrder) {
+    throw createError("Manufacturing order not found", 404);
+  }
+
+  if (manufacturingOrder.status === "cancelled") {
+    throw createError("Manufacturing order is cancelled", 400);
+  }
+
+  const productionUnit = manufacturingOrder.units.id(unitId);
+
+  if (!productionUnit) {
+    throw createError("Production unit not found", 404);
+  }
+
+  productionUnit.packagingCost = normalizedPackagingCost;
+
+  await manufacturingOrder.save();
+
+  return getManufacturingOrderById(manufacturingOrderId);
+};

@@ -895,6 +895,7 @@ title2: "قصتان.",
   }
 },
  "adminManufacturingOrderDetails": {
+  productionReadyForPackaging: "جاهز للتغليف",
     "loading": "جاري تحميل أمر التصنيع",
     "manufacturing": "التصنيع",
     "manufacturingOrders": "أوامر التصنيع",

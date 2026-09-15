@@ -888,6 +888,7 @@ const en = {
   }
 },
   "adminManufacturingOrderDetails": {
+    productionReadyForPackaging: "Ready for Packaging",
     "loading": "Loading Manufacturing Order",
     "manufacturing": "Manufacturing",
     "manufacturingOrders": "Manufacturing Orders",
