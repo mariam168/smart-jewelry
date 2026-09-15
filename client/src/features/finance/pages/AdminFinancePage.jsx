@@ -483,7 +483,9 @@ const AdminFinancePage = () => {
               <tbody className="divide-y divide-light-champagne">
                 {soldItems.length > 0 ? (
                   soldItems.map((order) => {
-                    const isExpanded = Boolean(expandedOrders[order.orderId]);
+                    const isExpanded = Boolean(
+                      expandedOrders[order.orderId],
+                    );
 
                     return (
                       <>
@@ -506,7 +508,9 @@ const AdminFinancePage = () => {
                           </td>
 
                           <td className="px-5 py-4">
-                            <OrderStatusBadge status={order.orderStatus} />
+                            <OrderStatusBadge
+                              status={order.orderStatus}
+                            />
                           </td>
 
                           <td className="px-5 py-4">
@@ -572,16 +576,26 @@ const AdminFinancePage = () => {
                             <div className="flex items-center justify-end gap-2">
                               <button
                                 type="button"
-                                onClick={() => toggleOrder(order.orderId)}
+                                onClick={() =>
+                                  toggleOrder(order.orderId)
+                                }
                                 className="inline-flex rounded-full border border-light-champagne bg-white px-4 py-2 text-[8px] font-semibold uppercase tracking-[0.08em] transition hover:border-classic-gold hover:bg-warm-ivory"
                               >
                                 {isExpanded
-                                  ? t("adminFinance.hideDetails", {
-                                      defaultValue: "Hide Details",
-                                    })
-                                  : t("adminFinance.viewDetails", {
-                                      defaultValue: "View Details",
-                                    })}
+                                  ? t(
+                                      "adminFinance.hideDetails",
+                                      {
+                                        defaultValue:
+                                          "Hide Details",
+                                      },
+                                    )
+                                  : t(
+                                      "adminFinance.viewDetails",
+                                      {
+                                        defaultValue:
+                                          "View Details",
+                                      },
+                                    )}
                               </button>
 
                               <Link
@@ -604,21 +618,30 @@ const AdminFinancePage = () => {
                                 <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
                                   <div>
                                     <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-antique-gold">
-                                      {t("adminFinance.orderDetails", {
-                                        defaultValue: "Order Details",
-                                      })}
+                                      {t(
+                                        "adminFinance.orderDetails",
+                                        {
+                                          defaultValue:
+                                            "Order Details",
+                                        },
+                                      )}
                                     </p>
 
                                     <p className="mt-1 text-[10px] text-steel-gray">
                                       {order.orderNumber} ·{" "}
-                                      {formatDate(order.orderDate)}
+                                      {formatDate(
+                                        order.orderDate,
+                                      )}
                                     </p>
                                   </div>
 
                                   <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-steel-gray">
                                     {order.items?.reduce(
                                       (total, item) =>
-                                        total + Number(item.quantity || 0),
+                                        total +
+                                        Number(
+                                          item.quantity || 0,
+                                        ),
                                       0,
                                     ) || 0}{" "}
                                     {t("adminFinance.items", {
@@ -628,54 +651,85 @@ const AdminFinancePage = () => {
                                 </div>
 
                                 <div className="overflow-x-auto rounded-2xl border border-light-champagne">
-                                  <table className="w-full min-w-[1100px]">
+                                  <table className="w-full min-w-[1250px]">
                                     <thead>
                                       <tr className="border-b border-light-champagne bg-warm-ivory/60 text-left">
                                         <TableHead
-                                          text={t("adminFinance.product")}
+                                          text={t(
+                                            "adminFinance.product",
+                                          )}
                                         />
 
                                         <TableHead
-                                          text={t("adminFinance.qty")}
+                                          text={t(
+                                            "adminFinance.piece",
+                                            {
+                                              defaultValue:
+                                                "Piece",
+                                            },
+                                          )}
                                         />
 
                                         <TableHead
-                                          text={t("adminFinance.sale")}
+                                          text={t(
+                                            "adminFinance.sale",
+                                          )}
                                           right
                                         />
 
                                         <TableHead
-                                          text={t("adminFinance.productCost")}
+                                          text={t(
+                                            "adminFinance.productCost",
+                                          )}
                                           right
                                         />
 
                                         <TableHead
-                                          text={t("adminFinance.smartUnit")}
+                                          text={t(
+                                            "adminFinance.smartUnit",
+                                          )}
                                           right
                                         />
 
                                         <TableHead
-                                          text={t("adminFinance.installation")}
+                                          text={t(
+                                            "adminFinance.installation",
+                                          )}
                                           right
                                         />
 
                                         <TableHead
-                                          text={t("adminFinance.packagingCost")}
+                                          text={t(
+                                            "adminFinance.packagingCost",
+                                          )}
                                           right
                                         />
 
                                         <TableHead
-                                          text={t("adminFinance.totalCost")}
+                                          text={t(
+                                            "adminFinance.totalCost",
+                                          )}
                                           right
                                         />
 
                                         <TableHead
-                                          text={t("adminFinance.profit")}
+                                          text={t(
+                                            "adminFinance.profit",
+                                          )}
                                           right
                                         />
 
                                         <TableHead
-                                          text={t("adminFinance.margin")}
+                                          text={t(
+                                            "adminFinance.margin",
+                                          )}
+                                          right
+                                        />
+
+                                        <TableHead
+                                          text={t(
+                                            "adminFinance.status",
+                                          )}
                                           right
                                         />
                                       </tr>
@@ -684,49 +738,33 @@ const AdminFinancePage = () => {
                                     <tbody className="divide-y divide-light-champagne">
                                       {(order.items || []).flatMap(
                                         (item, itemIndex) => {
-                                          const quantity = Math.max(
-                                            1,
-                                            Number(item.quantity || 1),
-                                          );
+                                          const pieces = Array.isArray(
+                                            item.pieces,
+                                          )
+                                            ? item.pieces
+                                            : [];
 
-                                          const unitRevenue =
-                                            Number(item.revenue || 0) /
-                                            quantity;
+                                          if (pieces.length === 0) {
+                                            return [];
+                                          }
 
-                                          const unitProductCost =
-                                            Number(item.productCost || 0) /
-                                            quantity;
-
-                                          const unitSmartUnitCost =
-                                            Number(item.smartUnitCost || 0) /
-                                            quantity;
-
-                                          const unitInstallationCost =
-                                            Number(item.installationCost || 0) /
-                                            quantity;
-
-                                          const unitPackagingCost =
-                                            Number(item.packagingCost || 0) /
-                                            quantity;
-
-                                          const unitTotalCost =
-                                            Number(item.totalCost || 0) /
-                                            quantity;
-
-                                          const unitProfit =
-                                            Number(item.profit || 0) / quantity;
-
-                                          return Array.from(
-                                            { length: quantity },
-                                            (_, pieceIndex) => (
+                                          return pieces.map(
+                                            (
+                                              piece,
+                                              pieceIndex,
+                                            ) => (
                                               <tr
-                                                key={`${order.orderId}-${item.productId || itemIndex}-piece-${pieceIndex + 1}`}
+                                                key={
+                                                  piece.unitId ||
+                                                  `${order.orderId}-${item.productId || itemIndex}-piece-${pieceIndex + 1}`
+                                                }
                                                 className="transition hover:bg-warm-ivory/40"
                                               >
                                                 <td className="px-5 py-4">
                                                   <p className="max-w-[260px] truncate text-[11px] font-semibold">
                                                     {formatProductName(
-                                                      item.productName,
+                                                      piece.productName ||
+                                                        item.productName,
                                                     )}
                                                   </p>
 
@@ -734,68 +772,111 @@ const AdminFinancePage = () => {
                                                     {t(
                                                       "adminFinance.item",
                                                       {
-                                                        defaultValue: "Item",
+                                                        defaultValue:
+                                                          "Item",
                                                       },
                                                     )}{" "}
-                                                    {pieceIndex + 1}
+                                                    {piece.pieceNumber ||
+                                                      pieceIndex +
+                                                        1}
                                                   </p>
 
-                                                  {item.sku && (
+                                                  {(piece.sku ||
+                                                    item.sku) && (
                                                     <p className="mt-1 text-[8px] uppercase tracking-[0.08em] text-steel-gray">
-                                                      {t("adminFinance.sku")}{" "}
-                                                      {item.sku}
+                                                      {t(
+                                                        "adminFinance.sku",
+                                                      )}{" "}
+                                                      {piece.sku ||
+                                                        item.sku}
                                                     </p>
                                                   )}
                                                 </td>
 
-                                                <td className="px-5 py-4 text-[11px]">
-                                                  1
+                                                <td className="px-5 py-4">
+                                                  <span className="inline-flex min-w-[42px] items-center justify-center rounded-full border border-light-champagne bg-warm-ivory px-3 py-1.5 text-[9px] font-semibold text-rich-navy">
+                                                    #
+                                                    {piece.pieceNumber ||
+                                                      pieceIndex +
+                                                        1}
+                                                  </span>
                                                 </td>
 
                                                 <MoneyCell
-                                                  value={unitRevenue}
-                                                  currency={currency}
+                                                  value={
+                                                    piece.sellingPrice
+                                                  }
+                                                  currency={
+                                                    currency
+                                                  }
                                                 />
 
                                                 <MoneyCell
-                                                  value={unitProductCost}
-                                                  currency={currency}
+                                                  value={
+                                                    piece.productCost
+                                                  }
+                                                  currency={
+                                                    currency
+                                                  }
                                                 />
 
                                                 <MoneyCell
-                                                  value={unitSmartUnitCost}
-                                                  currency={currency}
+                                                  value={
+                                                    piece.smartUnitCost
+                                                  }
+                                                  currency={
+                                                    currency
+                                                  }
                                                 />
 
                                                 <MoneyCell
-                                                  value={unitInstallationCost}
-                                                  currency={currency}
+                                                  value={
+                                                    piece.installationCost
+                                                  }
+                                                  currency={
+                                                    currency
+                                                  }
                                                 />
 
                                                 <MoneyCell
-                                                  value={unitPackagingCost}
-                                                  currency={currency}
+                                                  value={
+                                                    piece.packagingCost
+                                                  }
+                                                  currency={
+                                                    currency
+                                                  }
                                                 />
 
                                                 <MoneyCell
-                                                  value={unitTotalCost}
-                                                  currency={currency}
+                                                  value={
+                                                    piece.totalCost
+                                                  }
+                                                  currency={
+                                                    currency
+                                                  }
                                                   strong
                                                 />
 
                                                 <ProfitCell
-                                                  value={unitProfit}
-                                                  currency={currency}
+                                                  value={
+                                                    piece.profit
+                                                  }
+                                                  currency={
+                                                    currency
+                                                  }
                                                 />
 
                                                 <td className="whitespace-nowrap px-5 py-4 text-right text-[10px] font-semibold">
                                                   {formatPercent(
-                                                    unitRevenue > 0
-                                                      ? (unitProfit /
-                                                          unitRevenue) *
-                                                          100
-                                                      : 0,
+                                                    piece.margin,
                                                   )}
+                                                </td>
+
+                                                <td className="px-5 py-4 text-right">
+                                                  <span className="inline-flex rounded-full border border-light-champagne bg-warm-ivory px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.08em] text-slate-gray">
+                                                    {piece.manufacturingStatus ||
+                                                      "—"}
+                                                  </span>
                                                 </td>
                                               </tr>
                                             ),
@@ -816,7 +897,9 @@ const AdminFinancePage = () => {
                   <tr>
                     <td colSpan={13}>
                       <EmptyState
-                        text={t("adminFinance.noConfirmedSalesYet")}
+                        text={t(
+                          "adminFinance.noConfirmedSalesYet",
+                        )}
                       />
                     </td>
                   </tr>
@@ -851,7 +934,9 @@ const AdminFinancePage = () => {
                 name="title"
                 value={expenseForm.title}
                 onChange={handleExpenseChange}
-                placeholder={t("adminFinance.marketingCampaign")}
+                placeholder={t(
+                  "adminFinance.marketingCampaign",
+                )}
                 className="finance-input"
               />
             </Field>
@@ -913,7 +998,9 @@ const AdminFinancePage = () => {
                   value={expenseForm.note}
                   onChange={handleExpenseChange}
                   rows={3}
-                  placeholder={t("adminFinance.optionalNote")}
+                  placeholder={t(
+                    "adminFinance.optionalNote",
+                  )}
                   className="finance-input resize-none py-3"
                 />
               </Field>
@@ -924,7 +1011,9 @@ const AdminFinancePage = () => {
         <section className="mt-7 overflow-hidden rounded-[26px] border border-light-champagne bg-soft-white">
           <SectionHeader
             eyebrow={t("adminFinance.expenses")}
-            title={t("adminFinance.recentBusinessExpenses")}
+            title={t(
+              "adminFinance.recentBusinessExpenses",
+            )}
           />
 
           <div className="border-b border-light-champagne bg-warm-ivory/50 px-6 py-4">
@@ -934,7 +1023,10 @@ const AdminFinancePage = () => {
               </p>
 
               <p className="font-serif text-[1.3rem] text-rich-navy">
-                {formatMoney(data?.businessExpenses?.total)} {currency}
+                {formatMoney(
+                  data?.businessExpenses?.total,
+                )}{" "}
+                {currency}
               </p>
             </div>
           </div>
@@ -952,11 +1044,15 @@ const AdminFinancePage = () => {
                     </p>
 
                     <div className="mt-1 flex flex-wrap gap-2 text-[9px] text-steel-gray">
-                      <span>{formatLabel(expense.category)}</span>
+                      <span>
+                        {formatLabel(expense.category)}
+                      </span>
 
                       <span>·</span>
 
-                      <span>{formatDate(expense.expenseDate)}</span>
+                      <span>
+                        {formatDate(expense.expenseDate)}
+                      </span>
                     </div>
 
                     {expense.note && (
@@ -968,12 +1064,15 @@ const AdminFinancePage = () => {
 
                   <div className="flex shrink-0 items-center gap-4">
                     <p className="text-[12px] font-semibold text-[#A65353]">
-                      -{formatMoney(expense.amount)} {currency}
+                      -{formatMoney(expense.amount)}{" "}
+                      {currency}
                     </p>
 
                     <button
                       type="button"
-                      onClick={() => handleDeleteExpense(expense._id)}
+                      onClick={() =>
+                        handleDeleteExpense(expense._id)
+                      }
                       className="rounded-lg border border-red-200 px-3 py-2 text-[9px] font-semibold text-red-600 transition hover:bg-red-50"
                     >
                       {t("adminFinance.delete")}
@@ -983,7 +1082,11 @@ const AdminFinancePage = () => {
               ))}
             </div>
           ) : (
-            <EmptyState text={t("adminFinance.noExpensesRecorded")} />
+            <EmptyState
+              text={t(
+                "adminFinance.noExpensesRecorded",
+              )}
+            />
           )}
         </section>
 
@@ -993,7 +1096,9 @@ const AdminFinancePage = () => {
           </p>
 
           <p className="mt-3 text-[11px] leading-7 text-slate-gray">
-            {t("adminFinance.profitFormulaDescriptionBefore")}{" "}
+            {t(
+              "adminFinance.profitFormulaDescriptionBefore",
+            )}{" "}
             <strong className="text-rich-navy">
               {t("adminFinance.productProfit")}
             </strong>
@@ -1035,8 +1140,15 @@ const AdminFinancePage = () => {
   );
 };
 
-const SummaryCard = ({ label, value, helper, dark = false, profit = null }) => {
-  const negative = profit !== null && Number(profit) < 0;
+const SummaryCard = ({
+  label,
+  value,
+  helper,
+  dark = false,
+  profit = null,
+}) => {
+  const negative =
+    profit !== null && Number(profit) < 0;
 
   return (
     <div
@@ -1052,7 +1164,9 @@ const SummaryCard = ({ label, value, helper, dark = false, profit = null }) => {
 
       <p
         className={`text-[9px] font-semibold uppercase tracking-[0.22em] ${
-          dark ? "text-champagne-gold" : "text-antique-gold"
+          dark
+            ? "text-champagne-gold"
+            : "text-antique-gold"
         }`}
       >
         {label}
@@ -1068,7 +1182,9 @@ const SummaryCard = ({ label, value, helper, dark = false, profit = null }) => {
 
       <p
         className={`mt-4 text-[9px] leading-5 ${
-          dark ? "text-premium-silver/70" : "text-steel-gray"
+          dark
+            ? "text-premium-silver/70"
+            : "text-steel-gray"
         }`}
       >
         {helper}
@@ -1084,7 +1200,9 @@ const CostItem = ({ label, value }) => {
         {label}
       </p>
 
-      <p className="mt-3 font-serif text-[1.45rem] text-rich-navy">{value}</p>
+      <p className="mt-3 font-serif text-[1.45rem] text-rich-navy">
+        {value}
+      </p>
     </div>
   );
 };
@@ -1127,17 +1245,25 @@ const TableHead = ({ text, right = false }) => {
   );
 };
 
-const MoneyCell = ({ value, currency, strong = false }) => {
+const MoneyCell = ({
+  value,
+  currency,
+  strong = false,
+}) => {
   return (
     <td
       className={`whitespace-nowrap px-5 py-4 text-right text-[10px] ${
-        strong ? "font-semibold text-rich-navy" : "text-slate-gray"
+        strong
+          ? "font-semibold text-rich-navy"
+          : "text-slate-gray"
       }`}
     >
       {Number(value || 0).toLocaleString("en-EG", {
         maximumFractionDigits: 2,
       })}{" "}
-      <span className="text-[7px] text-steel-gray">{currency}</span>
+      <span className="text-[7px] text-steel-gray">
+        {currency}
+      </span>
     </td>
   );
 };
@@ -1154,7 +1280,9 @@ const ProfitCell = ({ value, currency }) => {
       {Number(value || 0).toLocaleString("en-EG", {
         maximumFractionDigits: 2,
       })}{" "}
-      <span className="text-[7px] text-steel-gray">{currency}</span>
+      <span className="text-[7px] text-steel-gray">
+        {currency}
+      </span>
     </td>
   );
 };
@@ -1162,7 +1290,9 @@ const ProfitCell = ({ value, currency }) => {
 const OrderStatusBadge = ({ status }) => {
   const { t } = useTranslation();
 
-  const normalized = String(status || "confirmed").toLowerCase();
+  const normalized = String(
+    status || "confirmed",
+  ).toLowerCase();
 
   const className =
     normalized === "delivered"
@@ -1178,7 +1308,8 @@ const OrderStatusBadge = ({ status }) => {
       className={`inline-flex rounded-full border px-3 py-1.5 text-[7px] font-semibold uppercase tracking-[0.08em] ${className}`}
     >
       {t(`adminFinance.orderStatuses.${normalized}`, {
-        defaultValue: formatStatusLabel(normalized),
+        defaultValue:
+          formatStatusLabel(normalized),
       })}
     </span>
   );
@@ -1187,7 +1318,9 @@ const OrderStatusBadge = ({ status }) => {
 const formatStatusLabel = (value) => {
   return String(value || "")
     .replaceAll("_", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+    .replace(/\b\w/g, (letter) =>
+      letter.toUpperCase(),
+    );
 };
 
 const EmptyState = ({ text }) => {

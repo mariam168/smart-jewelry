@@ -255,103 +255,68 @@ const FINANCE_RECOGNIZED_ORDER_STATUSES = [
   "shipped",
   "delivered",
 ];
-export const getFinanceDashboard = async ({
-  from,
-  to,
-} = {}) => {
-  const orderDateMatch = buildDateRange(
-    from,
-    to,
-    "createdAt",
-  );
-
-  const expenseDateMatch = buildDateRange(
-    from,
-    to,
-    "expenseDate",
-  );
+export const getFinanceDashboard = async ({ from, to } = {}) => {
+  const orderDateMatch = buildDateRange(from, to, "createdAt");
+  const expenseDateMatch = buildDateRange(from, to, "expenseDate");
 
   const recognizedOrders = await Order.find({
     ...orderDateMatch,
-    orderStatus: {
-      $in: FINANCE_RECOGNIZED_ORDER_STATUSES,
-    },
+    orderStatus: { $in: FINANCE_RECOGNIZED_ORDER_STATUSES },
   })
-    .populate(
-      "user",
-      "email",
-    )
-    .populate(
-      "items.product",
-      "name sku price costPrice",
-    )
-    .sort({
-      createdAt: -1,
-    })
+    .populate("user", "email")
+    .populate("items.product", "name sku price costPrice")
+    .sort({ createdAt: -1 })
     .lean();
 
-  const orderIds = recognizedOrders.map(
-    (order) => order._id,
-  );
+  const orderIds = recognizedOrders.map((order) => order._id);
 
   const manufacturingOrders =
     orderIds.length > 0
       ? await ManufacturingOrder.find({
-          order: {
-            $in: orderIds,
-          },
+          order: { $in: orderIds },
         })
-          .populate(
-            "units.smartUnit",
-            "name costPrice",
-          )
+          .populate("units.smartUnit", "name costPrice")
           .lean()
       : [];
 
   const manufacturingByOrder = new Map();
 
   for (const manufacturing of manufacturingOrders) {
-    manufacturingByOrder.set(
-      getId(manufacturing.order),
-      manufacturing,
-    );
+    const orderId = getId(manufacturing.order);
+
+    if (!orderId) continue;
+
+    manufacturingByOrder.set(orderId, manufacturing);
   }
 
-  const soldItems = [];
-
-  let recognizedSales = 0;
+  let totalConfirmedSales = 0;
   let totalProductCost = 0;
   let totalSmartUnitCost = 0;
   let totalInstallationCost = 0;
   let totalPackagingCost = 0;
-  let totalUnitsSold = 0;
+  let totalDirectCost = 0;
+  let totalProfit = 0;
+
+  const soldItems = [];
 
   for (const order of recognizedOrders) {
     const orderId = getId(order._id);
-
-    const manufacturing =
-      manufacturingByOrder.get(orderId);
+    const manufacturing = manufacturingByOrder.get(orderId);
 
     const units = manufacturing?.units || [];
 
     const unitsByItem = new Map();
 
     for (const unit of units) {
-      const itemId = getId(
-        unit.orderItemId,
-      );
+      const itemId = getId(unit.orderItemId);
 
-      if (!itemId) {
-        continue;
-      }
+      if (!itemId) continue;
 
       if (!unitsByItem.has(itemId)) {
         unitsByItem.set(itemId, []);
       }
 
-      unitsByItem
-        .get(itemId)
-        .push(unit);
+      unitsByItem.get(itemId).push(unit);
     }
 
     const orderItems = [];
@@ -361,56 +326,159 @@ export const getFinanceDashboard = async ({
     let orderSmartUnitCost = 0;
     let orderInstallationCost = 0;
     let orderPackagingCost = 0;
-    let orderTotalUnits = 0;
+    let orderTotalCost = 0;
+    let orderProfit = 0;
 
     for (const item of order.items || []) {
       const itemId = getId(item._id);
-
       const quantity = getQuantity(item);
 
       const revenue = getItemRevenue(item);
 
-      const productCost = getProductCost(item);
+      const productCostTotal = getProductCost(item);
 
-      const productionUnits =
-        unitsByItem.get(itemId) || [];
+      const productionUnits = unitsByItem.get(itemId) || [];
 
-      let smartUnitCost = 0;
-      let installationCost = 0;
-      let packagingCost = 0;
+      const unitRevenue =
+        quantity > 0
+          ? roundMoney(revenue / quantity)
+          : 0;
 
-      for (const unit of productionUnits) {
-        smartUnitCost += getNumber(
-          unit?.smartUnitCostSnapshot,
-          unit?.smartUnit?.costPrice,
-        );
+      const unitProductCost =
+        quantity > 0
+          ? roundMoney(productCostTotal / quantity)
+          : 0;
 
-        installationCost += getNumber(
-          unit?.assemblyCost,
-        );
+      const pieces = [];
 
-        packagingCost += getNumber(
-          unit?.packagingCost,
-        );
+      if (productionUnits.length > 0) {
+        for (let index = 0; index < productionUnits.length; index += 1) {
+          const unit = productionUnits[index];
+
+          const smartUnitCost = roundMoney(
+            getNumber(
+              unit?.smartUnitCostSnapshot,
+              unit?.smartUnit?.costPrice,
+            ),
+          );
+
+          const installationCost = roundMoney(
+            getNumber(unit?.assemblyCost),
+          );
+
+          const packagingCost = roundMoney(
+            getNumber(unit?.packagingCost),
+          );
+
+          const pieceRevenue = unitRevenue;
+
+          const pieceProductCost = unitProductCost;
+
+          const totalCost = roundMoney(
+            pieceProductCost +
+              smartUnitCost +
+              installationCost +
+              packagingCost,
+          );
+
+          const profit = roundMoney(
+            pieceRevenue - totalCost,
+          );
+
+          const margin =
+            pieceRevenue > 0
+              ? roundMoney((profit / pieceRevenue) * 100)
+              : 0;
+
+          pieces.push({
+            unitId: getId(unit._id),
+            productId: getId(item.product),
+            productName:
+              item.name ||
+              item.product?.name ||
+              "Unknown Product",
+            sku:
+              item.variant?.sku ||
+              item.product?.sku ||
+              "",
+            pieceNumber: index + 1,
+            sellingPrice: pieceRevenue,
+            productCost: pieceProductCost,
+            smartUnitCost,
+            installationCost,
+            packagingCost,
+            totalCost,
+            profit,
+            margin,
+            manufacturingStatus:
+              unit.status || "not_started",
+          });
+        }
       }
 
-      smartUnitCost = roundMoney(
-        smartUnitCost,
-      );
+      if (pieces.length < quantity) {
+        for (
+          let index = pieces.length;
+          index < quantity;
+          index += 1
+        ) {
+          const totalCost = roundMoney(
+            unitProductCost,
+          );
 
-      installationCost = roundMoney(
-        installationCost,
-      );
+          const profit = roundMoney(
+            unitRevenue - totalCost,
+          );
 
-      packagingCost = roundMoney(
-        packagingCost,
-      );
+          const margin =
+            unitRevenue > 0
+              ? roundMoney((profit / unitRevenue) * 100)
+              : 0;
+
+          pieces.push({
+            unitId: null,
+            productId: getId(item.product),
+            productName:
+              item.name ||
+              item.product?.name ||
+              "Unknown Product",
+            sku:
+              item.variant?.sku ||
+              item.product?.sku ||
+              "",
+            pieceNumber: index + 1,
+            sellingPrice: unitRevenue,
+            productCost: unitProductCost,
+            smartUnitCost: 0,
+            installationCost: 0,
+            packagingCost: 0,
+            totalCost,
+            profit,
+            margin,
+            manufacturingStatus: "not_started",
+          });
+        }
+      }
+
+      let itemSmartUnitCost = 0;
+      let itemInstallationCost = 0;
+      let itemPackagingCost = 0;
+
+      for (const piece of pieces) {
+        itemSmartUnitCost += piece.smartUnitCost;
+        itemInstallationCost += piece.installationCost;
+        itemPackagingCost += piece.packagingCost;
+      }
+
+      itemSmartUnitCost = roundMoney(itemSmartUnitCost);
+      itemInstallationCost = roundMoney(itemInstallationCost);
+      itemPackagingCost = roundMoney(itemPackagingCost);
 
       const totalCost = roundMoney(
-        productCost +
-          smartUnitCost +
-          installationCost +
-          packagingCost,
+        productCostTotal +
+          itemSmartUnitCost +
+          itemInstallationCost +
+          itemPackagingCost,
       );
 
       const profit = roundMoney(
@@ -419,355 +487,210 @@ export const getFinanceDashboard = async ({
 
       const margin =
         revenue > 0
-          ? roundMoney(
-              (profit / revenue) * 100,
-            )
+          ? roundMoney((profit / revenue) * 100)
           : 0;
 
-      orderRevenue += revenue;
-      orderProductCost += productCost;
-      orderSmartUnitCost += smartUnitCost;
-      orderInstallationCost += installationCost;
-      orderPackagingCost += packagingCost;
-      orderTotalUnits += quantity;
-
       orderItems.push({
-        productId: getId(
-          item.product,
-        ),
-
+        productId: getId(item.product),
         productName:
           item.name ||
           item.product?.name ||
           "Unknown Product",
-
         sku:
           item.variant?.sku ||
           item.product?.sku ||
           "",
-
         quantity,
-
-        sellingPricePerUnit:
-          quantity > 0
-            ? roundMoney(
-                revenue / quantity,
-              )
-            : 0,
-
+        sellingPricePerUnit: unitRevenue,
         revenue,
-
-        productCost,
-
-        smartUnitCost,
-
-        installationCost,
-
-        packagingCost,
-
+        productCost: productCostTotal,
+        smartUnitCost: itemSmartUnitCost,
+        installationCost: itemInstallationCost,
+        packagingCost: itemPackagingCost,
         totalCost,
-
         profit,
-
         margin,
-
         manufacturingStatus:
-          manufacturing?.status ||
-          "not_started",
+          manufacturing?.status || "not_started",
+        pieces,
       });
+
+      orderRevenue = roundMoney(
+        orderRevenue + revenue,
+      );
+
+      orderProductCost = roundMoney(
+        orderProductCost + productCostTotal,
+      );
+
+      orderSmartUnitCost = roundMoney(
+        orderSmartUnitCost + itemSmartUnitCost,
+      );
+
+      orderInstallationCost = roundMoney(
+        orderInstallationCost + itemInstallationCost,
+      );
+
+      orderPackagingCost = roundMoney(
+        orderPackagingCost + itemPackagingCost,
+      );
+
+      orderTotalCost = roundMoney(
+        orderTotalCost + totalCost,
+      );
+
+      orderProfit = roundMoney(
+        orderProfit + profit,
+      );
     }
-
-    orderRevenue = roundMoney(
-      orderRevenue,
-    );
-
-    orderProductCost = roundMoney(
-      orderProductCost,
-    );
-
-    orderSmartUnitCost = roundMoney(
-      orderSmartUnitCost,
-    );
-
-    orderInstallationCost = roundMoney(
-      orderInstallationCost,
-    );
-
-    orderPackagingCost = roundMoney(
-      orderPackagingCost,
-    );
-
-    const orderTotalCost = roundMoney(
-      orderProductCost +
-        orderSmartUnitCost +
-        orderInstallationCost +
-        orderPackagingCost,
-    );
-
-    const orderProfit = roundMoney(
-      orderRevenue -
-        orderTotalCost,
-    );
 
     const orderMargin =
       orderRevenue > 0
         ? roundMoney(
-            (orderProfit / orderRevenue) *
-              100,
+            (orderProfit / orderRevenue) * 100,
           )
         : 0;
 
-    recognizedSales += orderRevenue;
+    totalConfirmedSales = roundMoney(
+      totalConfirmedSales + orderRevenue,
+    );
 
-    totalProductCost += orderProductCost;
-    totalSmartUnitCost += orderSmartUnitCost;
-    totalInstallationCost +=
-      orderInstallationCost;
-    totalPackagingCost +=
-      orderPackagingCost;
+    totalProductCost = roundMoney(
+      totalProductCost + orderProductCost,
+    );
 
-    totalUnitsSold += orderTotalUnits;
+    totalSmartUnitCost = roundMoney(
+      totalSmartUnitCost + orderSmartUnitCost,
+    );
+
+    totalInstallationCost = roundMoney(
+      totalInstallationCost + orderInstallationCost,
+    );
+
+    totalPackagingCost = roundMoney(
+      totalPackagingCost + orderPackagingCost,
+    );
+
+    totalDirectCost = roundMoney(
+      totalDirectCost + orderTotalCost,
+    );
+
+    totalProfit = roundMoney(
+      totalProfit + orderProfit,
+    );
 
     soldItems.push({
-      orderId: order._id,
-
+      orderId,
       orderNumber:
-        order.orderNumber,
-
-      orderDate:
-        order.createdAt,
-
-      orderStatus:
-        order.orderStatus,
-
-      customer:
-        getCustomerName(order),
-
-      customerEmail:
-        order.user?.email || "",
-
-      productCount:
-        orderItems.length,
-
-      totalQuantity:
-        orderTotalUnits,
-
-      revenue:
-        orderRevenue,
-
-      productCost:
-        orderProductCost,
-
-      smartUnitCost:
-        orderSmartUnitCost,
-
-      installationCost:
-        orderInstallationCost,
-
-      packagingCost:
-        orderPackagingCost,
-
-      totalCost:
-        orderTotalCost,
-
-      profit:
-        orderProfit,
-
-      margin:
-        orderMargin,
-
-      manufacturingStatus:
-        manufacturing?.status ||
-        "not_started",
-
-      items:
-        orderItems,
+        order.orderNumber ||
+        order._id?.toString() ||
+        "",
+      customerName: getCustomerName(order),
+      customerEmail: order.user?.email || "",
+      orderStatus: order.orderStatus,
+      createdAt: order.createdAt,
+      revenue: orderRevenue,
+      productCost: orderProductCost,
+      smartUnitCost: orderSmartUnitCost,
+      installationCost: orderInstallationCost,
+      packagingCost: orderPackagingCost,
+      totalCost: orderTotalCost,
+      profit: orderProfit,
+      margin: orderMargin,
+      items: orderItems,
     });
   }
 
-  recognizedSales = roundMoney(
-    recognizedSales,
+  const expenses = await FinanceExpense.find(
+    expenseDateMatch,
+  )
+    .populate("createdBy", "email")
+    .sort({
+      expenseDate: -1,
+      createdAt: -1,
+    })
+    .lean();
+
+  const businessExpenses = expenses.map((expense) => ({
+    id: getId(expense._id),
+    title: expense.title,
+    category: expense.category,
+    amount: roundMoney(expense.amount),
+    expenseDate: expense.expenseDate,
+    note: expense.note || "",
+    createdBy: expense.createdBy?.email || "",
+    createdAt: expense.createdAt,
+  }));
+
+  const totalBusinessExpenses = roundMoney(
+    businessExpenses.reduce(
+      (sum, expense) =>
+        sum + Number(expense.amount || 0),
+      0,
+    ),
   );
 
-  totalProductCost = roundMoney(
-    totalProductCost,
+  const netProfit = roundMoney(
+    totalProfit - totalBusinessExpenses,
   );
 
-  totalSmartUnitCost = roundMoney(
-    totalSmartUnitCost,
-  );
-
-  totalInstallationCost = roundMoney(
-    totalInstallationCost,
-  );
-
-  totalPackagingCost = roundMoney(
-    totalPackagingCost,
-  );
-
-  const totalDirectCost = roundMoney(
-    totalProductCost +
-      totalSmartUnitCost +
-      totalInstallationCost +
-      totalPackagingCost,
-  );
-
-  const profit = roundMoney(
-    recognizedSales -
-      totalDirectCost,
-  );
-
-  const profitMargin =
-    recognizedSales > 0
+  const totalProfitMargin =
+    totalConfirmedSales > 0
       ? roundMoney(
-          (profit / recognizedSales) *
-            100,
+          (totalProfit / totalConfirmedSales) * 100,
         )
       : 0;
 
-  const [
-    expenseRows,
-    recentExpenses,
-  ] = await Promise.all([
-    FinanceExpense.aggregate([
-      {
-        $match:
-          expenseDateMatch,
-      },
-
-      {
-        $group: {
-          _id: null,
-
-          total: {
-            $sum: "$amount",
-          },
-
-          count: {
-            $sum: 1,
-          },
-        },
-      },
-    ]),
-
-    FinanceExpense.find(
-      expenseDateMatch,
-    )
-      .populate(
-        "createdBy",
-        "email",
-      )
-      .sort({
-        expenseDate: -1,
-        createdAt: -1,
-      })
-      .limit(20)
-      .lean(),
-  ]);
+  const netProfitMargin =
+    totalConfirmedSales > 0
+      ? roundMoney(
+          (netProfit / totalConfirmedSales) * 100,
+        )
+      : 0;
 
   return {
-    currency:
-      process.env.FINANCE_CURRENCY ||
-      "EGP",
+    currency: "EGP",
 
     filters: {
-      from: from || null,
-      to: to || null,
+      from: from || "",
+      to: to || "",
     },
 
     financeRecognition: {
-      startsAt:
-        "confirmed",
-
-      includedStatuses:
+      recognizedOrderStatuses:
         FINANCE_RECOGNIZED_ORDER_STATUSES,
-
-      excludedStatuses: [
-        "pending",
-        "cancelled",
-      ],
     },
 
     overview: {
-      recognizedSales,
-
-      recognizedOrders:
-        recognizedOrders.length,
-
+      confirmedSales: totalConfirmedSales,
+      productCost: totalProductCost,
+      smartUnitCost: totalSmartUnitCost,
+      installationCost: totalInstallationCost,
+      packagingCost: totalPackagingCost,
       totalDirectCost,
-
-      profit,
-
-      profitMargin,
-
-      totalUnitsSold,
-
-      deliveredSales:
-        recognizedSales,
-
-      deliveredOrders:
-        recognizedOrders.length,
+      profit: totalProfit,
+      profitMargin: totalProfitMargin,
+      businessExpenses: totalBusinessExpenses,
+      netProfit,
+      netProfitMargin,
     },
 
     costBreakdown: {
-      productCost:
-        totalProductCost,
-
-      smartUnitCost:
-        totalSmartUnitCost,
-
-      installationCost:
-        totalInstallationCost,
-
-      packagingCost:
-        totalPackagingCost,
-
-      total:
-        totalDirectCost,
+      productCost: totalProductCost,
+      smartUnitCost: totalSmartUnitCost,
+      installationCost: totalInstallationCost,
+      packagingCost: totalPackagingCost,
+      totalDirectCost,
     },
 
     soldItems,
 
     businessExpenses: {
-      total:
-        roundMoney(
-          expenseRows[0]?.total,
-        ),
-
-      count:
-        Number(
-          expenseRows[0]?.count || 0,
-        ),
+      total: totalBusinessExpenses,
+      items: businessExpenses,
     },
 
-    recentExpenses:
-      recentExpenses.map(
-        (expense) => ({
-          _id:
-            expense._id,
-
-          title:
-            expense.title,
-
-          category:
-            expense.category,
-
-          amount:
-            roundMoney(
-              expense.amount,
-            ),
-
-          expenseDate:
-            expense.expenseDate,
-
-          note:
-            expense.note,
-
-          createdBy:
-            expense.createdBy?.email ||
-            "",
-        }),
-      ),
+    recentExpenses: businessExpenses.slice(0, 10),
   };
 };
 export const createFinanceExpense =
