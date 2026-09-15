@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
@@ -19,6 +19,8 @@ import {
 import { getAdminOrders } from "../../orders/services/orderApi.js";
 
 import api from "../../../lib/axios";
+
+import { useAuth } from "../../auth/context/AuthContext.jsx";
 
 const COLORS = {
   background: "#F8F5EF",
@@ -105,6 +107,10 @@ const formatPrice = (price) => {
 const AdminOrdersPage = () => {
   const { t } = useTranslation();
 
+  const { user } = useAuth();
+
+  const isSuperAdmin = user?.role?.name === "super_admin";
+
   const [orders, setOrders] = useState([]);
 
   const [loading, setLoading] = useState(true);
@@ -112,6 +118,8 @@ const AdminOrdersPage = () => {
   const [error, setError] = useState("");
 
   const [deletingOrderId, setDeletingOrderId] = useState("");
+
+  const [searchTerm, setSearchTerm] = useState("");
 
   const fetchOrders = async () => {
     try {
@@ -124,9 +132,7 @@ const AdminOrdersPage = () => {
     } catch (error) {
       console.error("Failed to fetch orders:", error);
 
-      setError(
-        error?.response?.data?.message || t("adminOrders.failedToLoad"),
-      );
+      setError(error?.response?.data?.message || t("adminOrders.failedToLoad"));
     } finally {
       setLoading(false);
     }
@@ -167,6 +173,46 @@ const AdminOrdersPage = () => {
       setDeletingOrderId("");
     }
   };
+
+  const filteredOrders = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    if (!normalizedSearch) {
+      return orders;
+    }
+
+    return orders.filter((order) => {
+      const customerName = [
+        order.shippingAddress?.firstName,
+        order.shippingAddress?.lastName,
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      const searchableValues = [
+        order.orderNumber,
+        order._id,
+        order.orderStatus,
+        order.paymentStatus,
+        order.paymentMethod,
+        order.user?.email,
+        order.user?.phone,
+        order.shippingAddress?.firstName,
+        order.shippingAddress?.lastName,
+        customerName,
+        order.shippingAddress?.phone,
+        order.shippingAddress?.address,
+        order.shippingAddress?.city,
+        order.shippingAddress?.country,
+      ];
+
+      return searchableValues.some((value) =>
+        String(value || "")
+          .toLowerCase()
+          .includes(normalizedSearch),
+      );
+    });
+  }, [orders, searchTerm]);
 
   if (loading) {
     return (
@@ -240,6 +286,7 @@ const AdminOrdersPage = () => {
             className="group inline-flex min-h-[48px] w-fit items-center justify-center gap-3 rounded-[13px] border border-champagne-gold/20 bg-soft-white/[0.05] px-5 text-[9px] font-semibold uppercase tracking-[0.12em] text-soft-white shadow-[0_10px_24px_rgba(0,0,0,0.12)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-champagne-gold/45 hover:bg-soft-white/[0.09]"
           >
             <FaRotate className="text-[11px] text-champagne-gold transition-transform duration-500 group-hover:rotate-180" />
+
             {t("adminOrders.refresh")}
           </button>
         </div>
@@ -287,6 +334,7 @@ const AdminOrdersPage = () => {
 
           <div className="relative mt-6 flex items-center gap-2">
             <span className="h-px w-6 bg-classic-gold/45" />
+
             <span className="h-px flex-1 bg-light-champagne" />
           </div>
         </div>
@@ -316,6 +364,7 @@ const AdminOrdersPage = () => {
 
           <div className="relative mt-6 flex items-center gap-2">
             <span className="h-px w-6 bg-classic-gold/45" />
+
             <span className="h-px flex-1 bg-light-champagne" />
           </div>
         </div>
@@ -345,6 +394,7 @@ const AdminOrdersPage = () => {
 
           <div className="relative mt-6 flex items-center gap-2">
             <span className="h-px w-6 bg-classic-gold/45" />
+
             <span className="h-px flex-1 bg-light-champagne" />
           </div>
         </div>
@@ -374,6 +424,7 @@ const AdminOrdersPage = () => {
 
           <div className="relative mt-6 flex items-center gap-2">
             <span className="h-px w-6 bg-classic-gold/45" />
+
             <span className="h-px flex-1 bg-light-champagne" />
           </div>
         </div>
@@ -382,29 +433,51 @@ const AdminOrdersPage = () => {
       <div className="relative overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85 shadow-[0_16px_50px_rgba(7,19,31,0.05)] backdrop-blur-sm">
         <div className="pointer-events-none absolute -right-28 -top-28 h-64 w-64 rounded-full bg-soft-cream blur-[80px]" />
 
-        <div className="relative flex flex-col gap-4 border-b border-light-champagne/80 px-6 py-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-midnight-navy text-[9px] text-champagne-gold shadow-[0_7px_18px_rgba(18,38,58,0.13)]">
-              ✦
-            </span>
+        <div className="relative border-b border-light-champagne/80 px-6 py-6">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-4">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-midnight-navy text-[9px] text-champagne-gold shadow-[0_7px_18px_rgba(18,38,58,0.13)]">
+                ✦
+              </span>
 
-            <div>
-              <h2 className="font-serif text-[1.35rem] font-normal text-midnight-navy">
-                {t("adminOrders.customerOrders")}
-              </h2>
+              <div>
+                <h2 className="font-serif text-[1.35rem] font-normal text-midnight-navy">
+                  {t("adminOrders.customerOrders")}
+                </h2>
 
-              <p className="mt-1 text-[9px] text-slate-gray">
-                {totalOrders}{" "}
-                {totalOrders === 1
-                  ? t("adminOrders.order")
-                  : t("adminOrders.orders")}{" "}
-                {t("adminOrders.inTotal")}
-              </p>
+                <p className="mt-1 text-[9px] text-slate-gray">
+                  {searchTerm.trim()
+                    ? `${filteredOrders.length} ${t(
+                        "adminOrders.searchResults",
+                      )}`
+                    : `${totalOrders} ${
+                        totalOrders === 1
+                          ? t("adminOrders.order")
+                          : t("adminOrders.orders")
+                      } ${t("adminOrders.inTotal")}`}
+                </p>
+              </div>
             </div>
-          </div>
 
-          <div className="text-[7px] font-semibold uppercase tracking-[0.25em] text-antique-gold">
-            {t("adminOrders.smartJewelry")}
+            <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center lg:w-auto">
+              <div className="relative w-full sm:w-[330px]">
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder={t("adminOrders.searchPlaceholder")}
+                  className="h-[44px] w-full rounded-full border border-light-champagne bg-warm-ivory/55 px-5 pr-11 text-[10px] text-midnight-navy outline-none transition-all placeholder:text-steel-gray/70 focus:border-classic-gold focus:bg-soft-white focus:ring-2 focus:ring-classic-gold/10"
+                />
+
+                <span className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-[16px] text-antique-gold">
+                  ⌕
+                </span>
+              </div>
+
+              <div className="shrink-0 text-[7px] font-semibold uppercase tracking-[0.25em] text-antique-gold">
+                {t("adminOrders.smartJewelry")}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -422,6 +495,22 @@ const AdminOrdersPage = () => {
 
             <p className="relative mt-3 max-w-sm text-[11px] leading-6 text-slate-gray">
               {t("adminOrders.noCustomerOrders")}
+            </p>
+          </div>
+        ) : filteredOrders.length === 0 ? (
+          <div className="relative flex min-h-[360px] flex-col items-center justify-center px-6 text-center">
+            <div className="pointer-events-none absolute left-1/2 top-1/2 h-[280px] w-[380px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-soft-cream blur-[85px]" />
+
+            <div className="relative flex h-16 w-16 items-center justify-center rounded-full border border-champagne-gold/25 bg-warm-ivory text-[17px] text-classic-gold shadow-[0_9px_24px_rgba(7,19,31,0.04)]">
+              ⌕
+            </div>
+
+            <h2 className="relative mt-6 font-serif text-[1.7rem] font-normal tracking-[-0.025em] text-midnight-navy">
+              {t("adminOrders.noMatchingOrders")}
+            </h2>
+
+            <p className="relative mt-3 max-w-sm text-[11px] leading-6 text-slate-gray">
+              {t("adminOrders.noMatchingOrdersDescription")}
             </p>
           </div>
         ) : (
@@ -464,7 +553,7 @@ const AdminOrdersPage = () => {
               </thead>
 
               <tbody className="divide-y divide-light-champagne/65">
-                {orders.map((order) => {
+                {filteredOrders.map((order) => {
                   const status =
                     orderStatusConfig[order.orderStatus] ||
                     orderStatusConfig.pending;
@@ -476,26 +565,24 @@ const AdminOrdersPage = () => {
                   const customerEmail =
                     order.user?.email || t("adminOrders.unknownCustomer");
 
-                  const customerName =
-                    [
-                      order.shippingAddress?.firstName,
-                      order.shippingAddress?.lastName,
-                    ]
-                      .filter(Boolean)
-                      .join(" ") || t("adminOrders.unknownCustomer");
+                  const customerName = [
+                    order.shippingAddress?.firstName,
+                    order.shippingAddress?.lastName,
+                  ]
+                    .filter(Boolean)
+                    .join(" ") || t("adminOrders.unknownCustomer");
 
                   const isDeleting = deletingOrderId === order._id;
 
                   return (
-     <tr
-  key={order._id}
-  className={`group transition-colors duration-300 ${
-    order.orderStatus === "pending"
-      ? "bg-[#12263A]/10 hover:bg-[#12263A]/20"
-      : "hover:bg-warm-ivory/55"
-  }`}
->
-
+                    <tr
+                      key={order._id}
+                      className={`group transition-colors duration-300 ${
+                        order.orderStatus === "pending"
+                          ? "bg-[#12263A]/10 hover:bg-[#12263A]/20"
+                          : "hover:bg-warm-ivory/55"
+                      }`}
+                    >
                       <td className="px-6 py-5">
                         <div>
                           <p className="font-serif text-[1rem] font-normal text-midnight-navy">
@@ -574,9 +661,7 @@ const AdminOrdersPage = () => {
                         >
                           <span className="text-[8px]">{status.icon}</span>
 
-                          {t(
-                            `adminOrders.orderStatuses.${status.label}`,
-                          )}
+                          {t(`adminOrders.orderStatuses.${status.label}`)}
                         </span>
                       </td>
 
@@ -593,21 +678,24 @@ const AdminOrdersPage = () => {
                             className="group/view inline-flex min-h-[38px] items-center justify-center gap-2.5 rounded-full bg-midnight-navy px-4 text-[7px] font-semibold uppercase tracking-[0.1em] text-soft-white shadow-[0_7px_18px_rgba(18,38,58,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-rich-navy hover:shadow-[0_10px_22px_rgba(18,38,58,0.18)]"
                           >
                             <FaEye className="text-[9px] text-champagne-gold transition-transform duration-300 group-hover/view:scale-110" />
+
                             {t("adminOrders.view")}
                           </Link>
 
-                          <button
-                            type="button"
-                            disabled={isDeleting}
-                            onClick={() => handleDeleteOrder(order)}
-                            className="group/delete inline-flex min-h-[38px] items-center justify-center gap-2.5 rounded-full border border-antique-gold/25 bg-soft-white px-4 text-[7px] font-semibold uppercase tracking-[0.1em] text-antique-gold transition-all duration-300 hover:-translate-y-0.5 hover:border-antique-gold/50 hover:bg-soft-cream hover:text-midnight-navy disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
-                          >
-                            <FaTrash className="text-[9px] transition-transform duration-300 group-hover/delete:scale-110" />
+                          {isSuperAdmin && (
+                            <button
+                              type="button"
+                              disabled={isDeleting}
+                              onClick={() => handleDeleteOrder(order)}
+                              className="group/delete inline-flex min-h-[38px] items-center justify-center gap-2.5 rounded-full border border-antique-gold/25 bg-soft-white px-4 text-[7px] font-semibold uppercase tracking-[0.1em] text-antique-gold transition-all duration-300 hover:-translate-y-0.5 hover:border-antique-gold/50 hover:bg-soft-cream hover:text-midnight-navy disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+                            >
+                              <FaTrash className="text-[9px] transition-transform duration-300 group-hover/delete:scale-110" />
 
-                            {isDeleting
-                              ? t("adminOrders.deleting")
-                              : t("adminOrders.delete")}
-                          </button>
+                              {isDeleting
+                                ? t("adminOrders.deleting")
+                                : t("adminOrders.delete")}
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

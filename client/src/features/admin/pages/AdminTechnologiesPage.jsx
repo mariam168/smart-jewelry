@@ -1,15 +1,23 @@
-import { useEffect, useState } from "react";
+
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+
+import { useAuth } from "../../auth/context/AuthContext.jsx";
 
 import { getTechnologies, deleteTechnology } from "../services/technologyApi";
 
 const AdminTechnologiesPage = () => {
   const { t } = useTranslation();
 
+  const { user } = useAuth();
+
+  const isSuperAdmin = user?.role?.name === "super_admin";
+
   const [technologies, setTechnologies] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const loadTechnologies = async () => {
     try {
@@ -34,6 +42,31 @@ const AdminTechnologiesPage = () => {
   useEffect(() => {
     loadTechnologies();
   }, []);
+
+  const filteredTechnologies = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    if (!normalizedSearch) {
+      return technologies;
+    }
+
+    return technologies.filter((technology) => {
+      const searchableValues = [
+        technology?.name,
+        technology?.code,
+        technology?.slug,
+        technology?._id,
+        technology?.description,
+        technology?.status,
+      ];
+
+      return searchableValues.some((value) =>
+        String(value ?? "")
+          .toLowerCase()
+          .includes(normalizedSearch),
+      );
+    });
+  }, [technologies, searchTerm]);
 
   const handleDelete = async (technologyId) => {
     const confirmed = window.confirm(
@@ -119,7 +152,9 @@ const AdminTechnologiesPage = () => {
               <div className="relative mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-champagne-gold/25 bg-soft-white shadow-[0_10px_26px_rgba(7,19,31,0.045)]">
                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-champagne-gold/30 border-t-classic-gold" />
 
-                <span className="absolute text-[6px] text-classic-gold">✦</span>
+                <span className="absolute text-[6px] text-classic-gold">
+                  ✦
+                </span>
               </div>
 
               <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-slate-gray">
@@ -155,6 +190,7 @@ const AdminTechnologiesPage = () => {
                 <span className="text-[17px] leading-none text-champagne-gold">
                   +
                 </span>
+
                 {t("adminTechnologies.addTechnology")}
               </Link>
             </div>
@@ -191,78 +227,134 @@ const AdminTechnologiesPage = () => {
               </div>
             </div>
 
-            <div className="relative overflow-x-auto">
-              <table className="w-full min-w-[680px]">
-                <thead>
-                  <tr className="border-b border-light-champagne/80 bg-warm-ivory/55">
-                    <th className="px-7 py-4.5 text-left text-[7px] font-semibold uppercase tracking-[0.2em] text-steel-gray">
-                      {t("adminTechnologies.technology")}
-                    </th>
-
-                    <th className="px-7 py-4.5 text-left text-[7px] font-semibold uppercase tracking-[0.2em] text-steel-gray">
-                      {t("adminTechnologies.code")}
-                    </th>
-
-                    <th className="px-7 py-4.5 text-right text-[7px] font-semibold uppercase tracking-[0.2em] text-steel-gray">
-                      {t("adminTechnologies.actions")}
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {technologies.map((technology, index) => (
-                    <tr
-                      key={technology._id}
-                      className="group border-b border-light-champagne/65 transition-all duration-200 last:border-0 hover:bg-warm-ivory/55"
+            <div className="relative border-b border-light-champagne/80 bg-soft-white/45 px-6 py-5 lg:px-8">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="relative w-full max-w-2xl">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                    <svg
+                      className="h-4 w-4 text-antique-gold"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.7"
                     >
-                      <td className="px-7 py-5">
-                        <div className="flex items-center gap-4">
-                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-champagne-gold/25 bg-soft-cream text-[10px] text-classic-gold transition-all duration-300 group-hover:border-champagne-gold/55 group-hover:bg-soft-white group-hover:shadow-[0_7px_18px_rgba(7,19,31,0.04)]">
-                            ✦
-                          </div>
+                      <circle cx="11" cy="11" r="7" />
+                      <path d="m20 20-3.5-3.5" />
+                    </svg>
+                  </div>
 
-                          <div>
-                            <p className="text-[12px] font-semibold text-midnight-navy">
-                              {technology.name}
-                            </p>
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                    placeholder={t(
+                      "adminTechnologies.searchPlaceholder",
+                    )}
+                    className="h-12 w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 pl-11 pr-4 text-[10px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray focus:border-champagne-gold focus:bg-soft-white focus:ring-2 focus:ring-champagne-gold/10"
+                  />
+                </div>
 
-                            <p className="mt-1 text-[8px] uppercase tracking-[0.1em] text-steel-gray">
-                              {t("adminTechnologies.technologyNumber", {
-                                number: String(index + 1).padStart(2, "0"),
-                              })}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="px-7 py-5">
-                        <span className="inline-flex rounded-full border border-champagne-gold/25 bg-warm-ivory/80 px-4 py-2 font-mono text-[9px] font-semibold tracking-[0.12em] text-antique-gold">
-                          {technology.code}
-                        </span>
-                      </td>
-
-                      <td className="px-7 py-5">
-                        <div className="flex items-center justify-end gap-2.5">
-                          <Link
-                            to={`/admin/technologies/${technology._id}/edit`}
-                            className="inline-flex min-h-[38px] items-center justify-center rounded-full border border-light-champagne bg-soft-white px-4 text-[8px] font-semibold uppercase tracking-[0.12em] text-slate-gray transition-all duration-300 hover:border-champagne-gold hover:bg-warm-ivory hover:text-midnight-navy"
-                          >
-                            {t("adminTechnologies.edit")}
-                          </Link>
-
-                          <button
-                            onClick={() => handleDelete(technology._id)}
-                            className="inline-flex min-h-[38px] items-center justify-center rounded-full border border-antique-gold/20 bg-transparent px-4 text-[8px] font-semibold uppercase tracking-[0.12em] text-antique-gold transition-all duration-300 hover:border-antique-gold/40 hover:bg-soft-cream hover:text-midnight-navy"
-                          >
-                            {t("adminTechnologies.delete")}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                {searchTerm.trim() && (
+                  <span className="text-[8px] font-semibold uppercase tracking-[0.12em] text-slate-gray">
+                    {filteredTechnologies.length}{" "}
+                    {t("adminTechnologies.searchResults")}
+                  </span>
+                )}
+              </div>
             </div>
+
+            {searchTerm.trim() && filteredTechnologies.length === 0 ? (
+              <div className="relative z-10 px-6 py-16 text-center">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-champagne-gold/25 bg-warm-ivory text-[17px] text-classic-gold">
+                  ✦
+                </div>
+
+                <h2 className="mt-6 font-serif text-[2rem] font-normal text-midnight-navy">
+                  {t("adminTechnologies.noMatchingTechnologies")}
+                </h2>
+
+                <p className="mx-auto mt-3 max-w-md text-[11px] leading-6 text-slate-gray">
+                  {t(
+                    "adminTechnologies.noMatchingTechnologiesDescription",
+                  )}
+                </p>
+              </div>
+            ) : (
+              <div className="relative overflow-x-auto">
+                <table className="w-full min-w-[680px]">
+                  <thead>
+                    <tr className="border-b border-light-champagne/80 bg-warm-ivory/55">
+                      <th className="px-7 py-4.5 text-left text-[7px] font-semibold uppercase tracking-[0.2em] text-steel-gray">
+                        {t("adminTechnologies.technology")}
+                      </th>
+
+                      <th className="px-7 py-4.5 text-left text-[7px] font-semibold uppercase tracking-[0.2em] text-steel-gray">
+                        {t("adminTechnologies.code")}
+                      </th>
+
+                      <th className="px-7 py-4.5 text-right text-[7px] font-semibold uppercase tracking-[0.2em] text-steel-gray">
+                        {t("adminTechnologies.actions")}
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {filteredTechnologies.map((technology, index) => (
+                      <tr
+                        key={technology._id}
+                        className="group border-b border-light-champagne/65 transition-all duration-200 last:border-0 hover:bg-warm-ivory/55"
+                      >
+                        <td className="px-7 py-5">
+                          <div className="flex items-center gap-4">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-champagne-gold/25 bg-soft-cream text-[10px] text-classic-gold transition-all duration-300 group-hover:border-champagne-gold/55 group-hover:bg-soft-white group-hover:shadow-[0_7px_18px_rgba(7,19,31,0.04)]">
+                              ✦
+                            </div>
+
+                            <div>
+                              <p className="text-[12px] font-semibold text-midnight-navy">
+                                {technology.name}
+                              </p>
+
+                              <p className="mt-1 text-[8px] uppercase tracking-[0.1em] text-steel-gray">
+                                {t("adminTechnologies.technologyNumber", {
+                                  number: String(index + 1).padStart(2, "0"),
+                                })}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="px-7 py-5">
+                          <span className="inline-flex rounded-full border border-champagne-gold/25 bg-warm-ivory/80 px-4 py-2 font-mono text-[9px] font-semibold tracking-[0.12em] text-antique-gold">
+                            {technology.code}
+                          </span>
+                        </td>
+
+                        <td className="px-7 py-5">
+                          <div className="flex items-center justify-end gap-2.5">
+                            <Link
+                              to={`/admin/technologies/${technology._id}/edit`}
+                              className="inline-flex min-h-[38px] items-center justify-center rounded-full border border-light-champagne bg-soft-white px-4 text-[8px] font-semibold uppercase tracking-[0.12em] text-slate-gray transition-all duration-300 hover:border-champagne-gold hover:bg-warm-ivory hover:text-midnight-navy"
+                            >
+                              {t("adminTechnologies.edit")}
+                            </Link>
+
+                            {isSuperAdmin && (
+                              <button
+                                onClick={() => handleDelete(technology._id)}
+                                className="inline-flex min-h-[38px] items-center justify-center rounded-full border border-antique-gold/20 bg-transparent px-4 text-[8px] font-semibold uppercase tracking-[0.12em] text-antique-gold transition-all duration-300 hover:border-antique-gold/40 hover:bg-soft-cream hover:text-midnight-navy"
+                              >
+                                {t("adminTechnologies.delete")}
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             <div className="relative flex items-center justify-center gap-3 border-t border-light-champagne/70 px-6 py-4">
               <span className="h-px w-8 bg-classic-gold/30" />

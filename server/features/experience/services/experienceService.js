@@ -1257,3 +1257,20 @@ export const deleteExperienceMedia = async (mediaId) => {
 
   return media;
 };
+export const deleteVideoUploadRequest = async (
+  requestId,
+) => {
+  const request =
+    await VideoUploadRequest.findByIdAndDelete(
+      requestId,
+    );
+
+  if (!request) {
+    throw createError(
+      "Video upload request not found",
+      404,
+    );
+  }
+
+  return request;
+};

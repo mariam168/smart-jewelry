@@ -1,8 +1,11 @@
-import { Fragment, useEffect, useState } from "react";
+
+import { Fragment, useEffect, useMemo, useState } from "react";
 
 import { Link } from "react-router-dom";
 
 import { useTranslation } from "react-i18next";
+
+import { useAuth } from "../../../auth/context/AuthContext";
 
 import {
   getSmartUnits,
@@ -14,6 +17,10 @@ import {
 
 const AdminSmartUnitsPage = () => {
   const { t } = useTranslation();
+
+  const { user } = useAuth();
+
+  const isSuperAdmin = user?.role?.name === "super_admin";
 
   const [smartUnits, setSmartUnits] = useState([]);
 
@@ -28,6 +35,8 @@ const AdminSmartUnitsPage = () => {
   const [loadingInstances, setLoadingInstances] = useState({});
 
   const [instanceErrors, setInstanceErrors] = useState({});
+
+  const [searchTerm, setSearchTerm] = useState("");
 
   // =============================
   // Instance Modal
@@ -166,8 +175,7 @@ const AdminSmartUnitsPage = () => {
       setSmartUnits((previous) => previous.filter((item) => item._id !== id));
     } catch (error) {
       alert(
-        error?.response?.data?.message ||
-          t("adminSmartUnits.deleteFailed"),
+        error?.response?.data?.message || t("adminSmartUnits.deleteFailed"),
       );
     }
   };
@@ -197,6 +205,7 @@ const AdminSmartUnitsPage = () => {
 
     setShowInstanceModal(false);
   };
+
   // =============================
   // Update Instance
   // =============================
@@ -223,8 +232,7 @@ const AdminSmartUnitsPage = () => {
       console.error("Update Instance Error:", error);
 
       alert(
-        error?.response?.data?.message ||
-          t("adminSmartUnits.updateFailed"),
+        error?.response?.data?.message || t("adminSmartUnits.updateFailed"),
       );
     }
   };
@@ -277,32 +285,25 @@ const AdminSmartUnitsPage = () => {
   const getStatusStyle = (status) => {
     switch (status) {
       case "available":
-        return;
-        "border-[#B8D8C0] bg-[#EEF8F0] text-[#467454]";
+        return "border-[#B8D8C0] bg-[#EEF8F0] text-[#467454]";
 
       case "reserved":
-        return;
-        "border-[#E5D3A7] bg-[#FBF6E9] text-[#8A6A2F]";
+        return "border-[#E5D3A7] bg-[#FBF6E9] text-[#8A6A2F]";
 
       case "assigned":
-        return;
-        "border-[#BFD1E8] bg-[#EEF4FB] text-[#4D6F99]";
+        return "border-[#BFD1E8] bg-[#EEF4FB] text-[#4D6F99]";
 
       case "activated":
-        return;
-        "border-[#D8C7E8] bg-[#F6F0FA] text-[#79538F]";
+        return "border-[#D8C7E8] bg-[#F6F0FA] text-[#79538F]";
 
       case "inactive":
-        return;
-        "border-[#D9D5D0] bg-[#F4F2F0] text-[#77716A]";
+        return "border-[#D9D5D0] bg-[#F4F2F0] text-[#77716A]";
 
       case "damaged":
-        return;
-        "border-[#E7C1C1] bg-[#FCF0F0] text-[#A65353]";
+        return "border-[#E7C1C1] bg-[#FCF0F0] text-[#A65353]";
 
       default:
-        return;
-        "border-light-champagne bg-warm-ivory text-slate-gray";
+        return "border-light-champagne bg-warm-ivory text-slate-gray";
     }
   };
 
@@ -325,6 +326,49 @@ const AdminSmartUnitsPage = () => {
       damaged: list.filter((item) => item.status === "damaged").length,
     };
   };
+
+  const filteredSmartUnits = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    if (!normalizedSearch) {
+      return smartUnits;
+    }
+
+    return smartUnits.filter((smartUnit) => {
+      const searchableValues = [
+        smartUnit?.name,
+        smartUnit?.description,
+        smartUnit?.manufacturer,
+        smartUnit?.notes,
+        smartUnit?.status,
+        smartUnit?.costPrice,
+        smartUnit?.stock,
+        smartUnit?.productionDate,
+        smartUnit?._id,
+        smartUnit?.technologyModel?.modelName,
+        smartUnit?.technologyModel?.name,
+        smartUnit?.technologyModel?.slug,
+        smartUnit?.technologyModel?.modelName?.en,
+        smartUnit?.technologyModel?.modelName?.ar,
+        smartUnit?.technologyModel?.name?.en,
+        smartUnit?.technologyModel?.name?.ar,
+      ];
+
+      return searchableValues.some((value) => {
+        if (value === null || value === undefined) {
+          return false;
+        }
+
+        if (typeof value === "object") {
+          return Object.values(value).some((nestedValue) =>
+            String(nestedValue).toLowerCase().includes(normalizedSearch),
+          );
+        }
+
+        return String(value).toLowerCase().includes(normalizedSearch);
+      });
+    });
+  }, [smartUnits, searchTerm]);
 
   return (
     <div
@@ -428,6 +472,62 @@ const AdminSmartUnitsPage = () => {
             {error}
           </div>
         )}
+
+        <div
+          className="
+          mb-6
+          rounded-2xl
+          border
+          border-light-champagne
+          bg-soft-white
+          p-5
+        "
+        >
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex-1">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder={t("adminSmartUnits.searchPlaceholder")}
+                className="
+                  w-full
+                  rounded-xl
+                  border
+                  border-light-champagne
+                  bg-white
+                  px-5
+                  py-3
+                  text-sm
+                  outline-none
+                  transition
+                  focus:border-antique-gold
+                  focus:ring-2
+                  focus:ring-antique-gold/10
+                "
+              />
+            </div>
+
+            {searchTerm.trim() && (
+              <div
+                className="
+                rounded-xl
+                border
+                border-light-champagne
+                bg-warm-ivory
+                px-4
+                py-3
+                text-xs
+                text-slate-gray
+              "
+              >
+                {filteredSmartUnits.length}{" "}
+                {t("adminSmartUnits.searchResults")}
+              </div>
+            )}
+          </div>
+        </div>
+
         {isLoading ? (
           <div
             className="
@@ -438,6 +538,29 @@ const AdminSmartUnitsPage = () => {
           "
           >
             {t("adminSmartUnits.loadingSmartUnits")}
+          </div>
+        ) : filteredSmartUnits.length === 0 ? (
+          <div
+            className="
+            rounded-3xl
+            border
+            border-light-champagne
+            bg-white
+            p-20
+            text-center
+          "
+          >
+            <p className="font-serif text-2xl text-midnight-navy">
+              {searchTerm.trim()
+                ? t("adminSmartUnits.noMatchingSmartUnits")
+                : t("adminSmartUnits.noSmartUnits")}
+            </p>
+
+            <p className="mt-3 text-sm text-slate-gray">
+              {searchTerm.trim()
+                ? t("adminSmartUnits.noMatchingSmartUnitsDescription")
+                : t("adminSmartUnits.noSmartUnitsDescription")}
+            </p>
           </div>
         ) : (
           <div
@@ -519,7 +642,7 @@ const AdminSmartUnitsPage = () => {
               </thead>
 
               <tbody>
-                {smartUnits.map((smartUnit) => (
+                {filteredSmartUnits.map((smartUnit) => (
                   <Fragment key={smartUnit._id}>
                     <tr
                       className="
@@ -639,12 +762,9 @@ const AdminSmartUnitsPage = () => {
                                 ${getStatusStyle(smartUnit.status)}
                               `}
                         >
-                          {t(
-                            `adminSmartUnits.statuses.${smartUnit.status}`,
-                            {
-                              defaultValue: smartUnit.status,
-                            },
-                          )}
+                          {t(`adminSmartUnits.statuses.${smartUnit.status}`, {
+                            defaultValue: smartUnit.status,
+                          })}
                         </span>
                       </td>
 
@@ -675,9 +795,10 @@ const AdminSmartUnitsPage = () => {
                             {t("adminSmartUnits.edit")}
                           </Link>
 
-                          <button
-                            onClick={() => handleDelete(smartUnit._id)}
-                            className="
+                          {isSuperAdmin && (
+                            <button
+                              onClick={() => handleDelete(smartUnit._id)}
+                              className="
                                   rounded-lg
                                   border
                                   border-red-200
@@ -686,9 +807,10 @@ const AdminSmartUnitsPage = () => {
                                   text-xs
                                   text-red-600
                                 "
-                          >
-                            {t("adminSmartUnits.delete")}
-                          </button>
+                            >
+                              {t("adminSmartUnits.delete")}
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -743,8 +865,7 @@ const AdminSmartUnitsPage = () => {
                                         text-2xl
                                       "
                                 >
-                                  {smartUnit.name}{" "}
-                                  {t("adminSmartUnits.units")}
+                                  {smartUnit.name} {t("adminSmartUnits.units")}
                                 </h3>
                               </div>
 
@@ -762,6 +883,7 @@ const AdminSmartUnitsPage = () => {
                                 {t("adminSmartUnits.devices")}
                               </div>
                             </div>
+
                             {loadingInstances[smartUnit._id] ? (
                               <div
                                 className="
@@ -906,7 +1028,9 @@ const AdminSmartUnitsPage = () => {
                                                     text-slate-gray
                                                   "
                                           >
-                                            {t("adminSmartUnits.uniqueCode")}
+                                            {t(
+                                              "adminSmartUnits.uniqueCode",
+                                            )}
                                           </span>
 
                                           <span
@@ -990,11 +1114,12 @@ const AdminSmartUnitsPage = () => {
                                           {t("adminSmartUnits.edit")}
                                         </button>
 
-                                        <button
-                                          onClick={() =>
-                                            handleDeleteInstance(instance)
-                                          }
-                                          className="
+                                        {isSuperAdmin && (
+                                          <button
+                                            onClick={() =>
+                                              handleDeleteInstance(instance)
+                                            }
+                                            className="
                                                     flex-1
                                                     rounded-lg
                                                     border
@@ -1005,9 +1130,10 @@ const AdminSmartUnitsPage = () => {
                                                     text-xs
                                                     text-red-600
                                                   "
-                                        >
-                                          {t("adminSmartUnits.delete")}
-                                        </button>
+                                          >
+                                            {t("adminSmartUnits.delete")}
+                                          </button>
+                                        )}
                                       </div>
                                     </div>
                                   ),

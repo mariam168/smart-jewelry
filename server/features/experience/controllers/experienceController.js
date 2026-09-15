@@ -16,6 +16,7 @@ import {
   requestVideoUploadAccess,
   getAllVideoUploadRequests,
   updateVideoUploadRequest,
+  deleteVideoUploadRequest,
 } from "../services/experienceService.js";
 
 const getCurrentUserId = (
@@ -501,6 +502,26 @@ export const updateMediaLimitsController =
 
         data:
           limits,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+  export const deleteAdminVideoUploadRequestController =
+  async (
+    req,
+    res,
+    next,
+  ) => {
+    try {
+      await deleteVideoUploadRequest(
+        req.params.requestId,
+      );
+
+      return res.status(200).json({
+        success: true,
+        message:
+          "Video upload request deleted successfully.",
       });
     } catch (error) {
       next(error);

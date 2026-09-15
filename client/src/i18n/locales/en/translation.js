@@ -625,6 +625,10 @@ const en = {
     },
   },
   adminOrders: {
+      "searchPlaceholder": "Search by order number, customer name ",
+  "searchResults": "results",
+  "noMatchingOrders": "No matching orders",
+  "noMatchingOrdersDescription": "Try another search term.",
     loading: "Loading orders...",
     management: "Management",
     orders: "Orders",
@@ -844,6 +848,12 @@ const en = {
   }
 },
 "adminManufacturingOrders": {
+    "searchPlaceholder": "Search by order number, product, SKU, smart unit, or status...",
+  "searchResults": "results",
+  "ordersFound": "orders found",
+  "noMatchingOrders": "No matching manufacturing orders",
+  "noMatchingOrdersDescription": "Try another search term.",
+
   "loading": "Loading manufacturing orders...",
   "production": "Production",
   "manufacturingOrders": "Manufacturing Orders",
@@ -1536,6 +1546,13 @@ const en = {
     "edit": "Edit"
   },
   "adminExperienceMediaSettings": {
+    "videoUploadRequestDeleted": "Video upload request deleted.",
+    "searchResults": "Search results",
+    "searchVideoRequests": "Search video upload requests",
+    "noMatchingVideoRequestsDescription": "No matching video upload requests.",
+    "noMatchingVideoRequests": "No matching video upload requests.",
+    "delete": "Delete",
+    "confirmDeleteRequest": "Are you sure you want to delete this video upload request? This cannot be undone.",
     "failedToLoadMediaControls": "Failed to load experience media controls.",
     "mediaLimitsUpdatedSuccessfully": "Media limits updated successfully.",
     "failedToUpdateMediaLimits": "Failed to update media limits.",
@@ -1589,6 +1606,12 @@ const en = {
     }
   },
    "adminCategories": {
+    
+  "searchPlaceholder": "Search by category name, slug, or description...",
+  "searchResults": "results",
+  "noMatchingCategories": "No matching categories",
+  "noMatchingCategoriesDescription": "Try another search term.",
+
     "categories": "Categories",
     "manageProductCategories": "Manage your product categories.",
     "addCategory": "Add Category",
@@ -1676,6 +1699,11 @@ const en = {
     "failedToUpdateCategory": "Failed to update category."
   },
   "adminProducts": {
+     "searchPlaceholder": "Search by product name, SKU, category, technology, price, stock, or status...",
+  "searchResults": "results",
+  "productsFound": "products found",
+  "noMatchingProducts": "No matching products",
+  "noMatchingProductsDescription": "Try another search term.",
     "administration": "Administration",
     "products": "Products",
     "manageJewelryCollection": "Manage your jewelry collection",
@@ -2052,6 +2080,12 @@ const en = {
     "updateVariant": "Update Variant"
   },
    "adminSmartUnits": {
+     "smartUnitCollection": "Smart Unit Collection",
+  "searchPlaceholder": "Search by name, description, manufacturer, technology, cost, stock, or status...",
+  "searchResults": "results",
+  "unitsFound": "smart units found",
+  "noMatchingSmartUnits": "No matching smart units",
+  "noMatchingSmartUnitsDescription": "Try another search term.",
     "failedToLoadSmartUnits": "Failed to load Smart Units.",
     "failedToLoadInstances": "Failed to load instances.",
     "deleteSmartUnitConfirmation": "Delete this Smart Unit?",
@@ -2169,6 +2203,10 @@ const en = {
     }
   },
    "adminTechnologyModels": {
+    "searchPlaceholder": "Search by technology, model name, code, manufacturer, description, or status...",
+"searchResults": "results",
+"noMatchingTechnologyModels": "No matching technology models",
+"noMatchingTechnologyModelsDescription": "Try another search term.",
     "failedToLoadTechnologyModels": "Failed to load technology models.",
     "deleteConfirmation": "Are you sure you want to delete this technology model?",
     "failedToDeleteTechnologyModel": "Failed to delete technology model.",
@@ -2286,6 +2324,10 @@ const en = {
     "updating": "Updating..."
   },
    "adminTechnologies": {
+      "searchPlaceholder": "Search by technology name, code, slug, description, or status...",
+  "searchResults": "results",
+  "noMatchingTechnologies": "No matching technologies",
+  "noMatchingTechnologiesDescription": "Try another search term.",
     "failedToLoadTechnologies": "Failed to load technologies.",
     "deleteConfirmation": "Are you sure you want to delete this technology?",
     "failedToDeleteTechnology": "Failed to delete technology.",

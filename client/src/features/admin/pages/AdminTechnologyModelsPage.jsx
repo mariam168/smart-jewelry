@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Link } from "react-router-dom";
 
 import { useTranslation } from "react-i18next";
+
+import { useAuth } from "../../auth/context/AuthContext.jsx";
 
 import {
   getTechnologyModels,
@@ -46,16 +48,21 @@ const getImageUrl = (image) => {
 const AdminTechnologyModelsPage = () => {
   const { t } = useTranslation();
 
+  const { user } = useAuth();
+
+  const isSuperAdmin = user?.role?.name === "super_admin";
+
   const [technologyModels, setTechnologyModels] = useState([]);
 
   const [isLoading, setIsLoading] = useState(true);
 
   const [error, setError] = useState("");
 
+  const [searchTerm, setSearchTerm] = useState("");
+
   const loadTechnologyModels = async () => {
     try {
       setIsLoading(true);
-
       setError("");
 
       const response = await getTechnologyModels();
@@ -76,6 +83,37 @@ const AdminTechnologyModelsPage = () => {
   useEffect(() => {
     loadTechnologyModels();
   }, []);
+
+  const filteredTechnologyModels = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    if (!normalizedSearch) {
+      return technologyModels;
+    }
+
+    return technologyModels.filter((model) => {
+      const searchableValues = [
+        model?.modelName,
+        model?.modelCode,
+        model?.manufacturer,
+        model?.description,
+        model?.status,
+        model?.technology?.name,
+        model?.technology?.slug,
+        model?.technology?.modelName,
+        model?._id,
+        model?.requiresBattery ? "battery" : "",
+        model?.requiresActivation ? "activation" : "",
+        model?.requiresSubscription ? "subscription" : "",
+      ];
+
+      return searchableValues.some((value) =>
+        String(value ?? "")
+          .toLowerCase()
+          .includes(normalizedSearch),
+      );
+    });
+  }, [technologyModels, searchTerm]);
 
   const handleDelete = async (id) => {
     const confirmed = window.confirm(
@@ -212,168 +250,224 @@ const AdminTechnologyModelsPage = () => {
               </div>
             </div>
 
-            <div className="relative z-10 overflow-x-auto">
-              <table className="w-full min-w-[1150px]">
-                <thead className="border-b border-light-champagne/80 bg-warm-ivory/55">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                      {t("adminTechnologyModels.image")}
-                    </th>
-
-                    <th className="px-6 py-4 text-left text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                      {t("adminTechnologyModels.technology")}
-                    </th>
-
-                    <th className="px-6 py-4 text-left text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                      {t("adminTechnologyModels.modelName")}
-                    </th>
-
-                    <th className="px-6 py-4 text-left text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                      {t("adminTechnologyModels.modelCode")}
-                    </th>
-
-                    <th className="px-6 py-4 text-left text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                      {t("adminTechnologyModels.manufacturer")}
-                    </th>
-
-                    <th className="px-6 py-4 text-center text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                      {t("adminTechnologyModels.battery")}
-                    </th>
-
-                    <th className="px-6 py-4 text-center text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                      {t("adminTechnologyModels.activation")}
-                    </th>
-
-                    <th className="px-6 py-4 text-center text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                      {t("adminTechnologyModels.subscription")}
-                    </th>
-
-                    <th className="px-6 py-4 text-center text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                      {t("adminTechnologyModels.status")}
-                    </th>
-
-                    <th className="px-6 py-4 text-left text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
-                      {t("adminTechnologyModels.actions")}
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody className="divide-y divide-light-champagne/65">
-                  {technologyModels.map((model) => (
-                    <tr
-                      key={model._id}
-                      className="group transition-colors duration-300 hover:bg-warm-ivory/55"
+            <div className="relative z-10 border-b border-light-champagne/80 bg-soft-white/50 px-7 py-6 sm:px-10">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="relative w-full max-w-2xl">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                    <svg
+                      className="h-4 w-4 text-antique-gold"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.7"
                     >
-                      <td className="px-6 py-5">
-                        {model.image ? (
-                          <div className="relative h-16 w-16 overflow-hidden rounded-[15px] border border-light-champagne/80 bg-soft-cream">
-                            <img
-                              src={getImageUrl(model.image)}
-                              alt={model.modelName}
-                              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                            />
-                          </div>
-                        ) : (
-                          <div className="flex h-16 w-16 items-center justify-center rounded-[15px] border border-light-champagne/80 bg-soft-cream text-[8px] text-steel-gray">
-                            {t("adminTechnologyModels.noImage")}
-                          </div>
-                        )}
-                      </td>
+                      <circle cx="11" cy="11" r="7" />
+                      <path d="m20 20-3.5-3.5" />
+                    </svg>
+                  </div>
 
-                      <td className="px-6 py-5">
-                        <div className="inline-flex items-center rounded-full border border-champagne-gold/25 bg-warm-ivory/80 px-3 py-1.5">
-                          <span className="mr-2 h-1.5 w-1.5 rounded-full bg-classic-gold" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                    placeholder={t(
+                      "adminTechnologyModels.searchPlaceholder",
+                    )}
+                    className="h-12 w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 pl-11 pr-4 text-[10px] text-midnight-navy outline-none transition-all duration-300 placeholder:text-steel-gray focus:border-champagne-gold focus:bg-soft-white focus:ring-2 focus:ring-champagne-gold/10"
+                  />
+                </div>
 
-                          <span className="text-[8px] font-semibold uppercase text-antique-gold">
-                            {model.technology?.name || "-"}
-                          </span>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-5">
-                        <p className="font-serif text-[1rem] text-midnight-navy">
-                          {model.modelName}
-                        </p>
-
-                        {model.description && (
-                          <p className="mt-1 max-w-[220px] truncate text-[8px] text-slate-gray">
-                            {model.description}
-                          </p>
-                        )}
-                      </td>
-
-                      <td className="px-6 py-5">
-                        <span className="rounded-full border border-light-champagne bg-warm-ivory/80 px-3 py-1.5 font-mono text-[8px] font-semibold uppercase tracking-[0.12em] text-slate-gray">
-                          {model.modelCode}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-5">
-                        <span className="text-[9px] text-slate-gray">
-                          {model.manufacturer || "-"}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-5 text-center">
-                        {model.requiresBattery ? "✓" : "—"}
-                      </td>
-
-                      <td className="px-6 py-5 text-center">
-                        {model.requiresActivation ? "✓" : "—"}
-                      </td>
-
-                      <td className="px-6 py-5 text-center">
-                        {model.requiresSubscription ? "✓" : "—"}
-                      </td>
-
-                      <td className="px-6 py-5 text-center">
-                        <span
-                          className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[7px] font-semibold uppercase ${
-                            model.status === "active"
-                              ? "border-classic-gold/25 bg-soft-cream text-antique-gold"
-                              : "border-antique-gold/20 bg-warm-ivory text-antique-gold"
-                          }`}
-                        >
-                          <span
-                            className={`h-1.5 w-1.5 rounded-full ${
-                              model.status === "active"
-                                ? "bg-classic-gold"
-                                : "bg-antique-gold"
-                            }`}
-                          />
-
-                          {t(
-                            `adminTechnologyModels.statuses.${model.status}`,
-                            {
-                              defaultValue: model.status,
-                            },
-                          )}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-2">
-                          <Link
-                            to={`/admin/technology-models/${model._id}/edit`}
-                            className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-light-champagne bg-soft-white px-4 text-[7px] font-semibold uppercase tracking-[0.1em] text-slate-gray transition-all hover:border-champagne-gold hover:bg-warm-ivory"
-                          >
-                            {t("adminTechnologyModels.edit")}
-                          </Link>
-
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(model._id)}
-                            className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-antique-gold/20 bg-soft-white px-4 text-[7px] font-semibold uppercase tracking-[0.1em] text-antique-gold transition-all hover:bg-soft-cream"
-                          >
-                            {t("adminTechnologyModels.delete")}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                {searchTerm.trim() && (
+                  <span className="text-[8px] font-semibold uppercase tracking-[0.12em] text-slate-gray">
+                    {filteredTechnologyModels.length}{" "}
+                    {t("adminTechnologyModels.searchResults")}
+                  </span>
+                )}
+              </div>
             </div>
+
+            {searchTerm.trim() && filteredTechnologyModels.length === 0 ? (
+              <div className="relative z-10 px-6 py-16 text-center">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-champagne-gold/25 bg-warm-ivory text-[17px] text-classic-gold">
+                  ✦
+                </div>
+
+                <h2 className="mt-6 font-serif text-[2rem] font-normal text-midnight-navy">
+                  {t("adminTechnologyModels.noMatchingTechnologyModels")}
+                </h2>
+
+                <p className="mx-auto mt-3 max-w-md text-[11px] leading-6 text-slate-gray">
+                  {t(
+                    "adminTechnologyModels.noMatchingTechnologyModelsDescription",
+                  )}
+                </p>
+              </div>
+            ) : (
+              <div className="relative z-10 overflow-x-auto">
+                <table className="w-full min-w-[1150px]">
+                  <thead className="border-b border-light-champagne/80 bg-warm-ivory/55">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
+                        {t("adminTechnologyModels.image")}
+                      </th>
+
+                      <th className="px-6 py-4 text-left text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
+                        {t("adminTechnologyModels.technology")}
+                      </th>
+
+                      <th className="px-6 py-4 text-left text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
+                        {t("adminTechnologyModels.modelName")}
+                      </th>
+
+                      <th className="px-6 py-4 text-left text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
+                        {t("adminTechnologyModels.modelCode")}
+                      </th>
+
+                      <th className="px-6 py-4 text-left text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
+                        {t("adminTechnologyModels.manufacturer")}
+                      </th>
+
+                      <th className="px-6 py-4 text-center text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
+                        {t("adminTechnologyModels.battery")}
+                      </th>
+
+                      <th className="px-6 py-4 text-center text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
+                        {t("adminTechnologyModels.activation")}
+                      </th>
+
+                      <th className="px-6 py-4 text-center text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
+                        {t("adminTechnologyModels.subscription")}
+                      </th>
+
+                      <th className="px-6 py-4 text-center text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
+                        {t("adminTechnologyModels.status")}
+                      </th>
+
+                      <th className="px-6 py-4 text-left text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
+                        {t("adminTechnologyModels.actions")}
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody className="divide-y divide-light-champagne/65">
+                    {filteredTechnologyModels.map((model) => (
+                      <tr
+                        key={model._id}
+                        className="group transition-colors duration-300 hover:bg-warm-ivory/55"
+                      >
+                        <td className="px-6 py-5">
+                          {model.image ? (
+                            <div className="relative h-16 w-16 overflow-hidden rounded-[15px] border border-light-champagne/80 bg-soft-cream">
+                              <img
+                                src={getImageUrl(model.image)}
+                                alt={model.modelName}
+                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              />
+                            </div>
+                          ) : (
+                            <div className="flex h-16 w-16 items-center justify-center rounded-[15px] border border-light-champagne/80 bg-soft-cream text-[8px] text-steel-gray">
+                              {t("adminTechnologyModels.noImage")}
+                            </div>
+                          )}
+                        </td>
+
+                        <td className="px-6 py-5">
+                          <div className="inline-flex items-center rounded-full border border-champagne-gold/25 bg-warm-ivory/80 px-3 py-1.5">
+                            <span className="mr-2 h-1.5 w-1.5 rounded-full bg-classic-gold" />
+
+                            <span className="text-[8px] font-semibold uppercase text-antique-gold">
+                              {model.technology?.name || "-"}
+                            </span>
+                          </div>
+                        </td>
+
+                        <td className="px-6 py-5">
+                          <p className="font-serif text-[1rem] text-midnight-navy">
+                            {model.modelName}
+                          </p>
+
+                          {model.description && (
+                            <p className="mt-1 max-w-[220px] truncate text-[8px] text-slate-gray">
+                              {model.description}
+                            </p>
+                          )}
+                        </td>
+
+                        <td className="px-6 py-5">
+                          <span className="rounded-full border border-light-champagne bg-warm-ivory/80 px-3 py-1.5 font-mono text-[8px] font-semibold uppercase tracking-[0.12em] text-slate-gray">
+                            {model.modelCode}
+                          </span>
+                        </td>
+
+                        <td className="px-6 py-5">
+                          <span className="text-[9px] text-slate-gray">
+                            {model.manufacturer || "-"}
+                          </span>
+                        </td>
+
+                        <td className="px-6 py-5 text-center">
+                          {model.requiresBattery ? "✓" : "—"}
+                        </td>
+
+                        <td className="px-6 py-5 text-center">
+                          {model.requiresActivation ? "✓" : "—"}
+                        </td>
+
+                        <td className="px-6 py-5 text-center">
+                          {model.requiresSubscription ? "✓" : "—"}
+                        </td>
+
+                        <td className="px-6 py-5 text-center">
+                          <span
+                            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[7px] font-semibold uppercase ${
+                              model.status === "active"
+                                ? "border-classic-gold/25 bg-soft-cream text-antique-gold"
+                                : "border-antique-gold/20 bg-warm-ivory text-antique-gold"
+                            }`}
+                          >
+                            <span
+                              className={`h-1.5 w-1.5 rounded-full ${
+                                model.status === "active"
+                                  ? "bg-classic-gold"
+                                  : "bg-antique-gold"
+                              }`}
+                            />
+
+                            {t(
+                              `adminTechnologyModels.statuses.${model.status}`,
+                              {
+                                defaultValue: model.status,
+                              },
+                            )}
+                          </span>
+                        </td>
+
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-2">
+                            <Link
+                              to={`/admin/technology-models/${model._id}/edit`}
+                              className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-light-champagne bg-soft-white px-4 text-[7px] font-semibold uppercase tracking-[0.1em] text-slate-gray transition-all hover:border-champagne-gold hover:bg-warm-ivory"
+                            >
+                              {t("adminTechnologyModels.edit")}
+                            </Link>
+
+                            {isSuperAdmin && (
+                              <button
+                                type="button"
+                                onClick={() => handleDelete(model._id)}
+                                className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-antique-gold/20 bg-soft-white px-4 text-[7px] font-semibold uppercase tracking-[0.1em] text-antique-gold transition-all hover:bg-soft-cream"
+                              >
+                                {t("adminTechnologyModels.delete")}
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </main>

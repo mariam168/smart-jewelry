@@ -19,6 +19,7 @@ import {
   requestVideoUploadController,
   getAdminVideoUploadRequestsController,
   updateAdminVideoUploadRequestController,
+   deleteAdminVideoUploadRequestController,
 } from "../controllers/experienceController.js";
 
 import {
@@ -71,13 +72,12 @@ router.put(
   updatePersonalController,
 );
 
-/*
- * The customer Manage Experience page
- * no longer exposes custom-link editing.
- *
- * This endpoint is retained for
- * the admin/manufacturing workflow.
- */
+router.delete(
+  "/admin/video-requests/:requestId",
+  protect,
+  adminMiddleware,
+  deleteAdminVideoUploadRequestController,
+);
 router.put(
   "/manage/:token/slug",
   protect,

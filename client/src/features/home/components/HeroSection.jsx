@@ -302,7 +302,7 @@ const HeroSection = () => {
           </div>
         </div>
 
-        {/* <div
+        <div
           className={`absolute bottom-8 z-20 transition-all duration-500 max-sm:left-1/2 max-sm:-translate-x-1/2 ${
             isRtl
               ? "left-8 lg:left-12 xl:left-16"
@@ -343,7 +343,7 @@ const HeroSection = () => {
             <span className="absolute -right-1 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-classic-gold shadow-[0_0_0_4px_rgba(197,166,107,0.12)]" />
             <span className="absolute -left-1 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-classic-gold shadow-[0_0_0_4px_rgba(197,166,107,0.12)]" />
           </div>
-        </div> */}
+        </div>
 
         {slides.length > 1 && (
           <>

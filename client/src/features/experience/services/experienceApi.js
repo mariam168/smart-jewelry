@@ -60,11 +60,7 @@ export const uploadMedia = async (
   return data.data;
 };
 
-/*
- * Kept for admin/manufacturing only.
- * Customer Manage Experience does not
- * display custom-link editing anymore.
- */
+
 export const updateSlug = async (
   token,
   slug,
@@ -241,6 +237,21 @@ export const updateAdminVideoUploadRequest =
         requestId,
       )}`,
       payload,
+    );
+
+    return data.data;
+  };
+
+  export const deleteAdminVideoUploadRequest =
+  async (
+    requestId,
+  ) => {
+    const {
+      data,
+    } = await api.delete(
+      `/experience/admin/video-requests/${encodeURIComponent(
+        requestId,
+      )}`,
     );
 
     return data.data;
