@@ -1175,6 +1175,7 @@ title2: "قصتان.",
 },
 "mediaUploader": {
   "memories": "الذكريات",
+  "photoNotePlaceholder": "اكتب ملاحظاتك هنا...",
   "addYourMemories": "أضف ذكرياتك",
   "description": "أضف الصور، وسجّل رسالة صوتية مباشرة، أو اطلب الموافقة على رفع مقاطع الفيديو.",
 

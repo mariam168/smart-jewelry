@@ -1179,6 +1179,7 @@ const en = {
 },
 "mediaUploader": {
   "memories": "Memories",
+  "photoNotePlaceholder": "Write your photo note here...",
   "addYourMemories": "Add Your Memories",
   "description": "Add photos, record a voice message directly, or request approval for video uploads.",
 
