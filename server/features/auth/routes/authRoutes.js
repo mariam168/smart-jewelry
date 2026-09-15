@@ -10,6 +10,7 @@ import {
    verifyWhatsappOtpController,
   resendWhatsappOtpController,
   updateUserRoleController,
+  deleteUserController,
 } from "../controllers/authController.js";
 
 import {
@@ -63,7 +64,12 @@ router.patch(
   adminMiddleware,
   updateUserRoleController,
 );
-
+router.delete(
+  "/admin/users/:userId",
+  protect,
+  adminMiddleware,
+  deleteUserController,
+);
 router.post(
   "/verify-otp",
   verifyWhatsappOtpController,

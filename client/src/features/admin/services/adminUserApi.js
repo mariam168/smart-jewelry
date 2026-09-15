@@ -30,3 +30,17 @@ export const updateAdminUserRole =
 
     return response.data;
   };
+
+  export const deleteAdminUser =
+  async (
+    userId,
+  ) => {
+    const response =
+      await api.delete(
+        `/auth/admin/users/${encodeURIComponent(
+          userId,
+        )}`,
+      );
+
+    return response.data;
+  };

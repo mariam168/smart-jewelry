@@ -531,3 +531,58 @@ export const resendWhatsappOtp = async ({ phone }) => {
     message: "A new OTP has been sent to your WhatsApp.",
   };
 };
+export const deleteUser = async ({
+  userId,
+  adminUserId,
+}) => {
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    throw createError("Invalid user ID", 400);
+  }
+
+  const user = await User.findById(userId).populate(
+    "role",
+    "name",
+  );
+
+  if (!user) {
+    throw createError("User not found", 404);
+  }
+
+  if (
+    String(user._id) ===
+    String(adminUserId)
+  ) {
+    throw createError(
+      "You cannot delete your own account.",
+      400,
+    );
+  }
+
+  if (user.role?.name === "super_admin") {
+    const adminUser = await User.findById(
+      adminUserId,
+    ).populate("role", "name");
+
+    if (
+      adminUser?.role?.name !==
+      "super_admin"
+    ) {
+      throw createError(
+        "Only a super admin can delete a super admin.",
+        403,
+      );
+    }
+  }
+
+  await Customer.deleteOne({
+    user: user._id,
+  });
+
+  await User.deleteOne({
+    _id: user._id,
+  });
+
+  return {
+    success: true,
+  };
+};

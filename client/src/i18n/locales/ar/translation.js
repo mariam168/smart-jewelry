@@ -1369,6 +1369,8 @@ const ar = {
   "managementSystem": "نظام الإدارة"
 },
   "adminUsers": {
+    "delete":"حذف",
+    "deleteUserConfirmation": "هل تريد حذف {{fullName}}؟",
     "failedToLoadUsers": "تعذر تحميل المستخدمين.",
     "onlySuperAdminCanAssign": "يمكن للمدير العام فقط تعيين دور المدير العام.",
     "cannotModifySuperAdmin": "لا يمكنك تعديل حساب مدير عام.",

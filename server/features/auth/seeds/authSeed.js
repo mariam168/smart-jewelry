@@ -31,10 +31,6 @@ const seedAuthData = async () => {
 
     console.log("Starting Auth Seed...");
 
-    // =======================
-    // Permissions
-    // =======================
-
     const permissions = [];
 
     for (const permissionData of permissionsData) {
@@ -53,10 +49,6 @@ const seedAuthData = async () => {
       permissions.push(permission);
     }
 
-    // =======================
-    // Customer Role
-    // =======================
-
     let customerRole = await Role.findOne({
       name: "customer",
     });
@@ -73,10 +65,6 @@ const seedAuthData = async () => {
       console.log("Customer role created");
     }
 
-    // =======================
-    // Admin Role
-    // =======================
-
     let adminRole = await Role.findOne({
       name: "admin",
     });
@@ -92,10 +80,6 @@ const seedAuthData = async () => {
 
       console.log("Admin role created");
     }
-
-    // =======================
-    // Super Admin Role
-    // =======================
 
     let superAdminRole = await Role.findOne({
       name: "super_admin",

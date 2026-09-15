@@ -11,6 +11,7 @@ import {
 import {
   getAdminUsers,
   updateAdminUserRole,
+  deleteAdminUser,
 } from "../services/adminUserApi";
 
 import {
@@ -199,7 +200,6 @@ const AdminUsersPage = () => {
         return;
       }
 
-      // Only Super Admin can assign Super Admin role
       if (
         newRole ===
           "super_admin" &&
@@ -214,7 +214,6 @@ const AdminUsersPage = () => {
         return;
       }
 
-      // Only Super Admin can modify a Super Admin
       if (
         currentRole ===
           "super_admin" &&
@@ -317,6 +316,81 @@ const AdminUsersPage = () => {
             ?.message ||
             t(
               "adminUsers.failedToUpdateRole",
+            ),
+        );
+      } finally {
+        setUpdatingId("");
+      }
+    };
+
+  const handleDeleteUser =
+    async (
+      user,
+    ) => {
+      const fullName =
+        [
+          user.customer
+            ?.firstName,
+
+          user.customer
+            ?.lastName,
+        ]
+          .filter(Boolean)
+          .join(" ") ||
+        user.email;
+
+      const confirmed =
+        window.confirm(
+          t(
+            "adminUsers.deleteUserConfirmation",
+            {
+              fullName,
+            },
+          ),
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+        setUpdatingId(
+          user._id,
+        );
+
+        setError("");
+
+        setMessage("");
+
+        await deleteAdminUser(
+          user._id,
+        );
+
+        setUsers(
+          (previous) =>
+            previous.filter(
+              (item) =>
+                item._id !==
+                user._id,
+            ),
+        );
+
+        setMessage(
+          t(
+            "adminUsers.userDeletedSuccessfully",
+          ),
+        );
+      } catch (error) {
+        console.error(
+          "DELETE USER ERROR:",
+          error,
+        );
+
+        setError(
+          error?.response?.data
+            ?.message ||
+            t(
+              "adminUsers.failedToDeleteUser",
             ),
         );
       } finally {
@@ -548,7 +622,7 @@ const AdminUsersPage = () => {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1000px] border-collapse">
+            <table className="w-full min-w-[1100px] border-collapse">
               <thead>
                 <tr className="border-b border-light-champagne bg-soft-cream/50 text-left">
                   <th className="px-6 py-4 text-[8px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
@@ -584,6 +658,12 @@ const AdminUsersPage = () => {
                   <th className="px-6 py-4 text-[8px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
                     {t(
                       "adminUsers.role",
+                    )}
+                  </th>
+
+                  <th className="px-6 py-4 text-[8px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
+                    {t(
+                      "adminUsers.actions",
                     )}
                   </th>
                 </tr>
@@ -763,6 +843,31 @@ const AdminUsersPage = () => {
                             )}
                           </select>
                         </td>
+
+                        <td className="px-6 py-5">
+                          <button
+                            type="button"
+                            disabled={
+                              updatingId ===
+                              user._id
+                            }
+                            onClick={() =>
+                              handleDeleteUser(
+                                user,
+                              )
+                            }
+                            className="rounded-[11px] border border-red-200 bg-red-50 px-4 py-2.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-red-600 transition-all hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {updatingId ===
+                            user._id
+                              ? t(
+                                  "adminUsers.deleting",
+                                )
+                              : t(
+                                  "adminUsers.delete",
+                                )}
+                          </button>
+                        </td>
                       </tr>
                     );
                   },
@@ -772,7 +877,7 @@ const AdminUsersPage = () => {
                   0 && (
                   <tr>
                     <td
-                      colSpan="6"
+                      colSpan="7"
                       className="px-6 py-16 text-center text-[12px] text-steel-gray"
                     >
                       {t(

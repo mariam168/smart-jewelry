@@ -5,6 +5,7 @@ import {
   getCurrentUser,
   getUsersForAdmin,
   changeUserRole,
+  deleteUser,
 } from "../services/authService.js";
 
 import {
@@ -246,7 +247,25 @@ export const updateUserRoleController = async (req, res, next) => {
     next(error);
   }
 };
+export const deleteUserController = async (
+  req,
+  res,
+  next,
+) => {
+  try {
+    await deleteUser({
+      userId: req.params.userId,
+      adminUserId: req.user.userId,
+    });
 
+    return res.status(200).json({
+      success: true,
+      message: "User deleted successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 export const verifyWhatsappOtpController = async (req, res) => {
   const { phone, otp } = req.body;
 

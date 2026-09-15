@@ -1373,6 +1373,8 @@ const en = {
   "managementSystem": "Management System"
 },
 "adminUsers": {
+  "delete": "Delete",
+  "deleteUserConfirmation": "Delete {{fullName}}?",
     "failedToLoadUsers": "Failed to load users.",
     "onlySuperAdminCanAssign": "Only a Super Admin can assign the Super Admin role.",
     "cannotModifySuperAdmin": "You cannot modify a Super Admin account.",
