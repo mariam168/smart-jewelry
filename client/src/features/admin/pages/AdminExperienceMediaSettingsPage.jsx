@@ -549,7 +549,9 @@ const AdminExperienceMediaSettingsPage = () => {
             </p>
 
             <p className="mt-2 text-[11px] text-slate-gray">
-              {t("adminExperienceMediaSettings.noMatchingVideoRequestsDescription")}
+              {t(
+                "adminExperienceMediaSettings.noMatchingVideoRequestsDescription",
+              )}
             </p>
           </div>
         ) : (
@@ -715,21 +717,25 @@ const AdminExperienceMediaSettingsPage = () => {
                           <button
                             type="button"
                             disabled={isWorking}
-                            onClick={() => updateRequest(request, "approved")}
-                            className="min-h-[36px] rounded-[10px] bg-midnight-navy px-4 text-[8px] font-semibold text-soft-white disabled:opacity-50"
+                            onClick={() =>
+                              updateRequest(
+                                request,
+                                request.status === "approved"
+                                  ? "rejected"
+                                  : "approved",
+                              )
+                            }
+                            className={`min-h-[36px] rounded-[10px] px-4 text-[8px] font-semibold disabled:opacity-50 ${
+                              request.status === "approved"
+                                ? "border border-red-200 bg-red-50 text-red-700"
+                                : "bg-midnight-navy text-soft-white"
+                            }`}
                           >
                             {isWorking
                               ? t("adminExperienceMediaSettings.saving")
-                              : t("adminExperienceMediaSettings.approve")}
-                          </button>
-
-                          <button
-                            type="button"
-                            disabled={isWorking}
-                            onClick={() => updateRequest(request, "rejected")}
-                            className="min-h-[36px] rounded-[10px] border border-red-200 bg-red-50 px-4 text-[8px] font-semibold text-red-700 disabled:opacity-50"
-                          >
-                            {t("adminExperienceMediaSettings.reject")}
+                              : request.status === "approved"
+                                ? t("adminExperienceMediaSettings.reject")
+                                : t("adminExperienceMediaSettings.approve")}
                           </button>
 
                           {isSuperAdmin && (
