@@ -679,6 +679,7 @@ const en = {
   },
 
 "adminOrderDetails": {
+  'goToManufacturing': 'Go to Manufacturing',
   "loadingOrder": "Loading order...",
   "orderNotFound": "Order not found",
   "backToOrders": "Back to Orders",

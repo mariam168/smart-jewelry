@@ -125,8 +125,6 @@ const getFrontendOrigin = () => {
 
 const FRONTEND_ORIGIN = getFrontendOrigin();
 
-
-
 const WHATSAPP_NUMBER = "201554923541";
 
 const formatSlugInput = (value) => {
@@ -503,18 +501,18 @@ const AdminManufacturingOrderDetailsPage = () => {
     }
   };
 
- const handleStartProduction = async (unit) => {
-  try {
-    await runAction(`start-${unit._id}`, () =>
-      startProductionUnit(id, unit._id),
-    );
-  } catch (error) {
-    console.log("START PRODUCTION FULL ERROR:", error);
-    console.log("STATUS:", error.response?.status);
-    console.log("DATA:", error.response?.data);
-    console.log("MESSAGE:", error.response?.data?.message);
-  }
-};
+  const handleStartProduction = async (unit) => {
+    try {
+      await runAction(`start-${unit._id}`, () =>
+        startProductionUnit(id, unit._id),
+      );
+    } catch (error) {
+      console.log("START PRODUCTION FULL ERROR:", error);
+      console.log("STATUS:", error.response?.status);
+      console.log("DATA:", error.response?.data);
+      console.log("MESSAGE:", error.response?.data?.message);
+    }
+  };
 
   const handleCompleteProduction = async (unit) => {
     const form = unitForms[unit._id] || {};

@@ -453,9 +453,7 @@ const AdminOrderDetailsPage = () => {
         <div className="relative text-center">
           <div className="relative mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-champagne-gold/25 bg-midnight-navy shadow-[0_12px_30px_rgba(18,38,58,0.15)]">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-champagne-gold/20 border-t-champagne-gold" />
-            <span className="absolute text-[6px] text-champagne-gold">
-              ✦
-            </span>
+            <span className="absolute text-[6px] text-champagne-gold">✦</span>
           </div>
 
           <p className="text-[9px] font-semibold uppercase tracking-[0.28em] text-slate-gray">
@@ -497,13 +495,13 @@ const AdminOrderDetailsPage = () => {
   const productionProgress =
     totalUnits > 0 ? Math.round((completedUnits / totalUnits) * 100) : 0;
 
- const shippingAreaName = getLocalizedText(
-  order.shippingAreaName ||
-    order.shippingArea?.name ||
-    order.shippingAddress?.city,
-  activeLanguage,
-  "N/A",
-);
+  const shippingAreaName = getLocalizedText(
+    order.shippingAreaName ||
+      order.shippingArea?.name ||
+      order.shippingAddress?.city,
+    activeLanguage,
+    "N/A",
+  );
 
   const shippingAreaId =
     order.shippingArea?._id ||
@@ -660,8 +658,7 @@ const AdminOrderDetailsPage = () => {
             </p>
 
             <p className="mt-3 font-serif text-[1.45rem] text-midnight-navy">
-              {order.manufacturingName ||
-                t("adminOrderDetails.notProvided")}
+              {order.manufacturingName || t("adminOrderDetails.notProvided")}
             </p>
           </div>
 
@@ -685,6 +682,14 @@ const AdminOrderDetailsPage = () => {
             title={t("adminOrderDetails.manufacturing")}
             description={t("adminOrderDetails.manufacturingDescription")}
           />
+         {manufacturingOrder && (
+  <Link
+    to={`/admin/manufacturing/${manufacturingOrder._id}`}
+    className="inline-flex min-h-[44px] items-center justify-center rounded-full border border-antique-gold bg-antique-gold px-6 text-[8px] font-bold uppercase tracking-[0.12em] text-white shadow-md shadow-antique-gold/20 transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#9A7548] hover:shadow-lg hover:shadow-antique-gold/30"
+  >
+    {t("adminOrderDetails.goToManufacturing")}
+  </Link>
+)}
 
           {!manufacturingOrder ? (
             <button
@@ -750,9 +755,7 @@ const AdminOrderDetailsPage = () => {
                     {t(
                       `adminOrderDetails.manufacturingStatuses.${manufacturingOrder.status}`,
                       {
-                        defaultValue: formatLabel(
-                          manufacturingOrder.status,
-                        ),
+                        defaultValue: formatLabel(manufacturingOrder.status),
                       },
                     )}
                   </span>
@@ -834,8 +837,7 @@ const AdminOrderDetailsPage = () => {
                           </h4>
 
                           <p className="mt-1 break-all text-[8px] text-steel-gray">
-                            {t("adminOrderDetails.unitId")}:{" "}
-                            {unit._id || "N/A"}
+                            {t("adminOrderDetails.unitId")}: {unit._id || "N/A"}
                           </p>
                         </div>
 
@@ -844,12 +846,9 @@ const AdminOrderDetailsPage = () => {
                             unit.status,
                           )}`}
                         >
-                          {t(
-                            `adminOrderDetails.unitStatuses.${unit.status}`,
-                            {
-                              defaultValue: formatLabel(unit.status),
-                            },
-                          )}
+                          {t(`adminOrderDetails.unitStatuses.${unit.status}`, {
+                            defaultValue: formatLabel(unit.status),
+                          })}
                         </span>
                       </div>
 
@@ -943,9 +942,7 @@ const AdminOrderDetailsPage = () => {
               const quantity = Number(item.quantity || 1);
 
               const calculatedItemTotal = unitPrice * quantity;
-              const itemTotal = Number(
-                item.itemTotal ?? calculatedItemTotal,
-              );
+              const itemTotal = Number(item.itemTotal ?? calculatedItemTotal);
 
               const localizedItemName = getLocalizedText(
                 item.name,
@@ -1029,10 +1026,7 @@ const AdminOrderDetailsPage = () => {
                       <div className="mt-4 grid gap-x-6 md:grid-cols-2">
                         <InfoRow
                           label={t("adminOrderDetails.variantName")}
-                          value={getLocalizedText(
-                            variant.name,
-                            activeLanguage,
-                          )}
+                          value={getLocalizedText(variant.name, activeLanguage)}
                         />
 
                         <InfoRow
@@ -1045,10 +1039,7 @@ const AdminOrderDetailsPage = () => {
 
                         <InfoRow
                           label={t("adminOrderDetails.size")}
-                          value={getLocalizedText(
-                            variant.size,
-                            activeLanguage,
-                          )}
+                          value={getLocalizedText(variant.size, activeLanguage)}
                         />
 
                         <InfoRow
@@ -1128,9 +1119,7 @@ const AdminOrderDetailsPage = () => {
                           <div className="mt-5 grid gap-x-6 md:grid-cols-2">
                             <DarkInfoRow
                               label={t("adminOrderDetails.technologyModel")}
-                              value={
-                                technology.modelName || technology.name
-                              }
+                              value={technology.modelName || technology.name}
                             />
 
                             <DarkInfoRow
@@ -1161,9 +1150,7 @@ const AdminOrderDetailsPage = () => {
                               value={t(
                                 `adminOrderDetails.technologyStatuses.${technology.status}`,
                                 {
-                                  defaultValue: formatLabel(
-                                    technology.status,
-                                  ),
+                                  defaultValue: formatLabel(technology.status),
                                 },
                               )}
                             />
@@ -1455,12 +1442,9 @@ const AdminOrderDetailsPage = () => {
                   order.paymentStatus,
                 )}`}
               >
-                {t(
-                  `adminOrderDetails.paymentStatuses.${order.paymentStatus}`,
-                  {
-                    defaultValue: formatLabel(order.paymentStatus),
-                  },
-                )}
+                {t(`adminOrderDetails.paymentStatuses.${order.paymentStatus}`, {
+                  defaultValue: formatLabel(order.paymentStatus),
+                })}
               </span>
             </div>
 
@@ -1520,10 +1504,7 @@ const AdminOrderDetailsPage = () => {
               noBreak
             />
 
-            <InfoRow
-              label={t("adminOrderDetails.orderId")}
-              value={order._id}
-            />
+            <InfoRow label={t("adminOrderDetails.orderId")} value={order._id} />
           </SidebarSection>
         </div>
       </div>

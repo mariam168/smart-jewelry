@@ -687,6 +687,7 @@ const ar = {
   },
 
 "adminOrderDetails": {
+  'goToManufacturing': 'الذهاب للتصنيع',
   "loadingOrder": "جاري تحميل الطلب...",
   "orderNotFound": "الطلب غير موجود",
   "backToOrders": "العودة إلى الطلبات",
