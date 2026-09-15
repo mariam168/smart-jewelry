@@ -160,7 +160,7 @@ const en = {
     concept: {
       eyebrow: "The Idea",
       title1: "One piece.",
-      title2: "Two dimensions.",
+      title2: "Two stories.",
       description:
         "A physical piece designed to be worn, and a digital layer designed to hold what makes it personal.",
       card1: {
