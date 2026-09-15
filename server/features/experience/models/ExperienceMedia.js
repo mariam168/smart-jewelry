@@ -22,6 +22,12 @@ const experienceMediaSchema = new mongoose.Schema(
     fileName: String,
 
     fileSize: Number,
+    note: {
+  type: String,
+  default: "",
+  trim: true,
+  maxlength: 1000,
+},
 
     sortOrder: {
       type: Number,

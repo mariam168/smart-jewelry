@@ -29,7 +29,6 @@ export const updatePersonal = async (
 
   return data.data;
 };
-
 export const uploadMedia = async (
   token,
   files,
@@ -39,11 +38,22 @@ export const uploadMedia = async (
 
   files.forEach(
     (
-      file,
+      item,
     ) => {
+      const file =
+        item?.file || item;
+
+      const note =
+        item?.note || "";
+
       formData.append(
         "files",
         file,
+      );
+
+      formData.append(
+        "notes",
+        note,
       );
     },
   );
@@ -59,7 +69,6 @@ export const uploadMedia = async (
 
   return data.data;
 };
-
 
 export const updateSlug = async (
   token,
@@ -256,3 +265,60 @@ export const updateAdminVideoUploadRequest =
 
     return data.data;
   };
+
+
+  export const updateMediaNote = async (
+  token,
+  mediaId,
+  note,
+) => {
+  const {
+    data,
+  } = await api.put(
+    `/experience/manage/${encodeURIComponent(
+      token,
+    )}/media/${encodeURIComponent(
+      mediaId,
+    )}/note`,
+    {
+      note,
+    },
+  );
+
+  return data.data;
+};
+
+export const deleteMedia = async (
+  token,
+  mediaId,
+) => {
+  const {
+    data,
+  } = await api.delete(
+    `/experience/manage/${encodeURIComponent(
+      token,
+    )}/media/${encodeURIComponent(
+      mediaId,
+    )}`,
+  );
+
+  return data;
+};
+export const replaceMedia = async (
+  token,
+  mediaId,
+  file,
+) => {
+  const formData = new FormData();
+
+  formData.append("file", file);
+
+  const { data } = await api.put(
+    `/experience/manage/${encodeURIComponent(
+      token,
+    )}/media/${encodeURIComponent(mediaId)}`,
+    formData,
+  );
+
+  return data.data;
+};

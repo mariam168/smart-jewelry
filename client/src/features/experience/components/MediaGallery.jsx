@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import getMediaUrl from "../utils/mediaUrl";
 
@@ -29,6 +30,11 @@ const MediaGallery = ({
   media = [],
 }) => {
   const { t } = useTranslation();
+
+  const [
+    flippedImage,
+    setFlippedImage,
+  ] = useState(null);
 
   const visibleMedia =
     Array.isArray(
@@ -70,11 +76,15 @@ const MediaGallery = ({
         </div>
 
         <p className="mt-9 font-serif text-[1.5rem] tracking-[-0.025em] text-deep-navy">
-          {t("mediaGallery.noMemories")}
+          {t(
+            "mediaGallery.noMemories",
+          )}
         </p>
 
         <p className="mt-3 max-w-sm text-[13px] leading-6 text-slate-gray">
-          {t("mediaGallery.noMemoriesDescription")}
+          {t(
+            "mediaGallery.noMemoriesDescription",
+          )}
         </p>
 
         <div className="mt-7 flex items-center gap-3">
@@ -128,12 +138,16 @@ const MediaGallery = ({
                 <span className="h-px w-10 bg-gradient-to-r from-transparent to-champagne-gold/70" />
 
                 <p className="text-[9px] font-semibold uppercase tracking-[0.4em] text-antique-gold">
-                  {t("mediaGallery.memories")}
+                  {t(
+                    "mediaGallery.memories",
+                  )}
                 </p>
               </div>
 
               <h3 className="mt-4 font-serif text-[2.5rem] leading-[0.95] tracking-[-0.045em] text-deep-navy sm:text-[3rem]">
-                {t("mediaGallery.photos")}
+                {t(
+                  "mediaGallery.photos",
+                )}
               </h3>
             </div>
 
@@ -188,6 +202,10 @@ const MediaGallery = ({
                     "lg:rotate-[0.2deg]",
                   ];
 
+                  const isFlipped =
+                    flippedImage ===
+                    item._id;
+
                   return (
                     <div
                       key={
@@ -197,47 +215,133 @@ const MediaGallery = ({
                     >
                       <div className="absolute -inset-2 rounded-[30px] bg-champagne-gold/[0.045] opacity-0 blur-md transition-all duration-700 group-hover:opacity-100" />
 
-                      <div className="relative h-full rounded-[27px] border border-light-champagne bg-soft-white p-2 shadow-[0_20px_50px_rgba(13,34,53,0.075)] transition-all duration-700 group-hover:-translate-y-2 group-hover:shadow-[0_35px_85px_rgba(13,34,53,0.16)]">
-                        <div className="relative h-full min-h-[284px] overflow-hidden rounded-[21px] bg-soft-cream sm:min-h-[344px] lg:min-h-0">
-                          <img
-                            src={getMediaUrl(
-                              item.url,
-                            )}
-                            alt={
-                              t("mediaGallery.memory")
-                            }
-                            className="h-full w-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-[1.08]"
-                            loading="lazy"
-                          />
+                      <div
+                        className="relative h-full rounded-[27px] border border-light-champagne bg-soft-white p-2 shadow-[0_20px_50px_rgba(13,34,53,0.075)]"
+                        style={{
+                          perspective:
+                            "1200px",
+                        }}
+                      >
+                        <div
+                          className="relative h-full min-h-[284px] cursor-pointer sm:min-h-[344px] lg:min-h-0"
+                          onClick={() =>
+                            setFlippedImage(
+                              isFlipped
+                                ? null
+                                : item._id,
+                            )
+                          }
+                        >
+                          <div
+                            className="relative h-full w-full transition-transform duration-700 ease-in-out"
+                            style={{
+                              transformStyle:
+                                "preserve-3d",
+                              transform:
+                                isFlipped
+                                  ? "rotateY(180deg)"
+                                  : "rotateY(0deg)",
+                            }}
+                          >
+                            <div
+                              className="absolute inset-0 overflow-hidden rounded-[21px] bg-soft-cream"
+                              style={{
+                                backfaceVisibility:
+                                  "hidden",
+                                WebkitBackfaceVisibility:
+                                  "hidden",
+                              }}
+                            >
+                              <img
+                                src={getMediaUrl(
+                                  item.url,
+                                )}
+                                alt={t(
+                                  "mediaGallery.memory",
+                                )}
+                                className="h-full w-full object-cover"
+                                loading="lazy"
+                              />
 
-                          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-deep-navy/45 via-transparent to-white/[0.06] opacity-70 transition-opacity duration-700 group-hover:opacity-90" />
+                              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-deep-navy/45 via-transparent to-white/[0.06]" />
 
-                          <div className="pointer-events-none absolute inset-0 rounded-[21px] border border-white/20" />
+                              <div className="pointer-events-none absolute inset-0 rounded-[21px] border border-white/20" />
 
-                          <div className="absolute left-4 top-4 flex h-8 w-8 items-center justify-center rounded-full border border-white/30 bg-deep-navy/20 text-[10px] text-white opacity-0 backdrop-blur-md transition-all duration-500 group-hover:opacity-100">
-                            ✦
-                          </div>
+                              <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
+                                <span className="text-[9px] font-semibold uppercase tracking-[0.28em] text-white/80">
+                                  {t(
+                                    "mediaGallery.memory",
+                                  )}
+                                </span>
 
-                          <div className="absolute right-4 top-4 text-[10px] font-medium tracking-[0.2em] text-white/70 opacity-0 transition-all duration-500 group-hover:opacity-100">
-                            {String(
-                              index +
-                                1,
-                            ).padStart(
-                              2,
-                              "0",
-                            )}
-                          </div>
+                                <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/30 bg-deep-navy/20 text-[12px] text-white backdrop-blur-md">
+                                  ✦
+                                </span>
+                              </div>
 
-                          <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between opacity-0 transition-all duration-500 group-hover:opacity-100">
-                            <span className="text-[9px] font-semibold uppercase tracking-[0.28em] text-white/80">
-                              {t(
-                                "mediaGallery.memory",
-                              )}
-                            </span>
+                              <div className="absolute right-4 top-4 text-[10px] font-medium tracking-[0.2em] text-white/70">
+                                {String(
+                                  index +
+                                    1,
+                                ).padStart(
+                                  2,
+                                  "0",
+                                )}
+                              </div>
+                            </div>
 
-                            <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/30 bg-deep-navy/20 text-[12px] text-white backdrop-blur-md">
-                              ♡
-                            </span>
+                            <div
+                             className="absolute inset-0 flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-[21px] bg-gradient-to-br from-[#07192D] via-[#0D2A47] to-[#123B5D] px-7 py-8 text-center"
+                              style={{
+                                backfaceVisibility:
+                                  "hidden",
+                                WebkitBackfaceVisibility:
+                                  "hidden",
+                                transform:
+                                  "rotateY(180deg)",
+                              }}
+                            >
+                              <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-champagne-gold/[0.08] blur-[70px]" />
+
+                              <div className="pointer-events-none absolute -bottom-24 -left-20 h-56 w-56 rounded-full bg-navy-soft/40 blur-[80px]" />
+
+                              <div className="relative mb-6 flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-champagne-gold/25 bg-soft-white/[0.05] text-champagne-gold">
+                                <span className="text-[17px]">
+                                  ✦
+                                </span>
+                              </div>
+
+                              <p className="relative text-[9px] font-semibold uppercase tracking-[0.35em] text-champagne-gold">
+                                {t(
+                                  "mediaGallery.note",
+                                  "Note",
+                                )}
+                              </p>
+
+                              <div className="relative mt-5 h-px w-16 shrink-0 bg-gradient-to-r from-transparent via-champagne-gold/50 to-transparent" />
+
+                              <p className="relative mt-6 max-h-[180px] max-w-md overflow-y-auto whitespace-pre-wrap break-words font-serif text-[18px] leading-8 tracking-[-0.01em] text-soft-white">
+                                {item.note?.trim()
+                                  ? item.note
+                                  : t(
+                                      "mediaGallery.noNote",
+                                      "No note added",
+                                    )}
+                              </p>
+
+                              <div className="relative mt-7 flex items-center gap-3 text-[8px] uppercase tracking-[0.25em] text-premium-silver/40">
+                                <span className="h-px w-8 bg-champagne-gold/20" />
+
+                                <span>
+                                  {t(
+                                    "mediaGallery.tapToReturn",
+                                    "Tap to return",
+                                  )}
+                                </span>
+
+                                <span className="h-px w-8 bg-champagne-gold/20" />
+                              </div>
+                            </div>
                           </div>
                         </div>
 
@@ -273,12 +377,16 @@ const MediaGallery = ({
                 <span className="h-px w-10 bg-gradient-to-r from-transparent to-champagne-gold/70" />
 
                 <p className="text-[9px] font-semibold uppercase tracking-[0.4em] text-antique-gold">
-                  {t("mediaGallery.voiceMemories")}
+                  {t(
+                    "mediaGallery.voiceMemories",
+                  )}
                 </p>
               </div>
 
               <h3 className="mt-4 font-serif text-[2.5rem] leading-[0.95] tracking-[-0.045em] text-deep-navy sm:text-[3rem]">
-                {t("mediaGallery.voiceMessages")}
+                {t(
+                  "mediaGallery.voiceMessages",
+                )}
               </h3>
             </div>
 
@@ -346,7 +454,8 @@ const MediaGallery = ({
                                     style={{
                                       height: `${
                                         5 +
-                                        ((waveIndex * 11) %
+                                        ((waveIndex *
+                                          11) %
                                           18)
                                       }px`,
                                     }}
@@ -394,12 +503,16 @@ const MediaGallery = ({
                 <span className="h-px w-10 bg-gradient-to-r from-transparent to-champagne-gold/70" />
 
                 <p className="text-[9px] font-semibold uppercase tracking-[0.4em] text-antique-gold">
-                  {t("mediaGallery.approvedVideoMemories")}
+                  {t(
+                    "mediaGallery.approvedVideoMemories",
+                  )}
                 </p>
               </div>
 
               <h3 className="mt-4 font-serif text-[2.5rem] leading-[0.95] tracking-[-0.045em] text-deep-navy sm:text-[3rem]">
-                {t("mediaGallery.videos")}
+                {t(
+                  "mediaGallery.videos",
+                )}
               </h3>
             </div>
 

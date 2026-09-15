@@ -163,9 +163,9 @@ const ManageExperiencePage = () => {
     }
   };
 
-  const handleUpload = async (files) => {
-    return uploadMedia(token, files);
-  };
+const handleUpload = async (files) => {
+  return uploadMedia(token, files);
+};
 
   const handleSaveAccessDate = async () => {
     if (!accessDate) {

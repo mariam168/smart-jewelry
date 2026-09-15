@@ -1,5 +1,6 @@
 import crypto from "crypto";
-
+import fs from "fs/promises";
+import path from "path";
 import Product from "../../catalog/models/Product.js";
 import SmartUnit from "../../catalog/models/SmartUnit.js";
 import SmartUnitInstance from "../../catalog/models/SmartUnitInstance.js";
@@ -1090,7 +1091,11 @@ export const updateVideoUploadRequest = async (
     .populate("reviewedBy", "email phone firstName lastName");
 };
 
-export const uploadExperienceMedia = async (token, files) => {
+export const uploadExperienceMedia = async (
+  token,
+  files,
+  notes = [],
+) => {
   if (!files || files.length === 0) {
     throw createError("No media uploaded", 400);
   }
@@ -1108,7 +1113,22 @@ export const uploadExperienceMedia = async (token, files) => {
 
     type: getFileMediaType(file),
   }));
+const normalizedNotes = Array.isArray(notes)
+  ? notes
+  : [notes];
 
+const getNoteForFile = (index) => {
+  const note = String(normalizedNotes[index] ?? "").trim();
+
+  if (note.length > 1000) {
+    throw createError(
+      "Photo note is too long. Maximum length is 1000 characters.",
+      400,
+    );
+  }
+
+  return note;
+};
   const unsupported = typedFiles.find((item) => !item.type);
 
   if (unsupported) {
@@ -1217,20 +1237,15 @@ export const uploadExperienceMedia = async (token, files) => {
     (total, count) => total + Number(count || 0),
     0,
   );
-
-  const documents = typedFiles.map(({ file, type }, index) => ({
-    experience: experience._id,
-
-    type,
-
-    url: `/uploads/experience/${file.filename}`,
-
-    fileName: file.originalname,
-
-    fileSize: file.size,
-
-    sortOrder: totalCurrentMedia + index,
-  }));
+const documents = typedFiles.map(({ file, type }, index) => ({
+  experience: experience._id,
+  type,
+  url: `/uploads/experience/${file.filename}`,
+  fileName: file.originalname,
+  fileSize: file.size,
+  note: type === "image" ? getNoteForFile(index) : "",
+  sortOrder: totalCurrentMedia + index,
+}));
 
   return ExperienceMedia.insertMany(documents);
 };
@@ -1247,29 +1262,157 @@ export const getExperienceMedia = async (experienceId) => {
     createdAt: 1,
   });
 };
+export const deleteExperienceMedia = async (
+  token,
+  mediaId,
+) => {
+  const experience = await Experience.findOne({
+    manageToken: token,
+  });
 
-export const deleteExperienceMedia = async (mediaId) => {
-  const media = await ExperienceMedia.findByIdAndDelete(mediaId);
+  if (!experience) {
+    throw createError("Experience not found", 404);
+  }
+
+  const media = await ExperienceMedia.findOne({
+    _id: mediaId,
+    experience: experience._id,
+  });
 
   if (!media) {
     throw createError("Media not found", 404);
   }
 
-  return media;
-};
-export const deleteVideoUploadRequest = async (
-  requestId,
-) => {
-  const request =
-    await VideoUploadRequest.findByIdAndDelete(
-      requestId,
+  await ExperienceMedia.findByIdAndDelete(
+    media._id,
+  );
+
+  if (media.url) {
+    const relativePath = String(
+      media.url,
+    ).replace(/^\/+/, "");
+
+    const filePath = path.join(
+      process.cwd(),
+      relativePath,
     );
 
-  if (!request) {
+    try {
+      await fs.unlink(filePath);
+    } catch (error) {
+      if (error?.code !== "ENOENT") {
+        console.error(
+          "Unable to remove media file:",
+          error,
+        );
+      }
+    }
+  }
+
+  return media;
+};
+export const updateExperienceMediaNote = async (
+  token,
+  mediaId,
+  note,
+) => {
+  const experience = await Experience.findOne({
+    manageToken: token,
+  });
+
+  if (!experience) {
+    throw createError("Experience not found", 404);
+  }
+
+  const media = await ExperienceMedia.findOne({
+    _id: mediaId,
+    experience: experience._id,
+    type: "image",
+  });
+
+  if (!media) {
+    throw createError("Image not found", 404);
+  }
+
+  const normalizedNote = String(
+    note ?? "",
+  ).trim();
+
+  if (normalizedNote.length > 1000) {
     throw createError(
-      "Video upload request not found",
-      404,
+      "Photo note is too long. Maximum length is 1000 characters.",
+      400,
     );
+  }
+
+  media.note = normalizedNote;
+
+  await media.save();
+
+  return media;
+};
+export const replaceExperienceMedia = async (
+  token,
+  mediaId,
+  file,
+) => {
+  if (!file) {
+    throw createError("No image uploaded", 400);
+  }
+
+  const experience = await Experience.findOne({
+    manageToken: token,
+  });
+
+  if (!experience) {
+    throw createError("Experience not found", 404);
+  }
+
+  const media = await ExperienceMedia.findOne({
+    _id: mediaId,
+    experience: experience._id,
+    type: "image",
+  });
+
+  if (!media) {
+    throw createError("Image not found", 404);
+  }
+
+  const newUrl = `/uploads/experience/${file.filename}`;
+  const oldUrl = media.url;
+
+  media.url = newUrl;
+  media.fileName = file.originalname;
+  media.fileSize = file.size;
+
+  await media.save();
+
+  if (oldUrl) {
+    const relativePath = String(oldUrl).replace(/^\/+/, "");
+    const oldFilePath = path.join(
+      process.cwd(),
+      relativePath,
+    );
+
+    try {
+      await fs.unlink(oldFilePath);
+    } catch (error) {
+      if (error?.code !== "ENOENT") {
+        console.error(
+          "Unable to remove old media file:",
+          error,
+        );
+      }
+    }
+  }
+
+  return media;
+};
+export const deleteVideoUploadRequest = async (requestId) => {
+  const request = await VideoUploadRequest.findByIdAndDelete(requestId);
+
+  if (!request) {
+    throw createError("Video upload request not found", 404);
   }
 
   return request;

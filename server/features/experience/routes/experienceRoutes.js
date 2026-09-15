@@ -20,6 +20,9 @@ import {
   getAdminVideoUploadRequestsController,
   updateAdminVideoUploadRequestController,
    deleteAdminVideoUploadRequestController,
+   updateMediaNoteController,
+deleteMediaController,
+replaceMediaController,
 } from "../controllers/experienceController.js";
 
 import {
@@ -103,7 +106,15 @@ router.post(
   ),
   uploadMediaController,
 );
+router.put(
+  "/manage/:token/media/:mediaId/note",
+  updateMediaNoteController,
+);
 
+router.delete(
+  "/manage/:token/media/:mediaId",
+  deleteMediaController,
+);
 router.get(
   "/check-slug/:slug",
   checkSlugController,
@@ -129,4 +140,9 @@ router.get(
   getExperienceBySlugController,
 );
 
+router.put(
+  "/manage/:token/media/:mediaId",
+  upload.single("file"),
+  replaceMediaController,
+);
 export default router;
