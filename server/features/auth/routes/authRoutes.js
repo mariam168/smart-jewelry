@@ -11,6 +11,9 @@ import {
   resendWhatsappOtpController,
   updateUserRoleController,
   deleteUserController,
+  requestPasswordResetController,
+verifyPasswordResetOtpController,
+resetPasswordController,
 } from "../controllers/authController.js";
 
 import {
@@ -78,6 +81,21 @@ router.post(
 router.post(
   "/resend-otp",
   resendWhatsappOtpController,
+);
+
+router.post(
+  "/forgot-password",
+  requestPasswordResetController,
+);
+
+router.post(
+  "/forgot-password/verify-otp",
+  verifyPasswordResetOtpController,
+);
+
+router.post(
+  "/reset-password",
+  resetPasswordController,
 );
 
 export default router;

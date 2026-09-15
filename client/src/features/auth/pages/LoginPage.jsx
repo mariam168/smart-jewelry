@@ -348,7 +348,14 @@ const LoginPage = () => {
           required
         />
 
-        <div className="flex justify-end"></div>
+        <div className="flex justify-end">
+  <Link
+    to="/forgot-password"
+    className="text-sm font-semibold text-[#9B7428] transition hover:text-[#12263A] hover:underline"
+  >
+    {t("auth.login.forgotPassword", "Forgot Password?")}
+  </Link>
+</div>
 
         <AuthButton
           loading={isLoading}

@@ -7,7 +7,7 @@ import HomePage from "../features/home/pages/HomePage";
 
 import ShopPage from "../features/shop/pages/ShopPage";
 import ProductDetailsPage from "../features/shop/pages/ProductDetailsPage";
-
+import ForgotPasswordPage from "../features/auth/pages/ForgotPasswordPage";
 import CartPage from "../features/cart/pages/CartPage";
 import CheckoutPage from "../features/checkout/pages/CheckoutPage";
 
@@ -168,6 +168,10 @@ const router = createBrowserRouter([
       {
         path: "/login",
         element: <LoginPage />,
+      },
+      {
+  path:"/forgot-password",
+  element:<ForgotPasswordPage />
       },
 
       {

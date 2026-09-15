@@ -69,10 +69,40 @@ whatsappOtpAttempts: {
       type: Date,
       default: null,
     },
+    passwordResetOtpHash: {
+  type: String,
+  default: null,
+},
+
+passwordResetOtpExpiresAt: {
+  type: Date,
+  default: null,
+},
+
+passwordResetOtpLastSentAt: {
+  type: Date,
+  default: null,
+},
+
+passwordResetOtpAttempts: {
+  type: Number,
+  default: 0,
+},
+
+passwordResetTokenHash: {
+  type: String,
+  default: null,
+},
+
+passwordResetTokenExpiresAt: {
+  type: Date,
+  default: null,
+},
   },
   {
     timestamps: true,
   },
+  
 );
 
 const User = mongoose.model("User", userSchema);

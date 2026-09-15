@@ -6,6 +6,9 @@ import {
   getUsersForAdmin,
   changeUserRole,
   deleteUser,
+   requestPasswordReset,
+  verifyPasswordResetOtp,
+  resetPassword,
 } from "../services/authService.js";
 
 import {
@@ -291,4 +294,66 @@ export const resendWhatsappOtpController = async (req, res) => {
     success: true,
     ...result,
   });
+};
+
+export const requestPasswordResetController = async (req, res) => {
+  try {
+    const result = await requestPasswordReset({
+      phone: req.body.phone,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    console.error("Request Password Reset Error:", error);
+
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Failed to request password reset.",
+    });
+  }
+};
+
+export const verifyPasswordResetOtpController = async (req, res) => {
+  try {
+    const result = await verifyPasswordResetOtp({
+      phone: req.body.phone,
+      otp: req.body.otp,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    console.error("Verify Password Reset OTP Error:", error);
+
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Failed to verify reset code.",
+    });
+  }
+};
+
+export const resetPasswordController = async (req, res) => {
+  try {
+    const result = await resetPassword({
+      resetToken: req.body.resetToken,
+      password: req.body.password,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    console.error("Reset Password Error:", error);
+
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Failed to reset password.",
+    });
+  }
 };
