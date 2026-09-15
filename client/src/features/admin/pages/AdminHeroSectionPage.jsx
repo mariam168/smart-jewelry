@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 
 import { useTranslation } from "react-i18next";
@@ -12,7 +13,7 @@ const emptyLocalized = {
   ar: "",
 };
 
-const createEmptyHero = () => ({
+const createEmptySlide = () => ({
   eyebrow: { ...emptyLocalized },
   titlePart1: { ...emptyLocalized },
   titlePart2: { ...emptyLocalized },
@@ -41,20 +42,117 @@ const createEmptyHero = () => ({
   isActive: true,
 });
 
+const createEmptyHero = () => ({
+  slides: [createEmptySlide()],
+  isActive: true,
+});
+
+const normalizeSlide = (slide = {}) => {
+  const empty = createEmptySlide();
+
+  return {
+    ...empty,
+    ...slide,
+    eyebrow: {
+      ...empty.eyebrow,
+      ...slide.eyebrow,
+    },
+    titlePart1: {
+      ...empty.titlePart1,
+      ...slide.titlePart1,
+    },
+    titlePart2: {
+      ...empty.titlePart2,
+      ...slide.titlePart2,
+    },
+    description: {
+      ...empty.description,
+      ...slide.description,
+    },
+    cta: {
+      ...empty.cta,
+      ...slide.cta,
+    },
+    imageAlt: {
+      ...empty.imageAlt,
+      ...slide.imageAlt,
+    },
+    badge: {
+      nfc: {
+        ...empty.badge.nfc,
+        ...slide.badge?.nfc,
+      },
+      subtext: {
+        ...empty.badge.subtext,
+        ...slide.badge?.subtext,
+      },
+    },
+    features: {
+      design: {
+        title: {
+          ...empty.features.design.title,
+          ...slide.features?.design?.title,
+        },
+        desc: {
+          ...empty.features.design.desc,
+          ...slide.features?.design?.desc,
+        },
+      },
+      memories: {
+        title: {
+          ...empty.features.memories.title,
+          ...slide.features?.memories?.title,
+        },
+        desc: {
+          ...empty.features.memories.desc,
+          ...slide.features?.memories?.desc,
+        },
+      },
+      nfc: {
+        title: {
+          ...empty.features.nfc.title,
+          ...slide.features?.nfc?.title,
+        },
+        desc: {
+          ...empty.features.nfc.desc,
+          ...slide.features?.nfc?.desc,
+        },
+      },
+    },
+    isActive:
+      slide.isActive === undefined
+        ? true
+        : slide.isActive,
+  };
+};
+
 const AdminHeroSectionPage = () => {
   const { i18n } = useTranslation();
-  const isRtl = i18n.language === "ar";
+
+  const isRtl =
+    i18n.language === "ar";
 
   const [form, setForm] = useState(
     createEmptyHero(),
   );
 
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [loading, setLoading] =
+    useState(true);
+
+  const [saving, setSaving] =
+    useState(false);
+
+  const [uploadingImage, setUploadingImage] =
+    useState(false);
+
+  const [selectedImages, setSelectedImages] =
+    useState({});
+
+  const [message, setMessage] =
+    useState("");
+
+  const [error, setError] =
+    useState("");
 
   useEffect(() => {
     const loadHero = async () => {
@@ -65,76 +163,26 @@ const AdminHeroSectionPage = () => {
         const response =
           await getAdminHero();
 
-        if (response?.success && response.data) {
+        if (
+          response?.success &&
+          response.data
+        ) {
+          const slides =
+            Array.isArray(
+              response.data.slides,
+            ) &&
+            response.data.slides.length > 0
+              ? response.data.slides.map(
+                  normalizeSlide,
+                )
+              : [
+                  createEmptySlide(),
+                ];
+
           setForm({
-            ...createEmptyHero(),
-            ...response.data,
-            eyebrow: {
-              ...emptyLocalized,
-              ...response.data.eyebrow,
-            },
-            titlePart1: {
-              ...emptyLocalized,
-              ...response.data.titlePart1,
-            },
-            titlePart2: {
-              ...emptyLocalized,
-              ...response.data.titlePart2,
-            },
-            description: {
-              ...emptyLocalized,
-              ...response.data.description,
-            },
-            cta: {
-              ...emptyLocalized,
-              ...response.data.cta,
-            },
-            imageAlt: {
-              ...emptyLocalized,
-              ...response.data.imageAlt,
-            },
-            badge: {
-              nfc: {
-                ...emptyLocalized,
-                ...response.data.badge?.nfc,
-              },
-              subtext: {
-                ...emptyLocalized,
-                ...response.data.badge?.subtext,
-              },
-            },
-            features: {
-              design: {
-                title: {
-                  ...emptyLocalized,
-                  ...response.data.features?.design?.title,
-                },
-                desc: {
-                  ...emptyLocalized,
-                  ...response.data.features?.design?.desc,
-                },
-              },
-              memories: {
-                title: {
-                  ...emptyLocalized,
-                  ...response.data.features?.memories?.title,
-                },
-                desc: {
-                  ...emptyLocalized,
-                  ...response.data.features?.memories?.desc,
-                },
-              },
-              nfc: {
-                title: {
-                  ...emptyLocalized,
-                  ...response.data.features?.nfc?.title,
-                },
-                desc: {
-                  ...emptyLocalized,
-                  ...response.data.features?.nfc?.desc,
-                },
-              },
-            },
+            slides,
+            isActive:
+              response.data.isActive !== false,
           });
         }
       } catch (err) {
@@ -150,38 +198,76 @@ const AdminHeroSectionPage = () => {
     loadHero();
   }, []);
 
-  const updateLocalized = (
+  const updateSlide = (
+    slideIndex,
     section,
     language,
     value,
   ) => {
     setForm((current) => ({
       ...current,
-      [section]: {
-        ...current[section],
-        [language]: value,
-      },
+      slides: current.slides.map(
+        (slide, index) =>
+          index === slideIndex
+            ? {
+                ...slide,
+                [section]: {
+                  ...slide[section],
+                  [language]: value,
+                },
+              }
+            : slide,
+      ),
+    }));
+  };
+
+  const updateSlideField = (
+    slideIndex,
+    field,
+    value,
+  ) => {
+    setForm((current) => ({
+      ...current,
+      slides: current.slides.map(
+        (slide, index) =>
+          index === slideIndex
+            ? {
+                ...slide,
+                [field]: value,
+              }
+            : slide,
+      ),
     }));
   };
 
   const updateBadge = (
+    slideIndex,
     section,
     language,
     value,
   ) => {
     setForm((current) => ({
       ...current,
-      badge: {
-        ...current.badge,
-        [section]: {
-          ...current.badge[section],
-          [language]: value,
-        },
-      },
+      slides: current.slides.map(
+        (slide, index) =>
+          index === slideIndex
+            ? {
+                ...slide,
+                badge: {
+                  ...slide.badge,
+                  [section]: {
+                    ...slide.badge[section],
+                    [language]: value,
+                  },
+                },
+              }
+            : slide,
+      ),
     }));
   };
 
   const updateFeature = (
+    slideIndex,
     feature,
     field,
     language,
@@ -189,17 +275,71 @@ const AdminHeroSectionPage = () => {
   ) => {
     setForm((current) => ({
       ...current,
-      features: {
-        ...current.features,
-        [feature]: {
-          ...current.features[feature],
-          [field]: {
-            ...current.features[feature][field],
-            [language]: value,
-          },
-        },
-      },
+      slides: current.slides.map(
+        (slide, index) =>
+          index === slideIndex
+            ? {
+                ...slide,
+                features: {
+                  ...slide.features,
+                  [feature]: {
+                    ...slide.features[feature],
+                    [field]: {
+                      ...slide.features[feature][field],
+                      [language]: value,
+                    },
+                  },
+                },
+              }
+            : slide,
+      ),
     }));
+  };
+
+  const addSlide = () => {
+    setForm((current) => ({
+      ...current,
+      slides: [
+        ...current.slides,
+        createEmptySlide(),
+      ],
+    }));
+  };
+
+  const removeSlide = (slideIndex) => {
+    setForm((current) => {
+      if (current.slides.length <= 1) {
+        return current;
+      }
+
+      return {
+        ...current,
+        slides: current.slides.filter(
+          (_, index) =>
+            index !== slideIndex,
+        ),
+      };
+    });
+
+    setSelectedImages((current) => {
+      const next = {};
+
+      Object.entries(current).forEach(
+        ([key, value]) => {
+          const index = Number(key);
+
+          if (index < slideIndex) {
+            next[index] = value;
+          }
+
+          if (index > slideIndex) {
+            next[index - 1] = value;
+          }
+        },
+      );
+
+      return next;
+    });
   };
 
   const getBackendUrl = () => {
@@ -210,7 +350,10 @@ const AdminHeroSectionPage = () => {
       import.meta.env.VITE_BACKEND_URL;
 
     if (backendUrl) {
-      return backendUrl.replace(/\/$/, "");
+      return backendUrl.replace(
+        /\/$/,
+        "",
+      );
     }
 
     if (apiUrl) {
@@ -235,45 +378,69 @@ const AdminHeroSectionPage = () => {
       return image;
     }
 
-    return `${getBackendUrl()}/${image.replace(/^\/+/, "")}`;
+    return `${getBackendUrl()}/${image.replace(
+      /^\/+/,
+      "",
+    )}`;
   };
 
-  const handleImageChange = async (event) => {
-    const file = event.target.files?.[0];
+  const handleImageChange = async (
+    event,
+    slideIndex,
+  ) => {
+    const file =
+      event.target.files?.[0];
 
     if (!file) {
       return;
     }
 
-    setSelectedImage(file);
+    setSelectedImages((current) => ({
+      ...current,
+      [slideIndex]: file,
+    }));
+
     setMessage("");
     setError("");
 
     try {
       setUploadingImage(true);
 
-      const formData = new FormData();
-      formData.append("image", file);
+      const formData =
+        new FormData();
+
+      formData.append(
+        "image",
+        file,
+      );
 
       const apiUrl =
         import.meta.env.VITE_API_URL ||
         `${getBackendUrl()}/api`;
 
       const uploadUrl =
-        `${apiUrl.replace(/\/$/, "")}/upload`;
+        `${apiUrl.replace(
+          /\/$/,
+          "",
+        )}/upload`;
 
-      const response = await fetch(
-        uploadUrl,
-        {
-          method: "POST",
-          credentials: "include",
-          body: formData,
-        },
-      );
+      const response =
+        await fetch(
+          uploadUrl,
+          {
+            method: "POST",
+            credentials: "include",
+            body: formData,
+          },
+        );
 
-      const data = await response.json();
+      const data =
+        await response.json();
 
-      if (!response.ok || !data?.success) {
+      if (
+        !response.ok ||
+        !data?.success
+      ) {
         throw new Error(
           data?.message ||
             (isRtl
@@ -282,10 +449,11 @@ const AdminHeroSectionPage = () => {
         );
       }
 
-      setForm((current) => ({
-        ...current,
-        image: data.image,
-      }));
+      updateSlideField(
+        slideIndex,
+        "image",
+        data.image,
+      );
 
       setMessage(
         isRtl
@@ -304,7 +472,9 @@ const AdminHeroSectionPage = () => {
     }
   };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (
+    event,
+  ) => {
     event.preventDefault();
 
     try {
@@ -312,11 +482,30 @@ const AdminHeroSectionPage = () => {
       setMessage("");
       setError("");
 
+      const payload = {
+        ...form,
+        slides: form.slides.map(
+          normalizeSlide,
+        ),
+      };
+
       const response =
-        await updateAdminHero(form);
+        await updateAdminHero(
+          payload,
+        );
 
       if (response?.success) {
-        setForm(response.data);
+        setForm({
+          slides:
+            response.data?.slides?.map(
+              normalizeSlide,
+            ) || [],
+          isActive:
+            response.data?.isActive !==
+            false,
+        });
+
+        setSelectedImages({});
 
         setMessage(
           isRtl
@@ -344,6 +533,7 @@ const AdminHeroSectionPage = () => {
 
   const localizedField = (
     title,
+    slideIndex,
     section,
     type = "input",
   ) => (
@@ -360,9 +550,15 @@ const AdminHeroSectionPage = () => {
 
           {type === "textarea" ? (
             <textarea
-              value={form[section]?.en || ""}
+              value={
+                form.slides[
+                  slideIndex
+                ]?.[section]?.en ||
+                ""
+              }
               onChange={(event) =>
-                updateLocalized(
+                updateSlide(
+                  slideIndex,
                   section,
                   "en",
                   event.target.value,
@@ -372,9 +568,15 @@ const AdminHeroSectionPage = () => {
             />
           ) : (
             <input
-              value={form[section]?.en || ""}
+              value={
+                form.slides[
+                  slideIndex
+                ]?.[section]?.en ||
+                ""
+              }
               onChange={(event) =>
-                updateLocalized(
+                updateSlide(
+                  slideIndex,
                   section,
                   "en",
                   event.target.value,
@@ -393,9 +595,15 @@ const AdminHeroSectionPage = () => {
           {type === "textarea" ? (
             <textarea
               dir="rtl"
-              value={form[section]?.ar || ""}
+              value={
+                form.slides[
+                  slideIndex
+                ]?.[section]?.ar ||
+                ""
+              }
               onChange={(event) =>
-                updateLocalized(
+                updateSlide(
+                  slideIndex,
                   section,
                   "ar",
                   event.target.value,
@@ -406,9 +614,15 @@ const AdminHeroSectionPage = () => {
           ) : (
             <input
               dir="rtl"
-              value={form[section]?.ar || ""}
+              value={
+                form.slides[
+                  slideIndex
+                ]?.[section]?.ar ||
+                ""
+              }
               onChange={(event) =>
-                updateLocalized(
+                updateSlide(
+                  slideIndex,
                   section,
                   "ar",
                   event.target.value,
@@ -423,6 +637,7 @@ const AdminHeroSectionPage = () => {
   );
 
   const featureField = (
+    slideIndex,
     feature,
     title,
   ) => (
@@ -440,11 +655,15 @@ const AdminHeroSectionPage = () => {
           <div className="grid gap-4 lg:grid-cols-2">
             <input
               value={
-                form.features?.[feature]?.title?.en ||
-                ""
+                form.slides[
+                  slideIndex
+                ]?.features?.[
+                  feature
+                ]?.title?.en || ""
               }
               onChange={(event) =>
                 updateFeature(
+                  slideIndex,
                   feature,
                   "title",
                   "en",
@@ -458,11 +677,15 @@ const AdminHeroSectionPage = () => {
             <input
               dir="rtl"
               value={
-                form.features?.[feature]?.title?.ar ||
-                ""
+                form.slides[
+                  slideIndex
+                ]?.features?.[
+                  feature
+                ]?.title?.ar || ""
               }
               onChange={(event) =>
                 updateFeature(
+                  slideIndex,
                   feature,
                   "title",
                   "ar",
@@ -483,11 +706,15 @@ const AdminHeroSectionPage = () => {
           <div className="grid gap-4 lg:grid-cols-2">
             <textarea
               value={
-                form.features?.[feature]?.desc?.en ||
-                ""
+                form.slides[
+                  slideIndex
+                ]?.features?.[
+                  feature
+                ]?.desc?.en || ""
               }
               onChange={(event) =>
                 updateFeature(
+                  slideIndex,
                   feature,
                   "desc",
                   "en",
@@ -501,11 +728,15 @@ const AdminHeroSectionPage = () => {
             <textarea
               dir="rtl"
               value={
-                form.features?.[feature]?.desc?.ar ||
-                ""
+                form.slides[
+                  slideIndex
+                ]?.features?.[
+                  feature
+                ]?.desc?.ar || ""
               }
               onChange={(event) =>
                 updateFeature(
+                  slideIndex,
                   feature,
                   "desc",
                   "ar",
@@ -541,12 +772,11 @@ const AdminHeroSectionPage = () => {
           </p>
 
           <h1 className="font-serif text-4xl font-normal text-midnight-navy">
-            Hero Section
+            Hero Slider
           </h1>
 
           <p className="mt-2 max-w-2xl text-sm leading-7 text-midnight-navy/55">
-            Manage the main hero content shown on
-            the home page in English and Arabic.
+            Manage multiple hero slides with separate images and content for English and Arabic.
           </p>
         </div>
 
@@ -564,241 +794,347 @@ const AdminHeroSectionPage = () => {
 
         <form
           onSubmit={handleSubmit}
-          className="space-y-6"
+          className="space-y-8"
         >
-          <div className="rounded-3xl border border-light-champagne/70 bg-warm-ivory p-6 lg:p-8">
-            <div className="mb-6">
-              <h2 className="font-serif text-2xl font-normal">
-                Main Content
-              </h2>
+          {form.slides.map(
+            (slide, slideIndex) => (
+              <div
+                key={
+                  slide._id ||
+                  `slide-${slideIndex}`
+                }
+                className="overflow-hidden rounded-3xl border border-light-champagne/70 bg-warm-ivory shadow-[0_20px_60px_rgba(18,38,58,0.05)]"
+              >
+                <div className="flex flex-col gap-4 border-b border-light-champagne/70 bg-soft-cream px-6 py-5 sm:flex-row sm:items-center sm:justify-between lg:px-8">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-classic-gold">
+                      Slide {slideIndex + 1}
+                    </p>
 
-              <p className="mt-1 text-xs text-midnight-navy/50">
-                English and Arabic content
-              </p>
-            </div>
+                    <h2 className="mt-1 font-serif text-2xl font-normal text-midnight-navy">
+                      Hero Slide
+                    </h2>
+                  </div>
 
-            <div className="space-y-4">
-              {localizedField(
-                "Eyebrow",
-                "eyebrow",
-              )}
-
-              {localizedField(
-                "Title Part 1",
-                "titlePart1",
-              )}
-
-              {localizedField(
-                "Title Part 2",
-                "titlePart2",
-              )}
-
-              {localizedField(
-                "Description",
-                "description",
-                "textarea",
-              )}
-
-              {localizedField(
-                "CTA",
-                "cta",
-              )}
-
-              {localizedField(
-                "Image Alt",
-                "imageAlt",
-              )}
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-light-champagne/70 bg-warm-ivory p-6 lg:p-8">
-            <h2 className="mb-2 font-serif text-2xl font-normal">
-              Hero Image
-            </h2>
-
-            <p className="mb-5 text-xs text-midnight-navy/50">
-              Choose the hero image from your computer.
-            </p>
-
-            <div className="rounded-2xl border border-dashed border-classic-gold/50 bg-soft-white p-5">
-              <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-light-champagne bg-warm-ivory px-6 py-8 text-center transition hover:border-classic-gold hover:bg-light-champagne/20">
-                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-midnight-navy text-soft-white">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    className="h-5 w-5"
+                  <button
+                    type="button"
+                    onClick={() =>
+                      removeSlide(
+                        slideIndex,
+                      )
+                    }
+                    disabled={
+                      form.slides.length <=
+                      1
+                    }
+                    className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-red-200 bg-white px-5 text-xs font-semibold text-red-600 transition hover:border-red-300 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 16V4m0 0L8 8m4-4 4 4M5 20h14"
-                    />
-                  </svg>
+                    Remove Slide
+                  </button>
                 </div>
 
-                <span className="text-sm font-semibold text-midnight-navy">
-                  {uploadingImage
-                    ? "Uploading..."
-                    : "Choose Hero Image"}
-                </span>
+                <div className="space-y-6 p-6 lg:p-8">
+                  <div className="rounded-2xl border border-light-champagne/60 bg-soft-white p-5">
+                    <div className="mb-5">
+                      <h3 className="font-serif text-xl font-normal text-midnight-navy">
+                        Hero Image
+                      </h3>
 
-                <span className="mt-1 text-xs text-midnight-navy/50">
-                  JPG, PNG or WEBP
-                </span>
+                      <p className="mt-1 text-xs text-midnight-navy/50">
+                        Choose the image for this slide.
+                      </p>
+                    </div>
 
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={handleImageChange}
-                  disabled={uploadingImage}
-                  className="hidden"
-                />
-              </label>
+                    <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-classic-gold/50 bg-warm-ivory px-6 py-8 text-center transition hover:border-classic-gold hover:bg-light-champagne/20">
+                      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-midnight-navy text-soft-white">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          className="h-5 w-5"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M12 16V4m0 0L8 8m4-4 4 4M5 20h14"
+                          />
+                        </svg>
+                      </div>
 
-              {selectedImage && (
-                <div className="mt-4 rounded-xl border border-light-champagne bg-white px-4 py-3">
-                  <p className="text-xs font-semibold text-midnight-navy">
-                    {selectedImage.name}
-                  </p>
+                      <span className="text-sm font-semibold text-midnight-navy">
+                        {uploadingImage
+                          ? "Uploading..."
+                          : "Choose Slide Image"}
+                      </span>
 
-                  <p className="mt-1 text-[11px] text-midnight-navy/50">
-                    {(
-                      selectedImage.size /
-                      1024 /
-                      1024
-                    ).toFixed(2)}{" "}
-                    MB
-                  </p>
-                </div>
-              )}
-            </div>
+                      <span className="mt-1 text-xs text-midnight-navy/50">
+                        JPG, PNG or WEBP
+                      </span>
 
-            {form.image && (
-              <div className="mt-5 overflow-hidden rounded-2xl border border-light-champagne/70 bg-midnight-navy">
-                <img
-                  src={getImageUrl(form.image)}
-                  alt="Hero preview"
-                  className="h-[280px] w-full object-cover"
-                />
-              </div>
-            )}
-          </div>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={(
+                          event,
+                        ) =>
+                          handleImageChange(
+                            event,
+                            slideIndex,
+                          )
+                        }
+                        disabled={
+                          uploadingImage
+                        }
+                        className="hidden"
+                      />
+                    </label>
 
-          <div className="rounded-3xl border border-light-champagne/70 bg-warm-ivory p-6 lg:p-8">
-            <h2 className="mb-6 font-serif text-2xl font-normal">
-              NFC Badge
-            </h2>
+                    {selectedImages[
+                      slideIndex
+                    ] && (
+                      <div className="mt-4 rounded-xl border border-light-champagne bg-white px-4 py-3">
+                        <p className="text-xs font-semibold text-midnight-navy">
+                          {
+                            selectedImages[
+                              slideIndex
+                            ].name
+                          }
+                        </p>
 
-            <div className="space-y-4">
-              <div className="rounded-2xl border border-light-champagne/60 bg-soft-white p-5">
-                <h3 className="mb-4 text-sm font-semibold">
-                  NFC Text
-                </h3>
+                        <p className="mt-1 text-[11px] text-midnight-navy/50">
+                          {(
+                            selectedImages[
+                              slideIndex
+                            ].size /
+                            1024 /
+                            1024
+                          ).toFixed(
+                            2,
+                          )}{" "}
+                          MB
+                        </p>
+                      </div>
+                    )}
 
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <input
-                    value={
-                      form.badge?.nfc?.en ||
-                      ""
-                    }
-                    onChange={(event) =>
-                      updateBadge(
+                    {slide.image && (
+                      <div className="mt-5 overflow-hidden rounded-2xl border border-light-champagne/70 bg-midnight-navy">
+                        <img
+                          src={getImageUrl(
+                            slide.image,
+                          )}
+                          alt="Hero preview"
+                          className="h-[280px] w-full object-cover"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="rounded-2xl border border-light-champagne/60 bg-soft-white p-5">
+                    <h3 className="mb-5 font-serif text-xl font-normal text-midnight-navy">
+                      Main Content
+                    </h3>
+
+                    <div className="space-y-4">
+                      {localizedField(
+                        "Eyebrow",
+                        slideIndex,
+                        "eyebrow",
+                      )}
+
+                      {localizedField(
+                        "Title Part 1",
+                        slideIndex,
+                        "titlePart1",
+                      )}
+
+                      {localizedField(
+                        "Title Part 2",
+                        slideIndex,
+                        "titlePart2",
+                      )}
+
+                      {localizedField(
+                        "Description",
+                        slideIndex,
+                        "description",
+                        "textarea",
+                      )}
+
+                      {localizedField(
+                        "CTA",
+                        slideIndex,
+                        "cta",
+                      )}
+
+                      {localizedField(
+                        "Image Alt",
+                        slideIndex,
+                        "imageAlt",
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-light-champagne/60 bg-soft-white p-5">
+                    <h3 className="mb-5 font-serif text-xl font-normal text-midnight-navy">
+                      NFC Badge
+                    </h3>
+
+                    <div className="space-y-4">
+                      <div className="rounded-2xl border border-light-champagne/60 bg-warm-ivory p-5">
+                        <h4 className="mb-4 text-sm font-semibold text-midnight-navy">
+                          NFC Text
+                        </h4>
+
+                        <div className="grid gap-4 lg:grid-cols-2">
+                          <input
+                            value={
+                              slide.badge
+                                ?.nfc
+                                ?.en ||
+                              ""
+                            }
+                            onChange={(
+                              event,
+                            ) =>
+                              updateBadge(
+                                slideIndex,
+                                "nfc",
+                                "en",
+                                event
+                                  .target
+                                  .value,
+                              )
+                            }
+                            placeholder="English"
+                            className={inputClass}
+                          />
+
+                          <input
+                            dir="rtl"
+                            value={
+                              slide.badge
+                                ?.nfc
+                                ?.ar ||
+                              ""
+                            }
+                            onChange={(
+                              event,
+                            ) =>
+                              updateBadge(
+                                slideIndex,
+                                "nfc",
+                                "ar",
+                                event
+                                  .target
+                                  .value,
+                              )
+                            }
+                            placeholder="العربية"
+                            className={inputClass}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-light-champagne/60 bg-warm-ivory p-5">
+                        <h4 className="mb-4 text-sm font-semibold text-midnight-navy">
+                          Badge Subtext
+                        </h4>
+
+                        <div className="grid gap-4 lg:grid-cols-2">
+                          <input
+                            value={
+                              slide.badge
+                                ?.subtext
+                                ?.en ||
+                              ""
+                            }
+                            onChange={(
+                              event,
+                            ) =>
+                              updateBadge(
+                                slideIndex,
+                                "subtext",
+                                "en",
+                                event
+                                  .target
+                                  .value,
+                              )
+                            }
+                            placeholder="English"
+                            className={inputClass}
+                          />
+
+                          <input
+                            dir="rtl"
+                            value={
+                              slide.badge
+                                ?.subtext
+                                ?.ar ||
+                              ""
+                            }
+                            onChange={(
+                              event,
+                            ) =>
+                              updateBadge(
+                                slideIndex,
+                                "subtext",
+                                "ar",
+                                event
+                                  .target
+                                  .value,
+                              )
+                            }
+                            placeholder="العربية"
+                            className={inputClass}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-light-champagne/60 bg-soft-white p-5">
+                    <h3 className="mb-5 font-serif text-xl font-normal text-midnight-navy">
+                      Features
+                    </h3>
+
+                    <div className="space-y-4">
+                      {featureField(
+                        slideIndex,
+                        "design",
+                        "Design Feature",
+                      )}
+
+                      {featureField(
+                        slideIndex,
+                        "memories",
+                        "Memories Feature",
+                      )}
+
+                      {featureField(
+                        slideIndex,
                         "nfc",
-                        "en",
-                        event.target.value,
-                      )
-                    }
-                    placeholder="English"
-                    className={inputClass}
-                  />
-
-                  <input
-                    dir="rtl"
-                    value={
-                      form.badge?.nfc?.ar ||
-                      ""
-                    }
-                    onChange={(event) =>
-                      updateBadge(
-                        "nfc",
-                        "ar",
-                        event.target.value,
-                      )
-                    }
-                    placeholder="العربية"
-                    className={inputClass}
-                  />
+                        "NFC Feature",
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
+            ),
+          )}
 
-              <div className="rounded-2xl border border-light-champagne/60 bg-soft-white p-5">
-                <h3 className="mb-4 text-sm font-semibold">
-                  Badge Subtext
-                </h3>
+          <button
+            type="button"
+            onClick={addSlide}
+            className="flex w-full items-center justify-center gap-3 rounded-2xl border border-dashed border-classic-gold/50 bg-warm-ivory px-6 py-5 text-sm font-semibold text-midnight-navy transition hover:border-classic-gold hover:bg-light-champagne/20"
+          >
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-midnight-navy text-lg text-soft-white">
+              +
+            </span>
 
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <input
-                    value={
-                      form.badge?.subtext?.en ||
-                      ""
-                    }
-                    onChange={(event) =>
-                      updateBadge(
-                        "subtext",
-                        "en",
-                        event.target.value,
-                      )
-                    }
-                    placeholder="English"
-                    className={inputClass}
-                  />
-
-                  <input
-                    dir="rtl"
-                    value={
-                      form.badge?.subtext?.ar ||
-                      ""
-                    }
-                    onChange={(event) =>
-                      updateBadge(
-                        "subtext",
-                        "ar",
-                        event.target.value,
-                      )
-                    }
-                    placeholder="العربية"
-                    className={inputClass}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-light-champagne/70 bg-warm-ivory p-6 lg:p-8">
-            <h2 className="mb-6 font-serif text-2xl font-normal">
-              Features
-            </h2>
-
-            <div className="space-y-4">
-              {featureField(
-                "design",
-                "Design Feature",
-              )}
-
-              {featureField(
-                "memories",
-                "Memories Feature",
-              )}
-
-              {featureField(
-                "nfc",
-                "NFC Feature",
-              )}
-            </div>
-          </div>
+            Add New Hero Slide
+          </button>
 
           <div className="sticky bottom-4 z-20 flex justify-end">
             <button

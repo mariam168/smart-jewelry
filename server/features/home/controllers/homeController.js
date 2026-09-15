@@ -14,7 +14,6 @@ export const getHome = async (
 
     return res.status(200).json({
       success: true,
-
       data: {
         hero,
         featuredProducts: [],
