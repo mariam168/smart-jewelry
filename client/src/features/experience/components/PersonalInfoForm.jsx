@@ -1,3 +1,4 @@
+
 import { useTranslation } from "react-i18next";
 
 const PersonalInfoForm = ({
@@ -33,62 +34,8 @@ const PersonalInfoForm = ({
       </div>
 
       <div className="relative px-6 py-7 sm:px-8 sm:py-9 lg:px-10 lg:py-10">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6">
           <div>
-            <label className="mb-2.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-gray">
-              {t("personalInfo.from")}
-            </label>
-
-           <input
-  type="text"
-  name="receiverName"
-  value={form.ordererName?.trim() || form.receiverName}
-  readOnly
-  className="
-    h-[54px]
-    w-full
-    rounded-[14px]
-    border
-    border-light-champagne
-    bg-warm-ivory/60
-    px-5
-    text-[13px]
-    text-rich-navy
-    outline-none
-    cursor-default
-  "
-/>
-          </div>
-
-          {/* To */}
-          <div>
-            <label className="mb-2.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-gray">
-              {t("personalInfo.to")}
-            </label>
-
-            <input
-              type="text"
-              name="ownerName"
-              value={form.ownerName}
-              readOnly
-              className="
-                h-[54px]
-                w-full
-                rounded-[14px]
-                border
-                border-light-champagne
-                bg-warm-ivory/60
-                px-5
-                text-[13px]
-                text-rich-navy
-                outline-none
-                cursor-default
-              "
-            />
-          </div>
-
-          {/* Personal Message */}
-          <div className="md:col-span-2">
             <div className="mb-2.5 flex items-center justify-between gap-4">
               <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-gray">
                 {t("personalInfo.personalMessage")}

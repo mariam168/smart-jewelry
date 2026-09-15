@@ -52,9 +52,6 @@ const ProductInfoCard = ({
   const product =
     experience.product;
 
-  const smartUnit =
-    experience.smartUnit;
-
   const image =
     getMediaUrl(
       product?.primaryImage ||
@@ -62,152 +59,41 @@ const ProductInfoCard = ({
     ) ||
     "/placeholder.png";
 
-  const isActive =
-    experience.status?.toLowerCase() ===
-    "active";
-
   return (
-    <section className="relative overflow-hidden rounded-[28px] border border-light-champagne/90 bg-soft-white/90 shadow-[0_20px_60px_rgba(7,19,31,0.055)]">
-      <div className="relative flex flex-col gap-5 border-b border-light-champagne/80 bg-warm-ivory/50 px-6 py-7 sm:px-8 lg:flex-row lg:items-center lg:justify-between lg:px-10">
-        <div>
-          <div className="flex items-center gap-3">
-            <span className="h-px w-8 bg-classic-gold/70" />
+    <section className="relative overflow-hidden rounded-[32px] border border-light-champagne/80 bg-soft-white/90 shadow-[0_24px_70px_rgba(7,19,31,0.07)]">
+      <div className="relative flex items-center justify-between border-b border-light-champagne/70 bg-warm-ivory/45 px-6 py-5 sm:px-8">
+        <div className="flex items-center gap-3">
+          <span className="h-px w-8 bg-classic-gold/70" />
 
-            <span className="text-[10px] font-semibold uppercase tracking-[0.28em] text-antique-gold">
-              {t("manageExperience.smartJewelry")}
-            </span>
-          </div>
-
-          <h2 className="mt-4 font-serif text-[2rem] text-rich-navy">
-            {t("manageExperience.yourJewelryExperience")}
-          </h2>
-
-          <p className="mt-3 text-[13px] text-slate-gray">
-            {t(
-              "manageExperience.productDetailsConnected",
-            )}
-          </p>
-        </div>
-
-        <div className="inline-flex w-fit items-center gap-2 rounded-full border border-light-champagne bg-soft-white px-4 py-2.5">
-          <span
-            className={`h-2 w-2 rounded-full ${
-              isActive
-                ? "bg-classic-gold"
-                : "bg-steel-gray"
-            }`}
-          />
-
-          <span className="text-[11px] font-semibold">
-            {getLocalizedText(
-              experience.status,
-              activeLanguage,
-              t("manageExperience.unknown"),
-            )}
+          <span className="text-[10px] font-semibold uppercase tracking-[0.28em] text-antique-gold">
+            {t("manageExperience.smartJewelry")}
           </span>
         </div>
       </div>
 
-      <div className="px-6 py-7 sm:px-8 lg:px-10 lg:py-10">
-        <div className="grid gap-10 lg:grid-cols-[380px_minmax(0,1fr)]">
-          <div className="overflow-hidden rounded-[24px] border border-light-champagne bg-soft-cream">
-            <div className="flex aspect-square items-center justify-center p-8">
-              <img
-                src={image}
-                alt={getLocalizedText(
-                  product?.name,
-                  activeLanguage,
-                  t("manageExperience.jewelryProduct"),
-                )}
-                className="h-full w-full object-contain"
-                onError={(
-                  event,
-                ) => {
-                  event.currentTarget.src =
-                    "/placeholder.png";
-                }}
-              />
-            </div>
-          </div>
+      <div className="p-5 sm:p-8 lg:p-10">
+        <div className="group relative overflow-hidden rounded-[26px] border border-light-champagne bg-soft-cream">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.9),rgba(248,245,240,0.25)_55%,rgba(216,196,160,0.12))]" />
 
-          <div className="flex flex-col justify-center">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-antique-gold">
-              {t("manageExperience.featuredPiece")}
-            </span>
-
-            <h3 className="mt-3 font-serif text-[2.7rem] text-rich-navy">
-              {getLocalizedText(
+          <div className="relative flex aspect-[4/3] items-center justify-center p-8 sm:p-12 lg:p-16">
+            <img
+              src={image}
+              alt={getLocalizedText(
                 product?.name,
                 activeLanguage,
-                t("manageExperience.unnamedProduct"),
+                t("manageExperience.jewelryProduct"),
               )}
-            </h3>
-
-            {product?.description && (
-              <p className="mt-5 text-[13px] leading-7 text-slate-gray">
-                {getLocalizedText(
-                  product.description,
-                  activeLanguage,
-                )}
-              </p>
-            )}
-
-            <div className="mt-8 flex items-end gap-3">
-              <span className="text-[10px] uppercase text-steel-gray">
-                {t("manageExperience.price")}
-              </span>
-
-              <span className="font-serif text-[2rem] text-classic-gold">
-                EGP{" "}
-                {product?.price ??
-                  "-"}
-              </span>
-            </div>
-
-            <div className="mt-8 grid gap-5 sm:grid-cols-2">
-              <div className="rounded-[18px] border border-light-champagne bg-warm-ivory/45 p-5">
-                <p className="text-[10px] uppercase text-steel-gray">
-                  {t("manageExperience.smartUnit")}
-                </p>
-
-                <p className="mt-2.5 text-[13px] font-semibold text-rich-navy">
-                  {getLocalizedText(
-                    smartUnit?.name,
-                    activeLanguage,
-                    "-",
-                  )}
-                </p>
-              </div>
-
-              <div className="rounded-[18px] border border-light-champagne bg-warm-ivory/45 p-5">
-                <p className="text-[10px] uppercase text-steel-gray">
-                  {t("manageExperience.status")}
-                </p>
-
-                <p className="mt-2.5 text-[13px] font-semibold capitalize text-rich-navy">
-                  {getLocalizedText(
-                    experience.status,
-                    activeLanguage,
-                    t("manageExperience.unknown"),
-                  )}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 rounded-[18px] border border-light-champagne bg-warm-ivory/55 px-5 py-4">
-              <span className="text-[10px] uppercase text-steel-gray">
-                {t("manageExperience.serialNumber")}
-              </span>
-
-              <p className="mt-2 break-all font-mono text-[11px] text-rich-navy">
-                {getLocalizedText(
-                  experience.serialNumber,
-                  activeLanguage,
-                  "-",
-                )}
-              </p>
-            </div>
+              className="h-full w-full object-contain drop-shadow-[0_22px_28px_rgba(7,19,31,0.14)] transition-transform duration-700 ease-out group-hover:scale-[1.035]"
+              onError={(
+                event,
+              ) => {
+                event.currentTarget.src =
+                  "/placeholder.png";
+              }}
+            />
           </div>
+
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-rich-navy/5 to-transparent" />
         </div>
       </div>
     </section>
@@ -215,4 +101,3 @@ const ProductInfoCard = ({
 };
 
 export default ProductInfoCard;
-
