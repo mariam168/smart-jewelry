@@ -209,7 +209,10 @@ const RegisterPage = () => {
               name="firstName"
               value={formValues.firstName}
               onChange={handleChange}
-              placeholder="John"
+              placeholder={t(
+                "auth.register.firstNamePlaceholder",
+                "John"
+              )}
               error={errors.firstName}
               required
             />
@@ -222,7 +225,10 @@ const RegisterPage = () => {
               name="lastName"
               value={formValues.lastName}
               onChange={handleChange}
-              placeholder="Doe"
+              placeholder={t(
+                "auth.register.lastNamePlaceholder",
+                "Doe"
+              )}
               error={errors.lastName}
               required
             />
@@ -238,7 +244,10 @@ const RegisterPage = () => {
             inputMode="numeric"
             value={formValues.phone}
             onChange={handleChange}
-            placeholder="01098765432"
+            placeholder={t(
+              "auth.register.phonePlaceholder",
+              "01098765432"
+            )}
             error={errors.phone}
             required
           />

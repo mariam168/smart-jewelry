@@ -1,3 +1,4 @@
+
 import { createBrowserRouter } from "react-router-dom";
 
 import ScrollToTop from "../features/common/components/ScrollToTop";
@@ -128,6 +129,26 @@ const router = createBrowserRouter([
           },
 
           {
+            path: "/register",
+            element: <RegisterPage />,
+          },
+
+          {
+            path: "/login",
+            element: <LoginPage />,
+          },
+
+          {
+            path: "/forgot-password",
+            element: <ForgotPasswordPage />,
+          },
+
+          {
+            path: "/verify-email",
+            element: <VerifyEmailPage />,
+          },
+
+          {
             element: <ProtectedRoute />,
 
             children: [
@@ -161,22 +182,8 @@ const router = createBrowserRouter([
       },
 
       {
-        path: "/register",
-        element: <RegisterPage />,
-      },
-
-      {
-        path: "/login",
-        element: <LoginPage />,
-      },
-      {
-  path:"/forgot-password",
-  element:<ForgotPasswordPage />
-      },
-
-      {
-        path: "/verify-email",
-        element: <VerifyEmailPage />,
+        path: "*",
+        element: <NotFoundPage />,
       },
 
       {
@@ -192,20 +199,21 @@ const router = createBrowserRouter([
                 index: true,
                 element: <AdminDashboardPage />,
               },
-              {
-  path: "hero-section",
-  element: <AdminHeroSectionPage />,
-},
 
-             {
-  element: <SuperAdminRoute />,
-  children: [
-    {
-      path: "finance",
-      element: <AdminFinancePage />,
-    },
-  ],
-},
+              {
+                path: "hero-section",
+                element: <AdminHeroSectionPage />,
+              },
+
+              {
+                element: <SuperAdminRoute />,
+                children: [
+                  {
+                    path: "finance",
+                    element: <AdminFinancePage />,
+                  },
+                ],
+              },
 
               {
                 path: "products",
@@ -296,6 +304,7 @@ const router = createBrowserRouter([
                 path: "smart-units",
                 element: <AdminSmartUnitsPage />,
               },
+
               {
                 path: "smart-units/instance/:id/edit",
                 element: <AdminEditSmartUnitInstancePage />,
@@ -335,6 +344,7 @@ const router = createBrowserRouter([
                 path: "manufacturing/:id",
                 element: <AdminManufacturingOrderDetailsPage />,
               },
+
               {
                 path: "users",
                 element: <AdminUsersPage />,
@@ -347,11 +357,6 @@ const router = createBrowserRouter([
             ],
           },
         ],
-      },
-
-      {
-        path: "*",
-        element: <NotFoundPage />,
       },
     ],
   },

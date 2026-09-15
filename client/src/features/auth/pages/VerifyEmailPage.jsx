@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -128,7 +129,10 @@ try {
   setError(
     requestError.response?.data
       ?.message ||
-      "Invalid or expired code.",
+      t(
+        "auth.verifyEmail.invalidOrExpiredCode",
+        "Invalid or expired code.",
+      ),
   );
 } finally {
   setLoading(false);
@@ -178,7 +182,10 @@ try {
   const message =
     requestError.response?.data
       ?.message ||
-    "Could not resend code.";
+    t(
+      "auth.verifyEmail.couldNotResend",
+      "Could not resend code.",
+    );
 
   setError(message);
 
@@ -213,14 +220,20 @@ return ( <div className="relative flex min-h-screen items-center justify-center 
       </h1>
 
       <p className="mt-3 text-sm text-[#6C7280]">
-        Enter the 4-digit code sent to your WhatsApp number.
+        {t(
+          "auth.verifyEmail.enterFourDigitDescription",
+          "Enter the 4-digit code sent to your WhatsApp number.",
+        )}
       </p>
     </div>
 
     {phone && (
       <div className="mb-7 rounded-2xl border border-[#E8E1D3] bg-[#FBF9F4] px-4 py-3 text-center">
         <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8B8E96]">
-          Code sent to
+          {t(
+            "auth.verifyEmail.codeSentTo",
+            "Code sent to",
+          )}
         </p>
 
         <p className="mt-1.5 text-sm font-semibold text-[#0C1B33]">
@@ -279,14 +292,23 @@ return ( <div className="relative flex min-h-screen items-center justify-center 
         className="mt-8 flex h-14 w-full items-center justify-center rounded-2xl bg-[#0C1B33] font-bold tracking-wide text-white transition-all hover:bg-[#142B4E] active:scale-[0.98] disabled:opacity-50"
       >
         {loading
-          ? "Verifying..."
-          : "Verify Number"}
+          ? t(
+              "auth.verifyEmail.verifying",
+              "Verifying...",
+            )
+          : t(
+              "auth.verifyEmail.verifyNumber",
+              "Verify Number",
+            )}
       </button>
     </form>
 
     <div className="mt-8 border-t border-[#EEE9DF] pt-6 text-center">
       <p className="text-xs text-[#858991]">
-        Didn't receive the code?
+        {t(
+          "auth.verifyEmail.didntReceive",
+          "Didn't receive the code?",
+        )}
       </p>
 
       <button
@@ -302,10 +324,22 @@ return ( <div className="relative flex min-h-screen items-center justify-center 
         className="mt-2 text-sm font-bold text-[#B18C3D] transition-colors hover:text-[#8F6E2D] disabled:text-[#ADADB0]"
       >
         {resending
-          ? "Sending..."
+          ? t(
+              "auth.verifyEmail.sending",
+              "Sending...",
+            )
           : resendTimer > 0
-            ? `Resend code in ${resendTimer}s`
-            : "Resend Code"}
+            ? t(
+                "auth.verifyEmail.resendCodeIn",
+                "Resend code in {{seconds}}s",
+                {
+                  seconds: resendTimer,
+                },
+              )
+            : t(
+                "auth.verifyEmail.resendCode",
+                "Resend Code",
+              )}
       </button>
     </div>
   </div>

@@ -2384,6 +2384,9 @@ const en = {
   },
    "auth": {
     "register": {
+        "firstNamePlaceholder": "John",
+      "lastNamePlaceholder": "Doe",
+      "phonePlaceholder": "01098765432",
       "title": "Create your account",
       "subtitle": "Become part of the JEVORYA experience",
       "somethingWentWrong": "Something went wrong. Please try again.",
@@ -2405,10 +2408,15 @@ const en = {
       "createAccount": "Create Account",
       "alreadyHaveAccount": "Already have an account?",
       "login": "Login"
-    }
-  },
-    "auth": {
+    },
     "login": {
+      "phonePlaceholder": "01098765432",
+"phoneRequired": "WhatsApp number is required",
+"phoneInvalid": "Please enter a valid Egyptian WhatsApp number",
+"verifyWhatsappTitle": "Verify your WhatsApp number",
+"verifyWhatsappMessage": "Your account needs WhatsApp verification before you can continue.",
+"verifyWhatsappDescription": "We sent a verification code to your WhatsApp number. Verify your number to continue.",
+"verifyWhatsappButton": "Verify WhatsApp Number",
       "title": "Welcome back",
       "subtitle": "Login to your Smart Jewelry account",
       "email": "Email",
@@ -2423,6 +2431,22 @@ const en = {
       "unableToLogin": "Unable to login. Please try again."
     },
      "verifyEmail": {
+       "phoneRequired": "Phone number is required for verification.",
+  "enterFourDigitCode": "Please enter the 4-digit verification code.",
+  "success": "WhatsApp number verified successfully.",
+  "invalidOrExpiredCode": "Invalid or expired code.",
+  "verifyWhatsApp": "Verify WhatsApp",
+  "enterFourDigitDescription": "Enter the 4-digit code sent to your WhatsApp number.",
+  "codeSentTo": "Code sent to",
+  "phoneMissing": "No phone number was provided for verification.",
+  "verifying": "Verifying...",
+  "verifyNumber": "Verify Number",
+  "didntReceive": "Didn't receive the code?",
+  "sending": "Sending...",
+  "resendCodeIn": "Resend code in {{seconds}}s",
+  "resendCode": "Resend Code",
+  "newCodeSent": "A new code has been sent to your WhatsApp.",
+  "couldNotResend": "Could not resend code.",
       "whatsappNumberMissing": "WhatsApp number is missing. Please register again.",
       "enterSixDigitCode": "Please enter the 6-digit verification code.",
       "whatsappVerifiedSuccessfully": "WhatsApp number verified successfully.",
@@ -2445,8 +2469,39 @@ const en = {
       "resendCode": "Resend code",
       "useDifferentNumber": "Use a different number",
       "secureVerification": "Secure verification by JEVORYA"
-    }
+    },
+    "forgotPassword": {
+  "title": "Forgot Password",
+  "subtitle": "Reset your password using your WhatsApp number.",
+  "validEgyptianWhatsApp": "Please enter a valid Egyptian WhatsApp number.",
+  "codeSent": "A verification code has been sent to your WhatsApp.",
+  "failedToSendCode": "Failed to send verification code.",
+  "enterFourDigitCode": "Please enter the 4-digit verification code.",
+  "codeVerified": "Code verified successfully.",
+  "invalidCode": "Invalid verification code.",
+  "passwordMinLength": "Password must be at least 8 characters.",
+  "passwordsDoNotMatch": "Passwords do not match.",
+  "passwordResetSuccessfully": "Password reset successfully.",
+  "failedToReset": "Failed to reset password.",
+  "whatsappNumber": "WhatsApp Number",
+  "phonePlaceholder": "01xxxxxxxxx",
+  "sending": "Sending...",
+  "sendVerificationCode": "Send Verification Code",
+  "verificationCode": "Verification Code",
+  "enterFourDigitCodePlaceholder": "Enter 4-digit code",
+  "verifying": "Verifying...",
+  "verifyCode": "Verify Code",
+  "changeWhatsAppNumber": "Change WhatsApp Number",
+  "newPassword": "New Password",
+  "enterNewPassword": "Enter new password",
+  "confirmPassword": "Confirm Password",
+  "confirmNewPassword": "Confirm new password",
+  "resetting": "Resetting...",
+  "resetPassword": "Reset Password",
+  "backToLogin": "Back to Login"
+}
   },
+   
   contact: {
 hero: {
 eyebrow: "Contact JEVORYA",

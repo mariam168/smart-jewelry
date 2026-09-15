@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 
 import { Link, useNavigate } from "react-router-dom";
@@ -327,7 +328,10 @@ const LoginPage = () => {
           inputMode="numeric"
           value={formValues.phone}
           onChange={handleChange}
-          placeholder="01098765432"
+          placeholder={t(
+            "auth.login.phonePlaceholder",
+            "01098765432"
+          )}
           error={errors.phone}
           required
         />
@@ -349,13 +353,16 @@ const LoginPage = () => {
         />
 
         <div className="flex justify-end">
-  <Link
-    to="/forgot-password"
-    className="text-sm font-semibold text-[#9B7428] transition hover:text-[#12263A] hover:underline"
-  >
-    {t("auth.login.forgotPassword", "Forgot Password?")}
-  </Link>
-</div>
+          <Link
+            to="/forgot-password"
+            className="text-sm font-semibold text-[#9B7428] transition hover:text-[#12263A] hover:underline"
+          >
+            {t(
+              "auth.login.forgotPassword",
+              "Forgot Password?"
+            )}
+          </Link>
+        </div>
 
         <AuthButton
           loading={isLoading}

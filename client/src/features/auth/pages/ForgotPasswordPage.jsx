@@ -1,5 +1,7 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import {
   requestPasswordReset,
@@ -9,6 +11,7 @@ import {
 
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [step, setStep] = useState(1);
   const [phone, setPhone] = useState("");
@@ -41,7 +44,12 @@ const ForgotPasswordPage = () => {
     const digits = phone.replace(/\D/g, "");
 
     if (!/^01\d{9}$/.test(digits)) {
-      setError("Please enter a valid Egyptian WhatsApp number.");
+      setError(
+        t(
+          "auth.forgotPassword.validEgyptianWhatsApp",
+          "Please enter a valid Egyptian WhatsApp number.",
+        ),
+      );
       return;
     }
 
@@ -56,11 +64,19 @@ const ForgotPasswordPage = () => {
 
       setPhone(normalizedPhone);
       setStep(2);
-      setSuccess("A verification code has been sent to your WhatsApp.");
+      setSuccess(
+        t(
+          "auth.forgotPassword.codeSent",
+          "A verification code has been sent to your WhatsApp.",
+        ),
+      );
     } catch (error) {
       setError(
         error.response?.data?.message ||
-          "Failed to send verification code.",
+          t(
+            "auth.forgotPassword.failedToSendCode",
+            "Failed to send verification code.",
+          ),
       );
     } finally {
       setLoading(false);
@@ -74,7 +90,12 @@ const ForgotPasswordPage = () => {
     setSuccess("");
 
     if (!/^\d{4}$/.test(otp)) {
-      setError("Please enter the 4-digit verification code.");
+      setError(
+        t(
+          "auth.forgotPassword.enterFourDigitCode",
+          "Please enter the 4-digit verification code.",
+        ),
+      );
       return;
     }
 
@@ -89,11 +110,19 @@ const ForgotPasswordPage = () => {
       setResetToken(response.data.resetToken);
 
       setStep(3);
-      setSuccess("Code verified successfully.");
+      setSuccess(
+        t(
+          "auth.forgotPassword.codeVerified",
+          "Code verified successfully.",
+        ),
+      );
     } catch (error) {
       setError(
         error.response?.data?.message ||
-          "Invalid verification code.",
+          t(
+            "auth.forgotPassword.invalidCode",
+            "Invalid verification code.",
+          ),
       );
     } finally {
       setLoading(false);
@@ -107,12 +136,22 @@ const ForgotPasswordPage = () => {
     setSuccess("");
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+      setError(
+        t(
+          "auth.forgotPassword.passwordMinLength",
+          "Password must be at least 8 characters.",
+        ),
+      );
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError(
+        t(
+          "auth.forgotPassword.passwordsDoNotMatch",
+          "Passwords do not match.",
+        ),
+      );
       return;
     }
 
@@ -124,7 +163,12 @@ const ForgotPasswordPage = () => {
         password,
       });
 
-      setSuccess("Password reset successfully.");
+      setSuccess(
+        t(
+          "auth.forgotPassword.passwordResetSuccessfully",
+          "Password reset successfully.",
+        ),
+      );
 
       setTimeout(() => {
         navigate("/login");
@@ -132,7 +176,10 @@ const ForgotPasswordPage = () => {
     } catch (error) {
       setError(
         error.response?.data?.message ||
-          "Failed to reset password.",
+          t(
+            "auth.forgotPassword.failedToReset",
+            "Failed to reset password.",
+          ),
       );
     } finally {
       setLoading(false);
@@ -145,11 +192,17 @@ const ForgotPasswordPage = () => {
         <div className="w-full rounded-2xl bg-white p-8 shadow-xl">
           <div className="mb-8 text-center">
             <h1 className="text-2xl font-semibold text-[#12263A]">
-              Forgot Password
+              {t(
+                "auth.forgotPassword.title",
+                "Forgot Password",
+              )}
             </h1>
 
             <p className="mt-2 text-sm text-gray-500">
-              Reset your password using your WhatsApp number.
+              {t(
+                "auth.forgotPassword.subtitle",
+                "Reset your password using your WhatsApp number.",
+              )}
             </p>
           </div>
 
@@ -169,7 +222,10 @@ const ForgotPasswordPage = () => {
             <form onSubmit={handleSendOtp} className="space-y-5">
               <div>
                 <label className="mb-2 block text-sm font-medium text-[#12263A]">
-                  WhatsApp Number
+                  {t(
+                    "auth.forgotPassword.whatsappNumber",
+                    "WhatsApp Number",
+                  )}
                 </label>
 
                 <input
@@ -182,7 +238,10 @@ const ForgotPasswordPage = () => {
                         .slice(0, 11),
                     )
                   }
-                  placeholder="01xxxxxxxxx"
+                  placeholder={t(
+                    "auth.forgotPassword.phonePlaceholder",
+                    "01xxxxxxxxx",
+                  )}
                   className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none transition focus:border-[#B08D57]"
                 />
               </div>
@@ -192,7 +251,15 @@ const ForgotPasswordPage = () => {
                 disabled={loading}
                 className="w-full rounded-lg bg-[#12263A] px-6 py-3 font-semibold text-white transition hover:bg-[#0D1B29] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? "Sending..." : "Send Verification Code"}
+                {loading
+                  ? t(
+                      "auth.forgotPassword.sending",
+                      "Sending...",
+                    )
+                  : t(
+                      "auth.forgotPassword.sendVerificationCode",
+                      "Send Verification Code",
+                    )}
               </button>
             </form>
           )}
@@ -201,7 +268,10 @@ const ForgotPasswordPage = () => {
             <form onSubmit={handleVerifyOtp} className="space-y-5">
               <div>
                 <label className="mb-2 block text-sm font-medium text-[#12263A]">
-                  Verification Code
+                  {t(
+                    "auth.forgotPassword.verificationCode",
+                    "Verification Code",
+                  )}
                 </label>
 
                 <input
@@ -215,7 +285,10 @@ const ForgotPasswordPage = () => {
                         .slice(0, 4),
                     )
                   }
-                  placeholder="Enter 4-digit code"
+                  placeholder={t(
+                    "auth.forgotPassword.enterFourDigitCodePlaceholder",
+                    "Enter 4-digit code",
+                  )}
                   className="w-full rounded-lg border border-gray-200 px-4 py-3 text-center tracking-[0.4em] outline-none transition focus:border-[#B08D57]"
                 />
               </div>
@@ -225,7 +298,15 @@ const ForgotPasswordPage = () => {
                 disabled={loading}
                 className="w-full rounded-lg bg-[#12263A] px-6 py-3 font-semibold text-white transition hover:bg-[#0D1B29] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? "Verifying..." : "Verify Code"}
+                {loading
+                  ? t(
+                      "auth.forgotPassword.verifying",
+                      "Verifying...",
+                    )
+                  : t(
+                      "auth.forgotPassword.verifyCode",
+                      "Verify Code",
+                    )}
               </button>
 
               <button
@@ -238,7 +319,10 @@ const ForgotPasswordPage = () => {
                 }}
                 className="w-full text-sm font-semibold text-[#9B7428] hover:underline"
               >
-                Change WhatsApp Number
+                {t(
+                  "auth.forgotPassword.changeWhatsAppNumber",
+                  "Change WhatsApp Number",
+                )}
               </button>
             </form>
           )}
@@ -247,7 +331,10 @@ const ForgotPasswordPage = () => {
             <form onSubmit={handleResetPassword} className="space-y-5">
               <div>
                 <label className="mb-2 block text-sm font-medium text-[#12263A]">
-                  New Password
+                  {t(
+                    "auth.forgotPassword.newPassword",
+                    "New Password",
+                  )}
                 </label>
 
                 <input
@@ -256,14 +343,20 @@ const ForgotPasswordPage = () => {
                   onChange={(event) =>
                     setPassword(event.target.value)
                   }
-                  placeholder="Enter new password"
+                  placeholder={t(
+                    "auth.forgotPassword.enterNewPassword",
+                    "Enter new password",
+                  )}
                   className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none transition focus:border-[#B08D57]"
                 />
               </div>
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-[#12263A]">
-                  Confirm Password
+                  {t(
+                    "auth.forgotPassword.confirmPassword",
+                    "Confirm Password",
+                  )}
                 </label>
 
                 <input
@@ -272,7 +365,10 @@ const ForgotPasswordPage = () => {
                   onChange={(event) =>
                     setConfirmPassword(event.target.value)
                   }
-                  placeholder="Confirm new password"
+                  placeholder={t(
+                    "auth.forgotPassword.confirmNewPassword",
+                    "Confirm new password",
+                  )}
                   className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none transition focus:border-[#B08D57]"
                 />
               </div>
@@ -282,7 +378,15 @@ const ForgotPasswordPage = () => {
                 disabled={loading}
                 className="w-full rounded-lg bg-[#12263A] px-6 py-3 font-semibold text-white transition hover:bg-[#0D1B29] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? "Resetting..." : "Reset Password"}
+                {loading
+                  ? t(
+                      "auth.forgotPassword.resetting",
+                      "Resetting...",
+                    )
+                  : t(
+                      "auth.forgotPassword.resetPassword",
+                      "Reset Password",
+                    )}
               </button>
             </form>
           )}
@@ -292,7 +396,10 @@ const ForgotPasswordPage = () => {
             onClick={() => navigate("/login")}
             className="mt-6 w-full text-sm font-semibold text-[#9B7428] hover:underline"
           >
-            Back to Login
+            {t(
+              "auth.forgotPassword.backToLogin",
+              "Back to Login",
+            )}
           </button>
         </div>
       </div>
