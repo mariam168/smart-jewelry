@@ -393,12 +393,12 @@ const ManageExperiencePage = () => {
 
         <ProductInfoCard experience={experience} />
 
-        <PersonalInfoForm
-          form={form}
-          onChange={handleChange}
-          onSave={handleSave}
-          saving={saving}
-        />
+       <PersonalInfoForm
+  form={form}
+  handleChange={handleChange}
+  handleSave={handleSave}
+  saving={saving}
+/>
 
         <MediaUploader
           token={token}

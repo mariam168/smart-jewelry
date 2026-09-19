@@ -2,61 +2,34 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import getMediaUrl from "../utils/mediaUrl";
 
-const formatFileSize = (
-  bytes,
-) => {
+const formatFileSize = (bytes) => {
   if (!bytes) {
     return "";
   }
 
-  const mb =
-    bytes /
-    (1024 * 1024);
+  const mb = bytes / (1024 * 1024);
 
-  if (
-    mb >= 1
-  ) {
-    return `${mb.toFixed(
-      2,
-    )} MB`;
+  if (mb >= 1) {
+    return `${mb.toFixed(2)} MB`;
   }
 
-  return `${(
-    bytes / 1024
-  ).toFixed(1)} KB`;
+  return `${(bytes / 1024).toFixed(1)} KB`;
 };
 
-const MediaGallery = ({
-  media = [],
-}) => {
+const MediaGallery = ({ media = [] }) => {
   const { t } = useTranslation();
 
-  const [
-    flippedImage,
-    setFlippedImage,
-  ] = useState(null);
+  const [flippedImage, setFlippedImage] = useState(null);
 
-  const visibleMedia =
-    Array.isArray(
-      media,
-    )
-      ? media.filter(
-          (
-            item,
-          ) =>
-            [
-              "image",
-              "video",
-              "audio",
-            ].includes(
-              item?.type,
-            ),
-        )
-      : [];
+  const visibleMedia = Array.isArray(media)
+    ? media.filter((item) =>
+        ["image", "video", "audio"].includes(item?.type),
+      )
+    : [];
 
-  if (
-    !visibleMedia.length
-  ) {
+  const hasNote = (item) => Boolean(item?.note?.trim());
+
+  if (!visibleMedia.length) {
     return (
       <div className="relative flex min-h-[340px] flex-col items-center justify-center overflow-hidden rounded-[32px] border border-light-champagne/80 bg-soft-cream px-6 py-16 text-center shadow-[0_25px_70px_rgba(13,34,53,0.06)]">
         <div className="pointer-events-none absolute -left-32 -top-32 h-72 w-72 rounded-full bg-champagne-gold/[0.055] blur-[90px]" />
@@ -76,15 +49,11 @@ const MediaGallery = ({
         </div>
 
         <p className="mt-9 font-serif text-[1.5rem] tracking-[-0.025em] text-deep-navy">
-          {t(
-            "mediaGallery.noMemories",
-          )}
+          {t("mediaGallery.noMemories")}
         </p>
 
         <p className="mt-3 max-w-sm text-[13px] leading-6 text-slate-gray">
-          {t(
-            "mediaGallery.noMemoriesDescription",
-          )}
+          {t("mediaGallery.noMemoriesDescription")}
         </p>
 
         <div className="mt-7 flex items-center gap-3">
@@ -100,65 +69,40 @@ const MediaGallery = ({
     );
   }
 
-  const images =
-    visibleMedia.filter(
-      (
-        item,
-      ) =>
-        item.type ===
-        "image",
-    );
+  const images = visibleMedia.filter(
+    (item) => item.type === "image",
+  );
 
-  const videos =
-    visibleMedia.filter(
-      (
-        item,
-      ) =>
-        item.type ===
-        "video",
-    );
+  const videos = visibleMedia.filter(
+    (item) => item.type === "video",
+  );
 
-  const audios =
-    visibleMedia.filter(
-      (
-        item,
-      ) =>
-        item.type ===
-        "audio",
-    );
+  const audios = visibleMedia.filter(
+    (item) => item.type === "audio",
+  );
 
   return (
-    <div className="space-y-24">
-      {images.length >
-        0 && (
+    <div className="space-y-20 sm:space-y-24">
+      {images.length > 0 && (
         <section className="relative">
-          <div className="relative z-10 mb-10 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+          <div className="relative z-10 mb-8 flex flex-col justify-between gap-5 sm:mb-10 sm:flex-row sm:items-end">
             <div>
               <div className="flex items-center gap-3">
                 <span className="h-px w-10 bg-gradient-to-r from-transparent to-champagne-gold/70" />
 
                 <p className="text-[9px] font-semibold uppercase tracking-[0.4em] text-antique-gold">
-                  {t(
-                    "mediaGallery.memories",
-                  )}
+                  {t("mediaGallery.memories")}
                 </p>
               </div>
 
-              <h3 className="mt-4 font-serif text-[2.5rem] leading-[0.95] tracking-[-0.045em] text-deep-navy sm:text-[3rem]">
-                {t(
-                  "mediaGallery.photos",
-                )}
+              <h3 className="mt-4 font-serif text-[2.2rem] leading-[0.95] tracking-[-0.045em] text-deep-navy sm:text-[3rem]">
+                {t("mediaGallery.photos")}
               </h3>
             </div>
 
             <div className="flex items-center gap-3 sm:pb-1">
               <span className="text-[11px] tracking-[0.2em] text-antique-gold/50">
-                {String(
-                  images.length,
-                ).padStart(
-                  2,
-                  "0",
-                )}
+                {String(images.length).padStart(2, "0")}
               </span>
 
               <span className="h-px w-14 bg-champagne-gold/25" />
@@ -175,184 +119,164 @@ const MediaGallery = ({
             <div className="pointer-events-none absolute -bottom-20 right-0 h-72 w-72 rounded-full bg-navy-soft/[0.06] blur-[100px]" />
 
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-12 lg:auto-rows-[110px]">
-              {images.map(
-                (
-                  item,
-                  index,
-                ) => {
-                  const layouts = [
-                    "lg:col-span-7 lg:row-span-5",
-                    "lg:col-span-5 lg:row-span-4",
-                    "lg:col-span-5 lg:row-span-5",
-                    "lg:col-span-7 lg:row-span-4",
-                    "lg:col-span-4 lg:row-span-4",
-                    "lg:col-span-4 lg:row-span-5",
-                    "lg:col-span-4 lg:row-span-4",
-                    "lg:col-span-8 lg:row-span-5",
-                  ];
+              {images.map((item, index) => {
+                const layouts = [
+                  "lg:col-span-7 lg:row-span-5",
+                  "lg:col-span-5 lg:row-span-4",
+                  "lg:col-span-5 lg:row-span-5",
+                  "lg:col-span-7 lg:row-span-4",
+                  "lg:col-span-4 lg:row-span-4",
+                  "lg:col-span-4 lg:row-span-5",
+                  "lg:col-span-4 lg:row-span-4",
+                  "lg:col-span-8 lg:row-span-5",
+                ];
 
-                  const rotations = [
-                    "lg:-rotate-[0.35deg]",
-                    "lg:rotate-[0.3deg]",
-                    "lg:-rotate-[0.25deg]",
-                    "lg:rotate-[0.25deg]",
-                    "lg:-rotate-[0.4deg]",
-                    "lg:rotate-[0.35deg]",
-                    "lg:-rotate-[0.25deg]",
-                    "lg:rotate-[0.2deg]",
-                  ];
+                const rotations = [
+                  "lg:-rotate-[0.35deg]",
+                  "lg:rotate-[0.3deg]",
+                  "lg:-rotate-[0.25deg]",
+                  "lg:rotate-[0.25deg]",
+                  "lg:-rotate-[0.4deg]",
+                  "lg:rotate-[0.35deg]",
+                  "lg:-rotate-[0.25deg]",
+                  "lg:rotate-[0.2deg]",
+                ];
 
-                  const isFlipped =
-                    flippedImage ===
-                    item._id;
+                const isFlipped =
+                  flippedImage === item._id;
 
-                  return (
+                return (
+                  <div
+                    key={item._id}
+                    className={`${layouts[index % layouts.length]} group relative min-h-[300px] sm:min-h-[360px] lg:min-h-0 ${rotations[index % rotations.length]} transition-transform duration-700 hover:z-20 hover:rotate-0`}
+                  >
+                    <div className="absolute -inset-2 rounded-[30px] bg-champagne-gold/[0.045] opacity-0 blur-md transition-all duration-700 group-hover:opacity-100" />
+
                     <div
-                      key={
-                        item._id
-                      }
-                      className={`${layouts[index % layouts.length]} group relative min-h-[300px] sm:min-h-[360px] lg:min-h-0 ${rotations[index % rotations.length]} transition-transform duration-700 hover:z-20 hover:rotate-0`}
+                      className="relative h-full rounded-[27px] border border-light-champagne bg-soft-white p-2 shadow-[0_20px_50px_rgba(13,34,53,0.075)]"
+                      style={{
+                        perspective: "1200px",
+                      }}
                     >
-                      <div className="absolute -inset-2 rounded-[30px] bg-champagne-gold/[0.045] opacity-0 blur-md transition-all duration-700 group-hover:opacity-100" />
-
                       <div
-                        className="relative h-full rounded-[27px] border border-light-champagne bg-soft-white p-2 shadow-[0_20px_50px_rgba(13,34,53,0.075)]"
-                        style={{
-                          perspective:
-                            "1200px",
-                        }}
+                        className="relative h-full min-h-[284px] cursor-pointer sm:min-h-[344px] lg:min-h-0"
+                        onClick={() =>
+                          setFlippedImage(
+                            isFlipped
+                              ? null
+                              : item._id,
+                          )
+                        }
                       >
                         <div
-                          className="relative h-full min-h-[284px] cursor-pointer sm:min-h-[344px] lg:min-h-0"
-                          onClick={() =>
-                            setFlippedImage(
-                              isFlipped
-                                ? null
-                                : item._id,
-                            )
-                          }
+                          className="relative h-full w-full transition-transform duration-700 ease-in-out"
+                          style={{
+                            transformStyle:
+                              "preserve-3d",
+                            transform: isFlipped
+                              ? "rotateY(180deg)"
+                              : "rotateY(0deg)",
+                          }}
                         >
                           <div
-                            className="relative h-full w-full transition-transform duration-700 ease-in-out"
+                            className="absolute inset-0 overflow-hidden rounded-[21px] bg-soft-cream"
                             style={{
-                              transformStyle:
-                                "preserve-3d",
-                              transform:
-                                isFlipped
-                                  ? "rotateY(180deg)"
-                                  : "rotateY(0deg)",
+                              backfaceVisibility:
+                                "hidden",
+                              WebkitBackfaceVisibility:
+                                "hidden",
                             }}
                           >
-                            <div
-                              className="absolute inset-0 overflow-hidden rounded-[21px] bg-soft-cream"
-                              style={{
-                                backfaceVisibility:
-                                  "hidden",
-                                WebkitBackfaceVisibility:
-                                  "hidden",
-                              }}
-                            >
-                              <img
-                                src={getMediaUrl(
-                                  item.url,
-                                )}
-                                alt={t(
+                            <img
+                              src={getMediaUrl(item.url)}
+                              alt={t(
+                                "mediaGallery.memory",
+                              )}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                            />
+
+                            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-deep-navy/45 via-transparent to-white/[0.06]" />
+
+                            <div className="pointer-events-none absolute inset-0 rounded-[21px] border border-white/20" />
+
+                            <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
+                              <span className="text-[9px] font-semibold uppercase tracking-[0.28em] text-white/80">
+                                {t(
                                   "mediaGallery.memory",
                                 )}
-                                className="h-full w-full object-cover"
-                                loading="lazy"
-                              />
+                              </span>
 
-                              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-deep-navy/45 via-transparent to-white/[0.06]" />
-
-                              <div className="pointer-events-none absolute inset-0 rounded-[21px] border border-white/20" />
-
-                              <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
-                                <span className="text-[9px] font-semibold uppercase tracking-[0.28em] text-white/80">
-                                  {t(
-                                    "mediaGallery.memory",
-                                  )}
-                                </span>
-
-                                <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/30 bg-deep-navy/20 text-[12px] text-white backdrop-blur-md">
-                                  ✦
-                                </span>
-                              </div>
-
-                              <div className="absolute right-4 top-4 text-[10px] font-medium tracking-[0.2em] text-white/70">
-                                {String(
-                                  index +
-                                    1,
-                                ).padStart(
-                                  2,
-                                  "0",
-                                )}
-                              </div>
+                              <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/30 bg-deep-navy/20 text-[12px] text-white backdrop-blur-md">
+                                ✦
+                              </span>
                             </div>
 
-                            <div
-                             className="absolute inset-0 flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-[21px] bg-gradient-to-br from-[#07192D] via-[#0D2A47] to-[#123B5D] px-7 py-8 text-center"
-                              style={{
-                                backfaceVisibility:
-                                  "hidden",
-                                WebkitBackfaceVisibility:
-                                  "hidden",
-                                transform:
-                                  "rotateY(180deg)",
-                              }}
-                            >
-                              <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-champagne-gold/[0.08] blur-[70px]" />
+                            <div className="absolute right-4 top-4 text-[10px] font-medium tracking-[0.2em] text-white/70">
+                              {String(index + 1).padStart(
+                                2,
+                                "0",
+                              )}
+                            </div>
+                          </div>
 
-                              <div className="pointer-events-none absolute -bottom-24 -left-20 h-56 w-56 rounded-full bg-navy-soft/40 blur-[80px]" />
+                          <div
+                            className="absolute inset-0 flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-[21px] bg-gradient-to-br from-[#07192D] via-[#0D2A47] to-[#123B5D] px-5 py-7 text-center sm:px-7 sm:py-8"
+                            style={{
+                              backfaceVisibility:
+                                "hidden",
+                              WebkitBackfaceVisibility:
+                                "hidden",
+                              transform:
+                                "rotateY(180deg)",
+                            }}
+                          >
+                            <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-champagne-gold/[0.08] blur-[70px]" />
 
-                              <div className="relative mb-6 flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-champagne-gold/25 bg-soft-white/[0.05] text-champagne-gold">
-                                <span className="text-[17px]">
-                                  ✦
-                                </span>
-                              </div>
+                            <div className="pointer-events-none absolute -bottom-24 -left-20 h-56 w-56 rounded-full bg-navy-soft/40 blur-[80px]" />
 
-                              <p className="relative text-[9px] font-semibold uppercase tracking-[0.35em] text-champagne-gold">
-                                {t(
-                                  "mediaGallery.note",
-                                  "Note",
-                                )}
-                              </p>
+                            <div className="relative mb-5 flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-champagne-gold/25 bg-soft-white/[0.05] text-champagne-gold sm:mb-6">
+                              <span className="text-[17px]">
+                                ✦
+                              </span>
+                            </div>
 
-                              <div className="relative mt-5 h-px w-16 shrink-0 bg-gradient-to-r from-transparent via-champagne-gold/50 to-transparent" />
+                            <p className="relative text-[9px] font-semibold uppercase tracking-[0.35em] text-champagne-gold">
+                              {t("mediaGallery.note")}
+                            </p>
 
-                              <p className="relative mt-6 max-h-[180px] max-w-md overflow-y-auto whitespace-pre-wrap break-words font-serif text-[18px] leading-8 tracking-[-0.01em] text-soft-white">
-                                {item.note?.trim()
-                                  ? item.note
-                                  : t(
-                                      "mediaGallery.noNote",
-                                      "No note added",
-                                    )}
-                              </p>
+                            <div className="relative mt-4 h-px w-16 shrink-0 bg-gradient-to-r from-transparent via-champagne-gold/50 to-transparent sm:mt-5" />
 
-                              <div className="relative mt-7 flex items-center gap-3 text-[8px] uppercase tracking-[0.25em] text-premium-silver/40">
-                                <span className="h-px w-8 bg-champagne-gold/20" />
-
-                                <span>
-                                  {t(
-                                    "mediaGallery.tapToReturn",
-                                    "Tap to return",
+                            <p className="relative mt-5 max-h-[180px] max-w-md overflow-y-auto whitespace-pre-wrap break-words px-1 font-serif text-[16px] leading-7 tracking-[-0.01em] text-soft-white sm:mt-6 sm:text-[18px] sm:leading-8">
+                              {hasNote(item)
+                                ? item.note
+                                : t(
+                                    "mediaGallery.noNote",
                                   )}
-                                </span>
+                            </p>
 
-                                <span className="h-px w-8 bg-champagne-gold/20" />
-                              </div>
+                            <div className="relative mt-6 flex items-center gap-2 text-[8px] uppercase tracking-[0.2em] text-premium-silver/40 sm:mt-7 sm:gap-3 sm:tracking-[0.25em]">
+                              <span className="h-px w-5 bg-champagne-gold/20 sm:w-8" />
+
+                              <span>
+                                {t(
+                                  "mediaGallery.tapToReturn",
+                                )}
+                              </span>
+
+                              <span className="h-px w-5 bg-champagne-gold/20 sm:w-8" />
                             </div>
                           </div>
                         </div>
-
-                        <div className="pointer-events-none absolute left-5 top-5 h-4 w-4 border-l border-t border-champagne-gold/50" />
-
-                        <div className="pointer-events-none absolute bottom-5 right-5 h-4 w-4 border-b border-r border-champagne-gold/50" />
                       </div>
+
+                      <div className="pointer-events-none absolute left-5 top-5 h-4 w-4 border-l border-t border-champagne-gold/50" />
+
+                      <div className="pointer-events-none absolute bottom-5 right-5 h-4 w-4 border-b border-r border-champagne-gold/50" />
                     </div>
-                  );
-                },
-              )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -368,10 +292,9 @@ const MediaGallery = ({
         </section>
       )}
 
-      {audios.length >
-        0 && (
+      {audios.length > 0 && (
         <section className="relative">
-          <div className="mb-10 flex items-end justify-between gap-5">
+          <div className="mb-8 flex flex-col items-start justify-between gap-5 sm:mb-10 sm:flex-row sm:items-end">
             <div>
               <div className="flex items-center gap-3">
                 <span className="h-px w-10 bg-gradient-to-r from-transparent to-champagne-gold/70" />
@@ -383,7 +306,7 @@ const MediaGallery = ({
                 </p>
               </div>
 
-              <h3 className="mt-4 font-serif text-[2.5rem] leading-[0.95] tracking-[-0.045em] text-deep-navy sm:text-[3rem]">
+              <h3 className="mt-4 font-serif text-[2.2rem] leading-[0.95] tracking-[-0.045em] text-deep-navy sm:text-[3rem]">
                 {t(
                   "mediaGallery.voiceMessages",
                 )}
@@ -396,23 +319,18 @@ const MediaGallery = ({
           </div>
 
           <div className="space-y-5">
-            {audios.map(
-              (
-                item,
-                index,
-              ) => (
-                <div
-                  key={
-                    item._id
-                  }
-                  className="group relative overflow-hidden rounded-[30px] bg-luxury-black p-[1px] shadow-[0_25px_65px_rgba(7,19,31,0.12)] transition-all duration-700 hover:-translate-y-1 hover:shadow-[0_35px_85px_rgba(7,19,31,0.19)]"
-                >
-                  <div className="relative overflow-hidden rounded-[29px] border border-champagne-gold/10">
-                    <div className="pointer-events-none absolute -right-28 -top-28 h-72 w-72 rounded-full bg-champagne-gold/[0.055] blur-[90px]" />
+            {audios.map((item, index) => (
+              <div
+                key={item._id}
+                className="group relative overflow-hidden rounded-[30px] bg-luxury-black p-[1px] shadow-[0_25px_65px_rgba(7,19,31,0.12)] transition-all duration-700 hover:-translate-y-1 hover:shadow-[0_35px_85px_rgba(7,19,31,0.19)]"
+              >
+                <div className="relative overflow-hidden rounded-[29px] border border-champagne-gold/10">
+                  <div className="pointer-events-none absolute -right-28 -top-28 h-72 w-72 rounded-full bg-champagne-gold/[0.055] blur-[90px]" />
 
-                    <div className="pointer-events-none absolute -bottom-32 -left-24 h-64 w-64 rounded-full bg-navy-soft/35 blur-[90px]" />
+                  <div className="pointer-events-none absolute -bottom-32 -left-24 h-64 w-64 rounded-full bg-navy-soft/35 blur-[90px]" />
 
-                    <div className="relative flex flex-col gap-7 px-6 py-7 sm:flex-row sm:items-center sm:px-9 sm:py-8">
+                  <div className="relative flex flex-col gap-7 px-5 py-7 sm:px-9 sm:py-8">
+                    <div className="flex flex-col gap-7 sm:flex-row sm:items-center">
                       <div className="relative mx-auto shrink-0 sm:mx-0">
                         <div className="absolute -inset-3 animate-[spin_18s_linear_infinite] rounded-full border border-dashed border-champagne-gold/15" />
 
@@ -426,31 +344,23 @@ const MediaGallery = ({
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <div className="mb-4 flex items-center justify-between gap-5">
+                        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-5">
                           <div>
                             <p className="text-[9px] font-semibold uppercase tracking-[0.3em] text-champagne-gold">
                               {t(
                                 "mediaGallery.voiceMessage",
                               )}{" "}
-                              {index +
-                                1}
+                              {index + 1}
                             </p>
 
-                            <div className="mt-3 flex h-7 items-center gap-[3px]">
-                              {Array.from(
-                                {
-                                  length: 36,
-                                },
-                              ).map(
-                                (
-                                  _,
-                                  waveIndex,
-                                ) => (
+                            <div className="mt-3 flex h-7 items-center gap-[3px] overflow-hidden">
+                              {Array.from({
+                                length: 36,
+                              }).map(
+                                (_, waveIndex) => (
                                   <span
-                                    key={
-                                      waveIndex
-                                    }
-                                    className="w-[2px] rounded-full bg-champagne-gold/30 transition-all duration-500 group-hover:bg-champagne-gold/60"
+                                    key={waveIndex}
+                                    className="w-[2px] shrink-0 rounded-full bg-champagne-gold/30 transition-all duration-500 group-hover:bg-champagne-gold/60"
                                     style={{
                                       height: `${
                                         5 +
@@ -475,9 +385,7 @@ const MediaGallery = ({
                         </div>
 
                         <audio
-                          src={getMediaUrl(
-                            item.url,
-                          )}
+                          src={getMediaUrl(item.url)}
                           controls
                           preload="metadata"
                           className="w-full opacity-90"
@@ -485,19 +393,40 @@ const MediaGallery = ({
                       </div>
                     </div>
 
-                    <div className="pointer-events-none absolute bottom-0 left-1/2 h-px w-2/3 -translate-x-1/2 bg-gradient-to-r from-transparent via-champagne-gold/25 to-transparent" />
+                    <div className="rounded-[22px] border border-champagne-gold/10 bg-white/[0.025] px-5 py-4 sm:px-6 sm:py-5">
+                      <div className="flex items-start gap-3">
+                        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-champagne-gold/20 bg-champagne-gold/[0.06] text-[11px] text-champagne-gold">
+                          ✦
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[8px] font-semibold uppercase tracking-[0.3em] text-champagne-gold/65">
+                            {t("mediaGallery.note")}
+                          </p>
+
+                          <p className="mt-2 whitespace-pre-wrap break-words text-[13px] leading-6 text-soft-white/75 sm:text-[14px]">
+                            {hasNote(item)
+                              ? item.note
+                              : t(
+                                  "mediaGallery.noNote",
+                                )}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
+
+                  <div className="pointer-events-none absolute bottom-0 left-1/2 h-px w-2/3 -translate-x-1/2 bg-gradient-to-r from-transparent via-champagne-gold/25 to-transparent" />
                 </div>
-              ),
-            )}
+              </div>
+            ))}
           </div>
         </section>
       )}
 
-      {videos.length >
-        0 && (
+      {videos.length > 0 && (
         <section className="relative">
-          <div className="mb-10 flex items-end justify-between gap-5">
+          <div className="mb-8 flex flex-col items-start justify-between gap-5 sm:mb-10 sm:flex-row sm:items-end">
             <div>
               <div className="flex items-center gap-3">
                 <span className="h-px w-10 bg-gradient-to-r from-transparent to-champagne-gold/70" />
@@ -509,10 +438,8 @@ const MediaGallery = ({
                 </p>
               </div>
 
-              <h3 className="mt-4 font-serif text-[2.5rem] leading-[0.95] tracking-[-0.045em] text-deep-navy sm:text-[3rem]">
-                {t(
-                  "mediaGallery.videos",
-                )}
+              <h3 className="mt-4 font-serif text-[2.2rem] leading-[0.95] tracking-[-0.045em] text-deep-navy sm:text-[3rem]">
+                {t("mediaGallery.videos")}
               </h3>
             </div>
 
@@ -526,46 +453,53 @@ const MediaGallery = ({
           </div>
 
           <div className="grid gap-7 md:grid-cols-2">
-            {videos.map(
-              (
-                item,
-                index,
-              ) => (
-                <div
-                  key={
-                    item._id
-                  }
-                  className="group relative overflow-hidden rounded-[30px] bg-luxury-black p-1 shadow-[0_25px_60px_rgba(7,19,31,0.13)] transition-all duration-700 hover:-translate-y-1 hover:shadow-[0_35px_85px_rgba(7,19,31,0.2)]"
-                >
-                  <div className="relative overflow-hidden rounded-[26px] bg-black">
-                    <video
-                      src={getMediaUrl(
-                        item.url,
-                      )}
-                      controls
-                      preload="metadata"
-                      className="max-h-[560px] w-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-[1.025]"
-                    />
+            {videos.map((item, index) => (
+              <div
+                key={item._id}
+                className="group relative overflow-hidden rounded-[30px] bg-luxury-black p-1 shadow-[0_25px_60px_rgba(7,19,31,0.13)] transition-all duration-700 hover:-translate-y-1 hover:shadow-[0_35px_85px_rgba(7,19,31,0.2)]"
+              >
+                <div className="relative overflow-hidden rounded-[26px] bg-black">
+                  <video
+                    src={getMediaUrl(item.url)}
+                    controls
+                    preload="metadata"
+                    className="max-h-[560px] w-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-[1.025]"
+                  />
 
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-deep-navy/30 via-transparent to-transparent opacity-70" />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-deep-navy/30 via-transparent to-transparent opacity-70" />
 
-                    <div className="absolute left-5 top-5 flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-deep-navy/35 text-[10px] text-champagne-gold opacity-0 backdrop-blur-md transition-all duration-500 group-hover:opacity-100">
+                  <div className="absolute left-5 top-5 flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-deep-navy/35 text-[10px] text-champagne-gold opacity-0 backdrop-blur-md transition-all duration-500 group-hover:opacity-100">
+                    ✦
+                  </div>
+
+                  <div className="absolute right-5 top-5 text-[10px] font-medium tracking-[0.22em] text-white/60 opacity-0 transition-all duration-500 group-hover:opacity-100">
+                    {String(index + 1).padStart(2, "0")}
+                  </div>
+                </div>
+
+                <div className="rounded-b-[26px] bg-luxury-black px-5 py-5 sm:px-6 sm:py-6">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-champagne-gold/20 bg-champagne-gold/[0.06] text-[11px] text-champagne-gold">
                       ✦
                     </div>
 
-                    <div className="absolute right-5 top-5 text-[10px] font-medium tracking-[0.22em] text-white/60 opacity-0 transition-all duration-500 group-hover:opacity-100">
-                      {String(
-                        index +
-                          1,
-                      ).padStart(
-                        2,
-                        "0",
-                      )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[8px] font-semibold uppercase tracking-[0.3em] text-champagne-gold/65">
+                        {t("mediaGallery.note")}
+                      </p>
+
+                      <p className="mt-2 whitespace-pre-wrap break-words text-[13px] leading-6 text-soft-white/75 sm:text-[14px]">
+                        {hasNote(item)
+                          ? item.note
+                          : t(
+                              "mediaGallery.noNote",
+                            )}
+                      </p>
                     </div>
                   </div>
                 </div>
-              ),
-            )}
+              </div>
+            ))}
           </div>
         </section>
       )}

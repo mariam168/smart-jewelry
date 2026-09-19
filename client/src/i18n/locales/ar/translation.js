@@ -1007,6 +1007,7 @@ const ar = {
   },
   manageExperience: {
     smartJewelry: "المجوهرات الذكية",
+    savedSuccessfully: "تم حفظ التجربة بنجاح.",
     title: "إدارة تجربة مجوهرتك",
     yourJewelryExperience: "تجربتك مع المجوهرات",
     productDetailsConnected:
@@ -1338,19 +1339,22 @@ const ar = {
   whatsappPhone: "رقم الهاتف",
   whatsappMessage: "الرسالة",
 },
-  mediaGallery: {
-    noMemories: "لم تتم إضافة أي ذكريات حتى الآن.",
-    noMemoriesDescription:
-      "ستظهر الصور والرسائل الصوتية والفيديوهات المعتمدة هنا.",
-    memories: "الذكريات",
-    photos: "الصور",
-    memory: "ذكرى",
-    voiceMemories: "الذكريات الصوتية",
-    voiceMessages: "الرسائل الصوتية",
-    voiceMessage: "رسالة صوتية",
-    approvedVideoMemories: "ذكريات الفيديو المعتمدة",
-    videos: "الفيديوهات",
-  },
+ mediaGallery: {
+  noMemories: "لم تتم إضافة أي ذكريات حتى الآن.",
+  noMemoriesDescription:
+    "ستظهر الصور والرسائل الصوتية والفيديوهات المعتمدة هنا.",
+  memories: "الذكريات",
+  photos: "الصور",
+  memory: "ذكرى",
+  voiceMemories: "الذكريات الصوتية",
+  voiceMessages: "الرسائل الصوتية",
+  voiceMessage: "رسالة صوتية",
+  approvedVideoMemories: "ذكريات الفيديو المعتمدة",
+  videos: "الفيديوهات",
+  note: "ملاحظة",
+  noNote: "لم تتم إضافة ملاحظة",
+  tapToReturn: "اضغط للعودة",
+},
   
   experienceBySlug: {
     incompleteLink: "رابط التجربة غير مكتمل.",

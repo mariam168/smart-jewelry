@@ -1006,6 +1006,7 @@ const en = {
   manageExperience: {
     smartJewelry: "Smart Jewelry",
     title: "Manage Your Experience",
+    savedSuccessfully: "Saved successfully.",
     yourJewelryExperience: "Your Jewelry Experience",
     productDetailsConnected:
       "Product details connected to your personalized jewelry experience.",
@@ -1350,20 +1351,22 @@ const en = {
   whatsappPhone: "Phone",
   whatsappMessage: "Message",
 },
-  mediaGallery: {
-    noMemories: "No memories have been added yet.",
-    noMemoriesDescription:
-      "Photos, voice messages and approved videos will appear here.",
-    memories: "Memories",
-    photos: "Photos",
-    memory: "Memory",
-    voiceMemories: "Voice Memories",
-    voiceMessages: "Voice Messages",
-    voiceMessage: "Voice Message",
-    approvedVideoMemories: "Approved Video Memories",
-    videos: "Videos",
-  },
-
+ mediaGallery: {
+  noMemories: "No memories have been added yet.",
+  noMemoriesDescription:
+    "Photos, voice messages and approved videos will appear here.",
+  memories: "Memories",
+  photos: "Photos",
+  memory: "Memory",
+  voiceMemories: "Voice Memories",
+  voiceMessages: "Voice Messages",
+  voiceMessage: "Voice Message",
+  approvedVideoMemories: "Approved Video Memories",
+  videos: "Videos",
+  note: "Note",
+  noNote: "No note added",
+  tapToReturn: "Tap to return",
+},
   experienceBySlug: {
     incompleteLink: "The experience link is incomplete.",
     unavailableExperience:
