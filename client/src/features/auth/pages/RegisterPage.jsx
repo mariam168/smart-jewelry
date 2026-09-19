@@ -306,23 +306,19 @@ const RegisterPage = () => {
           </div>
 
           <div className="pt-2">
-            <AuthButton
-              type="submit"
-              loading={isLoading}
-              disabled={
-                isLoading || isSuccess
-              }
-            >
-              {isSuccess
-                ? t(
-                    "auth.register.success",
-                    "Creating Account..."
-                  )
-                : t(
-                    "auth.register.createAccount",
-                    "Create Account"
-                  )}
-            </AuthButton>
+           <AuthButton
+  loading={isLoading}
+  disabled={isLoading}
+  loadingText={t(
+    "auth.register.creatingAccount",
+    "Creating account..."
+  )}
+>
+  {t(
+    "auth.register.createAccount",
+    "Create Account"
+  )}
+</AuthButton>
           </div>
         </form>
 

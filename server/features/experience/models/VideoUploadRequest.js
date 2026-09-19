@@ -1,12 +1,18 @@
 import mongoose from "mongoose";
 
-const videoUploadRequestSchema = new mongoose.Schema(
+const mediaUploadRequestSchema = new mongoose.Schema(
   {
     experience: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Experience",
       required: true,
-      unique: true,
+      index: true,
+    },
+
+    mediaType: {
+      type: String,
+      enum: ["image", "audio", "video"],
+      required: true,
       index: true,
     },
 
@@ -36,6 +42,20 @@ const videoUploadRequestSchema = new mongoose.Schema(
       enum: ["pending", "approved", "rejected"],
       default: "pending",
       index: true,
+    },
+
+    requestedExtraLimit: {
+      type: Number,
+      default: 1,
+      min: 1,
+      max: 100,
+    },
+
+    approvedExtraLimit: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
     },
 
     approvedVideoLimit: {
@@ -70,14 +90,17 @@ const videoUploadRequestSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  },
+  }
 );
 
-const VideoUploadRequest =
-  mongoose.models.VideoUploadRequest ||
-  mongoose.model(
-    "VideoUploadRequest",
-    videoUploadRequestSchema,
-  );
+mediaUploadRequestSchema.index({
+  experience: 1,
+  mediaType: 1,
+  status: 1,
+});
 
-export default VideoUploadRequest;
+const ExperienceMediaRequest =
+  mongoose.models.ExperienceMediaRequest ||
+  mongoose.model("ExperienceMediaRequest", mediaUploadRequestSchema);
+
+export default ExperienceMediaRequest;

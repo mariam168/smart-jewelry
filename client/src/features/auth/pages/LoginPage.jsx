@@ -364,15 +364,19 @@ const LoginPage = () => {
           </Link>
         </div>
 
-        <AuthButton
-          loading={isLoading}
-          disabled={isLoading}
-        >
-          {t(
-            "auth.login.login",
-            "Login"
-          )}
-        </AuthButton>
+       <AuthButton
+  loading={isLoading}
+  disabled={isLoading}
+  loadingText={t(
+    "auth.login.loggingIn",
+    "Logging in..."
+  )}
+>
+  {t(
+    "auth.login.login",
+    "Login"
+  )}
+</AuthButton>
       </form>
 
       <p className="mt-6 text-center text-sm text-gray-600">

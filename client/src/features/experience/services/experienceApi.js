@@ -1,85 +1,44 @@
 import api from "../../../lib/axios";
 
-export const getExperience = async (
-  token,
-) => {
-  const {
-    data,
-  } = await api.get(
-    `/experience/manage/${encodeURIComponent(
-      token,
-    )}`,
+export const getExperience = async (token) => {
+  const { data } = await api.get(
+    `/experience/manage/${encodeURIComponent(token)}`,
   );
 
   return data.data;
 };
 
-export const updatePersonal = async (
-  token,
-  body,
-) => {
-  const {
-    data,
-  } = await api.put(
-    `/experience/manage/${encodeURIComponent(
-      token,
-    )}/personal`,
+export const updatePersonal = async (token, body) => {
+  const { data } = await api.put(
+    `/experience/manage/${encodeURIComponent(token)}/personal`,
     body,
   );
 
   return data.data;
 };
-export const uploadMedia = async (
-  token,
-  files,
-) => {
-  const formData =
-    new FormData();
 
-  files.forEach(
-    (
-      item,
-    ) => {
-      const file =
-        item?.file || item;
+export const uploadMedia = async (token, files) => {
+  const formData = new FormData();
 
-      const note =
-        item?.note || "";
+  files.forEach((item) => {
+    const file = item?.file || item;
+    const note = item?.note || "";
 
-      formData.append(
-        "files",
-        file,
-      );
+    formData.append("files", file);
+    formData.append("notes", note);
+  });
 
-      formData.append(
-        "notes",
-        note,
-      );
-    },
-  );
-
-  const {
-    data,
-  } = await api.post(
-    `/experience/manage/${encodeURIComponent(
-      token,
-    )}/media`,
+  const { data } = await api.post(
+    `/experience/manage/${encodeURIComponent(token)}/media`,
     formData,
   );
 
   return data.data;
 };
 
-export const updateSlug = async (
-  token,
-  slug,
-) => {
-  const {
-    data,
-  } = await api.put(
-    `/experience/manage/${encodeURIComponent(
-      token,
-    )}/slug`,
+export const updateSlug = async (token, slug) => {
+  const { data } = await api.put(
+    `/experience/manage/${encodeURIComponent(token)}/slug`,
     {
       slug,
     },
@@ -88,22 +47,32 @@ export const updateSlug = async (
   return data.data;
 };
 
-export const updatePublicSlug =
-  updateSlug;
+export const updatePublicSlug = updateSlug;
 
-export const updateAccessDate = async (
-  token,
-  accessDate,
-) => {
-  const {
-    data,
-  } = await api.put(
-    `/experience/manage/${encodeURIComponent(
-      token,
-    )}/access-date`,
+export const updateAccessDate = async (token, accessDate) => {
+  const { data } = await api.put(
+    `/experience/manage/${encodeURIComponent(token)}/access-date`,
     {
       accessDate,
     },
+  );
+
+  return data.data;
+};
+
+/*
+|--------------------------------------------------------------------------
+| Unified Media Allowance Requests
+|--------------------------------------------------------------------------
+*/
+
+export const requestMediaAllowance = async (
+  token,
+  requestData,
+) => {
+  const { data } = await api.post(
+    `/experience/manage/${encodeURIComponent(token)}/media-request`,
+    requestData,
   );
 
   return data.data;
@@ -113,27 +82,21 @@ export const requestVideoUpload = async (
   token,
   requestData,
 ) => {
-  const {
-    data,
-  } = await api.post(
-    `/experience/manage/${encodeURIComponent(
-      token,
-    )}/video-request`,
-    requestData,
-  );
-
-  return data.data;
+  return requestMediaAllowance(token, {
+    mediaType: "video",
+    ...requestData,
+  });
 };
 
-export const checkSlug = async (
-  slug,
-) => {
-  const {
-    data,
-  } = await api.get(
-    `/experience/check-slug/${encodeURIComponent(
-      slug,
-    )}`,
+/*
+|--------------------------------------------------------------------------
+| Public Experience
+|--------------------------------------------------------------------------
+*/
+
+export const checkSlug = async (slug) => {
+  const { data } = await api.get(
+    `/experience/check-slug/${encodeURIComponent(slug)}`,
   );
 
   return data.available;
@@ -143,14 +106,8 @@ export const getPublicExperience = async (
   serialNumber,
   slug,
 ) => {
-  const {
-    data,
-  } = await api.get(
-    `/experience/public/${encodeURIComponent(
-      serialNumber,
-    )}/${encodeURIComponent(
-      slug,
-    )}`,
+  const { data } = await api.get(
+    `/experience/public/${encodeURIComponent(serialNumber)}/${encodeURIComponent(slug)}`,
   );
 
   return data;
@@ -161,14 +118,8 @@ export const unlockPublicExperience = async (
   slug,
   accessDate,
 ) => {
-  const {
-    data,
-  } = await api.post(
-    `/experience/public/${encodeURIComponent(
-      serialNumber,
-    )}/${encodeURIComponent(
-      slug,
-    )}/unlock`,
+  const { data } = await api.post(
+    `/experience/public/${encodeURIComponent(serialNumber)}/${encodeURIComponent(slug)}/unlock`,
     {
       accessDate,
     },
@@ -181,105 +132,108 @@ export const getCustomerExperience = async (
   serialNumber,
   slug,
 ) => {
-  const {
-    data,
-  } = await api.get(
-    `/experience/customer/${encodeURIComponent(
-      serialNumber,
-    )}/${encodeURIComponent(
-      slug,
-    )}`,
+  const { data } = await api.get(
+    `/experience/customer/${encodeURIComponent(serialNumber)}/${encodeURIComponent(slug)}`,
   );
 
   return data;
 };
 
-export const getExperienceMediaLimits =
-  async () => {
-    const {
-      data,
-    } = await api.get(
-      "/experience/media-limits",
-    );
+/*
+|--------------------------------------------------------------------------
+| Media Limits
+|--------------------------------------------------------------------------
+*/
 
-    return data.data;
-  };
+export const getExperienceMediaLimits = async () => {
+  const { data } = await api.get(
+    "/experience/media-limits",
+  );
 
-export const updateExperienceMediaLimits =
-  async (
+  return data.data;
+};
+
+export const updateExperienceMediaLimits = async (
+  limits,
+) => {
+  const { data } = await api.put(
+    "/experience/admin/media-limits",
     limits,
-  ) => {
-    const {
-      data,
-    } = await api.put(
-      "/experience/admin/media-limits",
-      limits,
-    );
+  );
 
-    return data.data;
-  };
+  return data.data;
+};
+
+/*
+|--------------------------------------------------------------------------
+| Admin Unified Media Requests
+|--------------------------------------------------------------------------
+*/
+
+export const getAdminMediaRequests = async () => {
+  const { data } = await api.get(
+    "/experience/admin/media-requests",
+  );
+
+  return Array.isArray(data.data) ? data.data : [];
+};
+
+export const updateAdminMediaRequest = async (
+  requestId,
+  payload,
+) => {
+  const { data } = await api.patch(
+    `/experience/admin/media-requests/${encodeURIComponent(
+      requestId,
+    )}`,
+    payload,
+  );
+
+  return data.data;
+};
+
+export const deleteAdminMediaRequest = async (
+  requestId,
+) => {
+  const { data } = await api.delete(
+    `/experience/admin/media-requests/${encodeURIComponent(
+      requestId,
+    )}`,
+  );
+
+  return data.data;
+};
+
+/*
+|--------------------------------------------------------------------------
+| Backward Compatibility
+|--------------------------------------------------------------------------
+*/
 
 export const getAdminVideoUploadRequests =
-  async () => {
-    const {
-      data,
-    } = await api.get(
-      "/experience/admin/video-requests",
-    );
-
-    return Array.isArray(
-      data.data,
-    )
-      ? data.data
-      : [];
-  };
+  getAdminMediaRequests;
 
 export const updateAdminVideoUploadRequest =
-  async (
-    requestId,
-    payload,
-  ) => {
-    const {
-      data,
-    } = await api.patch(
-      `/experience/admin/video-requests/${encodeURIComponent(
-        requestId,
-      )}`,
-      payload,
-    );
+  updateAdminMediaRequest;
 
-    return data.data;
-  };
+export const deleteAdminVideoUploadRequest =
+  deleteAdminMediaRequest;
 
-  export const deleteAdminVideoUploadRequest =
-  async (
-    requestId,
-  ) => {
-    const {
-      data,
-    } = await api.delete(
-      `/experience/admin/video-requests/${encodeURIComponent(
-        requestId,
-      )}`,
-    );
+/*
+|--------------------------------------------------------------------------
+| Media Management
+|--------------------------------------------------------------------------
+*/
 
-    return data.data;
-  };
-
-
-  export const updateMediaNote = async (
+export const updateMediaNote = async (
   token,
   mediaId,
   note,
 ) => {
-  const {
-    data,
-  } = await api.put(
+  const { data } = await api.put(
     `/experience/manage/${encodeURIComponent(
       token,
-    )}/media/${encodeURIComponent(
-      mediaId,
-    )}/note`,
+    )}/media/${encodeURIComponent(mediaId)}/note`,
     {
       note,
     },
@@ -292,18 +246,15 @@ export const deleteMedia = async (
   token,
   mediaId,
 ) => {
-  const {
-    data,
-  } = await api.delete(
+  const { data } = await api.delete(
     `/experience/manage/${encodeURIComponent(
       token,
-    )}/media/${encodeURIComponent(
-      mediaId,
-    )}`,
+    )}/media/${encodeURIComponent(mediaId)}`,
   );
 
   return data;
 };
+
 export const replaceMedia = async (
   token,
   mediaId,

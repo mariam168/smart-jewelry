@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 
 import { useTranslation } from "react-i18next";
@@ -8,9 +7,9 @@ import { useAuth } from "../../auth/context/AuthContext.jsx";
 import {
   getExperienceMediaLimits,
   updateExperienceMediaLimits,
-  getAdminVideoUploadRequests,
-  updateAdminVideoUploadRequest,
-  deleteAdminVideoUploadRequest,
+  getAdminMediaRequests,
+  updateAdminMediaRequest,
+  deleteAdminMediaRequest,
 } from "../../experience/services/experienceApi.js";
 
 const normalizeWhatsAppNumber = (value) => {
@@ -59,13 +58,28 @@ const getStatusClasses = (status) => {
   }
 };
 
+const getMediaTypeLabel = (type, t) => {
+  switch (type) {
+    case "image":
+      return t("adminExperienceMediaSettings.images", "Images");
+
+    case "audio":
+      return t("adminExperienceMediaSettings.audio", "Audio");
+
+    case "video":
+      return t("adminExperienceMediaSettings.video", "Video");
+
+    default:
+      return type || "—";
+  }
+};
+
 const AdminExperienceMediaSettingsPage = () => {
   const { t } = useTranslation();
 
   const { user } = useAuth();
 
-  const isSuperAdmin =
-    user?.role?.name === "super_admin";
+  const isSuperAdmin = user?.role?.name === "super_admin";
 
   const [form, setForm] = useState({
     imageLimit: 5,
@@ -73,13 +87,17 @@ const AdminExperienceMediaSettingsPage = () => {
     audioLimit: 5,
   });
 
-  const [videoRequests, setVideoRequests] = useState([]);
+  const [mediaRequests, setMediaRequests] = useState([]);
 
   const [requestLimits, setRequestLimits] = useState({});
 
   const [requestNotes, setRequestNotes] = useState({});
 
   const [searchTerm, setSearchTerm] = useState("");
+
+  const [typeFilter, setTypeFilter] = useState("all");
+
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const [loading, setLoading] = useState(true);
 
@@ -94,12 +112,11 @@ const AdminExperienceMediaSettingsPage = () => {
   const loadPage = async () => {
     try {
       setLoading(true);
-
       setError("");
 
       const [limits, requests] = await Promise.all([
         getExperienceMediaLimits(),
-        getAdminVideoUploadRequests(),
+        getAdminMediaRequests(),
       ]);
 
       setForm({
@@ -108,15 +125,19 @@ const AdminExperienceMediaSettingsPage = () => {
         audioLimit: Number(limits?.audioLimit ?? 5),
       });
 
-      setVideoRequests(Array.isArray(requests) ? requests : []);
+      const normalizedRequests = Array.isArray(requests) ? requests : [];
+
+      setMediaRequests(normalizedRequests);
 
       const limitsByRequest = {};
 
       const notesByRequest = {};
 
-      (Array.isArray(requests) ? requests : []).forEach((request) => {
+      normalizedRequests.forEach((request) => {
         limitsByRequest[request._id] =
-          Number(request.approvedVideoLimit || 0) || 1;
+          Number(
+            request.approvedExtraLimit ?? request.requestedExtraLimit ?? 1,
+          ) || 1;
 
         notesByRequest[request._id] = request.adminNote || "";
       });
@@ -152,19 +173,26 @@ const AdminExperienceMediaSettingsPage = () => {
 
     try {
       setSaving(true);
-
       setError("");
       setMessage("");
 
       const payload = {
-        imageLimit: Number(form.imageLimit),
-        videoLimit: Number(form.videoLimit),
-        audioLimit: Number(form.audioLimit),
+        imageLimit: Math.max(Number(form.imageLimit) || 0, 0),
+
+        videoLimit: Math.max(Number(form.videoLimit) || 0, 0),
+
+        audioLimit: Math.max(Number(form.audioLimit) || 0, 0),
       };
 
       const result = await updateExperienceMediaLimits(payload);
 
-      setForm(result);
+      setForm({
+        imageLimit: Number(result?.imageLimit ?? payload.imageLimit),
+
+        videoLimit: Number(result?.videoLimit ?? payload.videoLimit),
+
+        audioLimit: Number(result?.audioLimit ?? payload.audioLimit),
+      });
 
       setMessage(
         t("adminExperienceMediaSettings.mediaLimitsUpdatedSuccessfully"),
@@ -186,28 +214,43 @@ const AdminExperienceMediaSettingsPage = () => {
       setError("");
       setMessage("");
 
+      const approvedExtraLimit = Math.max(
+        Number(
+          requestLimits[request._id] ?? request.requestedExtraLimit ?? 1,
+        ) || 0,
+        0,
+      );
+
       const payload = {
         status,
 
-        approvedVideoLimit:
-          status === "approved" ? Number(requestLimits[request._id] || 1) : 0,
+        approvedExtraLimit: status === "approved" ? approvedExtraLimit : 0,
 
         adminNote: requestNotes[request._id] || "",
       };
 
-      await updateAdminVideoUploadRequest(request._id, payload);
+      await updateAdminMediaRequest(request._id, payload);
 
       setMessage(
         status === "approved"
-          ? t("adminExperienceMediaSettings.videoUploadAccessApproved")
-          : t("adminExperienceMediaSettings.videoUploadRequestRejected"),
+          ? t(
+              "adminExperienceMediaSettings.mediaRequestApproved",
+              "Media allowance request approved.",
+            )
+          : t(
+              "adminExperienceMediaSettings.mediaRequestRejected",
+              "Media allowance request rejected.",
+            ),
       );
 
       await loadPage();
     } catch (updateError) {
       setError(
         updateError?.response?.data?.message ||
-          t("adminExperienceMediaSettings.failedToUpdateVideoRequest"),
+          t(
+            "adminExperienceMediaSettings.failedToUpdateMediaRequest",
+            "Failed to update media request.",
+          ),
       );
     } finally {
       setWorkingRequestId("");
@@ -229,17 +272,23 @@ const AdminExperienceMediaSettingsPage = () => {
       setError("");
       setMessage("");
 
-      await deleteAdminVideoUploadRequest(request._id);
+      await deleteAdminMediaRequest(request._id);
 
       setMessage(
-        t("adminExperienceMediaSettings.videoUploadRequestDeleted"),
+        t(
+          "adminExperienceMediaSettings.mediaRequestDeleted",
+          "Media request deleted.",
+        ),
       );
 
       await loadPage();
     } catch (deleteError) {
       setError(
         deleteError?.response?.data?.message ||
-          t("adminExperienceMediaSettings.failedToDeleteVideoRequest"),
+          t(
+            "adminExperienceMediaSettings.failedToDeleteMediaRequest",
+            "Failed to delete media request.",
+          ),
       );
     } finally {
       setWorkingRequestId("");
@@ -248,27 +297,35 @@ const AdminExperienceMediaSettingsPage = () => {
 
   const requestStats = useMemo(() => {
     return {
-      total: videoRequests.length,
+      total: mediaRequests.length,
 
-      pending: videoRequests.filter((request) => request.status === "pending")
+      pending: mediaRequests.filter((request) => request.status === "pending")
         .length,
 
-      approved: videoRequests.filter((request) => request.status === "approved")
+      approved: mediaRequests.filter((request) => request.status === "approved")
         .length,
 
-      rejected: videoRequests.filter((request) => request.status === "rejected")
+      rejected: mediaRequests.filter((request) => request.status === "rejected")
         .length,
     };
-  }, [videoRequests]);
+  }, [mediaRequests]);
 
-  const filteredVideoRequests = useMemo(() => {
+  const filteredRequests = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
-    if (!normalizedSearch) {
-      return videoRequests;
-    }
+    return mediaRequests.filter((request) => {
+      if (typeFilter !== "all" && request.mediaType !== typeFilter) {
+        return false;
+      }
 
-    return videoRequests.filter((request) => {
+      if (statusFilter !== "all" && request.status !== statusFilter) {
+        return false;
+      }
+
+      if (!normalizedSearch) {
+        return true;
+      }
+
       const experience = request.experience || {};
 
       const order = experience.order || {};
@@ -276,17 +333,30 @@ const AdminExperienceMediaSettingsPage = () => {
       const owner = experience.owner || {};
 
       const searchableValues = [
+        request.mediaType,
+
         request.requesterName,
+
         request.requesterPhone,
+
         request.message,
+
         request.status,
+
         request.adminNote,
+
         experience.serialNumber,
+
         experience.slug,
+
         order.orderNumber,
+
         owner.email,
+
         owner.phone,
+
         owner.firstName,
+
         owner.lastName,
       ];
 
@@ -296,7 +366,7 @@ const AdminExperienceMediaSettingsPage = () => {
           .includes(normalizedSearch),
       );
     });
-  }, [videoRequests, searchTerm]);
+  }, [mediaRequests, searchTerm, typeFilter, statusFilter]);
 
   if (loading) {
     return (
@@ -380,6 +450,10 @@ const AdminExperienceMediaSettingsPage = () => {
         </div>
       )}
 
+      {/* ---------------------------------------------------------------- */}
+      {/* GLOBAL LIMITS */}
+      {/* ---------------------------------------------------------------- */}
+
       <form
         onSubmit={handleSave}
         className="overflow-hidden rounded-[28px] border border-light-champagne bg-soft-white shadow-[0_20px_60px_rgba(7,19,31,0.06)]"
@@ -454,6 +528,10 @@ const AdminExperienceMediaSettingsPage = () => {
         </div>
       </form>
 
+      {/* ---------------------------------------------------------------- */}
+      {/* UNIFIED REQUEST QUEUE */}
+      {/* ---------------------------------------------------------------- */}
+
       <section className="overflow-hidden rounded-[28px] border border-light-champagne bg-soft-white shadow-[0_20px_60px_rgba(7,19,31,0.06)]">
         <div className="border-b border-light-champagne bg-warm-ivory/50 px-7 py-7">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -463,11 +541,17 @@ const AdminExperienceMediaSettingsPage = () => {
               </p>
 
               <h2 className="mt-3 font-serif text-[1.9rem]">
-                {t("adminExperienceMediaSettings.videoUploadRequests")}
+                {t(
+                  "adminExperienceMediaSettings.mediaRequests",
+                  "Media Allowance Requests",
+                )}
               </h2>
 
               <p className="mt-2 max-w-2xl text-[11px] leading-6 text-slate-gray">
-                {t("adminExperienceMediaSettings.videoRequestsDescription")}
+                {t(
+                  "adminExperienceMediaSettings.mediaRequestsDescription",
+                  "Review image, audio and video allowance requests.",
+                )}
               </p>
             </div>
 
@@ -506,73 +590,123 @@ const AdminExperienceMediaSettingsPage = () => {
             </div>
           </div>
 
-          <div className="mt-6">
-            <div className="relative">
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder={t(
-                  "adminExperienceMediaSettings.searchVideoRequests",
-                )}
-                className="h-[52px] w-full rounded-[14px] border border-light-champagne bg-soft-white px-5 pr-12 text-[11px] text-midnight-navy outline-none transition-all placeholder:text-steel-gray/70 focus:border-classic-gold focus:ring-2 focus:ring-classic-gold/10"
-              />
+          <div className="mt-6 grid gap-3 md:grid-cols-[1fr_auto_auto]">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder={t(
+                "adminExperienceMediaSettings.searchMediaRequests",
+                "Search media requests...",
+              )}
+              className="h-[52px] w-full rounded-[14px] border border-light-champagne bg-soft-white px-5 text-[11px] outline-none focus:border-classic-gold"
+            />
 
-              <span className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-[15px] text-antique-gold">
-                ⌕
-              </span>
-            </div>
+            <select
+              value={typeFilter}
+              onChange={(event) => setTypeFilter(event.target.value)}
+              className="h-[52px] rounded-[14px] border border-light-champagne bg-soft-white px-4 text-[10px] outline-none focus:border-classic-gold"
+            >
+              <option value="all">
+                {t("adminExperienceMediaSettings.allMediaTypes", "All Media")}
+              </option>
 
-            {searchTerm.trim() && (
-              <p className="mt-2 text-[9px] text-steel-gray">
-                {t("adminExperienceMediaSettings.searchResults")}:{" "}
-                {filteredVideoRequests.length}
-              </p>
-            )}
+              <option value="image">
+                {t("adminExperienceMediaSettings.images", "Images")}
+              </option>
+
+              <option value="audio">
+                {t("adminExperienceMediaSettings.audio", "Audio")}
+              </option>
+
+              <option value="video">
+                {t("adminExperienceMediaSettings.video", "Video")}
+              </option>
+            </select>
+
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              className="h-[52px] rounded-[14px] border border-light-champagne bg-soft-white px-4 text-[10px] outline-none focus:border-classic-gold"
+            >
+              <option value="all">
+                {t("adminExperienceMediaSettings.allStatuses", "All Statuses")}
+              </option>
+
+              <option value="pending">
+                {t("adminExperienceMediaSettings.pending")}
+              </option>
+
+              <option value="approved">
+                {t("adminExperienceMediaSettings.approved")}
+              </option>
+
+              <option value="rejected">
+                {t("adminExperienceMediaSettings.rejected")}
+              </option>
+            </select>
           </div>
         </div>
 
-        {videoRequests.length === 0 ? (
+        {mediaRequests.length === 0 ? (
           <div className="p-10 text-center">
             <p className="font-serif text-[1.5rem] text-midnight-navy">
-              {t("adminExperienceMediaSettings.noVideoRequestsYet")}
-            </p>
-
-            <p className="mt-2 text-[11px] text-slate-gray">
-              {t("adminExperienceMediaSettings.noVideoRequestsDescription")}
-            </p>
-          </div>
-        ) : filteredVideoRequests.length === 0 ? (
-          <div className="p-10 text-center">
-            <p className="font-serif text-[1.5rem] text-midnight-navy">
-              {t("adminExperienceMediaSettings.noMatchingVideoRequests")}
+              {t(
+                "adminExperienceMediaSettings.noMediaRequestsYet",
+                "No media requests yet.",
+              )}
             </p>
 
             <p className="mt-2 text-[11px] text-slate-gray">
               {t(
-                "adminExperienceMediaSettings.noMatchingVideoRequestsDescription",
+                "adminExperienceMediaSettings.noMediaRequestsDescription",
+                "New allowance requests will appear here.",
+              )}
+            </p>
+          </div>
+        ) : filteredRequests.length === 0 ? (
+          <div className="p-10 text-center">
+            <p className="font-serif text-[1.5rem] text-midnight-navy">
+              {t(
+                "adminExperienceMediaSettings.noMatchingMediaRequests",
+                "No matching requests.",
               )}
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1180px] text-left">
+            <table className="w-full min-w-[1380px] text-left">
               <thead>
                 <tr className="bg-midnight-navy">
                   {[
+                    [
+                      "type",
+                      t("adminExperienceMediaSettings.mediaType", "Media"),
+                    ],
+
                     ["customer", t("adminExperienceMediaSettings.customer")],
+
                     [
                       "experience",
                       t("adminExperienceMediaSettings.experience"),
                     ],
+
                     ["request", t("adminExperienceMediaSettings.request")],
+
                     ["status", t("adminExperienceMediaSettings.status")],
+
                     [
-                      "allowedVideos",
-                      t("adminExperienceMediaSettings.allowedVideos"),
+                      "allowed",
+                      t(
+                        "adminExperienceMediaSettings.extraAllowance",
+                        "Extra Allowance",
+                      ),
                     ],
+
                     ["adminNote", t("adminExperienceMediaSettings.adminNote")],
+
                     ["contact", t("adminExperienceMediaSettings.contact")],
+
                     ["action", t("adminExperienceMediaSettings.action")],
                   ].map(([key, heading]) => (
                     <th
@@ -586,7 +720,7 @@ const AdminExperienceMediaSettingsPage = () => {
               </thead>
 
               <tbody className="divide-y divide-light-champagne/70">
-                {filteredVideoRequests.map((request) => {
+                {filteredRequests.map((request) => {
                   const experience = request.experience || {};
 
                   const order = experience.order || {};
@@ -604,6 +738,12 @@ const AdminExperienceMediaSettingsPage = () => {
                       key={request._id}
                       className="align-top hover:bg-warm-ivory/40"
                     >
+                      <td className="px-5 py-5">
+                        <span className="inline-flex rounded-full border border-light-champagne bg-warm-ivory px-3 py-1.5 text-[8px] font-semibold uppercase tracking-[0.1em] text-deep-navy">
+                          {getMediaTypeLabel(request.mediaType, t)}
+                        </span>
+                      </td>
+
                       <td className="px-5 py-5">
                         <p className="text-[11px] font-semibold text-midnight-navy">
                           {request.requesterName}
@@ -635,8 +775,16 @@ const AdminExperienceMediaSettingsPage = () => {
                         </p>
                       </td>
 
-                      <td className="max-w-[240px] px-5 py-5">
-                        <p className="whitespace-pre-wrap text-[9px] leading-5 text-slate-gray">
+                      <td className="max-w-[230px] px-5 py-5">
+                        <p className="text-[9px] font-semibold text-midnight-navy">
+                          {t(
+                            "adminExperienceMediaSettings.requested",
+                            "Requested",
+                          )}{" "}
+                          {request.requestedExtraLimit || 1}
+                        </p>
+
+                        <p className="mt-2 whitespace-pre-wrap text-[9px] leading-5 text-slate-gray">
                           {request.message ||
                             t("adminExperienceMediaSettings.noNoteProvided")}
                         </p>
@@ -660,12 +808,18 @@ const AdminExperienceMediaSettingsPage = () => {
                       <td className="px-5 py-5">
                         <input
                           type="number"
-                          min="1"
-                          max={Math.max(Number(form.videoLimit || 1), 1)}
-                          value={requestLimits[request._id] || 1}
+                          min="0"
+                          max="100"
+                          value={
+                            requestLimits[request._id] ??
+                            request.approvedExtraLimit ??
+                            request.requestedExtraLimit ??
+                            1
+                          }
                           onChange={(event) =>
                             setRequestLimits((previous) => ({
                               ...previous,
+
                               [request._id]: event.target.value,
                             }))
                           }
@@ -673,8 +827,11 @@ const AdminExperienceMediaSettingsPage = () => {
                         />
 
                         <p className="mt-1 text-[7px] text-steel-gray">
-                          {t("adminExperienceMediaSettings.globalMax")}{" "}
-                          {form.videoLimit}
+                          {t(
+                            "adminExperienceMediaSettings.requested",
+                            "Requested",
+                          )}{" "}
+                          {request.requestedExtraLimit || 1}
                         </p>
                       </td>
 
@@ -685,6 +842,7 @@ const AdminExperienceMediaSettingsPage = () => {
                           onChange={(event) =>
                             setRequestNotes((previous) => ({
                               ...previous,
+
                               [request._id]: event.target.value,
                             }))
                           }
@@ -699,7 +857,7 @@ const AdminExperienceMediaSettingsPage = () => {
                         {whatsappNumber ? (
                           <a
                             href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-                              `Hello ${request.requesterName}, regarding your JEVORYA video upload request for serial ${experience.serialNumber || ""}.`,
+                              `Hello ${request.requesterName}, regarding your JEVORYA ${request.mediaType || "media"} allowance request for serial ${experience.serialNumber || ""}.`,
                             )}`}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -743,7 +901,7 @@ const AdminExperienceMediaSettingsPage = () => {
                               type="button"
                               disabled={isWorking}
                               onClick={() => deleteRequest(request)}
-                              className="min-h-[36px] rounded-[10px] border border-midnight-navy/15 bg-warm-ivory px-4 text-[8px] font-semibold text-midnight-navy transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
+                              className="min-h-[36px] rounded-[10px] border border-midnight-navy/15 bg-warm-ivory px-4 text-[8px] font-semibold text-midnight-navy hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
                             >
                               {t("adminExperienceMediaSettings.delete")}
                             </button>

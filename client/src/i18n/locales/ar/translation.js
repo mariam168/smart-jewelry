@@ -2383,6 +2383,8 @@ title2: "قصتان.",
    "auth": {
     "register": {
         "firstNamePlaceholder": "جون",
+        creatingAccount: "جاري انشاء الحساب...",
+        createAccount: "انشاء حساب",
       "lastNamePlaceholder": "دو",
       "phonePlaceholder": "01098765432",
       "title": "إنشاء حسابك",
@@ -2410,6 +2412,8 @@ title2: "قصتان.",
         "login": {
           "phonePlaceholder": "01098765432",
           phone: "رقم واتساب",
+          loggingIn: "جارٍ تسجيل الدخول...",
+          createAccount: "انشاء حساب",
 "phoneRequired": "رقم WhatsApp مطلوب",
 "phoneInvalid": "يرجى إدخال رقم WhatsApp مصري صحيح",
 "verifyWhatsappTitle": "تأكيد رقم WhatsApp الخاص بك",

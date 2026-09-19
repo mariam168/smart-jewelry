@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-
 import { useTranslation } from "react-i18next";
-
 import { useParams } from "react-router-dom";
 
 import ProductInfoCard from "../components/ProductInfoCard";
@@ -25,27 +23,144 @@ const DEFAULT_MEDIA_LIMITS = {
 
 const DEFAULT_VIDEO_ACCESS = {
   status: "not_requested",
-
   approvedVideoLimit: 0,
-
+  approvedExtraLimit: 0,
   requesterName: "",
-
   requesterPhone: "",
-
   message: "",
-
   adminNote: "",
+};
+
+const normalizeMediaRequests = (requests) => {
+  if (!Array.isArray(requests)) {
+    return [];
+  }
+
+  return requests.map((request) => ({
+    ...request,
+
+    mediaType: request?.mediaType || request?.type || null,
+
+    approvedExtraLimit: Number(request?.approvedExtraLimit || 0),
+
+    requestedExtraLimit: Number(request?.requestedExtraLimit || 0),
+
+    approvedVideoLimit: Number(request?.approvedVideoLimit || 0),
+  }));
+};
+
+const normalizeApprovedExtraLimits = (requests) => {
+  const result = {
+    image: 0,
+    audio: 0,
+    video: 0,
+  };
+
+  if (!Array.isArray(requests)) {
+    return result;
+  }
+
+  requests.forEach((request) => {
+    if (request?.status !== "approved") {
+      return;
+    }
+
+    const mediaType = request?.mediaType;
+
+    if (!["image", "audio", "video"].includes(mediaType)) {
+      return;
+    }
+
+    const approvedExtra = Number(request?.approvedExtraLimit || 0);
+
+    result[mediaType] += approvedExtra;
+  });
+
+  return result;
+};
+
+const normalizeVideoAccess = (data, mediaRequests) => {
+  const requests = Array.isArray(mediaRequests) ? mediaRequests : [];
+
+  const videoRequests = requests.filter(
+    (request) => request?.mediaType === "video",
+  );
+
+  const latestVideoRequest =
+    [...videoRequests]
+      .sort((a, b) => {
+        const aDate = new Date(a?.requestedAt || a?.createdAt || 0).getTime();
+
+        const bDate = new Date(b?.requestedAt || b?.createdAt || 0).getTime();
+
+        return aDate - bDate;
+      })
+      .at(-1) || null;
+
+  const approvedVideoRequests = videoRequests.filter(
+    (request) => request?.status === "approved",
+  );
+
+  const totalApprovedExtraLimit = approvedVideoRequests.reduce(
+    (total, request) => total + Number(request?.approvedExtraLimit || 0),
+    0,
+  );
+
+  const totalApprovedVideoLimit = approvedVideoRequests.reduce(
+    (total, request) => total + Number(request?.approvedVideoLimit || 0),
+    0,
+  );
+
+  const oldVideoAccess = data?.videoAccess || data?.mediaAccess?.video || {};
+
+  let status =
+    latestVideoRequest?.status || oldVideoAccess?.status || "not_requested";
+
+  if (totalApprovedExtraLimit > 0) {
+    status = "approved";
+  }
+
+  const approvedVideoLimit =
+    totalApprovedVideoLimit > 0
+      ? totalApprovedVideoLimit
+      : totalApprovedExtraLimit > 0
+        ? totalApprovedExtraLimit
+        : Number(oldVideoAccess?.approvedVideoLimit || 0);
+
+  return {
+    ...DEFAULT_VIDEO_ACCESS,
+    ...oldVideoAccess,
+
+    status,
+
+    approvedExtraLimit: totalApprovedExtraLimit,
+
+    approvedVideoLimit,
+
+    requesterName:
+      latestVideoRequest?.requesterName || oldVideoAccess?.requesterName || "",
+
+    requesterPhone:
+      latestVideoRequest?.requesterPhone ||
+      oldVideoAccess?.requesterPhone ||
+      "",
+
+    message: latestVideoRequest?.message || oldVideoAccess?.message || "",
+
+    adminNote: latestVideoRequest?.adminNote || oldVideoAccess?.adminNote || "",
+
+    requestCount: videoRequests.length,
+
+    approvedRequestCount: approvedVideoRequests.length,
+  };
 };
 
 const ManageExperiencePage = () => {
   const { token } = useParams();
-
   const { t } = useTranslation();
 
   const [loading, setLoading] = useState(true);
-
   const [saving, setSaving] = useState(false);
-
   const [savingAccessDate, setSavingAccessDate] = useState(false);
 
   const [experience, setExperience] = useState(null);
@@ -53,6 +168,8 @@ const ManageExperiencePage = () => {
   const [media, setMedia] = useState([]);
 
   const [mediaLimits, setMediaLimits] = useState(DEFAULT_MEDIA_LIMITS);
+
+  const [mediaRequests, setMediaRequests] = useState([]);
 
   const [videoAccess, setVideoAccess] = useState(DEFAULT_VIDEO_ACCESS);
 
@@ -73,45 +190,70 @@ const ManageExperiencePage = () => {
 
       const data = await getExperience(token);
 
-      setExperience(data.experience || null);
+      console.log(
+        "EXPERIENCE MEDIA RESPONSE JSON:",
+        JSON.stringify(data, null, 2),
+      );
 
-      setMedia(Array.isArray(data.media) ? data.media : []);
+      setExperience(data?.experience || null);
 
-      setMediaLimits({
+      setMedia(Array.isArray(data?.media) ? data.media : []);
+
+      const baseMediaLimits = {
         ...DEFAULT_MEDIA_LIMITS,
-        ...(data.mediaLimits || {}),
-      });
+        ...(data?.mediaLimits || {}),
+      };
 
-      setVideoAccess({
-        ...DEFAULT_VIDEO_ACCESS,
-        ...(data.videoAccess || {}),
-      });
+      const normalizedRequests = normalizeMediaRequests(data?.mediaRequests);
 
-      setAccessDate(data.experience?.accessDate || "");
+      setMediaRequests(normalizedRequests);
 
-      const order = data.experience?.order || {};
+      const approvedExtraLimits =
+        normalizeApprovedExtraLimits(normalizedRequests);
 
-      const manufacturingName = order.manufacturingName || "";
+   setMediaLimits({
+  ...baseMediaLimits,
+  approvedExtraLimits,
+  approvedExtraImageLimit: approvedExtraLimits.image,
+  approvedExtraAudioLimit: approvedExtraLimits.audio,
+  approvedExtraVideoLimit: approvedExtraLimits.video,
+});
 
-      const shippingAddress = order.shippingAddress || {};
+      const normalizedVideoAccess = normalizeVideoAccess(
+        data,
+        normalizedRequests,
+      );
+
+      console.log("NORMALIZED MEDIA REQUESTS:", normalizedRequests);
+
+      console.log("APPROVED EXTRA LIMITS:", approvedExtraLimits);
+
+      console.log("NORMALIZED VIDEO ACCESS:", normalizedVideoAccess);
+
+      setVideoAccess(normalizedVideoAccess);
+
+      setAccessDate(data?.experience?.accessDate || "");
+
+      const order = data?.experience?.order || {};
+
+      const manufacturingName = order?.manufacturingName || "";
+
+      const shippingAddress = order?.shippingAddress || {};
 
       const shippingReceiverName = [
-        shippingAddress.firstName,
-        shippingAddress.lastName,
+        shippingAddress?.firstName,
+        shippingAddress?.lastName,
       ]
         .filter(Boolean)
         .join(" ");
 
-      const receiverName = order.ordererName?.trim() || shippingReceiverName;
+      const receiverName = order?.ordererName?.trim() || shippingReceiverName;
 
       setForm({
         ownerName: manufacturingName,
-
-        receiverName: receiverName,
-
-        message: data.personal?.message || "",
-
-        profileImage: data.personal?.profileImage || "",
+        receiverName,
+        message: data?.personal?.message || "",
+        profileImage: data?.personal?.profileImage || "",
       });
     } catch (error) {
       console.error("Failed to load experience:", error);
@@ -130,6 +272,8 @@ const ManageExperiencePage = () => {
   };
 
   useEffect(() => {
+    if (!token) return;
+
     loadExperience({
       showLoader: true,
     });
@@ -138,7 +282,6 @@ const ManageExperiencePage = () => {
   const handleChange = (event) => {
     setForm((previous) => ({
       ...previous,
-
       [event.target.name]: event.target.value,
     }));
   };
@@ -163,9 +306,9 @@ const ManageExperiencePage = () => {
     }
   };
 
-const handleUpload = async (files) => {
-  return uploadMedia(token, files);
-};
+  const handleUpload = async (files) => {
+    return uploadMedia(token, files);
+  };
 
   const handleSaveAccessDate = async () => {
     if (!accessDate) {
@@ -183,6 +326,8 @@ const handleUpload = async (files) => {
 
       await loadExperience();
     } catch (error) {
+      console.error(error);
+
       alert(
         error?.response?.data?.message ||
           t("manageExperience.failedToSaveAccessDate"),
@@ -202,6 +347,8 @@ const handleUpload = async (files) => {
 
       await loadExperience();
     } catch (error) {
+      console.error(error);
+
       alert(
         error?.response?.data?.message ||
           t("manageExperience.failedToRemoveAccessDate"),
@@ -215,62 +362,41 @@ const handleUpload = async (files) => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-warm-ivory">
-        <div className="text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-light-champagne border-t-classic-gold" />
-
-          <p className="mt-5 text-[13px] text-slate-gray">
-            {t("manageExperience.loadingExperience")}
-          </p>
-        </div>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="text-sm text-gray-500">Loading...</div>
       </div>
     );
   }
 
   if (!experience) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-warm-ivory">
-        <h2 className="font-serif text-[2rem]">
-          {t("manageExperience.experienceNotFound")}
-        </h2>
+      <div className="mx-auto max-w-4xl px-4 py-12">
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center text-red-700">
+          {t("manageExperience.experienceNotFound") || "Experience not found."}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen bg-warm-ivory text-midnight-navy">
-      <header className="bg-gradient-to-br from-deep-navy via-rich-navy to-luxury-black">
-        <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8">
-          <p className="text-[10px] uppercase tracking-[0.25em] text-champagne-gold">
-            ✦ {t("manageExperience.smartJewelry")}
-          </p>
-
-          <h1 className="mt-3 font-serif text-[3rem] text-soft-white">
-            {t("manageExperience.manageExperience")}
+    <div className="min-h-screen bg-[#F8F5F0]">
+      <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 md:px-6 lg:px-8">
+        <div>
+          <h1 className="text-2xl font-semibold text-[#302820]">
+            {t("manageExperience.title") || "Manage Experience"}
           </h1>
 
-          <p className="mt-4 font-mono text-[12px] text-premium-silver">
-            {t("manageExperience.serial")} {serialNumber}
-          </p>
+          {serialNumber && (
+            <p className="mt-1 text-sm text-gray-500">{serialNumber}</p>
+          )}
         </div>
-      </header>
 
-      <main className="mx-auto max-w-6xl space-y-8 px-5 py-10 sm:px-8">
         <ProductInfoCard experience={experience} />
-
-        <ExperienceAccessDateCard
-          accessDate={accessDate}
-          setAccessDate={setAccessDate}
-          hasSavedDate={Boolean(experience.accessDate)}
-          onSave={handleSaveAccessDate}
-          onRemove={handleRemoveAccessDate}
-          saving={savingAccessDate}
-        />
 
         <PersonalInfoForm
           form={form}
-          handleChange={handleChange}
-          handleSave={handleSave}
+          onChange={handleChange}
+          onSave={handleSave}
           saving={saving}
         />
 
@@ -278,20 +404,23 @@ const handleUpload = async (files) => {
           token={token}
           uploadFiles={handleUpload}
           mediaLimits={mediaLimits}
+          mediaRequests={mediaRequests}
           currentMedia={media}
           videoAccess={videoAccess}
           serialNumber={serialNumber}
           onRefresh={loadExperience}
         />
 
-        <section className="rounded-[28px] border border-light-champagne bg-soft-white p-6 sm:p-8">
-          <h2 className="mb-6 font-serif text-[1.65rem]">
-            {t("manageExperience.yourMemories")}
-          </h2>
+        <MediaGallery media={media} serialNumber={serialNumber} />
 
-          <MediaGallery media={media} />
-        </section>
-      </main>
+        <ExperienceAccessDateCard
+          accessDate={accessDate}
+          setAccessDate={setAccessDate}
+          onSave={handleSaveAccessDate}
+          onRemove={handleRemoveAccessDate}
+          saving={savingAccessDate}
+        />
+      </div>
     </div>
   );
 };

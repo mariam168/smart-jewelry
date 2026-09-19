@@ -1,42 +1,68 @@
 import mongoose from "mongoose";
 
-const experienceMediaSchema = new mongoose.Schema(
-  {
-    experience: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Experience",
-      required: true,
+const experienceMediaSchema =
+  new mongoose.Schema(
+    {
+      experience: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Experience",
+        required: true,
+        index: true,
+      },
+
+      type: {
+        type: String,
+        enum: [
+          "image",
+          "video",
+          "audio",
+          "file",
+        ],
+        required: true,
+      },
+
+      url: {
+        type: String,
+        required: true,
+      },
+
+      fileName: {
+        type: String,
+        default: "",
+      },
+
+      fileSize: {
+        type: Number,
+        default: 0,
+      },
+
+      note: {
+        type: String,
+        default: "",
+        trim: true,
+        maxlength: 1000,
+      },
+
+      sortOrder: {
+        type: Number,
+        default: 0,
+      },
     },
-
-    type: {
-      type: String,
-      enum: ["image", "video", "audio", "file"],
-      required: true,
+    {
+      timestamps: true,
     },
+  );
 
-    url: {
-      type: String,
-      required: true,
-    },
+experienceMediaSchema.index({
+  experience: 1,
+  type: 1,
+});
 
-    fileName: String,
+const ExperienceMedia =
+  mongoose.models.ExperienceMedia ||
+  mongoose.model(
+    "ExperienceMedia",
+    experienceMediaSchema,
+  );
 
-    fileSize: Number,
-    note: {
-  type: String,
-  default: "",
-  trim: true,
-  maxlength: 1000,
-},
-
-    sortOrder: {
-      type: Number,
-      default: 0,
-    },
-  },
-  {
-    timestamps: true,
-  },
-);
-
-export default mongoose.model("ExperienceMedia", experienceMediaSchema);
+export default ExperienceMedia;
