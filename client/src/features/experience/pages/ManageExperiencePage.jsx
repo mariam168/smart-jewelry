@@ -382,9 +382,9 @@ const ManageExperiencePage = () => {
     <div className="min-h-screen bg-[#F8F5F0]">
       <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 md:px-6 lg:px-8">
         <div>
-          <h1 className="text-2xl font-semibold text-[#302820]">
-            {t("manageExperience.title") || "Manage Experience"}
-          </h1>
+        <h1 className="text-2xl font-semibold text-[#302820]">
+{t("manageExperience.title")}
+</h1>
 
           {serialNumber && (
             <p className="mt-1 text-sm text-gray-500">{serialNumber}</p>
