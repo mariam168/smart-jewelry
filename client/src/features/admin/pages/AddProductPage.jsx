@@ -821,86 +821,188 @@ const AddProductPage = () => {
                 </div>
               </section>
 
-              {/* 02 PRICING */}
-              <section className="overflow-hidden rounded-[28px] border border-light-champagne/90 bg-soft-white/90 shadow-[0_18px_48px_rgba(7,19,31,0.05)]">
-                <div className="border-b border-light-champagne/80 bg-warm-ivory/50 px-7 py-6 sm:px-9">
-                  <div className="flex items-center gap-3">
-                    <span className="text-antique-gold">02</span>
+           {/* 02 PRICING */}
+<section className="overflow-hidden rounded-[28px] border border-light-champagne/90 bg-soft-white/90 shadow-[0_18px_48px_rgba(7,19,31,0.05)]">
+  <div className="border-b border-light-champagne/80 bg-warm-ivory/50 px-7 py-6 sm:px-9">
+    <div className="flex items-center gap-3">
+      <span className="text-antique-gold">02</span>
 
-                    <span className="h-px w-8 bg-antique-gold" />
+      <span className="h-px w-8 bg-antique-gold" />
 
-                    <span className="text-[8px] font-semibold uppercase tracking-[0.24em] text-steel-gray">
-                      {t("addProduct.pricingInventory")}
-                    </span>
-                  </div>
+      <span className="text-[8px] font-semibold uppercase tracking-[0.24em] text-steel-gray">
+        {t("addProduct.pricingInventory")}
+      </span>
+    </div>
 
-                  <h2 className="mt-3 font-serif text-[1.65rem] text-midnight-navy">
-                    {t("addProduct.pricingAvailability")}
-                  </h2>
+    <h2 className="mt-3 font-serif text-[1.65rem] text-midnight-navy">
+      {t("addProduct.pricingAvailability")}
+    </h2>
 
-                  <p className="mt-2 text-[10px] leading-6 text-slate-gray">
-                    {t("addProduct.sellingPriceDescription")}
-                  </p>
-                </div>
+    <p className="mt-2 max-w-3xl text-[10px] leading-6 text-slate-gray">
+      {t("addProduct.sellingPriceDescription")}
+    </p>
+  </div>
 
-                <div className="grid grid-cols-1 gap-6 p-7 sm:grid-cols-2 sm:p-9 xl:grid-cols-5">
-                  {[
-                    {
-                      name: "price",
-                      label: t("addProduct.sellingPrice"),
-                      required: true,
-                      suffix: "EGP",
-                    },
-                    {
-                      name: "costPrice",
-                      label: t("addProduct.productCost"),
-                      required: true,
-                      suffix: "EGP",
-                    },
-                    {
-                      name: "comparePrice",
-                      label: t("addProduct.comparePrice"),
-                      suffix: "EGP",
-                    },
-                    {
-                      name: "stock",
-                      label: t("addProduct.stock"),
-                      step: "1",
-                      required: true,
-                    },
-                    {
-                      name: "weight",
-                      label: t("addProduct.weight"),
-                      suffix: "g",
-                    },
-                  ].map((field) => (
-                    <div key={field.name}>
-                      <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
-                        {field.label}
-                      </label>
+  <div className="space-y-7 p-7 sm:p-9">
+    {/* PRICING */}
+    <div>
+      <p className="mb-4 text-[8px] font-semibold uppercase tracking-[0.18em] text-antique-gold">
+        Pricing
+      </p>
 
-                      <div className="relative">
-                        <input
-                          type="number"
-                          min="0"
-                          step={field.step || "0.01"}
-                          name={field.name}
-                          value={formData[field.name]}
-                          onChange={handleChange}
-                          required={field.required}
-                          className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5 pr-14 text-[12px] outline-none focus:border-classic-gold"
-                        />
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+        {/* SELLING PRICE */}
+        <div>
+          <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+            {t("addProduct.sellingPrice")}
+          </label>
 
-                        {field.suffix && (
-                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-antique-gold">
-                            {field.suffix}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
+          <div className="flex overflow-hidden rounded-[14px] border border-light-champagne bg-warm-ivory/60 focus-within:border-classic-gold">
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              name="price"
+              value={formData.price}
+              onChange={handleChange}
+              required
+              inputMode="decimal"
+              dir="ltr"
+              className="min-w-0 flex-1 bg-transparent px-5 py-3.5 text-[12px] outline-none"
+            />
+
+            <span className="flex shrink-0 items-center border-l border-light-champagne bg-soft-cream px-4 text-[9px] font-semibold text-antique-gold">
+              EGP
+            </span>
+          </div>
+        </div>
+
+        {/* PRODUCT COST */}
+        <div>
+          <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+            {t("addProduct.productCost")}
+          </label>
+
+          <div className="flex overflow-hidden rounded-[14px] border border-light-champagne bg-warm-ivory/60 focus-within:border-classic-gold">
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              name="costPrice"
+              value={formData.costPrice}
+              onChange={handleChange}
+              required
+              inputMode="decimal"
+              dir="ltr"
+              className="min-w-0 flex-1 bg-transparent px-5 py-3.5 text-[12px] outline-none"
+            />
+
+            <span className="flex shrink-0 items-center border-l border-light-champagne bg-soft-cream px-4 text-[9px] font-semibold text-antique-gold">
+              EGP
+            </span>
+          </div>
+        </div>
+
+        {/* COMPARE PRICE */}
+        <div>
+          <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+            {t("addProduct.comparePrice")}
+          </label>
+
+          <div className="flex overflow-hidden rounded-[14px] border border-light-champagne bg-warm-ivory/60 focus-within:border-classic-gold">
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              name="comparePrice"
+              value={formData.comparePrice}
+              onChange={handleChange}
+              inputMode="decimal"
+              dir="ltr"
+              className="min-w-0 flex-1 bg-transparent px-5 py-3.5 text-[12px] outline-none"
+            />
+
+            <span className="flex shrink-0 items-center border-l border-light-champagne bg-soft-cream px-4 text-[9px] font-semibold text-antique-gold">
+              EGP
+            </span>
+          </div>
+
+          <p className="mt-2 text-[8px] text-steel-gray">
+            Optional reference price
+          </p>
+        </div>
+      </div>
+    </div>
+
+    {/* INVENTORY */}
+    <div className="border-t border-light-champagne pt-7">
+      <p className="mb-4 text-[8px] font-semibold uppercase tracking-[0.18em] text-antique-gold">
+        Inventory
+      </p>
+
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        {/* STOCK */}
+        <div>
+          <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+            {t("addProduct.stock")}
+          </label>
+
+          <div className="flex overflow-hidden rounded-[14px] border border-light-champagne bg-warm-ivory/60 focus-within:border-classic-gold">
+            <input
+              type="number"
+              min="0"
+              step="1"
+              name="stock"
+              value={formData.stock}
+              onChange={handleChange}
+              required
+              inputMode="numeric"
+              dir="ltr"
+              className="min-w-0 flex-1 bg-transparent px-5 py-3.5 text-[12px] outline-none"
+            />
+
+            <span className="flex shrink-0 items-center border-l border-light-champagne bg-soft-cream px-4 text-[9px] font-semibold text-antique-gold">
+              Units
+            </span>
+          </div>
+
+          <p className="mt-2 text-[8px] text-steel-gray">
+            Available quantity for this product
+          </p>
+        </div>
+
+        {/* WEIGHT */}
+        <div>
+          <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.14em] text-midnight-navy">
+            {t("addProduct.weight")}
+          </label>
+
+          <div className="flex overflow-hidden rounded-[14px] border border-light-champagne bg-warm-ivory/60 focus-within:border-classic-gold">
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              name="weight"
+              value={formData.weight}
+              onChange={handleChange}
+              inputMode="decimal"
+              dir="ltr"
+              className="min-w-0 flex-1 bg-transparent px-5 py-3.5 text-[12px] outline-none"
+            />
+
+            <span className="flex shrink-0 items-center border-l border-light-champagne bg-soft-cream px-4 text-[9px] font-semibold text-antique-gold">
+              g
+            </span>
+          </div>
+
+          <p className="mt-2 text-[8px] text-steel-gray">
+            Product weight in grams
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
               {/* 03 DETAILS */}
               <section className="overflow-hidden rounded-[28px] border border-light-champagne/90 bg-soft-white/90">
