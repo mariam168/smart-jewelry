@@ -161,7 +161,7 @@ const LoginPage = () => {
       ) {
         navigate("/admin");
       } else {
-        navigate("/account");
+        navigate("/");
       }
 
       console.log("Navigation Done");
