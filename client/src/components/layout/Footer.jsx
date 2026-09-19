@@ -55,7 +55,7 @@ icon: FaFacebookF,
 },
 {
 name: "TikTok",
-href: "https://www.tiktok.com/@jevorya0?lang=en",
+href: "https://www.tiktok.com/@jevorya?_r=1&_t=ZS-99pewF7Fiqr",
 icon: FaTiktok,
 },
 ];
