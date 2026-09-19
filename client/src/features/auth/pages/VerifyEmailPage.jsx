@@ -117,7 +117,7 @@ try {
 
   setTimeout(() => {
     navigate(
-      "/login",
+      "/",
       {
         replace: true,
       },
