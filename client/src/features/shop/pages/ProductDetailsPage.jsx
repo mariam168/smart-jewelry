@@ -150,6 +150,7 @@ const ProductDetailsPage = () => {
   const { addToCart, isLoading: isCartLoading } = useCart();
 
   const [addedToCart, setAddedToCart] = useState(false);
+  const [stockError, setStockError] = useState(false);
 
   const formatMoney = (value) => {
     return Number(value || 0).toLocaleString("en-EG", {
@@ -372,7 +373,7 @@ const ProductDetailsPage = () => {
     setSelectedVariant(null);
     setSelectedSize("");
     setQuantity(1);
-
+    setStockError(false);
     const firstColorVariant = colorVariants[0];
 
     if (firstColorVariant.image) {
@@ -420,6 +421,7 @@ const ProductDetailsPage = () => {
     }
 
     setQuantity(1);
+    setStockError(false);
   };
 
   const setTechnologyPreferenceInUrl = (
@@ -448,6 +450,7 @@ const ProductDetailsPage = () => {
     setTechnologyPreferenceInUrl(false);
     setQuantity(1);
     setAddedToCart(false);
+    setStockError(false);
   };
 
   const handleRemoveTechnology = () => {
@@ -459,6 +462,7 @@ const ProductDetailsPage = () => {
     setTechnologyPreferenceInUrl(true);
     setQuantity(1);
     setAddedToCart(false);
+    setStockError(false);
   };
 
   const technologyExtraPrice = Number(
@@ -523,14 +527,18 @@ const ProductDetailsPage = () => {
   const isUnavailable =
     isOutOfStock || isInactive;
 
-  const increaseQuantity = () => {
-    if (quantity < currentStock) {
-      setQuantity(
-        (previous) => previous + 1,
-      );
-    }
-  };
+ const increaseQuantity = () => {
+  if (quantity >= Number(currentStock || 0)) {
+    setStockError(true);
+    return;
+  }
 
+  setStockError(false);
+
+  setQuantity(
+    (previous) => previous + 1,
+  );
+};
   const decreaseQuantity = () => {
     if (quantity > 1) {
       setQuantity(
@@ -1607,7 +1615,7 @@ const ProductDetailsPage = () => {
                   </div>
                 )}
 
-                {/* {product.weight > 0 && (
+                {product.weight > 0 && (
                   <div className="flex justify-between gap-5 py-3.5">
                     <span className="text-[10px] text-steel-gray">
                       {t(
@@ -1619,7 +1627,7 @@ const ProductDetailsPage = () => {
                       {product.weight} g
                     </strong>
                   </div>
-                )} */}
+                )}
 
                 {product.sku && (
                   <div className="flex justify-between gap-5 py-3.5">
@@ -1672,35 +1680,36 @@ const ProductDetailsPage = () => {
                   )}
                 </h3>
 
-                <div className="flex w-fit items-center overflow-hidden rounded-full border border-light-champagne bg-soft-white shadow-[0_7px_20px_rgba(7,19,31,0.04)]">
-                  <button
-                    type="button"
-                    onClick={
-                      decreaseQuantity
-                    }
-                    disabled={quantity <= 1}
-                    className="flex h-12 w-14 items-center justify-center text-lg text-midnight-navy transition-colors duration-300 hover:bg-soft-cream disabled:opacity-30"
-                  >
-                    −
-                  </button>
+             <div>
+  <div className="flex w-fit items-center overflow-hidden rounded-full border border-light-champagne bg-soft-white shadow-[0_7px_20px_rgba(7,19,31,0.04)]">
+    <button
+      type="button"
+      onClick={decreaseQuantity}
+      disabled={quantity <= 1}
+      className="flex h-12 w-14 items-center justify-center text-lg text-midnight-navy transition-colors duration-300 hover:bg-soft-cream disabled:opacity-30"
+    >
+      −
+    </button>
 
-                  <div className="flex h-12 min-w-14 items-center justify-center border-x border-light-champagne px-4 text-[12px] font-semibold text-midnight-navy">
-                    {quantity}
-                  </div>
+    <div className="flex h-12 min-w-14 items-center justify-center border-x border-light-champagne px-4 text-[12px] font-semibold text-midnight-navy">
+      {quantity}
+    </div>
 
-                  <button
-                    type="button"
-                    onClick={
-                      increaseQuantity
-                    }
-                    disabled={
-                      quantity >= currentStock
-                    }
-                    className="flex h-12 w-14 items-center justify-center text-lg text-midnight-navy transition-colors duration-300 hover:bg-soft-cream disabled:opacity-30"
-                  >
-                    +
-                  </button>
-                </div>
+    <button
+      type="button"
+      onClick={increaseQuantity}
+      className="flex h-12 w-14 items-center justify-center text-lg text-midnight-navy transition-colors duration-300 hover:bg-soft-cream"
+    >
+      +
+    </button>
+  </div>
+
+  {stockError && (
+    <p className="mt-2 text-[9px] font-semibold text-red-600">
+      Out of stock
+    </p>
+  )}
+</div>
               </div>
             )}
 
