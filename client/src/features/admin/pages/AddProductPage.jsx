@@ -914,55 +914,84 @@ const AddProductPage = () => {
                   <LanguageSwitcher />
 
                   {/* MATERIAL + COLOR */}
-                  <div className="grid gap-5 md:grid-cols-2">
-                    <div>
-                      <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.14em]">
-                        {t("addProduct.material")} —{" "}
-                        {language === "en"
-                          ? t("addProduct.english")
-                          : t("addProduct.arabic")}
-                      </label>
+             {/* MATERIAL + COLOR */}
+<div className="grid gap-5 md:grid-cols-2">
+  {/* MATERIAL */}
+  <div>
+    <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.14em]">
+      {t("addProduct.material")} —{" "}
+      {language === "en"
+        ? t("addProduct.english")
+        : t("addProduct.arabic")}
+    </label>
 
-                      <input
-                        type="text"
-                        dir={language === "ar" ? "rtl" : "ltr"}
-                        value={formData.material[language]}
-                        onChange={(event) =>
-                          handleLocalizedChange("material", event.target.value)
-                        }
-                        placeholder={
-                          language === "en"
-                            ? t("addProduct.gold")
-                            : t("addProduct.goldArabic")
-                        }
-                        className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
-                      />
-                    </div>
+    <select
+      value={formData.material[language]}
+      onChange={(event) =>
+        handleLocalizedChange("material", event.target.value)
+      }
+      className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
+    >
+      <option value="">
+        {language === "en"
+          ? "Select material"
+          : "اختاري الخامة"}
+      </option>
 
-                    <div>
-                      <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.14em]">
-                        {t("addProduct.color")} —{" "}
-                        {language === "en"
-                          ? t("addProduct.english")
-                          : t("addProduct.arabic")}
-                      </label>
+      {language === "en" ? (
+        <>
+          <option value="Gold">Gold</option>
+          <option value="Silver">Silver</option>
+          <option value="Stainless Steel">Stainless Steel</option>
+        </>
+      ) : (
+        <>
+          <option value="ذهب">ذهب</option>
+          <option value="فضة">فضة</option>
+          <option value="ستانلس ستيل">ستانلس ستيل</option>
+        </>
+      )}
+    </select>
+  </div>
 
-                      <input
-                        type="text"
-                        dir={language === "ar" ? "rtl" : "ltr"}
-                        value={formData.color[language]}
-                        onChange={(event) =>
-                          handleLocalizedChange("color", event.target.value)
-                        }
-                        placeholder={
-                          language === "en"
-                            ? t("addProduct.gold")
-                            : t("addProduct.goldenArabic")
-                        }
-                        className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
-                      />
-                    </div>
-                  </div>
+  {/* COLOR */}
+  <div>
+    <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.14em]">
+      {t("addProduct.color")} —{" "}
+      {language === "en"
+        ? t("addProduct.english")
+        : t("addProduct.arabic")}
+    </label>
+
+    <select
+      value={formData.color[language]}
+      onChange={(event) =>
+        handleLocalizedChange("color", event.target.value)
+      }
+      className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
+    >
+      <option value="">
+        {language === "en"
+          ? "Select color"
+          : "اختاري اللون"}
+      </option>
+
+      {language === "en" ? (
+        <>
+          <option value="Gold">Gold</option>
+          <option value="Silver">Silver</option>
+          <option value="Stainless Steel">Stainless Steel</option>
+        </>
+      ) : (
+        <>
+          <option value="ذهبي">ذهبي</option>
+          <option value="فضي">فضي</option>
+          <option value="ستانلس ستيل">ستانلس ستيل</option>
+        </>
+      )}
+    </select>
+  </div>
+</div>
 
                   <input
                     type="number"

@@ -1615,7 +1615,7 @@ const ProductDetailsPage = () => {
                   </div>
                 )}
 
-                {/* {product.weight > 0 && (
+                {product.weight > 0 && (
                   <div className="flex justify-between gap-5 py-3.5">
                     <span className="text-[10px] text-steel-gray">
                       {t(
@@ -1627,7 +1627,7 @@ const ProductDetailsPage = () => {
                       {product.weight} g
                     </strong>
                   </div>
-                )} */}
+                )}
 
                 {product.sku && (
                   <div className="flex justify-between gap-5 py-3.5">
