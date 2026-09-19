@@ -2083,6 +2083,8 @@ const en = {
   },
    "adminSmartUnits": {
      "smartUnitCollection": "Smart Unit Collection",
+     "noSmartUnits": "No Smart Units",
+     "noSmartUnitsDescription":"Try adding a new Smart Unit.",
   "searchPlaceholder": "Search by name, description, manufacturer, technology, cost, stock, or status...",
   "searchResults": "results",
   "unitsFound": "smart units found",

@@ -2078,6 +2078,8 @@ title2: "قصتان.",
   },
     "adminSmartUnits": {
        "smartUnitCollection": "مجموعة وحدات الـ Smart",
+       noSmartUnits: "لا توجد وحدات Smart",
+       noSmartUnitsDescription:"لا توجد وحدات زكيه جرب اضافة وحدة جديدة",
   "searchPlaceholder": "ابحثي بالاسم أو الوصف أو الشركة المصنعة أو التكنولوجيا أو التكلفة أو المخزون أو الحالة...",
   "searchResults": "نتيجة",
   "unitsFound": "وحدة Smart",
