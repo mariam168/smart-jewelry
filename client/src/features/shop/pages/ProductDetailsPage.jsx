@@ -1607,7 +1607,7 @@ const ProductDetailsPage = () => {
                   </div>
                 )}
 
-                {product.weight > 0 && (
+                {/* {product.weight > 0 && (
                   <div className="flex justify-between gap-5 py-3.5">
                     <span className="text-[10px] text-steel-gray">
                       {t(
@@ -1619,7 +1619,7 @@ const ProductDetailsPage = () => {
                       {product.weight} g
                     </strong>
                   </div>
-                )}
+                )} */}
 
                 {product.sku && (
                   <div className="flex justify-between gap-5 py-3.5">
@@ -1634,7 +1634,7 @@ const ProductDetailsPage = () => {
                   </div>
                 )}
 
-                <div className="flex justify-between gap-5 py-3.5">
+                {/* <div className="flex justify-between gap-5 py-3.5">
                   <span className="text-[10px] text-steel-gray">
                     {t(
                       "productDetails.stock",
@@ -1644,7 +1644,7 @@ const ProductDetailsPage = () => {
                   <strong className="text-right text-[11px] font-semibold text-midnight-navy">
                     {currentStock}
                   </strong>
-                </div>
+                </div> */}
 
                 <div className="flex justify-between gap-5 py-3.5">
                   <span className="text-[10px] text-steel-gray">

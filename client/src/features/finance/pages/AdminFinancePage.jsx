@@ -278,13 +278,11 @@ const AdminFinancePage = () => {
     ? data.recentExpenses
     : [];
 
-  const recognizedSales = Number(
-    overview.recognizedSales ?? overview.deliveredSales ?? 0,
-  );
+const recognizedSales = Number(
+  overview.confirmedSales ?? 0,
+);
 
-  const recognizedOrders = Number(
-    overview.recognizedOrders ?? overview.deliveredOrders ?? 0,
-  );
+const recognizedOrders = soldItems.length;
 
   return (
     <main className="min-h-screen bg-warm-ivory text-rich-navy">

@@ -146,6 +146,7 @@ const getCartItemImage = (item) => {
 
 const getCartItemPricing = (item) => {
   const product = item?.product || null;
+  const stock = Number(product?.stock ?? 0);
   const variant = item?.variant || null;
   const productTechnology =
     item?.productTechnology || null;
@@ -237,6 +238,7 @@ const getCartItemPricing = (item) => {
     hasDiscount,
     discountPercentage,
     quantity,
+    stock,
     itemTotal,
     originalItemTotal,
     itemSaving,
@@ -406,6 +408,7 @@ const CartDrawer = () => {
                   hasDiscount,
                   discountPercentage,
                   quantity,
+                   stock,
                   itemTotal,
                   originalItemTotal,
                   itemSaving,
@@ -552,39 +555,68 @@ const CartDrawer = () => {
 
                       {/* QUANTITY + TOTAL */}
 
-                      <div className="mt-4 flex items-end justify-between border-t border-light-champagne pt-4">
-                        <div className="flex overflow-hidden rounded-full border border-light-champagne">
-                          <button
-                            type="button"
-                            disabled={quantity <= 1}
-                            onClick={() =>
-                              updateQuantity(
-                                item._id,
-                                quantity - 1,
-                              )
-                            }
-                            className="h-9 w-9 transition hover:bg-midnight-navy hover:text-soft-white disabled:opacity-30"
-                          >
-                            −
-                          </button>
+                  <div className="mt-4 flex items-end justify-between border-t border-light-champagne pt-4">
+  <div>
+    {/* QUANTITY */}
+    <div className="flex overflow-hidden rounded-full border border-light-champagne">
+      
+      <button
+        type="button"
+        disabled={quantity <= 1}
+        onClick={() =>
+          updateQuantity(
+            item._id,
+            quantity - 1,
+          )
+        }
+        className="h-9 w-9 transition hover:bg-midnight-navy hover:text-soft-white disabled:opacity-30"
+      >
+        −
+      </button>
 
-                          <span className="flex h-9 min-w-10 items-center justify-center border-x border-light-champagne text-[10px] font-semibold">
-                            {quantity}
-                          </span>
+      <span className="flex h-9 min-w-10 items-center justify-center border-x border-light-champagne text-[10px] font-semibold">
+        {quantity}
+      </span>
 
-                          <button
-                            type="button"
-                            onClick={() =>
-                              updateQuantity(
-                                item._id,
-                                quantity + 1,
-                              )
-                            }
-                            className="h-9 w-9 transition hover:bg-midnight-navy hover:text-soft-white"
-                          >
-                            +
-                          </button>
-                        </div>
+      <button
+        type="button"
+        disabled={quantity >= stock}
+        onClick={() => {
+          if (quantity < stock) {
+            updateQuantity(
+              item._id,
+              quantity + 1,
+            );
+          }
+        }}
+        className="h-9 w-9 transition hover:bg-midnight-navy hover:text-soft-white disabled:cursor-not-allowed disabled:opacity-30"
+      >
+        +
+      </button>
+
+    </div>
+
+    {/* OUT OF STOCK */}
+    {stock <= 0 || quantity >= stock ? (
+      <p className="mt-2 text-[8px] font-semibold text-red-600">
+        Out of stock
+      </p>
+    ) : null}
+  </div>
+
+  {/* TOTAL */}
+  <div className="text-right">
+    {hasDiscount && (
+      <p className="text-[8px] text-steel-gray line-through">
+        {originalItemTotal.toLocaleString("en-EG")} EGP
+      </p>
+    )}
+
+    <p className="font-serif text-[1.3rem] text-midnight-navy">
+      {itemTotal.toLocaleString("en-EG")} EGP
+    </p>
+  </div>
+
 
                         <div className="text-right">
                           {hasDiscount && (

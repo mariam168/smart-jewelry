@@ -133,6 +133,7 @@ const getCartItemImage = (item) => {
 
 const getCartItemPricing = (item) => {
   const product = item?.product || null;
+  const stock = Number(product?.stock ?? 0);
   const variant = item?.variant || null;
   const productTechnology = item?.productTechnology || null;
 
@@ -210,6 +211,7 @@ const getCartItemPricing = (item) => {
     hasDiscount,
     discountPercentage,
     quantity,
+     stock,
     itemTotal,
     originalItemTotal,
     itemSaving,
@@ -461,6 +463,7 @@ const CartPage = () => {
                 hasDiscount,
                 discountPercentage,
                 quantity,
+                stock,
                 itemTotal,
                 originalItemTotal,
                 itemSaving,
@@ -714,50 +717,56 @@ const CartPage = () => {
                         <div className="mt-6 flex flex-col gap-5 border-t border-[#ECE5DA] pt-5 sm:flex-row sm:items-end sm:justify-between">
 
                           {/* QUANTITY */}
-                          <div>
-                            <p className="mb-2 text-[6px] font-bold uppercase tracking-[0.2em] text-[#92958F]">
-                              {t(
-                                "cartPage.quantity"
-                              )}
-                            </p>
+                        {/* QUANTITY */}
+<div>
+  <p className="mb-2 text-[6px] font-bold uppercase tracking-[0.2em] text-[#92958F]">
+    {t("cartPage.quantity")}
+  </p>
 
-                            <div className="inline-flex overflow-hidden rounded-full border border-[#DED6C9] bg-white">
-                              <button
-                                type="button"
-                                disabled={
-                                  quantity <= 1
-                                }
-                                onClick={() =>
-                                  updateQuantity(
-                                    item._id,
-                                    quantity - 1
-                                  )
-                                }
-                                className="h-10 w-11 text-[15px] text-[#07131F] transition-all duration-200 hover:bg-[#07131F] hover:text-white disabled:cursor-not-allowed disabled:opacity-25"
-                              >
-                                −
-                              </button>
+  <div className="inline-flex overflow-hidden rounded-full border border-[#DED6C9] bg-white">
+    <button
+      type="button"
+      disabled={quantity <= 1}
+      onClick={() =>
+        updateQuantity(
+          item._id,
+          quantity - 1
+        )
+      }
+      className="h-10 w-11 text-[15px] text-[#07131F] transition-all duration-200 hover:bg-[#07131F] hover:text-white disabled:cursor-not-allowed disabled:opacity-25"
+    >
+      −
+    </button>
 
-                              <span className="flex h-10 min-w-11 items-center justify-center border-x border-[#DED6C9] text-[10px] font-bold text-[#07131F]">
-                                {quantity}
-                              </span>
+    <span className="flex h-10 min-w-11 items-center justify-center border-x border-[#DED6C9] text-[10px] font-bold text-[#07131F]">
+      {quantity}
+    </span>
 
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  updateQuantity(
-                                    item._id,
-                                    quantity + 1
-                                  )
-                                }
-                                className="h-10 w-11 text-[15px] text-[#07131F] transition-all duration-200 hover:bg-[#07131F] hover:text-white"
-                              >
-                                +
-                              </button>
-                            </div>
-                          </div>
+    <button
+      type="button"
+      disabled={quantity >= stock}
+      onClick={() => {
+        if (quantity < stock) {
+          updateQuantity(
+            item._id,
+            quantity + 1
+          );
+        }
+      }}
+      className="h-10 w-11 text-[15px] text-[#07131F] transition-all duration-200 hover:bg-[#07131F] hover:text-white disabled:cursor-not-allowed disabled:opacity-25"
+    >
+      +
+    </button>
+  </div>
 
-                          {/* TOTAL */}
+  {/* STOCK MESSAGE */}
+  {stock <= 0 || quantity >= stock ? (
+    <p className="mt-2 text-[8px] font-semibold text-red-600">
+      Out of stock
+    </p>
+  ) : null}
+</div>
+
                           <div className="sm:text-right">
                             <p className="text-[6px] font-bold uppercase tracking-[0.2em] text-[#92958F]">
                               {t(
