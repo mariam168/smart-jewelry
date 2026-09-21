@@ -21,7 +21,6 @@ import { getTechnologyModels } from "../services/technologyModelApi";
 import {
   getProductTechnologies,
   createProductTechnology,
-
   updateProductTechnology,
   deleteProductTechnology,
 } from "../services/productTechnologyApi";
@@ -191,7 +190,11 @@ const EditProductPage = () => {
   const [selectedTechnologyModels, setSelectedTechnologyModels] = useState([]);
 
   const [technologyPrices, setTechnologyPrices] = useState({});
-
+const [initialTechnologyState, setInitialTechnologyState] = useState({
+  technologyRequired: false,
+  selectedModels: [],
+  prices: {},
+});
   const [existingImages, setExistingImages] = useState([]);
   const [primaryImage, setPrimaryImage] = useState("");
   const [primaryImageId, setPrimaryImageId] = useState("");
@@ -446,8 +449,22 @@ const EditProductPage = () => {
           });
         }
 
-        setSelectedTechnologyModels(selectedIds);
-        setTechnologyPrices(prices);
+      setSelectedTechnologyModels(selectedIds);
+setTechnologyPrices(prices);
+
+setInitialTechnologyState({
+  technologyRequired: Boolean(product.technologyRequired),
+  selectedModels: [...selectedIds],
+  prices: Object.fromEntries(
+    Object.entries(prices).map(([modelId, priceData]) => [
+      modelId,
+      {
+        relationId: priceData?.relationId || "",
+        extraPrice: priceData?.extraPrice ?? "",
+      },
+    ]),
+  ),
+});
       } catch (error) {
         console.error(error);
 
@@ -800,25 +817,151 @@ const EditProductPage = () => {
 
         status: formData.status,
 
-       technologyModels: formData.technologyRequired
-  ? selectedTechnologyModels
-  : [],
+        technologyModels: formData.technologyRequired
+          ? selectedTechnologyModels
+          : [],
 
         primaryImage,
       });
-const selectedIdsSet = new Set(
-  formData.technologyRequired
-    ? selectedTechnologyModels.map((technologyId) => String(technologyId))
-    : [],
+  /* =========================================================
+   Product Technology Synchronization
+========================================================= */
+
+const initialSelectedModels = new Set(
+  initialTechnologyState.selectedModels.map((modelId) => String(modelId)),
 );
 
-// Delete old technology relations that are no longer selected
-for (const [modelId, priceData] of Object.entries(technologyPrices)) {
-  if (
-    priceData?.relationId &&
-    !selectedIdsSet.has(String(modelId))
-  ) {
-    await deleteProductTechnology(priceData.relationId);
+const currentSelectedModels = new Set(
+  selectedTechnologyModels.map((modelId) => String(modelId)),
+);
+
+const technologyRequiredChanged =
+  Boolean(formData.technologyRequired) !==
+  Boolean(initialTechnologyState.technologyRequired);
+
+const selectedModelsChanged =
+  initialSelectedModels.size !== currentSelectedModels.size ||
+  [...initialSelectedModels].some(
+    (modelId) => !currentSelectedModels.has(modelId),
+  );
+
+const technologyPricesChanged =
+  [...currentSelectedModels].some((modelId) => {
+    const initialPrice =
+      initialTechnologyState.prices[modelId]?.extraPrice ?? "";
+
+    const currentPrice = technologyPrices[modelId]?.extraPrice ?? "";
+
+    return String(initialPrice) !== String(currentPrice);
+  }) ||
+  [...initialSelectedModels].some((modelId) => {
+    const initialPrice =
+      initialTechnologyState.prices[modelId]?.extraPrice ?? "";
+
+    const currentPrice = technologyPrices[modelId]?.extraPrice ?? "";
+
+    return String(initialPrice) !== String(currentPrice);
+  });
+
+const technologyChanged =
+  technologyRequiredChanged ||
+  selectedModelsChanged ||
+  technologyPricesChanged;
+
+if (technologyChanged) {
+  /*
+   * Always fetch the latest relations from DB before modifying them.
+   * This prevents using stale relation IDs from the page state.
+   */
+  const latestProductTechnologiesResponse =
+    await getProductTechnologies(id);
+
+  const latestProductTechnologies =
+    latestProductTechnologiesResponse?.data?.productTechnologies ||
+    latestProductTechnologiesResponse?.productTechnologies ||
+    (Array.isArray(latestProductTechnologiesResponse)
+      ? latestProductTechnologiesResponse
+      : []);
+
+  const latestRelations = Array.isArray(latestProductTechnologies)
+    ? latestProductTechnologies
+    : [];
+
+  const relationsByModelId = new Map();
+
+  latestRelations.forEach((relation) => {
+    const modelId =
+      relation?.technologyModel?._id || relation?.technologyModel;
+
+    if (!modelId) {
+      return;
+    }
+
+    relationsByModelId.set(String(modelId), relation);
+  });
+
+  /*
+   * If Technology Required is disabled:
+   * remove every ProductTechnology relation.
+   */
+  if (!formData.technologyRequired) {
+    for (const relation of latestRelations) {
+      if (relation?._id) {
+        await deleteProductTechnology(relation._id);
+      }
+    }
+  } else {
+    /*
+     * Delete relations for technology models that are no longer selected.
+     */
+    for (const relation of latestRelations) {
+      const relationModelId =
+        relation?.technologyModel?._id || relation?.technologyModel;
+
+      if (!relationModelId) {
+        continue;
+      }
+
+      const modelId = String(relationModelId);
+
+      if (!currentSelectedModels.has(modelId) && relation?._id) {
+        await deleteProductTechnology(relation._id);
+      }
+    }
+
+    /*
+     * Create/update currently selected technologies.
+     */
+    for (
+      let index = 0;
+      index < selectedTechnologyModels.length;
+      index += 1
+    ) {
+      const modelId = String(selectedTechnologyModels[index]);
+
+      const priceData = technologyPrices[modelId];
+
+      const extraPrice = Number(priceData?.extraPrice || 0);
+
+      const existingRelation = relationsByModelId.get(modelId);
+
+      if (existingRelation?._id) {
+        await updateProductTechnology(existingRelation._id, {
+          extraPrice,
+          displayOrder: index,
+        });
+      } else {
+        await createProductTechnology({
+          product: id,
+          technologyModel: modelId,
+          extraPrice,
+          isDefault: false,
+          isSelectable: true,
+          displayOrder: index,
+          status: "active",
+        });
+      }
+    }
   }
 }
       for (let index = 0; index < selectedTechnologyModels.length; index += 1) {
@@ -1610,25 +1753,24 @@ for (const [modelId, priceData] of Object.entries(technologyPrices)) {
                     </p>
                   </div>
 
-                 <input
-  type="checkbox"
-  name="technologyRequired"
-  checked={formData.technologyRequired}
-  onChange={(event) => {
-    const checked = event.target.checked;
+                  <input
+                    type="checkbox"
+                    name="technologyRequired"
+                    checked={formData.technologyRequired}
+                    onChange={(event) => {
+                      const checked = event.target.checked;
 
-    setFormData((previous) => ({
-      ...previous,
-      technologyRequired: checked,
-    }));
+                      setFormData((previous) => ({
+                        ...previous,
+                        technologyRequired: checked,
+                      }));
 
-    if (!checked) {
-      setSelectedTechnologyModels([]);
-      setTechnologyPrices({});
-    }
-  }}
-  className="h-5 w-5 shrink-0 accent-classic-gold"
-/>
+                      if (!checked) {
+                        setSelectedTechnologyModels([]);
+                      }
+                    }}
+                    className="h-5 w-5 shrink-0 accent-classic-gold"
+                  />
                 </label>
               </div>
             </section>
