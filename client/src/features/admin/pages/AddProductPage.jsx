@@ -16,7 +16,62 @@ import { getTechnologyModels } from "../services/technologyModelApi";
 import { createProductTechnology } from "../services/productTechnologyApi";
 
 import { getSmartUnits } from "../smart-units/services/smartUnitApi";
+const compressImage = (file, maxSize = 1600, quality = 0.82) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
 
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+
+      let { width, height } = img;
+
+      if (width > maxSize || height > maxSize) {
+        if (width > height) {
+          height = Math.round((height * maxSize) / width);
+          width = maxSize;
+        } else {
+          width = Math.round((width * maxSize) / height);
+          height = maxSize;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error("Image compression failed."));
+            return;
+          }
+
+          const fileName = file.name.replace(/\.[^/.]+$/, "");
+
+          resolve(
+            new File([blob], `${fileName}.webp`, {
+              type: "image/webp",
+              lastModified: Date.now(),
+            }),
+          );
+        },
+        "image/webp",
+        quality,
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Failed to load image."));
+    };
+
+    img.src = objectUrl;
+  });
+};
 const sanitizeMoneyInput = (value) => {
   let cleanValue = String(value || "")
     .replace(/,/g, "")
@@ -84,8 +139,6 @@ const AddProductPage = () => {
     careInstructions: createLocalizedValue(),
 
     isCustomizable: false,
-
-    // BUSINESS RULE
     technologyRequired: false,
 
     status: "active",
@@ -93,13 +146,6 @@ const AddProductPage = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-
-  /*
-   * Language used for the localized product fields.
-   *
-   * en = English
-   * ar = Arabic
-   */
   const [language, setLanguage] = useState("en");
 
   useEffect(() => {
@@ -168,10 +214,7 @@ const AddProductPage = () => {
     };
   }, [previewImages]);
 
-  /*
-   * Handles normal fields:
-   * price, category, stock, checkbox fields, etc.
-   */
+
   const handleChange = (event) => {
     const { name, value, type, checked } = event.target;
 
@@ -180,16 +223,6 @@ const AddProductPage = () => {
       [name]: type === "checkbox" ? checked : value,
     }));
   };
-
-  /*
-   * Handles localized fields:
-   *
-   * name.en
-   * name.ar
-   * description.en
-   * description.ar
-   * etc.
-   */
   const handleLocalizedChange = (fieldName, value) => {
     setFormData((previous) => ({
       ...previous,
@@ -200,12 +233,6 @@ const AddProductPage = () => {
     }));
   };
 
-  /*
-   * Handles localized tags.
-   *
-   * UI stores tags as a comma-separated string.
-   * Before sending to backend they become arrays.
-   */
   const handleTagsChange = (value) => {
     setFormData((previous) => ({
       ...previous,
@@ -303,28 +330,33 @@ const AddProductPage = () => {
     });
   };
 
-  const handleImageChange = (event) => {
-    const files = Array.from(event.target.files || []);
+  const handleImageChange = async (event) => {
+  const files = Array.from(event.target.files || []);
 
-    previewImages.forEach((url) => {
-      URL.revokeObjectURL(url);
-    });
+  previewImages.forEach((url) => {
+    URL.revokeObjectURL(url);
+  });
+
+  try {
+    const compressedFiles = await Promise.all(
+      files.map((file) => compressImage(file)),
+    );
+
+    setImages(compressedFiles);
+    setPreviewImages(
+      compressedFiles.map((file) => URL.createObjectURL(file)),
+    );
+  } catch (error) {
+    console.error("Image compression failed:", error);
 
     setImages(files);
     setPreviewImages(files.map((file) => URL.createObjectURL(file)));
-  };
-
+  }
+};
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     setError("");
-
-    /*
-     * Required localized fields.
-     *
-     * Both English and Arabic are required because the backend
-     * expects the product name and description to contain both.
-     */
     if (!formData.name.en.trim()) {
       setError(t("addProduct.productNameEnglishRequired"));
       setLanguage("en");
@@ -378,18 +410,7 @@ const AddProductPage = () => {
     setIsLoading(true);
 
     try {
-      /*
-       * Convert tags from:
-       *
-       * "gold, ring, gift"
-       *
-       * into:
-       *
-       * {
-       *   en: ["gold", "ring", "gift"],
-       *   ar: [...]
-       * }
-       */
+     
       const localizedTags = {
         en: formData.tags.en
           .split(",")
@@ -403,9 +424,6 @@ const AddProductPage = () => {
       };
 
       const productResponse = await createProduct({
-        /*
-         * LOCALIZED FIELDS
-         */
         name: {
           en: formData.name.en.trim(),
           ar: formData.name.ar.trim(),
@@ -510,55 +528,53 @@ const AddProductPage = () => {
         });
       }
 
-      /*
-       * UPLOAD PRODUCT IMAGES
-       */
-      let primaryImage = "";
+    let primaryImage = "";
 
-      for (let i = 0; i < images.length; i += 1) {
-        const imageForm = new FormData();
+const uploadedImages = await Promise.all(
+  images.map(async (image, index) => {
+    const imageForm = new FormData();
 
-        imageForm.append("image", images[i]);
+    imageForm.append("image", image);
 
-        const upload = await uploadImage(imageForm);
+    const upload = await uploadImage(imageForm);
 
-        const uploadedImage =
-          upload?.image ||
-          upload?.data?.image ||
-          upload?.data?.data?.image ||
-          "";
+    const uploadedImage =
+      upload?.image ||
+      upload?.data?.image ||
+      upload?.data?.data?.image ||
+      "";
 
-        if (!uploadedImage) {
-          throw new Error(
-            t("addProduct.imageUploadedWithoutPath", {
-              number: i + 1,
-            }),
-          );
-        }
+    if (!uploadedImage) {
+      throw new Error(
+        t("addProduct.imageUploadedWithoutPath", {
+          number: index + 1,
+        }),
+      );
+    }
 
-        if (i === 0) {
-          primaryImage = uploadedImage;
-        }
+    return {
+      uploadedImage,
+      index,
+    };
+  }),
+);
 
-        await createProductImage({
-          product: product._id,
-          imageUrl: uploadedImage,
-          isPrimary: i === 0,
-          sortOrder: i,
+for (const { uploadedImage, index } of uploadedImages) {
+  if (index === 0) {
+    primaryImage = uploadedImage;
+  }
 
-          /*
-           * ProductImage.alt is now localized in the backend.
-           *
-           * We leave it empty for now because the current Add Product
-           * page does not have dedicated Alt Text fields.
-           */
-          alt: {
-            en: "",
-            ar: "",
-          },
-        });
-      }
-
+  await createProductImage({
+    product: product._id,
+    imageUrl: uploadedImage,
+    isPrimary: index === 0,
+    sortOrder: index,
+    alt: {
+      en: "",
+      ar: "",
+    },
+  });
+}
       if (primaryImage) {
         await updateProduct(product._id, {
           primaryImage,
@@ -580,9 +596,7 @@ const AddProductPage = () => {
     }
   };
 
-  /*
-   * Reusable language switcher.
-   */
+  
   const LanguageSwitcher = () => (
     <div className="mb-4 inline-flex overflow-hidden rounded-full border border-light-champagne bg-warm-ivory p-1">
       <button
