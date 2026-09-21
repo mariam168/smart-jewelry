@@ -5,7 +5,64 @@ import { Link, useNavigate } from "react-router-dom";
 import { createCategory, uploadImage } from "../services/categoryApi";
 
 import { useTranslation } from "react-i18next";
+const compressImage = (file, maxSize = 1600, quality = 0.82) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
 
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+
+      let { width, height } = img;
+
+      if (width > maxSize || height > maxSize) {
+        if (width > height) {
+          height = Math.round((height * maxSize) / width);
+          width = maxSize;
+        } else {
+          width = Math.round((width * maxSize) / height);
+          height = maxSize;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error("Image compression failed."));
+            return;
+          }
+
+          const fileName = file.name.replace(/\.[^/.]+$/, "");
+
+          resolve(
+            new File([blob], `${fileName}.webp`, {
+              type: "image/webp",
+              lastModified: Date.now(),
+            }),
+          );
+        },
+        "image/webp",
+        quality,
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Failed to load image."));
+    };
+
+    img.src = objectUrl;
+  });
+};
 const AddCategoryPage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -36,48 +93,52 @@ const AddCategoryPage = () => {
     setError("");
   };
 
-  const handleImageChange = (event) => {
-    const file = event.target.files?.[0];
+ const handleImageChange = async (event) => {
+  const file = event.target.files?.[0];
 
-    if (!file) {
-      return;
-    }
+  if (!file) {
+    return;
+  }
 
-    if (!file.type.startsWith("image/")) {
-      setError(
-        t("addCategory.validImageFile"),
-      );
+  if (!file.type.startsWith("image/")) {
+    setError(t("addCategory.validImageFile"));
+    event.target.value = "";
+    return;
+  }
 
-      event.target.value = "";
+  const maxSize = 5 * 1024 * 1024;
 
-      return;
-    }
+  if (file.size > maxSize) {
+    setError(t("addCategory.imageSizeLimit"));
+    event.target.value = "";
+    return;
+  }
 
-    const maxSize = 5 * 1024 * 1024;
+  setError("");
+  event.target.value = "";
 
-    if (file.size > maxSize) {
-      setError(
-        t("addCategory.imageSizeLimit"),
-      );
+  if (preview) {
+    URL.revokeObjectURL(preview);
+  }
 
-      event.target.value = "";
+  try {
+    const compressedFile = await compressImage(file);
 
-      return;
-    }
+    setImage(compressedFile);
 
-    setError("");
+    const imagePreview = URL.createObjectURL(compressedFile);
 
-    if (preview) {
-      URL.revokeObjectURL(preview);
-    }
+    setPreview(imagePreview);
+  } catch (error) {
+    console.error("Image compression failed:", error);
 
     setImage(file);
 
     const imagePreview = URL.createObjectURL(file);
 
     setPreview(imagePreview);
-  };
-
+  }
+};
   const handleRemoveImage = () => {
     if (preview) {
       URL.revokeObjectURL(preview);

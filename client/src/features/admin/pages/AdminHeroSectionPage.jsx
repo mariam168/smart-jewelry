@@ -125,6 +125,64 @@ const normalizeSlide = (slide = {}) => {
         : slide.isActive,
   };
 };
+const compressImage = (file, maxSize = 1600, quality = 0.82) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+
+      let { width, height } = img;
+
+      if (width > maxSize || height > maxSize) {
+        if (width > height) {
+          height = Math.round((height * maxSize) / width);
+          width = maxSize;
+        } else {
+          width = Math.round((width * maxSize) / height);
+          height = maxSize;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error("Image compression failed."));
+            return;
+          }
+
+          const fileName = file.name.replace(/\.[^/.]+$/, "");
+
+          resolve(
+            new File([blob], `${fileName}.webp`, {
+              type: "image/webp",
+              lastModified: Date.now(),
+            }),
+          );
+        },
+        "image/webp",
+        quality,
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Failed to load image."));
+    };
+
+    img.src = objectUrl;
+  });
+};
 
 const AdminHeroSectionPage = () => {
   const { i18n } = useTranslation();
@@ -383,95 +441,104 @@ const AdminHeroSectionPage = () => {
       "",
     )}`;
   };
+const handleImageChange = async (event, slideIndex) => {
+  const file = event.target.files?.[0];
 
-  const handleImageChange = async (
-    event,
-    slideIndex,
-  ) => {
-    const file =
-      event.target.files?.[0];
+  if (!file) {
+    return;
+  }
 
-    if (!file) {
-      return;
-    }
+  event.target.value = "";
+
+  if (!file.type.startsWith("image/")) {
+    setError(
+      isRtl
+        ? "يرجى اختيار ملف صورة صالح"
+        : "Please select a valid image file",
+    );
+
+    return;
+  }
+
+  const maxSize = 5 * 1024 * 1024;
+
+  if (file.size > maxSize) {
+    setError(
+      isRtl
+        ? "حجم الصورة يجب ألا يتجاوز 5 MB"
+        : "Image size must not exceed 5 MB",
+    );
+
+    return;
+  }
+
+  setMessage("");
+  setError("");
+
+  try {
+    setUploadingImage(true);
+
+    const compressedFile = await compressImage(file);
 
     setSelectedImages((current) => ({
       ...current,
-      [slideIndex]: file,
+      [slideIndex]: compressedFile,
     }));
 
-    setMessage("");
-    setError("");
+    const formData = new FormData();
 
-    try {
-      setUploadingImage(true);
+    formData.append("image", compressedFile);
 
-      const formData =
-        new FormData();
+    const apiUrl =
+      import.meta.env.VITE_API_URL ||
+      `${getBackendUrl()}/api`;
 
-      formData.append(
-        "image",
-        file,
-      );
+    const uploadUrl = `${apiUrl.replace(
+      /\/$/,
+      "",
+    )}/upload`;
 
-      const apiUrl =
-        import.meta.env.VITE_API_URL ||
-        `${getBackendUrl()}/api`;
+    const response = await fetch(uploadUrl, {
+      method: "POST",
+      credentials: "include",
+      body: formData,
+    });
 
-      const uploadUrl =
-        `${apiUrl.replace(
-          /\/$/,
-          "",
-        )}/upload`;
+    const data = await response.json();
 
-      const response =
-        await fetch(
-          uploadUrl,
-          {
-            method: "POST",
-            credentials: "include",
-            body: formData,
-          },
-        );
-
-      const data =
-        await response.json();
-
-      if (
-        !response.ok ||
-        !data?.success
-      ) {
-        throw new Error(
-          data?.message ||
-            (isRtl
-              ? "فشل رفع الصورة"
-              : "Failed to upload image"),
-        );
-      }
-
-      updateSlideField(
-        slideIndex,
-        "image",
-        data.image,
-      );
-
-      setMessage(
-        isRtl
-          ? "تم رفع الصورة بنجاح"
-          : "Image uploaded successfully",
-      );
-    } catch (err) {
-      setError(
-        err?.message ||
+    if (!response.ok || !data?.success) {
+      throw new Error(
+        data?.message ||
           (isRtl
-            ? "حدث خطأ أثناء رفع الصورة"
+            ? "فشل رفع الصورة"
             : "Failed to upload image"),
       );
-    } finally {
-      setUploadingImage(false);
     }
-  };
 
+    updateSlideField(
+      slideIndex,
+      "image",
+      data.image,
+    );
+
+    setMessage(
+      isRtl
+        ? "تم ضغط ورفع الصورة بنجاح"
+        : "Image compressed and uploaded successfully",
+    );
+  } catch (err) {
+    console.error("Hero image upload error:", err);
+
+    setError(
+      err?.message ||
+        (isRtl
+          ? "حدث خطأ أثناء رفع الصورة"
+          : "Failed to upload image"),
+    );
+  } finally {
+    setUploadingImage(false);
+  }
+};
   const handleSubmit = async (
     event,
   ) => {

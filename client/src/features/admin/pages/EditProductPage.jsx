@@ -106,9 +106,6 @@ const getImageUrl = (value) => {
   return `${BACKEND_URL}${image.startsWith("/") ? "" : "/"}${image}`;
 };
 
-/* =========================================================
-   Localization Helpers
-========================================================= */
 
 const createLocalizedField = (en = "", ar = "") => ({
   en: String(en ?? ""),
@@ -177,7 +174,62 @@ const getLocalizedValue = (value, language = "en") => {
 
   return value || "";
 };
+const compressImage = (file, maxSize = 1600, quality = 0.82) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
 
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+
+      let { width, height } = img;
+
+      if (width > maxSize || height > maxSize) {
+        if (width > height) {
+          height = Math.round((height * maxSize) / width);
+          width = maxSize;
+        } else {
+          width = Math.round((width * maxSize) / height);
+          height = maxSize;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error("Image compression failed."));
+            return;
+          }
+
+          const fileName = file.name.replace(/\.[^/.]+$/, "");
+
+          resolve(
+            new File([blob], `${fileName}.webp`, {
+              type: "image/webp",
+              lastModified: Date.now(),
+            }),
+          );
+        },
+        "image/webp",
+        quality,
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Failed to load image."));
+    };
+
+    img.src = objectUrl;
+  });
+};
 const EditProductPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -582,23 +634,38 @@ setInitialTechnologyState({
       maximumFractionDigits: 2,
     });
   };
+const handleImageChange = async (event) => {
+  const files = Array.from(event.target.files || []);
 
-  const handleImageChange = (event) => {
-    const files = Array.from(event.target.files || []);
+  if (!files.length) {
+    return;
+  }
 
-    if (!files.length) {
-      return;
-    }
+  event.target.value = "";
 
+  try {
+    const compressedFiles = await Promise.all(
+      files.map((file) => compressImage(file)),
+    );
+
+    setNewImages((previous) => [...previous, ...compressedFiles]);
+
+    setPreviewNewImages((previous) => [
+      ...previous,
+      ...compressedFiles.map((file) => URL.createObjectURL(file)),
+    ]);
+  } catch (error) {
+    console.error("Image compression failed:", error);
+
+    // fallback: use original files if compression fails
     setNewImages((previous) => [...previous, ...files]);
 
     setPreviewNewImages((previous) => [
       ...previous,
       ...files.map((file) => URL.createObjectURL(file)),
     ]);
-
-    event.target.value = "";
-  };
+  }
+};
 
   const handleRemoveNewImage = (index) => {
     setNewImages((previous) =>
@@ -988,51 +1055,56 @@ if (technologyChanged) {
           });
         }
       }
+let uploadedPrimaryImage = primaryImage;
 
-      let uploadedPrimaryImage = primaryImage;
+let uploadedPrimaryImageId = primaryImageId;
 
-      let uploadedPrimaryImageId = primaryImageId;
+const uploadedImages = await Promise.all(
+  newImages.map(async (imageFile, index) => {
+    const form = new FormData();
 
-      for (let i = 0; i < newImages.length; i += 1) {
-        const imageFile = newImages[i];
+    form.append("image", imageFile);
 
-        const form = new FormData();
+    const upload = await uploadImage(form);
 
-        form.append("image", imageFile);
+    const uploadedImage =
+      upload?.image ||
+      upload?.data?.image ||
+      upload?.data?.data?.image ||
+      "";
 
-        const upload = await uploadImage(form);
+    if (!uploadedImage) {
+      throw new Error(t("editProduct.imageUploadCompletedWithoutPath"));
+    }
 
-        const uploadedImage =
-          upload?.image ||
-          upload?.data?.image ||
-          upload?.data?.data?.image ||
-          "";
+    return {
+      uploadedImage,
+      index,
+    };
+  }),
+);
 
-        if (!uploadedImage) {
-          throw new Error(t("editProduct.imageUploadCompletedWithoutPath"));
-        }
+for (const { uploadedImage, index } of uploadedImages) {
+  const shouldBePrimary = !uploadedPrimaryImage && index === 0;
 
-        const shouldBePrimary = !uploadedPrimaryImage && i === 0;
+  const createdImageResponse = await createProductImage({
+    product: id,
+    imageUrl: uploadedImage,
+    isPrimary: shouldBePrimary,
+    sortOrder: existingImages.length + index,
+  });
 
-        const createdImageResponse = await createProductImage({
-          product: id,
-          imageUrl: uploadedImage,
-          isPrimary: shouldBePrimary,
-          sortOrder: existingImages.length + i,
-        });
+  const createdImage =
+    createdImageResponse?.data?.image ||
+    createdImageResponse?.image ||
+    createdImageResponse?.data?.data?.image ||
+    null;
 
-        const createdImage =
-          createdImageResponse?.data?.image ||
-          createdImageResponse?.image ||
-          createdImageResponse?.data?.data?.image ||
-          null;
-
-        if (shouldBePrimary) {
-          uploadedPrimaryImage = uploadedImage;
-
-          uploadedPrimaryImageId = createdImage?._id || "";
-        }
-      }
+  if (shouldBePrimary) {
+    uploadedPrimaryImage = uploadedImage;
+    uploadedPrimaryImageId = createdImage?._id || "";
+  }
+}
 
       if (uploadedPrimaryImage) {
         await updateProduct(id, {
