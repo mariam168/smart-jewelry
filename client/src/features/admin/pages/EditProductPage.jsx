@@ -21,7 +21,9 @@ import { getTechnologyModels } from "../services/technologyModelApi";
 import {
   getProductTechnologies,
   createProductTechnology,
+
   updateProductTechnology,
+  deleteProductTechnology,
 } from "../services/productTechnologyApi";
 
 import { getSmartUnits } from "../smart-units/services/smartUnitApi";
@@ -798,11 +800,27 @@ const EditProductPage = () => {
 
         status: formData.status,
 
-        technologyModels: selectedTechnologyModels,
+       technologyModels: formData.technologyRequired
+  ? selectedTechnologyModels
+  : [],
 
         primaryImage,
       });
+const selectedIdsSet = new Set(
+  formData.technologyRequired
+    ? selectedTechnologyModels.map((technologyId) => String(technologyId))
+    : [],
+);
 
+// Delete old technology relations that are no longer selected
+for (const [modelId, priceData] of Object.entries(technologyPrices)) {
+  if (
+    priceData?.relationId &&
+    !selectedIdsSet.has(String(modelId))
+  ) {
+    await deleteProductTechnology(priceData.relationId);
+  }
+}
       for (let index = 0; index < selectedTechnologyModels.length; index += 1) {
         const modelId = selectedTechnologyModels[index];
 
@@ -1153,185 +1171,191 @@ const EditProductPage = () => {
               </div>
             </section>
 
-         {/* 02 — Pricing & Inventory */}
-<section className="overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85 shadow-[0_16px_46px_rgba(7,19,31,0.05)]">
-  {/* Section Header */}
-  <div className="border-b border-light-champagne/80 bg-warm-ivory/50 px-7 py-6 sm:px-9">
-    <div className="flex items-center gap-3">
-      <span className="text-antique-gold">02</span>
-      <span className="h-px w-8 bg-antique-gold" />
-      <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-steel-gray">
-        {t("editProduct.pricingInventory")}
-      </span>
-    </div>
+            {/* 02 — Pricing & Inventory */}
+            <section className="overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85 shadow-[0_16px_46px_rgba(7,19,31,0.05)]">
+              {/* Section Header */}
+              <div className="border-b border-light-champagne/80 bg-warm-ivory/50 px-7 py-6 sm:px-9">
+                <div className="flex items-center gap-3">
+                  <span className="text-antique-gold">02</span>
+                  <span className="h-px w-8 bg-antique-gold" />
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-steel-gray">
+                    {t("editProduct.pricingInventory")}
+                  </span>
+                </div>
 
-    <h2 className="mt-3 font-serif text-[1.55rem] text-deep-navy">
-      {t("editProduct.pricingAvailability")}
-    </h2>
-  </div>
+                <h2 className="mt-3 font-serif text-[1.55rem] text-deep-navy">
+                  {t("editProduct.pricingAvailability")}
+                </h2>
+              </div>
 
-  {/* Fields */}
-  <div className="space-y-7 p-7 sm:p-9">
-    {/* Row 1 — Selling Price / Compare Price */}
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-      {/* Selling Price */}
-      <div>
-        <label className="mb-2 block text-sm font-medium text-deep-navy">
-          {t("editProduct.sellingPrice")}
-        </label>
+              {/* Fields */}
+              <div className="space-y-7 p-7 sm:p-9">
+                {/* Row 1 — Selling Price / Compare Price */}
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  {/* Selling Price */}
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-deep-navy">
+                      {t("editProduct.sellingPrice")}
+                    </label>
 
-        <div
-          className={`flex min-h-[50px] overflow-hidden rounded-xl border border-light-champagne bg-white transition-colors focus-within:border-antique-gold ${
-            activeLanguage === "ar" ? "flex-row-reverse" : "flex-row"
-          }`}
-        >
-          <input
-            type="number"
-            name="price"
-            min="0"
-            step="0.01"
-            value={formData.price}
-            onChange={handleChange}
-            dir="ltr"
-            className="min-w-0 flex-1 border-0 bg-transparent px-4 text-sm text-deep-navy outline-none focus:ring-0"
-            placeholder="0.00"
-          />
+                    <div
+                      className={`flex min-h-[50px] overflow-hidden rounded-xl border border-light-champagne bg-white transition-colors focus-within:border-antique-gold ${
+                        activeLanguage === "ar"
+                          ? "flex-row-reverse"
+                          : "flex-row"
+                      }`}
+                    >
+                      <input
+                        type="number"
+                        name="price"
+                        min="0"
+                        step="0.01"
+                        value={formData.price}
+                        onChange={handleChange}
+                        dir="ltr"
+                        className="min-w-0 flex-1 border-0 bg-transparent px-4 text-sm text-deep-navy outline-none focus:ring-0"
+                        placeholder="0.00"
+                      />
 
-          <span
-            className={`flex w-[58px] shrink-0 items-center justify-center bg-warm-ivory text-xs font-semibold text-steel-gray ${
-              activeLanguage === "ar"
-                ? "border-l border-light-champagne"
-                : "border-r border-light-champagne"
-            }`}
-          >
-            EGP
-          </span>
-        </div>
-      </div>
+                      <span
+                        className={`flex w-[58px] shrink-0 items-center justify-center bg-warm-ivory text-xs font-semibold text-steel-gray ${
+                          activeLanguage === "ar"
+                            ? "border-l border-light-champagne"
+                            : "border-r border-light-champagne"
+                        }`}
+                      >
+                        EGP
+                      </span>
+                    </div>
+                  </div>
 
-      {/* Compare Price */}
-      <div>
-        <label className="mb-2 block text-sm font-medium text-deep-navy">
-          {t("editProduct.comparePrice")}
-        </label>
+                  {/* Compare Price */}
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-deep-navy">
+                      {t("editProduct.comparePrice")}
+                    </label>
 
-        <div
-          className={`flex min-h-[50px] overflow-hidden rounded-xl border border-light-champagne bg-white transition-colors focus-within:border-antique-gold ${
-            activeLanguage === "ar" ? "flex-row-reverse" : "flex-row"
-          }`}
-        >
-          <input
-            type="number"
-            name="comparePrice"
-            min="0"
-            step="0.01"
-            value={formData.comparePrice}
-            onChange={handleChange}
-            dir="ltr"
-            className="min-w-0 flex-1 border-0 bg-transparent px-4 text-sm text-deep-navy outline-none focus:ring-0"
-            placeholder="0.00"
-          />
+                    <div
+                      className={`flex min-h-[50px] overflow-hidden rounded-xl border border-light-champagne bg-white transition-colors focus-within:border-antique-gold ${
+                        activeLanguage === "ar"
+                          ? "flex-row-reverse"
+                          : "flex-row"
+                      }`}
+                    >
+                      <input
+                        type="number"
+                        name="comparePrice"
+                        min="0"
+                        step="0.01"
+                        value={formData.comparePrice}
+                        onChange={handleChange}
+                        dir="ltr"
+                        className="min-w-0 flex-1 border-0 bg-transparent px-4 text-sm text-deep-navy outline-none focus:ring-0"
+                        placeholder="0.00"
+                      />
 
-          <span
-            className={`flex w-[58px] shrink-0 items-center justify-center bg-warm-ivory text-xs font-semibold text-steel-gray ${
-              activeLanguage === "ar"
-                ? "border-l border-light-champagne"
-                : "border-r border-light-champagne"
-            }`}
-          >
-            EGP
-          </span>
-        </div>
-      </div>
-    </div>
+                      <span
+                        className={`flex w-[58px] shrink-0 items-center justify-center bg-warm-ivory text-xs font-semibold text-steel-gray ${
+                          activeLanguage === "ar"
+                            ? "border-l border-light-champagne"
+                            : "border-r border-light-champagne"
+                        }`}
+                      >
+                        EGP
+                      </span>
+                    </div>
+                  </div>
+                </div>
 
-    {/* Row 2 — Product Cost / Stock */}
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-      {/* Product Cost */}
-      <div>
-        <label className="mb-2 block text-sm font-medium text-deep-navy">
-          {t("editProduct.productCost")}
-        </label>
+                {/* Row 2 — Product Cost / Stock */}
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  {/* Product Cost */}
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-deep-navy">
+                      {t("editProduct.productCost")}
+                    </label>
 
-        <div
-          className={`flex min-h-[50px] overflow-hidden rounded-xl border border-light-champagne bg-white transition-colors focus-within:border-antique-gold ${
-            activeLanguage === "ar" ? "flex-row-reverse" : "flex-row"
-          }`}
-        >
-          <input
-            type="number"
-            name="costPrice"
-            min="0"
-            step="0.01"
-            value={formData.costPrice}
-            onChange={handleChange}
-            dir="ltr"
-            className="min-w-0 flex-1 border-0 bg-transparent px-4 text-sm text-deep-navy outline-none focus:ring-0"
-            placeholder="0.00"
-          />
+                    <div
+                      className={`flex min-h-[50px] overflow-hidden rounded-xl border border-light-champagne bg-white transition-colors focus-within:border-antique-gold ${
+                        activeLanguage === "ar"
+                          ? "flex-row-reverse"
+                          : "flex-row"
+                      }`}
+                    >
+                      <input
+                        type="number"
+                        name="costPrice"
+                        min="0"
+                        step="0.01"
+                        value={formData.costPrice}
+                        onChange={handleChange}
+                        dir="ltr"
+                        className="min-w-0 flex-1 border-0 bg-transparent px-4 text-sm text-deep-navy outline-none focus:ring-0"
+                        placeholder="0.00"
+                      />
 
-          <span
-            className={`flex w-[58px] shrink-0 items-center justify-center bg-warm-ivory text-xs font-semibold text-steel-gray ${
-              activeLanguage === "ar"
-                ? "border-l border-light-champagne"
-                : "border-r border-light-champagne"
-            }`}
-          >
-            EGP
-          </span>
-        </div>
+                      <span
+                        className={`flex w-[58px] shrink-0 items-center justify-center bg-warm-ivory text-xs font-semibold text-steel-gray ${
+                          activeLanguage === "ar"
+                            ? "border-l border-light-champagne"
+                            : "border-r border-light-champagne"
+                        }`}
+                      >
+                        EGP
+                      </span>
+                    </div>
 
-        <p className="mt-2 text-xs leading-5 text-steel-gray">
-          {t("editProduct.jewelryPieceCostOnly")}
-        </p>
-      </div>
+                    <p className="mt-2 text-xs leading-5 text-steel-gray">
+                      {t("editProduct.jewelryPieceCostOnly")}
+                    </p>
+                  </div>
 
-      {/* Stock */}
-      <div>
-        <label className="mb-2 block text-sm font-medium text-deep-navy">
-          {t("editProduct.stock")}
-        </label>
+                  {/* Stock */}
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-deep-navy">
+                      {t("editProduct.stock")}
+                    </label>
 
-        <input
-          type="number"
-          name="stock"
-          min="0"
-          step="1"
-          value={formData.stock}
-          onChange={handleChange}
-          dir="ltr"
-          className="min-h-[50px] w-full rounded-xl border border-light-champagne bg-white px-4 text-sm text-deep-navy outline-none transition-colors focus:border-antique-gold focus:ring-0"
-          placeholder="0"
-        />
-      </div>
-    </div>
+                    <input
+                      type="number"
+                      name="stock"
+                      min="0"
+                      step="1"
+                      value={formData.stock}
+                      onChange={handleChange}
+                      dir="ltr"
+                      className="min-h-[50px] w-full rounded-xl border border-light-champagne bg-white px-4 text-sm text-deep-navy outline-none transition-colors focus:border-antique-gold focus:ring-0"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
 
-    {/* Row 3 — Weight */}
-    <div className="max-w-[calc(50%-0.75rem)] min-w-full md:min-w-0">
-      <label className="mb-2 block text-sm font-medium text-deep-navy">
-        {t("editProduct.weight")}
-      </label>
+                {/* Row 3 — Weight */}
+                <div className="max-w-[calc(50%-0.75rem)] min-w-full md:min-w-0">
+                  <label className="mb-2 block text-sm font-medium text-deep-navy">
+                    {t("editProduct.weight")}
+                  </label>
 
-      <div className="flex min-h-[50px] overflow-hidden rounded-xl border border-light-champagne bg-white transition-colors focus-within:border-antique-gold">
-        <input
-          type="number"
-          name="weight"
-          min="0"
-          step="0.01"
-          value={formData.weight}
-          onChange={handleChange}
-          dir="ltr"
-          className="min-w-0 flex-1 border-0 bg-transparent px-4 text-sm text-deep-navy outline-none focus:ring-0"
-          placeholder="0.00"
-        />
+                  <div className="flex min-h-[50px] overflow-hidden rounded-xl border border-light-champagne bg-white transition-colors focus-within:border-antique-gold">
+                    <input
+                      type="number"
+                      name="weight"
+                      min="0"
+                      step="0.01"
+                      value={formData.weight}
+                      onChange={handleChange}
+                      dir="ltr"
+                      className="min-w-0 flex-1 border-0 bg-transparent px-4 text-sm text-deep-navy outline-none focus:ring-0"
+                      placeholder="0.00"
+                    />
 
-        <span className="flex w-[58px] shrink-0 items-center justify-center border-l border-light-champagne bg-warm-ivory text-xs font-semibold text-steel-gray">
-          g
-        </span>
-      </div>
-    </div>
-  </div>
-</section>
+                    <span className="flex w-[58px] shrink-0 items-center justify-center border-l border-light-champagne bg-warm-ivory text-xs font-semibold text-steel-gray">
+                      g
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </section>
 
             <section className="overflow-hidden rounded-[26px] border border-light-champagne/90 bg-soft-white/85">
               <div className="border-b border-light-champagne/80 bg-warm-ivory/50 px-7 py-6 sm:px-9">
@@ -1342,6 +1366,7 @@ const EditProductPage = () => {
 
               <div className="space-y-6 p-7 sm:p-9">
                 <div className="grid gap-5 md:grid-cols-3">
+                  {/* MATERIAL */}
                   <div>
                     <label className="mb-2.5 block text-[8px] font-semibold uppercase">
                       {t("editProduct.material")}
@@ -1351,9 +1376,21 @@ const EditProductPage = () => {
                       value={formData.material.en}
                       onChange={(event) => {
                         const materialMap = {
-                          Gold: {
-                            en: "Gold",
-                            ar: "ذهب",
+                          "Gold 18K": {
+                            en: "Gold 18K",
+                            ar: "ذهب عيار 18",
+                          },
+                          "Gold 21K": {
+                            en: "Gold 21K",
+                            ar: "ذهب عيار 21",
+                          },
+                          "Gold 24K": {
+                            en: "Gold 24K",
+                            ar: "ذهب عيار 24",
+                          },
+                          "Chinese Gold": {
+                            en: "Chinese Gold",
+                            ar: "ذهب صيني",
                           },
                           Silver: {
                             en: "Silver",
@@ -1381,8 +1418,20 @@ const EditProductPage = () => {
                           : "Select Material"}
                       </option>
 
-                      <option value="Gold">
-                        {activeLanguage === "ar" ? "ذهب" : "Gold"}
+                      <option value="Gold 18K">
+                        {activeLanguage === "ar" ? "ذهب عيار 18" : "Gold 18K"}
+                      </option>
+
+                      <option value="Gold 21K">
+                        {activeLanguage === "ar" ? "ذهب عيار 21" : "Gold 21K"}
+                      </option>
+
+                      <option value="Gold 24K">
+                        {activeLanguage === "ar" ? "ذهب عيار 24" : "Gold 24K"}
+                      </option>
+
+                      <option value="Chinese Gold">
+                        {activeLanguage === "ar" ? "ذهب صيني" : "Chinese Gold"}
                       </option>
 
                       <option value="Silver">
@@ -1397,6 +1446,7 @@ const EditProductPage = () => {
                     </select>
                   </div>
 
+                  {/* COLOR */}
                   <div>
                     <label className="mb-2.5 block text-[8px] font-semibold uppercase">
                       {t("editProduct.color")}
@@ -1450,6 +1500,23 @@ const EditProductPage = () => {
                           : "Stainless Steel"}
                       </option>
                     </select>
+                  </div>
+
+                  {/* PREPARATION DAYS */}
+                  <div>
+                    <label className="mb-2.5 block text-[8px] font-semibold uppercase">
+                      {t("editProduct.preparationDays")}
+                    </label>
+
+                    <input
+                      type="number"
+                      min="0"
+                      name="preparationDays"
+                      value={formData.preparationDays}
+                      onChange={handleChange}
+                      placeholder={t("editProduct.preparationDays")}
+                      className="w-full rounded-[13px] border border-light-champagne bg-warm-ivory/60 px-4 py-3.5 text-[11px]"
+                    />
                   </div>
 
                   <div>
@@ -1543,13 +1610,25 @@ const EditProductPage = () => {
                     </p>
                   </div>
 
-                  <input
-                    type="checkbox"
-                    name="technologyRequired"
-                    checked={formData.technologyRequired}
-                    onChange={handleChange}
-                    className="h-5 w-5 shrink-0 accent-classic-gold"
-                  />
+                 <input
+  type="checkbox"
+  name="technologyRequired"
+  checked={formData.technologyRequired}
+  onChange={(event) => {
+    const checked = event.target.checked;
+
+    setFormData((previous) => ({
+      ...previous,
+      technologyRequired: checked,
+    }));
+
+    if (!checked) {
+      setSelectedTechnologyModels([]);
+      setTechnologyPrices({});
+    }
+  }}
+  className="h-5 w-5 shrink-0 accent-classic-gold"
+/>
                 </label>
               </div>
             </section>

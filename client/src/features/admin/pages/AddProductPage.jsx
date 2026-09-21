@@ -1015,46 +1015,48 @@ const AddProductPage = () => {
                 <div className="space-y-6 p-7 sm:p-9">
                   <LanguageSwitcher />
 
-                  {/* MATERIAL + COLOR */}
-             {/* MATERIAL + COLOR */}
+           {/* MATERIAL + COLOR */}
 <div className="grid gap-5 md:grid-cols-2">
   {/* MATERIAL */}
-  <div>
-    <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.14em]">
-      {t("addProduct.material")} —{" "}
-      {language === "en"
-        ? t("addProduct.english")
-        : t("addProduct.arabic")}
-    </label>
+ {/* MATERIAL */}
+<div>
+  <label className="mb-2 block text-sm font-medium text-gray-700">
+    {t("addProduct.material")} —{" "}
+    {language === "en" ? "Material" : "الخامة"}
+  </label>
 
-    <select
-      value={formData.material[language]}
-      onChange={(event) =>
-        handleLocalizedChange("material", event.target.value)
-      }
-      className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
-    >
-      <option value="">
-        {language === "en"
-          ? "Select material"
-          : "اختاري الخامة"}
-      </option>
+  <select
+    value={formData.material[language]}
+    onChange={(event) =>
+      handleLocalizedChange("material", event.target.value)
+    }
+    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-[#B08D57]"
+  >
+    <option value="">
+      {language === "en" ? "Select material" : "اختاري الخامة"}
+    </option>
 
-      {language === "en" ? (
-        <>
-          <option value="Gold">Gold</option>
-          <option value="Silver">Silver</option>
-          <option value="Stainless Steel">Stainless Steel</option>
-        </>
-      ) : (
-        <>
-          <option value="ذهب">ذهب</option>
-          <option value="فضة">فضة</option>
-          <option value="ستانلس ستيل">ستانلس ستيل</option>
-        </>
-      )}
-    </select>
-  </div>
+    {language === "en" ? (
+      <>
+        <option value="Gold 18K">Gold 18K</option>
+        <option value="Gold 21K">Gold 21K</option>
+        <option value="Gold 24K">Gold 24K</option>
+        <option value="Chinese Gold">Chinese Gold</option>
+        <option value="Silver">Silver</option>
+        <option value="Stainless Steel">Stainless Steel</option>
+      </>
+    ) : (
+      <>
+        <option value="ذهب عيار 18">ذهب عيار 18</option>
+        <option value="ذهب عيار 21">ذهب عيار 21</option>
+        <option value="ذهب عيار 24">ذهب عيار 24</option>
+        <option value="ذهب صيني">ذهب صيني</option>
+        <option value="فضة">فضة</option>
+        <option value="ستانلس ستيل">ستانلس ستيل</option>
+      </>
+    )}
+  </select>
+</div>
 
   {/* COLOR */}
   <div>
@@ -1073,9 +1075,7 @@ const AddProductPage = () => {
       className="w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 py-3.5"
     >
       <option value="">
-        {language === "en"
-          ? "Select color"
-          : "اختاري اللون"}
+        {language === "en" ? "Select color" : "اختاري اللون"}
       </option>
 
       {language === "en" ? (
