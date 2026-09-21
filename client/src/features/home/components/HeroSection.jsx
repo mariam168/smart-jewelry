@@ -112,6 +112,9 @@ const HeroSection = () => {
     loadHero();
   }, []);
 
+  /*
+   * Automatically move to the next slide.
+   */
   useEffect(() => {
     if (slides.length <= 1) {
       return;
@@ -130,6 +133,10 @@ const HeroSection = () => {
       clearInterval(interval);
   }, [slides.length]);
 
+  /*
+   * Make sure the active slide is still valid
+   * if slides are changed or removed.
+   */
   useEffect(() => {
     if (
       activeSlide >= slides.length &&
@@ -140,6 +147,43 @@ const HeroSection = () => {
   }, [
     activeSlide,
     slides.length,
+  ]);
+
+  /*
+   * Preload the next hero image.
+   *
+   * This means that while the current slide
+   * is visible, the browser starts downloading
+   * the next image in the background.
+   *
+   * When the carousel changes, the next image
+   * should already be available or partially loaded.
+   */
+  useEffect(() => {
+    if (slides.length <= 1) {
+      return;
+    }
+
+    const nextIndex =
+      (activeSlide + 1) % slides.length;
+
+    const nextImage =
+      getImageUrl(
+        slides[nextIndex]?.image,
+      );
+
+    if (!nextImage) {
+      return;
+    }
+
+    const image =
+      new Image();
+
+    image.decoding = "async";
+    image.src = nextImage;
+  }, [
+    activeSlide,
+    slides,
   ]);
 
   if (!slides.length) {
@@ -172,7 +216,6 @@ const HeroSection = () => {
   return (
     <section className="relative overflow-hidden bg-warm-ivory">
       <div className="relative min-h-[740px] sm:min-h-[720px] lg:min-h-[690px]">
-
         <div className="absolute inset-0">
           {imageUrl && (
             <img
@@ -182,6 +225,19 @@ const HeroSection = () => {
                 hero.imageAlt,
                 i18n.language,
               )}
+              width={1920}
+              height={700}
+              loading={
+                activeSlide === 0
+                  ? "eager"
+                  : "lazy"
+              }
+              fetchPriority={
+                activeSlide === 0
+                  ? "high"
+                  : "auto"
+              }
+              decoding="async"
               className={`h-full w-full object-cover transition-all duration-700 lg:hover:scale-[1.01] ${
                 isRtl
                   ? "-scale-x-100"
@@ -310,7 +366,6 @@ const HeroSection = () => {
           }`}
         >
           <div className="group relative flex h-[126px] w-[126px] items-center justify-center sm:h-[142px] sm:w-[142px]">
-
             <div className="absolute inset-0 rounded-full border border-soft-white/80 bg-soft-white/70 shadow-[0_20px_60px_rgba(18,38,58,0.18)] backdrop-blur-xl transition-all duration-500 group-hover:scale-105 group-hover:bg-soft-white/80" />
 
             <div className="absolute inset-[7px] rounded-full border border-classic-gold/20" />
@@ -320,7 +375,6 @@ const HeroSection = () => {
             <div className="absolute inset-[20px] rounded-full bg-warm-ivory/50 shadow-inner" />
 
             <div className="relative z-10 flex flex-col items-center justify-center text-center">
-
               <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full border border-classic-gold/30 bg-soft-white/70 text-classic-gold shadow-sm">
                 <NfcIcon className="h-6 w-6" />
               </div>
@@ -341,6 +395,7 @@ const HeroSection = () => {
             </div>
 
             <span className="absolute -right-1 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-classic-gold shadow-[0_0_0_4px_rgba(197,166,107,0.12)]" />
+
             <span className="absolute -left-1 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-classic-gold shadow-[0_0_0_4px_rgba(197,166,107,0.12)]" />
           </div>
         </div>
