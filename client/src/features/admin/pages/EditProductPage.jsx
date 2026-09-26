@@ -558,9 +558,17 @@ setInitialTechnologyState({
 
   const handleTechnologyModelChange = (modelId) => {
     setSelectedTechnologyModels((previous) => {
-      if (previous.includes(modelId)) {
-        return previous.filter((selectedId) => selectedId !== modelId);
-      }
+    if (previous.includes(modelId)) {
+  setTechnologyPrices((previousPrices) => {
+    const updatedPrices = { ...previousPrices };
+
+    delete updatedPrices[modelId];
+
+    return updatedPrices;
+  });
+
+  return previous.filter((selectedId) => selectedId !== modelId);
+}
 
       setTechnologyPrices((previousPrices) => ({
         ...previousPrices,
@@ -936,10 +944,7 @@ const technologyChanged =
   technologyPricesChanged;
 
 if (technologyChanged) {
-  /*
-   * Always fetch the latest relations from DB before modifying them.
-   * This prevents using stale relation IDs from the page state.
-   */
+  
   const latestProductTechnologiesResponse =
     await getProductTechnologies(id);
 
@@ -967,10 +972,7 @@ if (technologyChanged) {
     relationsByModelId.set(String(modelId), relation);
   });
 
-  /*
-   * If Technology Required is disabled:
-   * remove every ProductTechnology relation.
-   */
+ 
   if (!formData.technologyRequired) {
     for (const relation of latestRelations) {
       if (relation?._id) {
@@ -978,9 +980,7 @@ if (technologyChanged) {
       }
     }
   } else {
-    /*
-     * Delete relations for technology models that are no longer selected.
-     */
+  
     for (const relation of latestRelations) {
       const relationModelId =
         relation?.technologyModel?._id || relation?.technologyModel;
@@ -996,9 +996,7 @@ if (technologyChanged) {
       }
     }
 
-    /*
-     * Create/update currently selected technologies.
-     */
+   
     for (
       let index = 0;
       index < selectedTechnologyModels.length;
@@ -1031,30 +1029,7 @@ if (technologyChanged) {
     }
   }
 }
-      for (let index = 0; index < selectedTechnologyModels.length; index += 1) {
-        const modelId = selectedTechnologyModels[index];
-
-        const priceData = technologyPrices[modelId];
-
-        const extraPrice = Number(priceData?.extraPrice || 0);
-
-        if (priceData?.relationId) {
-          await updateProductTechnology(priceData.relationId, {
-            extraPrice,
-            displayOrder: index,
-          });
-        } else {
-          await createProductTechnology({
-            product: id,
-            technologyModel: modelId,
-            extraPrice,
-            isDefault: false,
-            isSelectable: true,
-            displayOrder: index,
-            status: "active",
-          });
-        }
-      }
+   
 let uploadedPrimaryImage = primaryImage;
 
 let uploadedPrimaryImageId = primaryImageId;
