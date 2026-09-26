@@ -1,6 +1,10 @@
+
 import { useMemo } from "react";
+
 import { Link } from "react-router-dom";
+
 import { useTranslation } from "react-i18next";
+
 import { FaArrowRight, FaHeart } from "react-icons/fa6";
 
 const getBackendOrigin = () => {
@@ -142,10 +146,7 @@ const getTechnologyLabel = (
     technologyModel?.technology || {};
 
   return (
-    getLocalizedText(
-      technology?.name,
-      language,
-    ) ||
+    getLocalizedText(technology?.name, language) ||
     getLocalizedText(
       technologyModel?.modelName,
       language,
@@ -158,14 +159,15 @@ const getTechnologyLabel = (
   );
 };
 
-const ProductCard = ({ product, index = 0 }) => {
+const ProductCard = ({
+  product,
+  index = 0,
+}) => {
   const { t, i18n } = useTranslation();
 
   const isRtl = i18n.language === "ar";
 
-  const activeLanguage = isRtl
-    ? "ar"
-    : "en";
+  const activeLanguage = isRtl ? "ar" : "en";
 
   const productTechnologies = useMemo(() => {
     return Array.isArray(
@@ -214,22 +216,19 @@ const ProductCard = ({ product, index = 0 }) => {
 
   const finalPrice =
     basePrice +
-    (hasTechnology
-      ? technologyPrice
-      : 0);
+    (hasTechnology ? technologyPrice : 0);
 
   const hasDiscount =
     baseComparePrice > 0 &&
     basePrice > 0 &&
     baseComparePrice > basePrice;
 
-  const finalComparePrice =
-    hasDiscount
-      ? baseComparePrice +
-        (hasTechnology
-          ? technologyPrice
-          : 0)
-      : 0;
+  const finalComparePrice = hasDiscount
+    ? baseComparePrice +
+      (hasTechnology
+        ? technologyPrice
+        : 0)
+    : 0;
 
   const saving = hasDiscount
     ? finalComparePrice - finalPrice
@@ -239,8 +238,7 @@ const ProductCard = ({ product, index = 0 }) => {
     hasDiscount &&
     finalComparePrice > 0
       ? Math.round(
-          (saving /
-            finalComparePrice) *
+          (saving / finalComparePrice) *
             100,
         )
       : 0;
@@ -254,10 +252,9 @@ const ProductCard = ({ product, index = 0 }) => {
       product?.images,
   );
 
-  const number = String(index + 1).padStart(
-    2,
-    "0",
-  );
+  const number = String(
+    index + 1,
+  ).padStart(2, "0");
 
   const technologyLabel =
     getTechnologyLabel(
@@ -289,8 +286,7 @@ const ProductCard = ({ product, index = 0 }) => {
       activeLanguage,
     );
 
-  const detailsUrl =
-    `/shop/products/${product._id}`;
+  const detailsUrl = `/shop/products/${product._id}`;
 
   const badge = hasDiscount
     ? `${discountPercentage}% ${t(
@@ -299,13 +295,9 @@ const ProductCard = ({ product, index = 0 }) => {
     : product?.newArrival
       ? t("productCard.new")
       : product?.bestSeller
-        ? t(
-            "productCard.bestseller",
-          )
+        ? t("productCard.bestseller")
         : product?.featured
-          ? t(
-              "productCard.featured",
-            )
+          ? t("productCard.featured")
           : null;
 
   return (
@@ -316,10 +308,6 @@ const ProductCard = ({ product, index = 0 }) => {
         h-full
       "
     >
-      {/* =====================================================
-          IMAGE AREA
-      ===================================================== */}
-
       <div
         className="
           relative
@@ -333,7 +321,6 @@ const ProductCard = ({ product, index = 0 }) => {
         "
       >
         {/* Thin luxury frame */}
-
         <div
           className="
             pointer-events-none
@@ -382,7 +369,6 @@ const ProductCard = ({ product, index = 0 }) => {
           />
 
           {/* Dark cinematic gradient */}
-
           <div
             className="
               pointer-events-none
@@ -396,7 +382,6 @@ const ProductCard = ({ product, index = 0 }) => {
           />
 
           {/* Soft light */}
-
           <div
             className="
               pointer-events-none
@@ -411,20 +396,12 @@ const ProductCard = ({ product, index = 0 }) => {
             "
           />
 
-          {/* =================================================
-              INDEX
-          ================================================= */}
-
           <div
             className={`
               absolute
               top-6
               z-20
-              ${
-                isRtl
-                  ? "right-6"
-                  : "left-6"
-              }
+              ${isRtl ? "right-6" : "left-6"}
             `}
           >
             <div
@@ -455,21 +432,13 @@ const ProductCard = ({ product, index = 0 }) => {
             </div>
           </div>
 
-          {/* =================================================
-              BADGE
-          ================================================= */}
-
           {badge && (
             <div
               className={`
                 absolute
                 top-5
                 z-20
-                ${
-                  isRtl
-                    ? "left-5"
-                    : "right-5"
-                }
+                ${isRtl ? "left-5" : "right-5"}
               `}
             >
               <span
@@ -480,15 +449,19 @@ const ProductCard = ({ product, index = 0 }) => {
                   border
                   border-white/30
                   bg-[#07131F]/75
-                  px-4
-                  py-2
-                  text-[7px]
+                  px-3
+                  py-1.5
+                  text-[6px]
                   font-bold
                   uppercase
-                  tracking-[0.2em]
+                  tracking-[0.15em]
                   text-[#E2C681]
                   shadow-lg
                   backdrop-blur-xl
+                  sm:px-4
+                  sm:py-2
+                  sm:text-[7px]
+                  sm:tracking-[0.2em]
                 "
               >
                 {badge}
@@ -496,20 +469,12 @@ const ProductCard = ({ product, index = 0 }) => {
             </div>
           )}
 
-          {/* =================================================
-              CATEGORY
-          ================================================= */}
-
           <div
             className={`
               absolute
               bottom-6
               z-20
-              ${
-                isRtl
-                  ? "right-6"
-                  : "left-6"
-              }
+              ${isRtl ? "right-6" : "left-6"}
             `}
           >
             <div
@@ -517,11 +482,7 @@ const ProductCard = ({ product, index = 0 }) => {
                 flex
                 items-center
                 gap-2.5
-                ${
-                  isRtl
-                    ? "flex-row-reverse"
-                    : ""
-                }
+                ${isRtl ? "flex-row-reverse" : ""}
               `}
             >
               <span
@@ -542,11 +503,13 @@ const ProductCard = ({ product, index = 0 }) => {
                     : "ltr"
                 }
                 className="
-                  text-[7px]
+                  text-[6px]
                   font-semibold
                   uppercase
-                  tracking-[0.28em]
+                  tracking-[0.2em]
                   text-white/90
+                  sm:text-[7px]
+                  sm:tracking-[0.28em]
                 "
               >
                 {categoryName ||
@@ -554,10 +517,6 @@ const ProductCard = ({ product, index = 0 }) => {
               </span>
             </div>
           </div>
-
-          {/* =================================================
-              VIEW ARROW
-          ================================================= */}
 
           <div
             className={`
@@ -570,18 +529,14 @@ const ProductCard = ({ product, index = 0 }) => {
               duration-500
               group-hover:translate-y-0
               group-hover:opacity-100
-              ${
-                isRtl
-                  ? "left-5"
-                  : "right-5"
-              }
+              ${isRtl ? "left-5" : "right-5"}
             `}
           >
             <span
               className="
                 flex
-                h-11
-                w-11
+                h-9
+                w-9
                 items-center
                 justify-center
                 rounded-full
@@ -590,25 +545,20 @@ const ProductCard = ({ product, index = 0 }) => {
                 bg-white/15
                 text-white
                 backdrop-blur-lg
+                sm:h-11
+                sm:w-11
               "
             >
               <FaArrowRight
                 className={`
-                  text-[9px]
-                  ${
-                    isRtl
-                      ? "rotate-180"
-                      : ""
-                  }
+                  text-[8px]
+                  sm:text-[9px]
+                  ${isRtl ? "rotate-180" : ""}
                 `}
               />
             </span>
           </div>
         </Link>
-
-        {/* ===================================================
-            WISHLIST
-        =================================================== */}
 
         <button
           type="button"
@@ -617,11 +567,11 @@ const ProductCard = ({ product, index = 0 }) => {
           )}
           className={`
             absolute
-            top-16
+            top-14
             z-30
             flex
-            h-10
-            w-10
+            h-8
+            w-8
             items-center
             justify-center
             rounded-full
@@ -637,19 +587,14 @@ const ProductCard = ({ product, index = 0 }) => {
             hover:border-[#07131F]
             hover:bg-[#07131F]
             hover:text-[#D9B96E]
-            ${
-              isRtl
-                ? "left-5"
-                : "right-5"
-            }
+            sm:top-16
+            sm:h-10
+            sm:w-10
+            ${isRtl ? "left-5" : "right-5"}
           `}
         >
-          <FaHeart className="text-[9px]" />
+          <FaHeart className="text-[8px] sm:text-[9px]" />
         </button>
-
-        {/* ===================================================
-            SOLD OUT
-        =================================================== */}
 
         {isOutOfStock && (
           <div
@@ -670,70 +615,62 @@ const ProductCard = ({ product, index = 0 }) => {
                 border
                 border-white/40
                 bg-white
-                px-8
-                py-3
-                text-[8px]
+                px-5
+                py-2.5
+                text-[7px]
                 font-bold
                 uppercase
-                tracking-[0.3em]
+                tracking-[0.2em]
                 text-[#07131F]
                 shadow-2xl
+                sm:px-8
+                sm:py-3
+                sm:text-[8px]
+                sm:tracking-[0.3em]
               "
             >
-              {t(
-                "productCard.soldOut",
-              )}
+              {t("productCard.soldOut")}
             </span>
           </div>
         )}
       </div>
 
-      {/* =====================================================
-          CONTENT
-      ===================================================== */}
-
       <div
         className={`
-          px-1
-          pt-6
-          ${
-            isRtl
-              ? "text-right"
-              : "text-left"
-          }
+          px-0.5
+          pt-4
+          sm:px-1
+          sm:pt-6
+          ${isRtl ? "text-right" : "text-left"}
         `}
       >
-        {/* =================================================
-            BRAND
-        ================================================= */}
-
         <div
           className={`
             flex
             items-center
-            gap-2
-            ${
-              isRtl
-                ? "flex-row-reverse"
-                : ""
-            }
+            gap-1.5
+            sm:gap-2
+            ${isRtl ? "flex-row-reverse" : ""}
           `}
         >
           <span
             className="
               h-px
-              w-6
+              w-4
               bg-[#C9A75E]
+              sm:w-6
             "
           />
 
           <span
             className="
-              text-[7px]
+              text-[6px]
               font-bold
               uppercase
-              tracking-[0.3em]
+              tracking-[0.2em]
               text-[#9D8350]
+              sm:text-[7px]
+              sm:tracking-[0.3em]
             "
           >
             Jevorya
@@ -741,19 +678,16 @@ const ProductCard = ({ product, index = 0 }) => {
 
           <span
             className="
-              text-[6px]
+              text-[5px]
               text-[#C9A75E]
+              sm:text-[6px]
             "
           >
             ✦
           </span>
         </div>
 
-        {/* =================================================
-            NAME
-        ================================================= */}
-
-        <div className="mt-3">
+        <div className="mt-2 sm:mt-3">
           <Link to={detailsUrl}>
             <h3
               dir={
@@ -764,7 +698,7 @@ const ProductCard = ({ product, index = 0 }) => {
               className="
                 line-clamp-1
                 font-serif
-                text-[24px]
+                text-[17px]
                 font-normal
                 leading-[1.15]
                 tracking-[-0.025em]
@@ -772,6 +706,7 @@ const ProductCard = ({ product, index = 0 }) => {
                 transition-colors
                 duration-300
                 group-hover:text-[#A7864C]
+                sm:text-[24px]
               "
             >
               {productName}
@@ -782,41 +717,35 @@ const ProductCard = ({ product, index = 0 }) => {
         {/* =================================================
             PRICE ROW
         ================================================= */}
-
         <div
           className={`
-            mt-3
+            mt-2
             flex
             items-center
             justify-between
-            gap-4
-            ${
-              isRtl
-                ? "flex-row-reverse"
-                : ""
-            }
+            gap-2
+            sm:mt-3
+            sm:gap-4
+            ${isRtl ? "flex-row-reverse" : ""}
           `}
         >
           {/* Main Price */}
-
           <div
             className={`
               flex
               items-baseline
-              gap-2
-              ${
-                isRtl
-                  ? "flex-row-reverse"
-                  : ""
-              }
+              gap-1.5
+              sm:gap-2
+              ${isRtl ? "flex-row-reverse" : ""}
             `}
           >
             <span
               className="
-                text-[21px]
+                text-[16px]
                 font-bold
                 tracking-[-0.04em]
                 text-[#07131F]
+                sm:text-[21px]
               "
             >
               {formatMoney(finalPrice)}
@@ -824,11 +753,13 @@ const ProductCard = ({ product, index = 0 }) => {
 
             <span
               className="
-                text-[7px]
+                text-[6px]
                 font-bold
                 uppercase
-                tracking-[0.2em]
+                tracking-[0.15em]
                 text-[#8D877D]
+                sm:text-[7px]
+                sm:tracking-[0.2em]
               "
             >
               EGP
@@ -836,25 +767,22 @@ const ProductCard = ({ product, index = 0 }) => {
           </div>
 
           {/* Discount */}
-
           {hasDiscount && (
             <div
               className={`
                 flex
                 items-center
-                gap-2
-                ${
-                  isRtl
-                    ? "flex-row-reverse"
-                    : ""
-                }
+                gap-1
+                sm:gap-2
+                ${isRtl ? "flex-row-reverse" : ""}
               `}
             >
               <span
                 className="
-                  text-[9px]
+                  text-[7px]
                   text-[#9C968D]
                   line-through
+                  sm:text-[9px]
                 "
               >
                 {formatMoney(
@@ -869,12 +797,16 @@ const ProductCard = ({ product, index = 0 }) => {
                   border
                   border-[#D6BD91]
                   bg-[#FBF7EF]
-                  px-2
-                  py-1
-                  text-[7px]
+                  px-1.5
+                  py-0.5
+                  text-[6px]
                   font-bold
-                  tracking-[0.08em]
+                  tracking-[0.05em]
                   text-[#9A783D]
+                  sm:px-2
+                  sm:py-1
+                  sm:text-[7px]
+                  sm:tracking-[0.08em]
                 "
               >
                 -{discountPercentage}%
@@ -886,26 +818,26 @@ const ProductCard = ({ product, index = 0 }) => {
         {/* =================================================
             SAVING
         ================================================= */}
-
         {hasDiscount && (
           <div
             className={`
-              mt-2
+              mt-1.5
               flex
-              ${
-                isRtl
-                  ? "justify-end"
-                  : "justify-start"
-              }
+              sm:mt-2
+              ${isRtl
+                ? "justify-end"
+                : "justify-start"}
             `}
           >
             <span
               className="
-                text-[7px]
+                text-[6px]
                 font-semibold
                 uppercase
-                tracking-[0.15em]
+                tracking-[0.1em]
                 text-[#A7864C]
+                sm:text-[7px]
+                sm:tracking-[0.15em]
               "
             >
               {t("productCard.save")}{" "}
@@ -917,7 +849,6 @@ const ProductCard = ({ product, index = 0 }) => {
         {/* =================================================
             DESCRIPTION
         ================================================= */}
-
         {(productShortDescription ||
           productDescription) && (
           <p
@@ -927,12 +858,15 @@ const ProductCard = ({ product, index = 0 }) => {
                 : "ltr"
             }
             className="
-              mt-3
+              mt-2
               line-clamp-2
               max-w-[96%]
-              text-[10px]
-              leading-[1.8]
+              text-[8px]
+              leading-[1.7]
               text-[#888278]
+              sm:mt-3
+              sm:text-[10px]
+              sm:leading-[1.8]
             "
           >
             {productShortDescription ||
@@ -943,20 +877,23 @@ const ProductCard = ({ product, index = 0 }) => {
         {/* =================================================
             SMART TECHNOLOGY
         ================================================= */}
-
         {hasTechnology && (
           <div
             className="
-              mt-5
-              rounded-[18px]
+              mt-4
+              rounded-[14px]
               border
               border-[#E9E0D2]
               bg-[#FAF7F1]
-              px-3.5
-              py-3
+              px-2.5
+              py-2.5
               transition-all
               duration-300
               group-hover:border-[#D9C79F]
+              sm:mt-5
+              sm:rounded-[18px]
+              sm:px-3.5
+              sm:py-3
             "
           >
             <div
@@ -964,12 +901,11 @@ const ProductCard = ({ product, index = 0 }) => {
                 flex
                 items-center
                 justify-between
-                gap-3
-                ${
-                  isRtl
-                    ? "flex-row-reverse"
-                    : ""
-                }
+                gap-2
+                sm:gap-3
+                ${isRtl
+                  ? "flex-row-reverse"
+                  : ""}
               `}
             >
               <div
@@ -977,26 +913,28 @@ const ProductCard = ({ product, index = 0 }) => {
                   flex
                   min-w-0
                   items-center
-                  gap-3
-                  ${
-                    isRtl
-                      ? "flex-row-reverse"
-                      : ""
-                  }
+                  gap-2
+                  sm:gap-3
+                  ${isRtl
+                    ? "flex-row-reverse"
+                    : ""}
                 `}
               >
                 <span
                   className="
                     flex
-                    h-8
-                    w-8
+                    h-7
+                    w-7
                     shrink-0
                     items-center
                     justify-center
                     rounded-full
                     bg-[#07131F]
-                    text-[8px]
+                    text-[7px]
                     text-[#D9B96E]
+                    sm:h-8
+                    sm:w-8
+                    sm:text-[8px]
                   "
                 >
                   ✦
@@ -1005,11 +943,13 @@ const ProductCard = ({ product, index = 0 }) => {
                 <div className="min-w-0">
                   <p
                     className="
-                      text-[6px]
+                      text-[5px]
                       font-bold
                       uppercase
-                      tracking-[0.18em]
+                      tracking-[0.12em]
                       text-[#A7864C]
+                      sm:text-[6px]
+                      sm:tracking-[0.18em]
                     "
                   >
                     {t(
@@ -1027,9 +967,10 @@ const ProductCard = ({ product, index = 0 }) => {
                     className="
                       mt-0.5
                       truncate
-                      text-[9px]
+                      text-[8px]
                       font-medium
                       text-[#07131F]
+                      sm:text-[9px]
                     "
                   >
                     {technologyLabel}
@@ -1040,13 +981,13 @@ const ProductCard = ({ product, index = 0 }) => {
               <span
                 className="
                   shrink-0
-                  text-[8px]
+                  text-[7px]
                   font-semibold
                   text-[#777168]
+                  sm:text-[8px]
                 "
               >
-                +
-                {formatMoney(
+                +{formatMoney(
                   technologyPrice,
                 )}{" "}
                 EGP
@@ -1058,13 +999,14 @@ const ProductCard = ({ product, index = 0 }) => {
         {/* =================================================
             FOOTER
         ================================================= */}
-
         <div
           className="
-            mt-5
+            mt-4
             border-t
             border-[#E9E0D2]
-            pt-4
+            pt-3
+            sm:mt-5
+            sm:pt-4
           "
         >
           <Link
@@ -1074,46 +1016,46 @@ const ProductCard = ({ product, index = 0 }) => {
               flex
               items-center
               justify-between
-              ${
-                isRtl
-                  ? "flex-row-reverse"
-                  : ""
-              }
+              ${isRtl
+                ? "flex-row-reverse"
+                : ""}
             `}
           >
             <div
               className={`
                 flex
                 items-center
-                gap-2
-                ${
-                  isRtl
-                    ? "flex-row-reverse"
-                    : ""
-                }
+                gap-1.5
+                sm:gap-2
+                ${isRtl
+                  ? "flex-row-reverse"
+                  : ""}
               `}
             >
               <span
                 className="
                   h-px
-                  w-4
+                  w-3
                   bg-[#C9A75E]
                   transition-all
                   duration-300
                   group-hover/discover:w-7
+                  sm:w-4
                 "
               />
 
               <span
                 className="
-                  text-[7px]
+                  text-[6px]
                   font-bold
                   uppercase
-                  tracking-[0.25em]
+                  tracking-[0.18em]
                   text-[#07131F]
                   transition-colors
                   duration-300
                   group-hover/discover:text-[#A7864C]
+                  sm:text-[7px]
+                  sm:tracking-[0.25em]
                 "
               >
                 {t(
@@ -1125,8 +1067,8 @@ const ProductCard = ({ product, index = 0 }) => {
             <span
               className="
                 flex
-                h-7
-                w-7
+                h-6
+                w-6
                 items-center
                 justify-center
                 rounded-full
@@ -1138,19 +1080,20 @@ const ProductCard = ({ product, index = 0 }) => {
                 group-hover/discover:border-[#07131F]
                 group-hover/discover:bg-[#07131F]
                 group-hover/discover:text-white
+                sm:h-7
+                sm:w-7
               "
             >
               <FaArrowRight
                 className={`
-                  text-[7px]
+                  text-[6px]
                   transition-transform
                   duration-300
                   group-hover/discover:translate-x-0.5
-                  ${
-                    isRtl
-                      ? "rotate-180"
-                      : ""
-                  }
+                  sm:text-[7px]
+                  ${isRtl
+                    ? "rotate-180"
+                    : ""}
                 `}
               />
             </span>
