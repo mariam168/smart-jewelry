@@ -173,3 +173,38 @@ export const updateProduct = async (productId, productData) => {
 export const deleteProduct = async (productId) => {
   return await Product.findByIdAndDelete(productId);
 };
+export const getNewArrivalProducts = async () => {
+  const products = await Product.find({
+    newArrival: true,
+    status: "active",
+  })
+    .populate("category")
+    .populate("technologyModels")
+    .sort({
+      createdAt: -1,
+    });
+
+  const result = await Promise.all(
+    products.map(async (product) => {
+      const primaryImage = await ProductImage.findOne({
+        product: product._id,
+        isPrimary: true,
+      }).lean();
+
+      const imageUrl =
+        primaryImage?.imageUrl ||
+        product.primaryImage ||
+        product.image ||
+        product.images?.[0] ||
+        "";
+
+      return {
+        ...product.toObject(),
+        image: imageUrl,
+        primaryImage: imageUrl,
+      };
+    }),
+  );
+
+  return result;
+};

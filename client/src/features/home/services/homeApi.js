@@ -27,3 +27,8 @@ export const updateAdminHero = async (
 
   return response.data;
 };
+export const getNewArrivalProducts = async () => {
+  const response = await api.get("/products/new-arrivals");
+
+  return response.data;
+};

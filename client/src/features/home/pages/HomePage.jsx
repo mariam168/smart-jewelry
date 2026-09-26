@@ -1,6 +1,7 @@
 import HeroSection from "../components/HeroSection";
 import CategorySection from "../components/CategorySection";
 import FeaturedProducts from "../components/FeaturedProducts";
+import NewArrivals from "../components/NewArrivals";
 import SmartTechnologySection from "../components/SmartTechnologySection";
 import HowItWorksSection from "../components/HowItWorksSection";
 import HomeCTA from "../components/HomeCTA";
@@ -11,7 +12,7 @@ const HomePage = () => {
       <HeroSection />
 
       <CategorySection />
-
+  <NewArrivals />
       <SmartTechnologySection />
 
       <HowItWorksSection />
