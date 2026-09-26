@@ -12,6 +12,16 @@ const ar = {
     toggleMenu: "فتح القائمة",
     language: "English",
   },
+newArrivals: {
+  label: "وصل حديثًا",
+  title: "أحدث القطع",
+  description:
+    "اكتشفي أحدث القطع التي أُضيفت إلى مجموعة JEVORYA.",
+  shopAll: "تسوقي المجموعة",
+  new: "جديد",
+  soldOut: "نفدت الكمية",
+},
+
   hero: {
     imageAlt: "مجموعة مجوهرات ذكية أنيقة",
     eyebrow: "مجوهرات ذكية",

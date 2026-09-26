@@ -1003,6 +1003,17 @@ const en = {
       failed: "Failed",
     },
   },
+
+newArrivals: {
+  label: "Just In",
+  title: "New Arrivals",
+  description:
+    "Discover the latest pieces added to the JEVORYA collection.",
+  shopAll: "Shop All",
+  new: "New",
+  soldOut: "Sold Out",
+},
+
   manageExperience: {
     smartJewelry: "Smart Jewelry",
     title: "Manage Your Experience",
