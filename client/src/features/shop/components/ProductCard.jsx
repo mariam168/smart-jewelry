@@ -718,17 +718,17 @@ const ProductCard = ({
             PRICE ROW
         ================================================= */}
         <div
-          className={`
-            mt-2
-            flex
-            items-center
-            justify-between
-            gap-2
-            sm:mt-3
-            sm:gap-4
-            ${isRtl ? "flex-row-reverse" : ""}
-          `}
-        >
+  className={`
+    mt-2
+    flex
+    items-center
+    justify-between
+    gap-2
+    sm:mt-3
+    sm:gap-4
+    ${isRtl ? "text-right" : "text-left"}
+  `}
+>
           {/* Main Price */}
           <div
             className={`
