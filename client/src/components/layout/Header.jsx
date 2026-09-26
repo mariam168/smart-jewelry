@@ -85,11 +85,14 @@ const Header = () => {
             className="inline-block transition-transform duration-300 hover:scale-[1.03]"
           >
             {" "}
-            <img
-              src={logo}
-              alt="logo"
-              className="h-12 w-auto md:h-16"
-            />{" "}
+          
+<img
+  src={logo}
+  alt="logo"
+  className="h-16 w-auto md:h-16"
+/>
+
+{" "}
           </Link>{" "}
         </div>
         <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-10 md:flex">
