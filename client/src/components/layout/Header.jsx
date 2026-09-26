@@ -1,3 +1,4 @@
+
 import { useContext, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -74,27 +75,37 @@ const Header = () => {
     "group relative flex h-10 w-10 items-center justify-center rounded-full text-midnight-navy/80 transition-all duration-300 hover:bg-midnight-navy hover:text-white";
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-light-champagne/40 bg-soft-white/90 backdrop-blur-lg">
-      {" "}
+    <header className="sticky top-0 z-50 w-full border-b border-light-champagne/40 bg-soft-white/90 pt-9 backdrop-blur-lg">
+
+      {/* Fixed Phone Number */}
+     <div className="fixed left-0 right-0 top-0 z-[9999] flex h-9 items-center gap-2 bg-midnight-navy px-6 lg:px-12">
+  <span className="text-[12px] text-classic-gold">
+    ☎
+  </span>
+
+  <a
+    href="tel:+201554923541"
+    dir="ltr"
+    className="text-[11px] font-medium tracking-[0.15em] text-white/90 transition-colors duration-300 hover:text-classic-gold sm:text-[12px]"
+  >
+    +20 15 54923541
+  </a>
+</div>
       <div className="mx-auto flex h-20 max-w-[1600px] items-center justify-between px-6 lg:px-12">
-        {" "}
+
         <div className="flex-1">
-          {" "}
           <Link
             to="/"
             className="inline-block transition-transform duration-300 hover:scale-[1.03]"
           >
-            {" "}
-          
-<img
-  src={logo}
-  alt="logo"
-  className="h-16 w-auto md:h-16"
-/>
-
-{" "}
-          </Link>{" "}
+            <img
+              src={logo}
+              alt="logo"
+              className="h-16 w-auto md:h-16"
+            />
+          </Link>
         </div>
+
         <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-10 md:flex">
           <NavLink
             to="/"
@@ -124,7 +135,9 @@ const Header = () => {
             {t("header.contact")}
           </NavLink>
         </nav>
+
         <div className="flex flex-1 items-center justify-end gap-1 sm:gap-3">
+
           <button
             onClick={toggleLanguage}
             className="hidden items-center gap-2 rounded-full border border-light-champagne/50 px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-midnight-navy transition-all hover:bg-warm-ivory md:flex"
@@ -138,6 +151,7 @@ const Header = () => {
 
           {user ? (
             <div className="flex items-center gap-1">
+
               <Link
                 to={
                   isAdmin
@@ -173,6 +187,7 @@ const Header = () => {
               >
                 <FaArrowRightFromBracket className="text-base" />
               </button>
+
             </div>
           ) : (
             <Link
@@ -209,11 +224,15 @@ const Header = () => {
               <FaBars className="text-lg" />
             )}
           </button>
+
         </div>
       </div>
+
       {isMenuOpen && (
         <div className="absolute left-0 top-full w-full bg-soft-white/98 px-8 py-10 shadow-2xl backdrop-blur-xl md:hidden">
+
           <nav className="flex flex-col space-y-6">
+
             {[
               [t("header.home"), "/"],
               [t("header.shop"), "/shop"],
@@ -241,6 +260,7 @@ const Header = () => {
             ))}
 
             <div className="mt-4 flex flex-col gap-4 border-t border-light-champagne/40 pt-6">
+
               <button
                 onClick={() => {
                   toggleLanguage();
@@ -251,6 +271,7 @@ const Header = () => {
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-warm-ivory">
                   <FaGlobe />
                 </span>
+
                 {t("header.language")} (
                 {i18n.language})
               </button>
@@ -286,6 +307,7 @@ const Header = () => {
                   {t("header.logout")}
                 </button>
               )}
+
             </div>
           </nav>
         </div>
