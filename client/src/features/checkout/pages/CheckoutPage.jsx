@@ -1,5 +1,4 @@
-
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Link, useNavigate } from "react-router-dom";
 
@@ -179,12 +178,21 @@ const CheckoutPage = () => {
   const { cart, cartTotal, isLoading: cartLoading, clearCart } = useCart();
 
   const [shippingAreas, setShippingAreas] = useState([]);
-
   const [shippingLoading, setShippingLoading] = useState(true);
-
   const [submitting, setSubmitting] = useState(false);
-
   const [error, setError] = useState("");
+
+  // Only used to show the existing validation message
+  // next to the field that needs attention.
+  const [validationField, setValidationField] = useState("");
+
+  // Refs are only for scrolling/focusing the existing fields.
+  const manufacturingNameRef = useRef(null);
+  const firstNameRef = useRef(null);
+  const lastNameRef = useRef(null);
+  const phoneRef = useRef(null);
+  const addressRef = useRef(null);
+  const shippingAreaRef = useRef(null);
 
   const [formValues, setFormValues] = useState({
     manufacturingName: "",
@@ -251,6 +259,7 @@ const CheckoutPage = () => {
     }));
 
     setError("");
+    setValidationField("");
   };
 
   const validateForm = () => {
@@ -293,25 +302,98 @@ const CheckoutPage = () => {
     return "";
   };
 
+  // This does NOT change validation rules.
+  // It only identifies which existing field should receive focus.
+  const getValidationField = () => {
+    if (!formValues.manufacturingName.trim()) {
+      return "manufacturingName";
+    }
+
+    if (formValues.manufacturingName.trim().length > 120) {
+      return "manufacturingName";
+    }
+
+    if (formValues.manufacturingNotes.trim().length > 1000) {
+      return "manufacturingNotes";
+    }
+
+    if (!formValues.firstName.trim()) {
+      return "firstName";
+    }
+
+    if (!formValues.lastName.trim()) {
+      return "lastName";
+    }
+
+    if (!formValues.phone.trim()) {
+      return "phone";
+    }
+
+    if (!formValues.address.trim()) {
+      return "address";
+    }
+
+    if (!formValues.shippingAreaId) {
+      return "shippingAreaId";
+    }
+
+    if (!selectedShippingArea) {
+      return "shippingAreaId";
+    }
+
+    return "";
+  };
+
+  const focusValidationField = (fieldName) => {
+    const refs = {
+      manufacturingName: manufacturingNameRef,
+      firstName: firstNameRef,
+      lastName: lastNameRef,
+      phone: phoneRef,
+      address: addressRef,
+      shippingAreaId: shippingAreaRef,
+    };
+
+    const fieldRef = refs[fieldName]?.current;
+
+    if (!fieldRef) {
+      return;
+    }
+
+    fieldRef.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+
+    window.setTimeout(() => {
+      fieldRef.focus();
+    }, 350);
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     const validationError = validateForm();
 
     if (validationError) {
+      const fieldName = getValidationField();
+
       setError(validationError);
+      setValidationField(fieldName);
+
+      focusValidationField(fieldName);
 
       return;
     }
 
     try {
       setSubmitting(true);
-
       setError("");
+      setValidationField("");
 
       const response = await createOrder({
         manufacturingName: formValues.manufacturingName.trim(),
-         ordererName: formValues.ordererName.trim(),
+        ordererName: formValues.ordererName.trim(),
         manufacturingNotes: formValues.manufacturingNotes.trim(),
         shippingAreaId: formValues.shippingAreaId,
         shippingAddress: {
@@ -344,6 +426,8 @@ const CheckoutPage = () => {
       });
     } catch (error) {
       console.error("Create Order Error:", error);
+
+      setValidationField("");
 
       setError(
         error?.response?.data?.message ||
@@ -591,6 +675,7 @@ const CheckoutPage = () => {
                 </label>
 
                 <input
+                  ref={manufacturingNameRef}
                   id="manufacturingName"
                   type="text"
                   name="manufacturingName"
@@ -600,40 +685,55 @@ const CheckoutPage = () => {
                   maxLength={120}
                   autoComplete="off"
                   placeholder="e.g. Mariam"
-                  className="checkout-input"
+                  aria-invalid={
+                    validationField === "manufacturingName" ? "true" : "false"
+                  }
+                  className={`checkout-input ${
+                    validationField === "manufacturingName"
+                      ? "border-antique-gold"
+                      : ""
+                  }`}
                 />
+
+                {validationField === "manufacturingName" && error && (
+                  <p className="mt-2 rounded-[10px] border border-antique-gold/20 bg-soft-cream px-3 py-2 text-[10px] leading-5 text-antique-gold">
+                    {error}
+                  </p>
+                )}
 
                 <p className="mt-2 text-[8px] leading-5 text-steel-gray">
                   {t("checkout.manufacturingNameHelp")}
                 </p>
               </div>
+
               <div>
-  <label
-    htmlFor="ordererName"
-    className="mb-2 block text-sm font-medium text-[#332a22]"
-  >
-    {t("checkout.ordererName")}
-    <span className="ml-1 text-xs font-normal text-[#7f7265]">
-      ({t("common.optional")})
-    </span>
-  </label>
+                <label
+                  htmlFor="ordererName"
+                  className="mb-2 block text-sm font-medium text-[#332a22]"
+                >
+                  {t("checkout.ordererName")}
 
-  <input
-    id="ordererName"
-    type="text"
-    name="ordererName"
-    value={formValues.ordererName}
-    onChange={handleChange}
-    maxLength={120}
-    autoComplete="name"
-    placeholder={t("checkout.ordererNamePlaceholder")}
-    className="checkout-input"
-  />
+                  <span className="ml-1 text-xs font-normal text-[#7f7265]">
+                    ({t("common.optional")})
+                  </span>
+                </label>
 
-  <p className="mt-2 text-xs leading-5 text-[#7f7265]">
-    {t("checkout.ordererNameHelp")}
-  </p>
-</div>
+                <input
+                  id="ordererName"
+                  type="text"
+                  name="ordererName"
+                  value={formValues.ordererName}
+                  onChange={handleChange}
+                  maxLength={120}
+                  autoComplete="name"
+                  placeholder={t("checkout.ordererNamePlaceholder")}
+                  className="checkout-input"
+                />
+
+                <p className="mt-2 text-xs leading-5 text-[#7f7265]">
+                  {t("checkout.ordererNameHelp")}
+                </p>
+              </div>
             </div>
           </section>
 
@@ -647,7 +747,7 @@ const CheckoutPage = () => {
             />
 
             <div className="relative px-6 py-6 sm:px-8 sm:py-8">
-              {error && (
+              {error && !validationField && (
                 <div className="mb-6 rounded-[14px] border border-antique-gold/25 bg-soft-cream px-4 py-3 text-[11px] leading-6 text-antique-gold">
                   {error}
                 </div>
@@ -659,14 +759,28 @@ const CheckoutPage = () => {
                   htmlFor="firstName"
                 >
                   <input
+                    ref={firstNameRef}
                     id="firstName"
                     name="firstName"
                     value={formValues.firstName}
                     onChange={handleChange}
                     placeholder={t("checkout.firstNamePlaceholder")}
-                    className="checkout-input"
+                    aria-invalid={
+                      validationField === "firstName" ? "true" : "false"
+                    }
+                    className={`checkout-input ${
+                      validationField === "firstName"
+                        ? "border-antique-gold"
+                        : ""
+                    }`}
                     autoComplete="given-name"
                   />
+
+                  {validationField === "firstName" && error && (
+                    <p className="mt-2 rounded-[10px] border border-antique-gold/20 bg-soft-cream px-3 py-2 text-[10px] leading-5 text-antique-gold">
+                      {error}
+                    </p>
+                  )}
                 </CheckoutField>
 
                 <CheckoutField
@@ -674,14 +788,28 @@ const CheckoutPage = () => {
                   htmlFor="lastName"
                 >
                   <input
+                    ref={lastNameRef}
                     id="lastName"
                     name="lastName"
                     value={formValues.lastName}
                     onChange={handleChange}
                     placeholder={t("checkout.lastNamePlaceholder")}
-                    className="checkout-input"
+                    aria-invalid={
+                      validationField === "lastName" ? "true" : "false"
+                    }
+                    className={`checkout-input ${
+                      validationField === "lastName"
+                        ? "border-antique-gold"
+                        : ""
+                    }`}
                     autoComplete="family-name"
                   />
+
+                  {validationField === "lastName" && error && (
+                    <p className="mt-2 rounded-[10px] border border-antique-gold/20 bg-soft-cream px-3 py-2 text-[10px] leading-5 text-antique-gold">
+                      {error}
+                    </p>
+                  )}
                 </CheckoutField>
 
                 <div className="sm:col-span-2">
@@ -690,15 +818,29 @@ const CheckoutPage = () => {
                     htmlFor="phone"
                   >
                     <input
+                      ref={phoneRef}
                       id="phone"
                       name="phone"
                       type="tel"
                       value={formValues.phone}
                       onChange={handleChange}
                       placeholder={t("checkout.phonePlaceholder")}
-                      className="checkout-input"
+                      aria-invalid={
+                        validationField === "phone" ? "true" : "false"
+                      }
+                      className={`checkout-input ${
+                        validationField === "phone"
+                          ? "border-antique-gold"
+                          : ""
+                      }`}
                       autoComplete="tel"
                     />
+
+                    {validationField === "phone" && error && (
+                      <p className="mt-2 rounded-[10px] border border-antique-gold/20 bg-soft-cream px-3 py-2 text-[10px] leading-5 text-antique-gold">
+                        {error}
+                      </p>
+                    )}
                   </CheckoutField>
                 </div>
 
@@ -708,15 +850,29 @@ const CheckoutPage = () => {
                     htmlFor="address"
                   >
                     <textarea
+                      ref={addressRef}
                       id="address"
                       name="address"
                       rows={4}
                       value={formValues.address}
                       onChange={handleChange}
                       placeholder={t("checkout.addressPlaceholder")}
-                      className="checkout-textarea"
+                      aria-invalid={
+                        validationField === "address" ? "true" : "false"
+                      }
+                      className={`checkout-textarea ${
+                        validationField === "address"
+                          ? "border-antique-gold"
+                          : ""
+                      }`}
                       autoComplete="street-address"
                     />
+
+                    {validationField === "address" && error && (
+                      <p className="mt-2 rounded-[10px] border border-antique-gold/20 bg-soft-cream px-3 py-2 text-[10px] leading-5 text-antique-gold">
+                        {error}
+                      </p>
+                    )}
                   </CheckoutField>
                 </div>
 
@@ -725,12 +881,20 @@ const CheckoutPage = () => {
                   htmlFor="shippingAreaId"
                 >
                   <select
+                    ref={shippingAreaRef}
                     id="shippingAreaId"
                     name="shippingAreaId"
                     value={formValues.shippingAreaId}
                     onChange={handleChange}
                     disabled={shippingLoading}
-                    className="checkout-input cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+                    aria-invalid={
+                      validationField === "shippingAreaId" ? "true" : "false"
+                    }
+                    className={`checkout-input cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 ${
+                      validationField === "shippingAreaId"
+                        ? "border-antique-gold"
+                        : ""
+                    }`}
                   >
                     <option value="">
                       {shippingLoading
@@ -745,12 +909,15 @@ const CheckoutPage = () => {
                       </option>
                     ))}
                   </select>
+
+                  {validationField === "shippingAreaId" && error && (
+                    <p className="mt-2 rounded-[10px] border border-antique-gold/20 bg-soft-cream px-3 py-2 text-[10px] leading-5 text-antique-gold">
+                      {error}
+                    </p>
+                  )}
                 </CheckoutField>
 
-                <CheckoutField
-                  label={t("checkout.country")}
-                  htmlFor="country"
-                >
+                <CheckoutField label={t("checkout.country")} htmlFor="country">
                   <input
                     id="country"
                     name="country"
@@ -835,9 +1002,7 @@ const CheckoutPage = () => {
                   type="radio"
                   name="paymentMethod"
                   value="cash_on_delivery"
-                  checked={
-                    formValues.paymentMethod === "cash_on_delivery"
-                  }
+                  checked={formValues.paymentMethod === "cash_on_delivery"}
                   onChange={handleChange}
                   className="h-4 w-4 accent-[#12263A]"
                 />
