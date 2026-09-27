@@ -256,7 +256,10 @@ export const createOrder = async (
     return {
       product: product._id,
 
-      name: product.name,
+     name:
+  product.name?.ar ||
+  product.name?.en ||
+  "",
 
       price: productPrice,
 

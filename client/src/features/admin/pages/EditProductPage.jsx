@@ -106,7 +106,6 @@ const getImageUrl = (value) => {
   return `${BACKEND_URL}${image.startsWith("/") ? "" : "/"}${image}`;
 };
 
-
 const createLocalizedField = (en = "", ar = "") => ({
   en: String(en ?? ""),
   ar: String(ar ?? ""),
@@ -242,11 +241,11 @@ const EditProductPage = () => {
   const [selectedTechnologyModels, setSelectedTechnologyModels] = useState([]);
 
   const [technologyPrices, setTechnologyPrices] = useState({});
-const [initialTechnologyState, setInitialTechnologyState] = useState({
-  technologyRequired: false,
-  selectedModels: [],
-  prices: {},
-});
+  const [initialTechnologyState, setInitialTechnologyState] = useState({
+    technologyRequired: false,
+    selectedModels: [],
+    prices: {},
+  });
   const [existingImages, setExistingImages] = useState([]);
   const [primaryImage, setPrimaryImage] = useState("");
   const [primaryImageId, setPrimaryImageId] = useState("");
@@ -501,22 +500,22 @@ const [initialTechnologyState, setInitialTechnologyState] = useState({
           });
         }
 
-      setSelectedTechnologyModels(selectedIds);
-setTechnologyPrices(prices);
+        setSelectedTechnologyModels(selectedIds);
+        setTechnologyPrices(prices);
 
-setInitialTechnologyState({
-  technologyRequired: Boolean(product.technologyRequired),
-  selectedModels: [...selectedIds],
-  prices: Object.fromEntries(
-    Object.entries(prices).map(([modelId, priceData]) => [
-      modelId,
-      {
-        relationId: priceData?.relationId || "",
-        extraPrice: priceData?.extraPrice ?? "",
-      },
-    ]),
-  ),
-});
+        setInitialTechnologyState({
+          technologyRequired: Boolean(product.technologyRequired),
+          selectedModels: [...selectedIds],
+          prices: Object.fromEntries(
+            Object.entries(prices).map(([modelId, priceData]) => [
+              modelId,
+              {
+                relationId: priceData?.relationId || "",
+                extraPrice: priceData?.extraPrice ?? "",
+              },
+            ]),
+          ),
+        });
       } catch (error) {
         console.error(error);
 
@@ -558,17 +557,17 @@ setInitialTechnologyState({
 
   const handleTechnologyModelChange = (modelId) => {
     setSelectedTechnologyModels((previous) => {
-    if (previous.includes(modelId)) {
-  setTechnologyPrices((previousPrices) => {
-    const updatedPrices = { ...previousPrices };
+      if (previous.includes(modelId)) {
+        setTechnologyPrices((previousPrices) => {
+          const updatedPrices = { ...previousPrices };
 
-    delete updatedPrices[modelId];
+          delete updatedPrices[modelId];
 
-    return updatedPrices;
-  });
+          return updatedPrices;
+        });
 
-  return previous.filter((selectedId) => selectedId !== modelId);
-}
+        return previous.filter((selectedId) => selectedId !== modelId);
+      }
 
       setTechnologyPrices((previousPrices) => ({
         ...previousPrices,
@@ -642,38 +641,38 @@ setInitialTechnologyState({
       maximumFractionDigits: 2,
     });
   };
-const handleImageChange = async (event) => {
-  const files = Array.from(event.target.files || []);
+  const handleImageChange = async (event) => {
+    const files = Array.from(event.target.files || []);
 
-  if (!files.length) {
-    return;
-  }
+    if (!files.length) {
+      return;
+    }
 
-  event.target.value = "";
+    event.target.value = "";
 
-  try {
-    const compressedFiles = await Promise.all(
-      files.map((file) => compressImage(file)),
-    );
+    try {
+      const compressedFiles = await Promise.all(
+        files.map((file) => compressImage(file)),
+      );
 
-    setNewImages((previous) => [...previous, ...compressedFiles]);
+      setNewImages((previous) => [...previous, ...compressedFiles]);
 
-    setPreviewNewImages((previous) => [
-      ...previous,
-      ...compressedFiles.map((file) => URL.createObjectURL(file)),
-    ]);
-  } catch (error) {
-    console.error("Image compression failed:", error);
+      setPreviewNewImages((previous) => [
+        ...previous,
+        ...compressedFiles.map((file) => URL.createObjectURL(file)),
+      ]);
+    } catch (error) {
+      console.error("Image compression failed:", error);
 
-    // fallback: use original files if compression fails
-    setNewImages((previous) => [...previous, ...files]);
+      // fallback: use original files if compression fails
+      setNewImages((previous) => [...previous, ...files]);
 
-    setPreviewNewImages((previous) => [
-      ...previous,
-      ...files.map((file) => URL.createObjectURL(file)),
-    ]);
-  }
-};
+      setPreviewNewImages((previous) => [
+        ...previous,
+        ...files.map((file) => URL.createObjectURL(file)),
+      ]);
+    }
+  };
 
   const handleRemoveNewImage = (index) => {
     setNewImages((previous) =>
@@ -892,59 +891,56 @@ const handleImageChange = async (event) => {
 
         status: formData.status,
 
-        technologyModels: formData.technologyRequired
-          ? selectedTechnologyModels
-          : [],
+        technologyModels: selectedTechnologyModels,
 
         primaryImage,
       });
-  /* =========================================================
+      /* =========================================================
    Product Technology Synchronization
 ========================================================= */
 
-const initialSelectedModels = new Set(
-  initialTechnologyState.selectedModels.map((modelId) => String(modelId)),
-);
+      const initialSelectedModels = new Set(
+        initialTechnologyState.selectedModels.map((modelId) => String(modelId)),
+      );
 
-const currentSelectedModels = new Set(
-  selectedTechnologyModels.map((modelId) => String(modelId)),
-);
+      const currentSelectedModels = new Set(
+        selectedTechnologyModels.map((modelId) => String(modelId)),
+      );
 
-const technologyRequiredChanged =
-  Boolean(formData.technologyRequired) !==
-  Boolean(initialTechnologyState.technologyRequired);
+      const technologyRequiredChanged =
+        Boolean(formData.technologyRequired) !==
+        Boolean(initialTechnologyState.technologyRequired);
 
-const selectedModelsChanged =
-  initialSelectedModels.size !== currentSelectedModels.size ||
-  [...initialSelectedModels].some(
-    (modelId) => !currentSelectedModels.has(modelId),
-  );
+      const selectedModelsChanged =
+        initialSelectedModels.size !== currentSelectedModels.size ||
+        [...initialSelectedModels].some(
+          (modelId) => !currentSelectedModels.has(modelId),
+        );
 
-const technologyPricesChanged =
-  [...currentSelectedModels].some((modelId) => {
-    const initialPrice =
-      initialTechnologyState.prices[modelId]?.extraPrice ?? "";
+      const technologyPricesChanged =
+        [...currentSelectedModels].some((modelId) => {
+          const initialPrice =
+            initialTechnologyState.prices[modelId]?.extraPrice ?? "";
 
-    const currentPrice = technologyPrices[modelId]?.extraPrice ?? "";
+          const currentPrice = technologyPrices[modelId]?.extraPrice ?? "";
 
-    return String(initialPrice) !== String(currentPrice);
-  }) ||
-  [...initialSelectedModels].some((modelId) => {
-    const initialPrice =
-      initialTechnologyState.prices[modelId]?.extraPrice ?? "";
+          return String(initialPrice) !== String(currentPrice);
+        }) ||
+        [...initialSelectedModels].some((modelId) => {
+          const initialPrice =
+            initialTechnologyState.prices[modelId]?.extraPrice ?? "";
 
-    const currentPrice = technologyPrices[modelId]?.extraPrice ?? "";
+          const currentPrice = technologyPrices[modelId]?.extraPrice ?? "";
 
-    return String(initialPrice) !== String(currentPrice);
-  });
+          return String(initialPrice) !== String(currentPrice);
+        });
 
-const technologyChanged =
-  technologyRequiredChanged ||
-  selectedModelsChanged ||
-  technologyPricesChanged;
+      const technologyChanged =
+        technologyRequiredChanged ||
+        selectedModelsChanged ||
+        technologyPricesChanged;
 
-if (technologyChanged) {
-  
+    if (technologyChanged) {
   const latestProductTechnologiesResponse =
     await getProductTechnologies(id);
 
@@ -965,121 +961,106 @@ if (technologyChanged) {
     const modelId =
       relation?.technologyModel?._id || relation?.technologyModel;
 
-    if (!modelId) {
-      return;
-    }
+    if (!modelId) return;
 
     relationsByModelId.set(String(modelId), relation);
   });
 
- 
-  if (!formData.technologyRequired) {
-    for (const relation of latestRelations) {
-      if (relation?._id) {
-        await deleteProductTechnology(relation._id);
-      }
+  for (const relation of latestRelations) {
+    const relationModelId =
+      relation?.technologyModel?._id || relation?.technologyModel;
+
+    if (!relationModelId) continue;
+
+    const modelId = String(relationModelId);
+
+    if (!currentSelectedModels.has(modelId) && relation?._id) {
+      await deleteProductTechnology(relation._id);
     }
-  } else {
-  
-    for (const relation of latestRelations) {
-      const relationModelId =
-        relation?.technologyModel?._id || relation?.technologyModel;
+  }
 
-      if (!relationModelId) {
-        continue;
-      }
+  for (
+    let index = 0;
+    index < selectedTechnologyModels.length;
+    index += 1
+  ) {
+    const modelId = String(selectedTechnologyModels[index]);
+    const priceData = technologyPrices[modelId];
+    const extraPrice = Number(priceData?.extraPrice || 0);
 
-      const modelId = String(relationModelId);
+    const existingRelation = relationsByModelId.get(modelId);
 
-      if (!currentSelectedModels.has(modelId) && relation?._id) {
-        await deleteProductTechnology(relation._id);
-      }
+    if (existingRelation?._id) {
+      await updateProductTechnology(existingRelation._id, {
+        extraPrice,
+        displayOrder: index,
+        isSelectable: true,
+        status: "active",
+      });
+    } else {
+      await createProductTechnology({
+        product: id,
+        technologyModel: modelId,
+        extraPrice,
+        isDefault: false,
+        isSelectable: true,
+        displayOrder: index,
+        status: "active",
+      });
     }
+  }
+}
 
-   
-    for (
-      let index = 0;
-      index < selectedTechnologyModels.length;
-      index += 1
-    ) {
-      const modelId = String(selectedTechnologyModels[index]);
+      let uploadedPrimaryImage = primaryImage;
 
-      const priceData = technologyPrices[modelId];
+      let uploadedPrimaryImageId = primaryImageId;
 
-      const extraPrice = Number(priceData?.extraPrice || 0);
+      const uploadedImages = await Promise.all(
+        newImages.map(async (imageFile, index) => {
+          const form = new FormData();
 
-      const existingRelation = relationsByModelId.get(modelId);
+          form.append("image", imageFile);
 
-      if (existingRelation?._id) {
-        await updateProductTechnology(existingRelation._id, {
-          extraPrice,
-          displayOrder: index,
-        });
-      } else {
-        await createProductTechnology({
+          const upload = await uploadImage(form);
+
+          const uploadedImage =
+            upload?.image ||
+            upload?.data?.image ||
+            upload?.data?.data?.image ||
+            "";
+
+          if (!uploadedImage) {
+            throw new Error(t("editProduct.imageUploadCompletedWithoutPath"));
+          }
+
+          return {
+            uploadedImage,
+            index,
+          };
+        }),
+      );
+
+      for (const { uploadedImage, index } of uploadedImages) {
+        const shouldBePrimary = !uploadedPrimaryImage && index === 0;
+
+        const createdImageResponse = await createProductImage({
           product: id,
-          technologyModel: modelId,
-          extraPrice,
-          isDefault: false,
-          isSelectable: true,
-          displayOrder: index,
-          status: "active",
+          imageUrl: uploadedImage,
+          isPrimary: shouldBePrimary,
+          sortOrder: existingImages.length + index,
         });
+
+        const createdImage =
+          createdImageResponse?.data?.image ||
+          createdImageResponse?.image ||
+          createdImageResponse?.data?.data?.image ||
+          null;
+
+        if (shouldBePrimary) {
+          uploadedPrimaryImage = uploadedImage;
+          uploadedPrimaryImageId = createdImage?._id || "";
+        }
       }
-    }
-  }
-}
-   
-let uploadedPrimaryImage = primaryImage;
-
-let uploadedPrimaryImageId = primaryImageId;
-
-const uploadedImages = await Promise.all(
-  newImages.map(async (imageFile, index) => {
-    const form = new FormData();
-
-    form.append("image", imageFile);
-
-    const upload = await uploadImage(form);
-
-    const uploadedImage =
-      upload?.image ||
-      upload?.data?.image ||
-      upload?.data?.data?.image ||
-      "";
-
-    if (!uploadedImage) {
-      throw new Error(t("editProduct.imageUploadCompletedWithoutPath"));
-    }
-
-    return {
-      uploadedImage,
-      index,
-    };
-  }),
-);
-
-for (const { uploadedImage, index } of uploadedImages) {
-  const shouldBePrimary = !uploadedPrimaryImage && index === 0;
-
-  const createdImageResponse = await createProductImage({
-    product: id,
-    imageUrl: uploadedImage,
-    isPrimary: shouldBePrimary,
-    sortOrder: existingImages.length + index,
-  });
-
-  const createdImage =
-    createdImageResponse?.data?.image ||
-    createdImageResponse?.image ||
-    createdImageResponse?.data?.data?.image ||
-    null;
-
-  if (shouldBePrimary) {
-    uploadedPrimaryImage = uploadedImage;
-    uploadedPrimaryImageId = createdImage?._id || "";
-  }
-}
 
       if (uploadedPrimaryImage) {
         await updateProduct(id, {
@@ -1811,10 +1792,6 @@ for (const { uploadedImage, index } of uploadedImages) {
                         ...previous,
                         technologyRequired: checked,
                       }));
-
-                      if (!checked) {
-                        setSelectedTechnologyModels([]);
-                      }
                     }}
                     className="h-5 w-5 shrink-0 accent-classic-gold"
                   />

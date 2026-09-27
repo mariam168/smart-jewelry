@@ -1910,7 +1910,8 @@ newArrivals: {
       "Selling Price is the jewelry price before a selected Smart Technology extra price is added.",
     sellingPrice: "Selling Price",
     productCost: "Product Cost",
-    comparePrice: "Compare Price",
+   
+    comparePrice: "price before discount",
     stock: "Stock",
     weight: "Weight",
     productRulesDetailsNumbered: "03 · Product Rules & Details",

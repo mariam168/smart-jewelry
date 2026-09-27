@@ -1893,7 +1893,7 @@ newArrivals: {
       "سعر البيع هو سعر المجوهرات قبل إضافة السعر الإضافي للتقنية الذكية المختارة.",
     sellingPrice: "سعر البيع",
     productCost: "تكلفة المنتج",
-    comparePrice: "السعر المقارن",
+    comparePrice: "السعر قبل الخصم",
     stock: "المخزون",
     weight: "الوزن",
     productRulesDetailsNumbered: "03 · قواعد وتفاصيل المنتج",

@@ -729,7 +729,7 @@ const ProductCard = ({
     ${isRtl ? "text-right" : "text-left"}
   `}
 >
-          {/* Main Price */}
+        
           <div
             className={`
               flex
@@ -877,7 +877,7 @@ const ProductCard = ({
         {/* =================================================
             SMART TECHNOLOGY
         ================================================= */}
-        {hasTechnology && (
+        {/* {hasTechnology && (
           <div
             className="
               mt-4
@@ -994,11 +994,7 @@ const ProductCard = ({
               </span>
             </div>
           </div>
-        )}
-
-        {/* =================================================
-            FOOTER
-        ================================================= */}
+        )} */}
         <div
           className="
             mt-4

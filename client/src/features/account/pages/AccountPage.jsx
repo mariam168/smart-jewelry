@@ -69,7 +69,7 @@ const manufacturingSteps = [
 const AccountPage = () => {
   const navigate = useNavigate();
 
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const {
     user: authUser,
@@ -1367,11 +1367,16 @@ const AccountPage = () => {
                                           <div className="min-w-0 flex-1">
                                             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                               <div>
-                                                <h5 className="text-[14px] font-semibold">
-                                                  {
-                                                    item.name
-                                                  }
-                                                </h5>
+
+                                            <h5 className="text-[14px] font-semibold">
+  {typeof item.name === "string"
+    ? item.name
+    : item.name?.[i18n.language?.split("-")[0]] ||
+      item.name?.en ||
+      item.name?.ar ||
+      ""}
+</h5>
+                                                
 
                                                 <p className="mt-1 text-[11px] text-slate-gray">
                                                   {t("account.quantity")}{" "}
