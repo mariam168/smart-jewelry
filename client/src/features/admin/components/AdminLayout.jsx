@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
@@ -6,6 +7,8 @@ import AdminSidebar from "./AdminSidebar";
 const AdminLayout = () => {
   const { t } = useTranslation();
   const location = useLocation();
+
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const getPageTitle = () => {
     const path = location.pathname;
@@ -56,7 +59,10 @@ const AdminLayout = () => {
 
       <div className="pointer-events-none fixed left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/40 blur-[130px]" />
 
-      <AdminSidebar />
+      <AdminSidebar
+        isMobileOpen={isMobileSidebarOpen}
+        onClose={() => setIsMobileSidebarOpen(false)}
+      />
 
       <main className="relative min-h-screen lg:ml-72">
         {/* Top Header */}
@@ -64,6 +70,16 @@ const AdminLayout = () => {
           <div className="mx-auto flex h-[82px] items-center justify-between px-5 sm:px-8 lg:px-10">
             {/* Page identity */}
             <div className="flex min-w-0 items-center gap-4">
+              {/* Mobile Menu Button */}
+              <button
+                type="button"
+                onClick={() => setIsMobileSidebarOpen(true)}
+                aria-label="Open admin menu"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-champagne-gold/25 bg-midnight-navy text-[18px] text-champagne-gold shadow-[0_8px_20px_rgba(18,38,58,0.12)] transition-all duration-300 hover:border-champagne-gold/40 hover:bg-rich-navy sm:h-11 sm:w-11 lg:hidden"
+              >
+                ☰
+              </button>
+
               <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-champagne-gold/25 bg-midnight-navy text-[13px] text-champagne-gold shadow-[0_10px_25px_rgba(18,38,58,0.12)] sm:flex">
                 ✦
               </div>
@@ -88,6 +104,7 @@ const AdminLayout = () => {
               <div className="hidden items-center gap-2.5 rounded-full border border-[#e8dfd1] bg-white/70 px-4 py-2.5 shadow-[0_5px_18px_rgba(7,19,31,0.025)] sm:flex">
                 <span className="relative flex h-2.5 w-2.5 items-center justify-center">
                   <span className="absolute h-2.5 w-2.5 animate-ping rounded-full bg-classic-gold/25" />
+
                   <span className="relative h-1.5 w-1.5 rounded-full bg-classic-gold" />
                 </span>
 
