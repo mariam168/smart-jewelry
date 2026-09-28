@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useTranslation } from "react-i18next";
 
@@ -34,6 +34,8 @@ const ExperienceBySlugPage = () => {
   const [unlockError, setUnlockError] = useState("");
 
   const [pageError, setPageError] = useState("");
+
+  const [calendarDate, setCalendarDate] = useState(() => new Date());
 
   const applyExperiencePayload = (payload) => {
     if (!payload?.experience?._id) {
@@ -71,9 +73,7 @@ const ExperienceBySlugPage = () => {
 
       setRequiresDate(false);
 
-      setPageError(
-        t("experienceBySlug.incompleteLink"),
-      );
+      setPageError(t("experienceBySlug.incompleteLink"));
 
       setLoading(false);
 
@@ -87,10 +87,7 @@ const ExperienceBySlugPage = () => {
       setUnlockError("");
       setAccessDate("");
 
-      const response = await getPublicExperience(
-        serialNumber,
-        slug,
-      );
+      const response = await getPublicExperience(serialNumber, slug);
 
       if (response?.requiresDate === true) {
         setRequiresDate(true);
@@ -106,20 +103,13 @@ const ExperienceBySlugPage = () => {
 
       setRequiresDate(false);
 
-      const loaded = applyExperiencePayload(
-        response?.data || null,
-      );
+      const loaded = applyExperiencePayload(response?.data || null);
 
       if (!loaded) {
-        setPageError(
-          t("experienceBySlug.unavailableExperience"),
-        );
+        setPageError(t("experienceBySlug.unavailableExperience"));
       }
     } catch (error) {
-      console.error(
-        "FAILED TO LOAD PUBLIC EXPERIENCE:",
-        error,
-      );
+      console.error("FAILED TO LOAD PUBLIC EXPERIENCE:", error);
 
       setExperience(null);
 
@@ -146,9 +136,7 @@ const ExperienceBySlugPage = () => {
     event.preventDefault();
 
     if (!accessDate) {
-      setUnlockError(
-        t("experienceBySlug.enterSpecialDate"),
-      );
+      setUnlockError(t("experienceBySlug.enterSpecialDate"));
 
       return;
     }
@@ -167,9 +155,7 @@ const ExperienceBySlugPage = () => {
       const loaded = applyExperiencePayload(payload);
 
       if (!loaded) {
-        setUnlockError(
-          t("experienceBySlug.unableToOpen"),
-        );
+        setUnlockError(t("experienceBySlug.unableToOpen"));
 
         return;
       }
@@ -178,19 +164,156 @@ const ExperienceBySlugPage = () => {
 
       setAccessDate("");
     } catch (error) {
-      console.error(
-        "UNLOCK EXPERIENCE ERROR:",
-        error,
-      );
+      console.error("UNLOCK EXPERIENCE ERROR:", error);
 
       setUnlockError(
-        error?.response?.data?.message ||
-          t("experienceBySlug.incorrectDate"),
+        error?.response?.data?.message || t("experienceBySlug.incorrectDate"),
       );
     } finally {
       setUnlocking(false);
     }
   };
+
+  const calendarMonthLabel = useMemo(() => {
+    return new Intl.DateTimeFormat(undefined, {
+      month: "long",
+      year: "numeric",
+    }).format(calendarDate);
+  }, [calendarDate]);
+
+  const calendarDays = useMemo(() => {
+    const year = calendarDate.getFullYear();
+    const month = calendarDate.getMonth();
+
+    const firstDay = new Date(year, month, 1);
+    const firstDayIndex = firstDay.getDay();
+
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const daysInPreviousMonth = new Date(year, month, 0).getDate();
+
+    const days = [];
+
+    for (let index = firstDayIndex - 1; index >= 0; index -= 1) {
+      days.push({
+        day: daysInPreviousMonth - index,
+        month,
+        year,
+        currentMonth: false,
+      });
+    }
+
+    for (let day = 1; day <= daysInMonth; day += 1) {
+      days.push({
+        day,
+        month,
+        year,
+        currentMonth: true,
+      });
+    }
+
+    let nextDay = 1;
+
+    while (days.length < 42) {
+      days.push({
+        day: nextDay,
+        month: month + 2,
+        year,
+        currentMonth: false,
+      });
+
+      nextDay += 1;
+    }
+
+    return days;
+  }, [calendarDate]);
+
+  const selectedDateObject = useMemo(() => {
+    if (!accessDate) {
+      return null;
+    }
+
+    const [year, month, day] = accessDate.split("-").map(Number);
+
+    if (!year || !month || !day) {
+      return null;
+    }
+
+    return new Date(year, month - 1, day);
+  }, [accessDate]);
+
+  const isSelectedDate = (dayData) => {
+    if (!selectedDateObject || !dayData.currentMonth) {
+      return false;
+    }
+
+    return (
+      selectedDateObject.getFullYear() === dayData.year &&
+      selectedDateObject.getMonth() === calendarDate.getMonth() &&
+      selectedDateObject.getDate() === dayData.day
+    );
+  };
+
+  const isToday = (dayData) => {
+    const today = new Date();
+
+    return (
+      dayData.currentMonth &&
+      today.getFullYear() === dayData.year &&
+      today.getMonth() === calendarDate.getMonth() &&
+      today.getDate() === dayData.day
+    );
+  };
+
+  const handleCalendarDateSelect = (dayData) => {
+    if (!dayData.currentMonth || unlocking) {
+      return;
+    }
+
+    const month = String(calendarDate.getMonth() + 1).padStart(2, "0");
+
+    const day = String(dayData.day).padStart(2, "0");
+
+    const formattedDate = `${calendarDate.getFullYear()}-${month}-${day}`;
+
+    setAccessDate(formattedDate);
+
+    setUnlockError("");
+  };
+
+  const goToPreviousMonth = () => {
+    if (unlocking) {
+      return;
+    }
+
+    setCalendarDate(
+      (currentDate) =>
+        new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1),
+    );
+  };
+
+  const goToNextMonth = () => {
+    if (unlocking) {
+      return;
+    }
+
+    setCalendarDate(
+      (currentDate) =>
+        new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1),
+    );
+  };
+
+  const formattedSelectedDate = useMemo(() => {
+    if (!selectedDateObject) {
+      return "";
+    }
+
+    return new Intl.DateTimeFormat(undefined, {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(selectedDateObject);
+  }, [selectedDateObject]);
 
   if (loading) {
     return (
@@ -216,9 +339,7 @@ const ExperienceBySlugPage = () => {
             <div className="absolute inset-3 rounded-full bg-[#0B2235] shadow-[0_25px_80px_rgba(0,0,0,0.4)]" />
 
             <div className="absolute inset-7 flex items-center justify-center rounded-full border border-[#D9BC78]/15 bg-[#102D45]">
-              <span className="animate-pulse text-2xl text-[#D9BC78]">
-                ✦
-              </span>
+              <span className="animate-pulse text-2xl text-[#D9BC78]">✦</span>
             </div>
           </div>
 
@@ -253,100 +374,164 @@ const ExperienceBySlugPage = () => {
 
   if (requiresDate) {
     return (
-      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#102D45] px-5 py-12">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(217,188,120,0.10),transparent_30%),linear-gradient(145deg,#102D45_0%,#0B2235_60%,#071A29_100%)]" />
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#EAF1F7] px-4 py-8 sm:px-6">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_15%,rgba(255,255,255,0.95),transparent_30%),radial-gradient(circle_at_85%_85%,rgba(54,67,101,0.12),transparent_34%),linear-gradient(135deg,#F8FBFD_0%,#EAF1F7_48%,#DDE8F1_100%)]" />
 
-        <div className="pointer-events-none absolute -left-40 -top-32 h-[520px] w-[520px] rounded-full bg-[#F1E9DD]/[0.035] blur-[130px]" />
+        <div className="pointer-events-none absolute -left-32 -top-32 h-80 w-80 rounded-full bg-white/70 blur-[100px]" />
+        <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-[#364365]/10 blur-[110px]" />
 
-        <div className="pointer-events-none absolute -bottom-40 -right-32 h-[560px] w-[560px] rounded-full bg-[#C9A24D]/[0.045] blur-[140px]" />
+        <div className="relative w-full max-w-[520px] animate-[unlockEnter_0.7s_ease-out]">
+          <div className="overflow-hidden rounded-[30px] border border-white/80 bg-white shadow-[0_30px_90px_rgba(54,67,101,0.18)] sm:rounded-[38px]">
+            <div className="h-[5px] bg-gradient-to-r from-[#24334F] via-[#52688F] to-[#24334F]" />
 
-        <div className="pointer-events-none absolute left-1/2 top-10 h-[330px] w-[330px] -translate-x-1/2 rounded-full border border-[#D9BC78]/[0.035]" />
+            <div className="relative overflow-hidden bg-gradient-to-br from-[#364365] via-[#3F5277] to-[#263650] px-5 pb-9 pt-9 text-center sm:px-9 sm:pb-10 sm:pt-10">
+              <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-white/[0.07] blur-2xl" />
+              <div className="absolute -bottom-24 -left-16 h-48 w-48 rounded-full bg-[#9FB4CE]/[0.10] blur-3xl" />
 
-        <div className="pointer-events-none absolute left-1/2 top-10 h-[280px] w-[280px] -translate-x-1/2 rounded-full border border-dashed border-[#D9BC78]/[0.045] animate-[spin_28s_linear_infinite]" />
+              <div className="relative flex items-center justify-center gap-3">
+                <span className="h-px w-9 bg-white/30 sm:w-12" />
 
-        <div className="relative w-full max-w-[550px] animate-[unlockEnter_0.8s_ease-out]">
-          <div className="absolute -inset-[1px] rounded-[42px] bg-gradient-to-b from-[#D9BC78]/35 via-[#C9A24D]/10 to-transparent" />
-
-          <div className="relative overflow-hidden rounded-[42px] border border-[#F1E9DD]/10 bg-[#0B2235]/95 shadow-[0_50px_150px_rgba(0,0,0,0.5)] backdrop-blur-2xl">
-            <div className="absolute left-0 right-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-[#D9BC78] to-transparent" />
-
-            <div className="absolute -right-32 -top-32 h-72 w-72 rounded-full bg-[#C9A24D]/[0.05] blur-[80px]" />
-
-            <div className="absolute -left-28 bottom-0 h-64 w-64 rounded-full bg-[#F1E9DD]/[0.025] blur-[80px]" />
-
-            <div className="relative px-8 pb-10 pt-12 text-center sm:px-12 sm:pb-11 sm:pt-14">
-              <div className="flex items-center justify-center gap-4">
-                <span className="h-px w-12 bg-gradient-to-r from-transparent to-[#D9BC78]/50" />
-
-                <span className="text-[8px] font-semibold uppercase tracking-[0.5em] text-[#D9BC78]">
+                <span className="text-[9px] font-medium uppercase tracking-[0.42em] text-white/80">
                   JE VORYA
                 </span>
 
-                <span className="h-px w-12 bg-gradient-to-l from-transparent to-[#D9BC78]/50" />
+                <span className="h-px w-9 bg-white/30 sm:w-12" />
               </div>
 
-              <div className="relative mx-auto mt-10 h-[108px] w-[108px]">
-                <div className="absolute -inset-4 rounded-full border border-dashed border-[#C9A24D]/20 animate-[spin_20s_linear_infinite]" />
-
-                <div className="absolute -inset-1 rounded-full border border-[#D9BC78]/30" />
-
-                <div className="absolute inset-0 rounded-full bg-[#102D45] shadow-[0_25px_70px_rgba(0,0,0,0.35)]" />
-
-                <div className="absolute inset-5 flex items-center justify-center rounded-full border border-[#D9BC78]/15 bg-[#0B2235]">
-                  <span className="animate-pulse text-[26px] text-[#D9BC78]">
+              <div className="relative mx-auto mt-7 flex h-[76px] w-[76px] items-center justify-center rounded-full border border-white/20 bg-white/[0.10] shadow-[0_18px_45px_rgba(0,0,0,0.18)] backdrop-blur-sm sm:mt-8 sm:h-[84px] sm:w-[84px]">
+                <div className="flex h-[56px] w-[56px] items-center justify-center rounded-full border border-white/15 bg-white shadow-[0_8px_25px_rgba(0,0,0,0.12)] sm:h-[62px] sm:w-[62px]">
+                  <span className="text-xl text-[#364365] sm:text-2xl">
                     ✦
                   </span>
                 </div>
               </div>
 
-              <p className="mt-10 text-[9px] font-semibold uppercase tracking-[0.48em] text-[#D9BC78]">
+              <p className="relative mt-6 text-[8px] font-semibold uppercase tracking-[0.38em] text-white/60">
                 {t("experienceBySlug.privateJewelryExperience")}
               </p>
 
-              <h1 className="mt-5 font-serif text-[2.9rem] font-normal leading-[0.98] tracking-[-0.055em] text-[#F8F3EC] sm:text-[3.6rem]">
+              <h1 className="relative mt-3 font-serif text-[2.25rem] font-normal leading-tight tracking-[-0.045em] text-white sm:text-[2.85rem]">
                 {t("experienceBySlug.specialDate")}
               </h1>
 
-              <div className="mx-auto mt-7 flex items-center justify-center gap-3">
-                <span className="h-px w-8 bg-[#D9BC78]/30" />
+              <div className="relative mx-auto mt-4 h-px w-12 bg-white/30" />
 
-                <span className="text-[10px] text-[#D9BC78]/60">
-                  ✦
-                </span>
-
-                <span className="h-px w-8 bg-[#D9BC78]/30" />
-              </div>
-
-              <p className="mx-auto mt-6 max-w-sm text-[13px] leading-7 text-[#F1E9DD]/65">
+              <p className="relative mx-auto mt-4 max-w-[370px] text-[12px] leading-6 text-white/65 sm:text-[13px]">
                 {t("experienceBySlug.protectedDescription")}
               </p>
             </div>
 
             <form
               onSubmit={handleUnlock}
-              className="relative border-t border-[#F1E9DD]/[0.07] px-8 pb-10 pt-9 sm:px-12 sm:pb-12"
+              className="bg-white px-5 pb-7 pt-7 sm:px-9 sm:pb-9 sm:pt-8"
             >
-              <label className="mb-3 block text-[9px] font-semibold uppercase tracking-[0.3em] text-[#F1E9DD]/50">
+              <label className="mb-3 block text-center text-[8px] font-semibold uppercase tracking-[0.28em] text-[#536174] sm:text-[9px]">
                 {t("experienceBySlug.enterSpecialDate")}
               </label>
 
-              <div className="group relative">
-                <input
-                  type="date"
-                  value={accessDate}
-                  onChange={(event) => {
-                    setAccessDate(event.target.value);
+              <div className="rounded-[22px] border border-[#D8E1EA] bg-[#F7FAFC] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] sm:rounded-[25px] sm:p-5">
+                <div className="flex items-center justify-between px-1">
+                  <button
+                    type="button"
+                    onClick={goToPreviousMonth}
+                    disabled={unlocking}
+                    aria-label="Previous month"
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-[#D5DEE8] bg-white text-xl text-[#364365] shadow-[0_4px_12px_rgba(54,67,101,0.06)] transition-all duration-200 hover:border-[#8EA2BC] hover:bg-[#F8FBFD] disabled:cursor-not-allowed disabled:opacity-40 sm:h-10 sm:w-10"
+                  >
+                    ‹
+                  </button>
 
-                    setUnlockError("");
-                  }}
-                  className="h-[64px] w-full rounded-[18px] border border-[#F1E9DD]/10 bg-[#F1E9DD]/[0.045] px-5 text-[14px] font-medium text-[#F8F3EC] outline-none transition-all duration-500 [color-scheme:dark] hover:border-[#C9A24D]/30 hover:bg-[#F1E9DD]/[0.065] focus:border-[#C9A24D]/60 focus:bg-[#F1E9DD]/[0.07] focus:ring-4 focus:ring-[#C9A24D]/10"
-                />
+                  <div className="text-center">
+                    <p className="font-serif text-[19px] tracking-[-0.02em] text-[#263650] sm:text-[21px]">
+                      {calendarMonthLabel}
+                    </p>
 
-                <div className="pointer-events-none absolute bottom-0 left-5 right-5 h-px origin-center scale-x-0 bg-gradient-to-r from-transparent via-[#D9BC78] to-transparent transition-transform duration-700 group-focus-within:scale-x-100" />
+                    <div className="mx-auto mt-1.5 h-[2px] w-8 rounded-full bg-[#364365]/30" />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={goToNextMonth}
+                    disabled={unlocking}
+                    aria-label="Next month"
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-[#D5DEE8] bg-white text-xl text-[#364365] shadow-[0_4px_12px_rgba(54,67,101,0.06)] transition-all duration-200 hover:border-[#8EA2BC] hover:bg-[#F8FBFD] disabled:cursor-not-allowed disabled:opacity-40 sm:h-10 sm:w-10"
+                  >
+                    ›
+                  </button>
+                </div>
+
+                <div className="mt-5 grid grid-cols-7 border-b border-[#DCE4EC] pb-2.5">
+                  {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map(
+                    (day) => (
+                      <div
+                        key={day}
+                        className="text-center text-[7px] font-semibold tracking-[0.12em] text-[#718096] sm:text-[8px]"
+                      >
+                        {day}
+                      </div>
+                    ),
+                  )}
+                </div>
+
+                <div className="mt-2 grid grid-cols-7 gap-1 sm:gap-1.5">
+                  {calendarDays.map((dayData, index) => {
+                    const selected = isSelectedDate(dayData);
+                    const today = isToday(dayData);
+
+                    return (
+                      <button
+                        key={`${dayData.year}-${dayData.month}-${dayData.day}-${index}`}
+                        type="button"
+                        onClick={() => handleCalendarDateSelect(dayData)}
+                        disabled={!dayData.currentMonth || unlocking}
+                        className={[
+                          "relative flex aspect-square items-center justify-center rounded-xl text-[11px] font-medium transition-all duration-200 sm:text-[12px]",
+                          dayData.currentMonth
+                            ? "text-[#43536A] hover:bg-[#364365]/[0.07] hover:text-[#263650]"
+                            : "cursor-default text-[#9AA7B5]/35",
+                          selected
+                            ? "bg-[#364365] font-semibold text-white shadow-[0_7px_18px_rgba(54,67,101,0.25)] hover:bg-[#364365] hover:text-white"
+                            : "",
+                          today && !selected
+                            ? "border border-[#7F93AE] text-[#364365]"
+                            : "border border-transparent",
+                        ].join(" ")}
+                      >
+                        {today && !selected && (
+                          <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#52688F]" />
+                        )}
+
+                        {selected && (
+                          <span className="absolute inset-1 rounded-lg border border-white/20" />
+                        )}
+
+                        <span className="relative z-10">
+                          {dayData.day}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-4 flex min-h-[44px] items-center justify-center rounded-xl border border-[#D7E0E9] bg-white px-3 shadow-[0_4px_14px_rgba(54,67,101,0.04)]">
+                  {formattedSelectedDate ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-[#52688F]">✦</span>
+
+                      <span className="text-[9px] font-medium tracking-[0.08em] text-[#536174]">
+                        {formattedSelectedDate}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-[8px] uppercase tracking-[0.16em] text-[#9AA4AF]">
+                      Select your special date
+                    </span>
+                  )}
+                </div>
               </div>
 
               {unlockError && (
-                <div className="mt-4 animate-[fadeIn_0.3s_ease-out] rounded-[15px] border border-red-300/15 bg-red-400/[0.07] px-4 py-3.5 text-[11px] leading-5 text-red-200">
+                <div className="mt-4 rounded-xl border border-[#B85C5C]/15 bg-[#B85C5C]/[0.055] px-3 py-3 text-center text-[10px] leading-5 text-[#8F4747]">
                   {unlockError}
                 </div>
               )}
@@ -354,9 +539,9 @@ const ExperienceBySlugPage = () => {
               <button
                 type="submit"
                 disabled={unlocking}
-                className="group relative mt-7 inline-flex min-h-[60px] w-full items-center justify-center gap-3 overflow-hidden rounded-[18px] bg-[#D9BC78] px-7 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#102D45] shadow-[0_20px_50px_rgba(201,162,77,0.20)] transition-all duration-500 hover:-translate-y-1 hover:bg-[#E4CA8B] hover:shadow-[0_28px_70px_rgba(201,162,77,0.28)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                className="group relative mt-5 inline-flex min-h-[54px] w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-[#364365] px-5 text-[9px] font-semibold uppercase tracking-[0.2em] text-white shadow-[0_14px_32px_rgba(54,67,101,0.20)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#2D3957] hover:shadow-[0_18px_40px_rgba(54,67,101,0.25)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 sm:min-h-[57px]"
               >
-                <span className="absolute inset-0 -translate-x-full bg-white/20 transition-transform duration-700 group-hover:translate-x-full" />
+                <span className="absolute inset-0 -translate-x-full bg-white/10 transition-transform duration-700 group-hover:translate-x-full" />
 
                 <span className="relative">
                   {unlocking
@@ -371,14 +556,14 @@ const ExperienceBySlugPage = () => {
                 )}
               </button>
 
-              <div className="mt-7 flex items-center justify-center gap-3">
-                <span className="h-px w-8 bg-[#D9BC78]/20" />
+              <div className="mt-5 flex items-center justify-center gap-3">
+                <span className="h-px w-8 bg-[#364365]/15" />
 
-                <span className="text-[9px] uppercase tracking-[0.3em] text-[#F1E9DD]/25">
+                <span className="text-[7px] uppercase tracking-[0.25em] text-[#8995A3]">
                   Private Experience
                 </span>
 
-                <span className="h-px w-8 bg-[#D9BC78]/20" />
+                <span className="h-px w-8 bg-[#364365]/15" />
               </div>
             </form>
           </div>
@@ -389,20 +574,11 @@ const ExperienceBySlugPage = () => {
             @keyframes unlockEnter {
               from {
                 opacity: 0;
-                transform: translateY(24px) scale(0.97);
+                transform: translateY(16px);
               }
               to {
                 opacity: 1;
-                transform: translateY(0) scale(1);
-              }
-            }
-
-            @keyframes fadeIn {
-              from {
-                opacity: 0;
-              }
-              to {
-                opacity: 1;
+                transform: translateY(0);
               }
             }
           `}
@@ -410,6 +586,8 @@ const ExperienceBySlugPage = () => {
       </div>
     );
   }
+
+
 
   if (!experience) {
     return (
@@ -442,16 +620,13 @@ const ExperienceBySlugPage = () => {
           <div className="mx-auto mt-6 flex items-center justify-center gap-3">
             <span className="h-px w-10 bg-[#C9A24D]/35" />
 
-            <span className="text-[9px] text-[#A7843E]">
-              ✦
-            </span>
+            <span className="text-[9px] text-[#A7843E]">✦</span>
 
             <span className="h-px w-10 bg-[#C9A24D]/35" />
           </div>
 
           <p className="mx-auto mt-6 max-w-md text-[13px] leading-7 text-[#64717B]">
-            {pageError ||
-              t("experienceBySlug.privateExperienceUnavailable")}
+            {pageError || t("experienceBySlug.privateExperienceUnavailable")}
           </p>
         </div>
 
@@ -527,10 +702,7 @@ const ExperienceBySlugPage = () => {
                 {profileImageUrl ? (
                   <img
                     src={profileImageUrl}
-                    alt={
-                      personal?.ownerName ||
-                      t("experienceBySlug.profile")
-                    }
+                    alt={personal?.ownerName || t("experienceBySlug.profile")}
                     className="relative h-32 w-32 rounded-full border-2 border-[#D9BC78]/85 object-cover shadow-[0_35px_90px_rgba(0,0,0,0.48)] transition-all duration-700 hover:scale-[1.04] hover:border-[#F0D99D] md:h-40 md:w-40"
                   />
                 ) : (
@@ -566,9 +738,7 @@ const ExperienceBySlugPage = () => {
                   <div className="mx-auto mt-8 flex items-center justify-center gap-4">
                     <span className="h-px w-8 bg-[#D9BC78]/30" />
 
-                    <span className="text-[9px] text-[#D9BC78]/60">
-                      ✦
-                    </span>
+                    <span className="text-[9px] text-[#D9BC78]/60">✦</span>
 
                     <span className="h-px w-8 bg-[#D9BC78]/30" />
                   </div>
@@ -628,14 +798,11 @@ const ExperienceBySlugPage = () => {
             <div className="mt-7 flex items-center gap-3">
               <div className="h-px w-16 bg-gradient-to-r from-[#D9BC78]/70 to-transparent" />
 
-              <span className="text-[8px] text-[#D9BC78]/50">
-                ✦
-              </span>
+              <span className="text-[8px] text-[#D9BC78]/50">✦</span>
             </div>
 
             <p className="mt-8 max-w-5xl whitespace-pre-wrap font-serif text-2xl font-light leading-[1.7] tracking-[-0.02em] text-[#FCF9F4] md:text-3xl lg:text-[39px]">
-              {personal?.message ||
-                t("experienceBySlug.defaultMessage")}
+              {personal?.message || t("experienceBySlug.defaultMessage")}
             </p>
 
             {personal?.ownerName && (
@@ -688,9 +855,7 @@ const ExperienceBySlugPage = () => {
               <div className="mx-auto mt-6 flex items-center justify-center gap-3">
                 <span className="h-px w-10 bg-[#C9A24D]/35" />
 
-                <span className="text-[9px] text-[#A7843E]">
-                  ✦
-                </span>
+                <span className="text-[9px] text-[#A7843E]">✦</span>
 
                 <span className="h-px w-10 bg-[#C9A24D]/35" />
               </div>
