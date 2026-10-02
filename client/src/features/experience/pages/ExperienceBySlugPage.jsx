@@ -15,7 +15,10 @@ import getMediaUrl from "../utils/mediaUrl";
 const ExperienceBySlugPage = () => {
   const { serialNumber, slug } = useParams();
 
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+const isArabic = i18n.language?.startsWith("ar");
+const locale = isArabic ? "ar-EG" : "en-US";
 
   const [loading, setLoading] = useState(true);
 
@@ -36,7 +39,14 @@ const ExperienceBySlugPage = () => {
   const [pageError, setPageError] = useState("");
 
   const [calendarDate, setCalendarDate] = useState(() => new Date());
+const [showYearPicker, setShowYearPicker] = useState(false);
+const [selectedYear, setSelectedYear] = useState(
+  () => new Date().getFullYear(),
+);
 
+const [yearRangeStart, setYearRangeStart] = useState(
+  () => new Date().getFullYear() - 6,
+);
   const applyExperiencePayload = (payload) => {
     if (!payload?.experience?._id) {
       setExperience(null);
@@ -174,12 +184,12 @@ const ExperienceBySlugPage = () => {
     }
   };
 
-  const calendarMonthLabel = useMemo(() => {
-    return new Intl.DateTimeFormat(undefined, {
-      month: "long",
-      year: "numeric",
-    }).format(calendarDate);
-  }, [calendarDate]);
+const calendarMonthLabel = useMemo(() => {
+  return new Intl.DateTimeFormat(locale, {
+    month: "long",
+    year: "numeric",
+  }).format(calendarDate);
+}, [calendarDate, locale]);
 
   const calendarDays = useMemo(() => {
     const year = calendarDate.getFullYear();
@@ -303,17 +313,17 @@ const ExperienceBySlugPage = () => {
     );
   };
 
-  const formattedSelectedDate = useMemo(() => {
-    if (!selectedDateObject) {
-      return "";
-    }
+ const formattedSelectedDate = useMemo(() => {
+  if (!selectedDateObject) {
+    return "";
+  }
 
-    return new Intl.DateTimeFormat(undefined, {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }).format(selectedDateObject);
-  }, [selectedDateObject]);
+  return new Intl.DateTimeFormat(locale, {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(selectedDateObject);
+}, [selectedDateObject, locale]);
 
   if (loading) {
     return (
@@ -421,10 +431,11 @@ const ExperienceBySlugPage = () => {
               </p>
             </div>
 
-            <form
-              onSubmit={handleUnlock}
-              className="bg-white px-5 pb-7 pt-7 sm:px-9 sm:pb-9 sm:pt-8"
-            >
+          <form
+  onSubmit={handleUnlock}
+  dir={isArabic ? "rtl" : "ltr"}
+  className="bg-white px-5 pb-7 pt-7 sm:px-9 sm:pb-9 sm:pt-8"
+>
               <label className="mb-3 block text-center text-[8px] font-semibold uppercase tracking-[0.28em] text-[#536174] sm:text-[9px]">
                 {t("experienceBySlug.enterSpecialDate")}
               </label>
@@ -441,13 +452,91 @@ const ExperienceBySlugPage = () => {
                     ‹
                   </button>
 
-                  <div className="text-center">
-                    <p className="font-serif text-[19px] tracking-[-0.02em] text-[#263650] sm:text-[21px]">
-                      {calendarMonthLabel}
-                    </p>
+                <div className="relative text-center">
+  <button
+    type="button"
+    onClick={() => {
+      setSelectedYear(calendarDate.getFullYear());
+      setYearRangeStart(calendarDate.getFullYear() - 6);
+      setShowYearPicker((previous) => !previous);
+    }}
+    disabled={unlocking}
+    className="group flex items-center gap-2 font-serif text-[19px] tracking-[-0.02em] text-[#263650] transition-colors hover:text-[#52688F] disabled:opacity-50 sm:text-[21px]"
+  >
+    {calendarMonthLabel}
 
-                    <div className="mx-auto mt-1.5 h-[2px] w-8 rounded-full bg-[#364365]/30" />
-                  </div>
+    <span
+      className={`text-[10px] text-[#52688F] transition-transform duration-300 ${
+        showYearPicker ? "rotate-180" : ""
+      }`}
+    >
+      ▼
+    </span>
+  </button>
+
+  <div className="mx-auto mt-1.5 h-[2px] w-8 rounded-full bg-[#364365]/30" />
+
+  {showYearPicker && (
+    <div className="absolute left-1/2 top-full z-50 mt-3 w-[270px] -translate-x-1/2 rounded-2xl border border-[#D8E1EA] bg-white p-4 shadow-[0_18px_50px_rgba(54,67,101,0.18)]">
+      <div className="mb-4 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => setYearRangeStart((year) => year - 12)}
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-[#D5DEE8] text-[#364365] transition hover:bg-[#F0F4F8]"
+        >
+          ‹
+        </button>
+
+        <span className="text-xs font-semibold tracking-wider text-[#364365]">
+          {yearRangeStart} – {yearRangeStart + 11}
+        </span>
+
+        <button
+          type="button"
+          onClick={() => setYearRangeStart((year) => year + 12)}
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-[#D5DEE8] text-[#364365] transition hover:bg-[#F0F4F8]"
+        >
+          ›
+        </button>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        {Array.from({ length: 12 }, (_, index) => {
+          const year = yearRangeStart + index;
+          const isSelected = selectedYear === year;
+
+          return (
+            <button
+              key={year}
+              type="button"
+              onClick={() => {
+                setSelectedYear(year);
+
+                setCalendarDate(
+                  (currentDate) =>
+                    new Date(
+                      year,
+                      currentDate.getMonth(),
+                      1,
+                    ),
+                );
+
+                setShowYearPicker(false);
+              }}
+              className={`rounded-xl py-2.5 text-sm font-medium transition-all duration-200 ${
+                isSelected
+                  ? "bg-[#364365] text-white shadow-md"
+                  : "text-[#43536A] hover:bg-[#364365]/[0.07]"
+              }`}
+            >
+              {year}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  )}
+</div>
 
                   <button
                     type="button"
@@ -461,8 +550,11 @@ const ExperienceBySlugPage = () => {
                 </div>
 
                 <div className="mt-5 grid grid-cols-7 border-b border-[#DCE4EC] pb-2.5">
-                  {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map(
-                    (day) => (
+                {(
+  isArabic
+    ? ["أحد", "إثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"]
+    : ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
+).map( (day) => (
                       <div
                         key={day}
                         className="text-center text-[7px] font-semibold tracking-[0.12em] text-[#718096] sm:text-[8px]"
@@ -521,9 +613,9 @@ const ExperienceBySlugPage = () => {
                       </span>
                     </div>
                   ) : (
-                    <span className="text-[8px] uppercase tracking-[0.16em] text-[#9AA4AF]">
-                      Select your special date
-                    </span>
+                   <span className="text-[8px] uppercase tracking-[0.16em] text-[#9AA4AF]">
+  {isArabic ? "اختاري تاريخك المميز" : "Select your special date"}
+</span>
                   )}
                 </div>
               </div>

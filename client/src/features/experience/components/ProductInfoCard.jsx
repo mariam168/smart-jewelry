@@ -75,7 +75,7 @@ const ProductInfoCard = ({
         <div className="group relative overflow-hidden rounded-[26px] border border-light-champagne bg-soft-cream">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.9),rgba(248,245,240,0.25)_55%,rgba(216,196,160,0.12))]" />
 
-          <div className="relative flex aspect-[4/3] items-center justify-center p-8 sm:p-12 lg:p-16">
+          <div className="relative h-[380px] w-full sm:h-[500px] lg:h-[620px]">
             <img
               src={image}
               alt={getLocalizedText(

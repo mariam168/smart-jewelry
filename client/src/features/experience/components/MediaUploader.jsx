@@ -149,7 +149,8 @@ const MediaUploader = ({
 
     return result;
   }, [mediaRequests, mediaLimits, videoAccess]);
-
+console.log("BASE MEDIA LIMITS:", mediaLimits);
+console.log("APPROVED EXTRAS:", approvedExtras);
   const effectiveLimits = useMemo(
     () => ({
       image: Number(limits.imageLimit || 0) + approvedExtras.image,
@@ -307,9 +308,7 @@ const MediaUploader = ({
     } catch (err) {
       console.error(err);
 
-      showError(
-        getErrorMessage(err, t("mediaUploader.unableToUploadPhotos")),
-      );
+      showError(getErrorMessage(err, t("mediaUploader.unableToUploadPhotos")));
     } finally {
       setUploadingImages(false);
     }
@@ -367,9 +366,7 @@ const MediaUploader = ({
     } catch (err) {
       console.error(err);
 
-      showError(
-        getErrorMessage(err, t("mediaUploader.unableToUploadVideo")),
-      );
+      showError(getErrorMessage(err, t("mediaUploader.unableToUploadVideo")));
     } finally {
       setUploadingVideos(false);
     }
@@ -424,9 +421,7 @@ const MediaUploader = ({
     } catch (err) {
       console.error(err);
 
-      showError(
-        getErrorMessage(err, t("mediaUploader.microphoneError")),
-      );
+      showError(getErrorMessage(err, t("mediaUploader.microphoneError")));
     }
   };
 
@@ -534,9 +529,7 @@ const MediaUploader = ({
     } catch (err) {
       console.error(err);
 
-      showError(
-        getErrorMessage(err, t("mediaUploader.unableToSendRequest")),
-      );
+      showError(getErrorMessage(err, t("mediaUploader.unableToSendRequest")));
     } finally {
       setRequestingAllowance(false);
     }
@@ -569,9 +562,7 @@ const MediaUploader = ({
     } catch (err) {
       console.error(err);
 
-      showError(
-        getErrorMessage(err, t("mediaUploader.unableToSaveNote")),
-      );
+      showError(getErrorMessage(err, t("mediaUploader.unableToSaveNote")));
     } finally {
       setSavingNote(false);
     }
@@ -595,9 +586,7 @@ const MediaUploader = ({
     } catch (err) {
       console.error(err);
 
-      showError(
-        getErrorMessage(err, t("mediaUploader.unableToDeleteMedia")),
-      );
+      showError(getErrorMessage(err, t("mediaUploader.unableToDeleteMedia")));
     }
   };
 
@@ -634,9 +623,7 @@ const MediaUploader = ({
     } catch (err) {
       console.error(err);
 
-      showError(
-        getErrorMessage(err, t("mediaUploader.unableToReplaceMedia")),
-      );
+      showError(getErrorMessage(err, t("mediaUploader.unableToReplaceMedia")));
     } finally {
       setReplacing(false);
     }
@@ -968,7 +955,8 @@ const MediaUploader = ({
 
             {approvedExtras.image > 0 && (
               <p className="mt-1 text-xs text-green-600">
-                +{approvedExtras.image} {t("mediaUploader.additionalApprovedSlots")}
+                +{approvedExtras.image}{" "}
+                {t("mediaUploader.additionalApprovedSlots")}
               </p>
             )}
           </div>
