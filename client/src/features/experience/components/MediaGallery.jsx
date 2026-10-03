@@ -110,8 +110,7 @@ const MediaGallery = ({ media = [] }) => {
 
             <div className="pointer-events-none absolute -bottom-20 right-0 h-64 w-64 rounded-full bg-navy-soft/[0.06] blur-[90px] sm:h-80 sm:w-80" />
 
-            <div className="relative grid grid-cols-2 gap-x-5 gap-y-12 sm:gap-x-9 sm:gap-y-16 lg:grid-cols-3 lg:gap-x-12 lg:gap-y-20">
-              {images.map((item, index) => {
+           <div className="relative grid grid-cols-1 gap-y-12 sm:grid-cols-2 sm:gap-x-9 sm:gap-y-16 lg:grid-cols-3 lg:gap-x-12 lg:gap-y-20">  {images.map((item, index) => {
                 const isFlipped = flippedImage === item._id;
 
                 const rotations = [
