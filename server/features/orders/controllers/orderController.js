@@ -5,7 +5,9 @@ import {
   getAllOrders,
   getOrderById,
   updateOrderStatus,
+
   deleteOrder,
+  updateManufacturingName
 } from "../services/orderService.js";
 
 export const createOrderController = async (req, res, next) => {
@@ -119,6 +121,23 @@ export const deleteAdminOrder = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: "Order deleted successfully",
+      data: order,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateManufacturingNameController = async (req, res, next) => {
+  try {
+    const order = await updateManufacturingName(
+      req.params.id,
+      req.body.manufacturingName,
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Manufacturing name updated successfully",
       data: order,
     });
   } catch (error) {

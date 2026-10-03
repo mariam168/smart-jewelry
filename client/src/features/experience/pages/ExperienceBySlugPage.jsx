@@ -936,9 +936,9 @@ const calendarMonthLabel = useMemo(() => {
                               {t("experienceBySlug.withLove")}
                             </p>
 
-                            <p className="mt-2 font-serif text-[24px] text-[#263650] sm:text-[27px]">
+                            {/* <p className="mt-2 font-serif text-[24px] text-[#263650] sm:text-[27px]">
                               {personal.ownerName}
-                            </p>
+                            </p> */}
                           </div>
                         )}
                       </div>

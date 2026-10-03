@@ -8,6 +8,7 @@ import {
   getAdminOrderById,
   updateAdminOrderStatus,
   deleteAdminOrder,
+  updateManufacturingNameController,
 } from "../controllers/orderController.js";
 
 import { protect } from "../../auth/middleware/authMiddleware.js";
@@ -32,7 +33,12 @@ router.patch(
   adminMiddleware,
   updateAdminOrderStatus,
 );
-
+router.patch(
+  "/admin/:id/manufacturing-name",
+  protect,
+  adminMiddleware,
+  updateManufacturingNameController,
+);
 router.delete(
   "/admin/:id",
   protect,

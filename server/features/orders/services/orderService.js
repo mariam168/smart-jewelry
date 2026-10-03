@@ -492,3 +492,43 @@ export const deleteOrder = async (orderId) => {
 
   return order;
 };
+
+export const updateManufacturingName = async (orderId, manufacturingName) => {
+  if (!mongoose.Types.ObjectId.isValid(orderId)) {
+    throw createError("Invalid order ID", 400);
+  }
+
+  const cleanedName = cleanRequiredText(
+    manufacturingName,
+    "Manufacturing name",
+  );
+
+  if (cleanedName.length > 120) {
+    throw createError(
+      "Manufacturing name cannot exceed 120 characters",
+      400,
+    );
+  }
+
+  const order = await Order.findByIdAndUpdate(
+    orderId,
+    {
+      manufacturingName: cleanedName,
+    },
+    {
+      new: true,
+      runValidators: true,
+    },
+  )
+    .populate("user", "name email")
+    .populate("shippingArea")
+    .populate("items.product")
+    .populate("items.smartUnit")
+    .populate("items.experience");
+
+  if (!order) {
+    throw createError("Order not found", 404);
+  }
+
+  return order;
+};

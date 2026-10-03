@@ -164,3 +164,16 @@ export const updatePackagingCost = async (
 
   return response.data;
 };
+export const updateManufacturingName = async (
+  orderId,
+  manufacturingName,
+) => {
+  const response = await api.patch(
+    `/orders/admin/${orderId}/manufacturing-name`,
+    {
+      manufacturingName,
+    },
+  );
+
+  return response.data;
+};

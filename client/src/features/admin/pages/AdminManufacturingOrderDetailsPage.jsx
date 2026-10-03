@@ -17,6 +17,7 @@ import {
   completePackaging,
   cancelManufacturingOrder,
   updatePackagingCost,
+  updateManufacturingName,
 } from "../services/manufacturingApi";
 
 import {
@@ -188,7 +189,7 @@ const AdminManufacturingOrderDetailsPage = () => {
   const { t, i18n } = useTranslation();
 
   const activeLanguage = i18n.language === "ar" ? "ar" : "en";
-
+const [manufacturingName, setManufacturingName] = useState("");
   const [manufacturingOrder, setManufacturingOrder] = useState(null);
 
   const [customerOrder, setCustomerOrder] = useState(null);
@@ -263,6 +264,13 @@ const AdminManufacturingOrderDetailsPage = () => {
           orderResponse?.data?.data ?? orderResponse?.data ?? null;
 
         setCustomerOrder(fullOrder);
+        setManufacturingName(
+  getLocalizedText(
+    fullOrder?.manufacturingName,
+    activeLanguage,
+    "",
+  ),
+);
       } else {
         setCustomerOrder(null);
       }
@@ -465,7 +473,52 @@ const AdminManufacturingOrderDetailsPage = () => {
       }),
     );
   };
+const handleSaveManufacturingName = async () => {
+  const orderId = customerOrder?._id || manufacturingOrder?.order?._id;
 
+  if (!orderId) {
+    setError("Order ID not found");
+    return;
+  }
+
+  const name = manufacturingName.trim();
+
+  if (!name) {
+    setError("Manufacturing name is required");
+    return;
+  }
+
+  try {
+    setWorkingKey("manufacturing-name");
+    setError("");
+
+    const response = await updateManufacturingName(orderId, name);
+
+    const updatedOrder = response?.data ?? response;
+
+    setCustomerOrder(updatedOrder);
+
+    setManufacturingName(
+      getLocalizedText(
+        updatedOrder?.manufacturingName,
+        activeLanguage,
+        "",
+      ),
+    );
+  } catch (error) {
+    console.error("UPDATE MANUFACTURING NAME ERROR:", error);
+
+    setError(
+      getLocalizedText(
+        error?.response?.data?.message,
+        activeLanguage,
+        error?.message || "Failed to update manufacturing name",
+      ),
+    );
+  } finally {
+    setWorkingKey("");
+  }
+};
   const handleUseCustomerName = (unitId) => {
     const requestedName = getLocalizedText(
       customerOrder?.manufacturingName,
@@ -1208,19 +1261,42 @@ const AdminManufacturingOrderDetailsPage = () => {
                       </div>
 
                       <div className="mb-5 grid gap-4 md:grid-cols-2">
-                        <div className="rounded-[16px] border border-champagne-gold/25 bg-soft-white p-4">
-                          <p className="text-[7px] font-semibold uppercase tracking-[0.18em] text-antique-gold">
-                            {t(
-                              "adminManufacturingOrderDetails.customerRequestedName",
-                            )}
-                          </p>
+                       <div className="rounded-[16px] border border-champagne-gold/25 bg-soft-white p-4">
+  <p className="text-[7px] font-semibold uppercase tracking-[0.18em] text-antique-gold">
+    {t(
+      "adminManufacturingOrderDetails.customerRequestedName",
+    )}
+  </p>
 
-                          <p className="mt-2 font-serif text-[1.15rem] text-midnight-navy">
-                            {requestedName ||
-                              t("adminManufacturingOrderDetails.notProvided")}
-                          </p>
-                        </div>
+  <div className="mt-3 flex flex-col gap-3">
+    <input
+      type="text"
+      value={manufacturingName}
+      onChange={(event) =>
+        setManufacturingName(event.target.value)
+      }
+      maxLength={120}
+      className="w-full rounded-[12px] border border-light-champagne bg-warm-ivory px-4 py-3 font-serif text-[1.05rem] text-midnight-navy outline-none transition focus:border-classic-gold"
+      placeholder={t(
+        "adminManufacturingOrderDetails.customerRequestedName",
+      )}
+    />
 
+    <button
+      type="button"
+      onClick={handleSaveManufacturingName}
+      disabled={
+        workingKey === "manufacturing-name" ||
+        !manufacturingName.trim()
+      }
+      className="self-start rounded-[12px] bg-midnight-navy px-5 py-3 text-[8px] font-semibold uppercase tracking-[0.1em] text-soft-white transition hover:bg-rich-navy disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {workingKey === "manufacturing-name"
+        ? t("adminManufacturingOrderDetails.saving")
+        : t("adminManufacturingOrderDetails.save")}
+    </button>
+  </div>
+</div>
                         <div className="rounded-[16px] border border-light-champagne bg-soft-white p-4">
                           <p className="text-[7px] font-semibold uppercase tracking-[0.18em] text-steel-gray">
                             {t("adminManufacturingOrderDetails.customerNotes")}
