@@ -205,12 +205,12 @@ const MediaGallery = ({ media = [] }) => {
                               WebkitBackfaceVisibility: "hidden",
                             }}
                           >
-                            <img
-                              src={getMediaUrl(item.url)}
-                              alt={t("mediaGallery.memory")}
-                              className="h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.035]"
-                              loading="lazy"
-                            />
+                           <img
+  src={getMediaUrl(item.url)}
+  alt={t("mediaGallery.memory")}
+  className="h-full w-full object-contain bg-[#F3F1EC] transition-transform duration-[1200ms] ease-out group-hover:scale-[1.015]"
+  loading="lazy"
+/>
 
                             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-deep-navy/45 via-transparent to-white/[0.08]" />
 
