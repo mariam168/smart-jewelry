@@ -184,11 +184,11 @@ const MediaGallery = ({ media = [] }) => {
                       <div className="pointer-events-none absolute bottom-2 right-2 h-3 w-3 border-b border-r border-champagne-gold/20 sm:bottom-3 sm:right-3 sm:h-4 sm:w-4" />
 
                       <div
-                        className="relative h-[205px] w-full cursor-pointer overflow-hidden sm:h-[315px] lg:h-[360px]"
-                        onClick={() =>
-                          setFlippedImage(isFlipped ? null : item._id)
-                        }
-                      >
+  className="relative aspect-[4/5] w-full cursor-pointer overflow-hidden"
+  onClick={() =>
+    setFlippedImage(isFlipped ? null : item._id)
+  }
+>
                         <div
                           className="relative h-full w-full transition-transform duration-700 ease-in-out"
                           style={{
@@ -205,12 +205,12 @@ const MediaGallery = ({ media = [] }) => {
                               WebkitBackfaceVisibility: "hidden",
                             }}
                           >
-                            <img
-                              src={getMediaUrl(item.url)}
-                              alt={t("mediaGallery.memory")}
-                              className="h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.035]"
-                              loading="lazy"
-                            />
+                           <img
+  src={getMediaUrl(item.url)}
+  alt={t("mediaGallery.memory")}
+  className="h-full w-full object-contain bg-[#F3F1EC] transition-transform duration-[1200ms] ease-out group-hover:scale-[1.015]"
+  loading="lazy"
+/>
 
                             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-deep-navy/45 via-transparent to-white/[0.08]" />
 
