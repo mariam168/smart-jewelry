@@ -11,7 +11,43 @@ import {
 
 import MediaGallery from "../components/MediaGallery";
 import getMediaUrl from "../utils/mediaUrl";
+const LanguageSwitcher = () => {
+  const { i18n } = useTranslation();
 
+  const isArabic = i18n.language?.startsWith("ar");
+
+  const handleLanguageChange = (language) => {
+    i18n.changeLanguage(language);
+  };
+
+  return (
+    <div className="fixed right-4 top-4 z-[100] flex items-center gap-1 rounded-full border border-[#D9BC78]/30 bg-white/90 p-1 shadow-[0_8px_25px_rgba(54,67,101,0.12)] backdrop-blur-md sm:right-6 sm:top-6">
+      <button
+        type="button"
+        onClick={() => handleLanguageChange("ar")}
+        className={`rounded-full px-3 py-1.5 text-[9px] font-semibold tracking-wider transition-all ${
+          isArabic
+            ? "bg-[#364365] text-white"
+            : "text-[#536174] hover:bg-[#364365]/[0.07]"
+        }`}
+      >
+        AR
+      </button>
+
+      <button
+        type="button"
+        onClick={() => handleLanguageChange("en")}
+        className={`rounded-full px-3 py-1.5 text-[9px] font-semibold tracking-wider transition-all ${
+          !isArabic
+            ? "bg-[#364365] text-white"
+            : "text-[#536174] hover:bg-[#364365]/[0.07]"
+        }`}
+      >
+        EN
+      </button>
+    </div>
+  );
+};
 const ExperienceBySlugPage = () => {
   const { serialNumber, slug } = useParams();
 
@@ -328,6 +364,7 @@ const calendarMonthLabel = useMemo(() => {
   if (loading) {
     return (
       <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#102D45] px-6">
+          <LanguageSwitcher />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(217,188,120,0.12),transparent_28%),radial-gradient(circle_at_15%_80%,rgba(255,255,255,0.045),transparent_28%),linear-gradient(135deg,#102D45_0%,#0B2235_58%,#071A29_100%)]" />
 
         <div className="absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#D9BC78]/[0.035]" />
@@ -385,6 +422,7 @@ const calendarMonthLabel = useMemo(() => {
   if (requiresDate) {
     return (
       <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#EAF1F7] px-4 py-8 sm:px-6">
+        <LanguageSwitcher />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_15%,rgba(255,255,255,0.95),transparent_30%),radial-gradient(circle_at_85%_85%,rgba(54,67,101,0.12),transparent_34%),linear-gradient(135deg,#F8FBFD_0%,#EAF1F7_48%,#DDE8F1_100%)]" />
 
         <div className="pointer-events-none absolute -left-32 -top-32 h-80 w-80 rounded-full bg-white/70 blur-[100px]" />
@@ -680,6 +718,7 @@ const calendarMonthLabel = useMemo(() => {
   if (!experience) {
     return (
       <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#EAF1F7] px-5">
+      <LanguageSwitcher />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(82,104,143,0.10),transparent_32%),linear-gradient(135deg,#F8FBFD_0%,#EAF1F7_55%,#DDE8F1_100%)]" />
 
         <div className="pointer-events-none absolute -left-28 top-10 h-64 w-64 rounded-full bg-[#364365]/[0.035] blur-[90px]" />
@@ -742,6 +781,7 @@ const calendarMonthLabel = useMemo(() => {
 
   return (
     <div className="min-h-screen overflow-hidden bg-[#EAF1F7] text-[#263650]">
+     <LanguageSwitcher />
       <section className="relative overflow-hidden bg-[#EAF1F7]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.95),transparent_34%),radial-gradient(circle_at_10%_55%,rgba(159,180,206,0.18),transparent_28%),linear-gradient(180deg,#F8FBFD_0%,#EAF1F7_55%,#E3ECF3_100%)]" />
 

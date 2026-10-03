@@ -14,7 +14,43 @@ import {
   uploadMedia,
   updateAccessDate,
 } from "../services/experienceApi";
+const LanguageSwitcher = () => {
+  const { i18n } = useTranslation();
 
+  const isArabic = i18n.language?.startsWith("ar");
+
+  const handleLanguageChange = (language) => {
+    i18n.changeLanguage(language);
+  };
+
+  return (
+    <div className="fixed right-4 top-4 z-[100] flex items-center gap-1 rounded-full border border-[#D9BC78]/30 bg-white/90 p-1 shadow-[0_8px_25px_rgba(54,67,101,0.12)] backdrop-blur-md sm:right-6 sm:top-6">
+      <button
+        type="button"
+        onClick={() => handleLanguageChange("ar")}
+        className={`rounded-full px-3 py-1.5 text-[9px] font-semibold tracking-wider transition-all ${
+          isArabic
+            ? "bg-[#364365] text-white"
+            : "text-[#536174] hover:bg-[#364365]/[0.07]"
+        }`}
+      >
+        AR
+      </button>
+
+      <button
+        type="button"
+        onClick={() => handleLanguageChange("en")}
+        className={`rounded-full px-3 py-1.5 text-[9px] font-semibold tracking-wider transition-all ${
+          !isArabic
+            ? "bg-[#364365] text-white"
+            : "text-[#536174] hover:bg-[#364365]/[0.07]"
+        }`}
+      >
+        EN
+      </button>
+    </div>
+  );
+};
 const DEFAULT_MEDIA_LIMITS = {
   imageLimit: 5,
   videoLimit: 5,
@@ -360,17 +396,20 @@ const ManageExperiencePage = () => {
 
   const serialNumber = experience?.serialNumber || "";
 
-  if (loading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="text-sm text-gray-500">Loading...</div>
-      </div>
-    );
-  }
+ if (loading) {
+  return (
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <LanguageSwitcher />
+
+      <div className="text-sm text-gray-500">Loading...</div>
+    </div>
+  );
+}
 
   if (!experience) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-12">
+      <LanguageSwitcher />
         <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center text-red-700">
           {t("manageExperience.experienceNotFound") || "Experience not found."}
         </div>
@@ -380,6 +419,7 @@ const ManageExperiencePage = () => {
 
   return (
     <div className="min-h-screen bg-[#F8F5F0]">
+      <LanguageSwitcher />
       <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 md:px-6 lg:px-8">
         <div>
         <h1 className="text-2xl font-semibold text-[#302820]">
