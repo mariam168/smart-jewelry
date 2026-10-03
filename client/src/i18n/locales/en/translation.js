@@ -1227,6 +1227,8 @@ newArrivals: {
   },
  mediaUploader: {
   memories: "Memories",
+  "imageSizeError": "Each image must not exceed {{size}} MB.",
+"videoSizeError": "Each video must not exceed {{size}} MB.",
   photoNotePlaceholder: "Write your photo note here...",
   addYourMemories: "Add Your Memories",
   description:

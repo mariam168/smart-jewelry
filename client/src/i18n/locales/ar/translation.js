@@ -1018,6 +1018,8 @@ newArrivals: {
   manageExperience: {
     smartJewelry: "المجوهرات الذكية",
     savedSuccessfully: "تم حفظ التجربة بنجاح.",
+    "imageSizeError": "يجب ألا يتجاوز حجم الصورة الواحدة {{size}} ميجابايت.",
+"videoSizeError": "يجب ألا يتجاوز حجم الفيديو الواحد {{size}} ميجابايت.",
     title: "إدارة تجربة مجوهرتك",
     yourJewelryExperience: "تجربتك مع المجوهرات",
     productDetailsConnected:

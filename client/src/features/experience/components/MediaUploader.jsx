@@ -15,7 +15,8 @@ const DEFAULT_LIMITS = {
   videoLimit: 5,
   audioLimit: 5,
 };
-
+const MAX_IMAGE_SIZE_MB = 5;
+const MAX_VIDEO_SIZE_MB = 20;
 const WHATSAPP_NUMBER = "201554923541";
 
 const MediaUploader = ({
@@ -269,11 +270,28 @@ console.log("APPROVED EXTRAS:", approvedExtras);
       return;
     }
 
-    const allowedFiles = files.slice(0, imageRemaining);
+   const maxImageSize = MAX_IMAGE_SIZE_MB * 1024 * 1024;
 
-    setSelectedImages(allowedFiles);
+const oversizedFiles = files.filter(
+  (file) => file.size > maxImageSize,
+);
 
-    event.target.value = "";
+if (oversizedFiles.length > 0) {
+  showError(
+    t("mediaUploader.imageSizeError", {
+      size: MAX_IMAGE_SIZE_MB,
+    }),
+  );
+
+  event.target.value = "";
+  return;
+}
+
+const allowedFiles = files.slice(0, imageRemaining);
+
+setSelectedImages(allowedFiles);
+
+event.target.value = "";
   };
 
   const handleUploadImages = async () => {
@@ -327,11 +345,28 @@ console.log("APPROVED EXTRAS:", approvedExtras);
       return;
     }
 
-    const allowedFiles = files.slice(0, videoRemaining);
+  const maxVideoSize = MAX_VIDEO_SIZE_MB * 1024 * 1024;
 
-    setSelectedVideos(allowedFiles);
+const oversizedFiles = files.filter(
+  (file) => file.size > maxVideoSize,
+);
 
-    event.target.value = "";
+if (oversizedFiles.length > 0) {
+  showError(
+    t("mediaUploader.videoSizeError", {
+      size: MAX_VIDEO_SIZE_MB,
+    }),
+  );
+
+  event.target.value = "";
+  return;
+}
+
+const allowedFiles = files.slice(0, videoRemaining);
+
+setSelectedVideos(allowedFiles);
+
+event.target.value = "";
   };
 
   const handleUploadVideos = async () => {
