@@ -21,8 +21,7 @@ const LanguageSwitcher = () => {
   };
 
   return (
-    <div className="fixed right-4 top-4 z-[100] flex items-center gap-1 rounded-full border border-[#D9BC78]/30 bg-white/90 p-1 shadow-[0_8px_25px_rgba(54,67,101,0.12)] backdrop-blur-md sm:right-6 sm:top-6">
-      <button
+  <div className="absolute right-4 top-4 z-[100] flex items-center gap-1 rounded-full border border-[#D9BC78]/30 bg-white/90 p-1 shadow-[0_8px_25px_rgba(54,67,101,0.12)] backdrop-blur-md sm:right-6 sm:top-6">  <button
         type="button"
         onClick={() => handleLanguageChange("ar")}
         className={`rounded-full px-3 py-1.5 text-[9px] font-semibold tracking-wider transition-all ${
