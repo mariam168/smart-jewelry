@@ -646,6 +646,22 @@ const ProductDetailsPage = () => {
       product?.tags,
       activeLanguage,
     );
+    
+useEffect(() => {
+  const defaultTitle = "Smart Jewelry";
+
+  if (!product || !localizedProductName) {
+    document.title = defaultTitle;
+    return;
+  }
+
+  document.title = `${localizedProductName} `;
+
+  return () => {
+    document.title = defaultTitle;
+  };
+}, [product, localizedProductName]);
+
 
   if (isLoading) {
     return (
