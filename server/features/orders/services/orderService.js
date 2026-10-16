@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import Order from "../models/Order.js";
 import Cart from "../../cart/models/Cart.js";
 import ShippingArea from "../../shipping/models/ShippingArea.js";
-
+import Product from "../../catalog/models/Product.js";
 const createError = (message, statusCode = 400) => {
   const error = new Error(message);
 
@@ -444,40 +444,223 @@ export const updateOrderStatus = async (orderId, orderStatus) => {
     throw createError("Invalid order ID");
   }
 
-  const updateData = {
-    orderStatus,
-  };
-
-  /*
-   * Delivery keeps the existing business rule:
-   * once delivered, the order is considered paid.
-   *
-   * If the admin later moves the order backwards,
-   * orderStatus is allowed to move backwards and the
-   * customer profile will reflect that latest status.
-   * paymentStatus is intentionally not rolled back here.
-   */
-  if (orderStatus === "delivered") {
-    updateData.paymentStatus = "paid";
-  }
-
-  const order = await Order.findByIdAndUpdate(orderId, updateData, {
-    new: true,
-
-    runValidators: true,
-  })
-    .populate("user", "email phone")
-    .populate(
-      "items.product",
-      "name price costPrice images primaryImage image technologyRequired",
-    );
+  let order = await Order.findById(orderId);
 
   if (!order) {
     throw createError("Order not found", 404);
   }
 
-  return order;
+  // تحديث الحالات العادية من غير خصم المخزون.
+  if (orderStatus !== "delivered") {
+    order.orderStatus = orderStatus;
+    await order.save();
+
+    return Order.findById(order._id)
+      .populate("user", "email phone")
+      .populate(
+        "items.product",
+        "name price costPrice images primaryImage image technologyRequired stock",
+      );
+  }
+
+  // لو الطلب تم تسليمه بالفعل، لا نخصم مرة أخرى.
+  if (order.orderStatus === "delivered") {
+    if (order.paymentStatus !== "paid") {
+      order.paymentStatus = "paid";
+      await order.save();
+    }
+
+    return Order.findById(order._id)
+      .populate("user", "email phone")
+      .populate(
+        "items.product",
+        "name price costPrice images primaryImage image technologyRequired stock",
+      );
+  }
+
+  // لو سبق خصم المخزون، لا نكرر الخصم.
+  if (order.stockDeducted) {
+    order.orderStatus = "delivered";
+    order.paymentStatus = "paid";
+    await order.save();
+
+    return Order.findById(order._id)
+      .populate("user", "email phone")
+      .populate(
+        "items.product",
+        "name price costPrice images primaryImage image technologyRequired stock",
+      );
+  }
+
+  const previousStatus = order.orderStatus;
+  const previousPaymentStatus = order.paymentStatus;
+
+  // تجميع الكميات لو المنتج نفسه موجود في أكثر من بند بالطلب.
+  const quantitiesByProduct = new Map();
+
+  for (const item of order.items) {
+    const productId = String(item.product);
+
+    quantitiesByProduct.set(
+      productId,
+      (quantitiesByProduct.get(productId) || 0) +
+        Number(item.quantity),
+    );
+  }
+
+  const productsToDeduct = [...quantitiesByProduct.entries()].map(
+    ([productId, quantity]) => ({
+      productId,
+      quantity,
+    }),
+  );
+
+  // حجز عملية الخصم على الطلب ذريًا لمنع طلبين متزامنين
+  // من خصم المخزون للطلب نفسه مرتين.
+  const claimedOrder = await Order.findOneAndUpdate(
+    {
+      _id: order._id,
+      orderStatus: previousStatus,
+      stockDeducted: { $ne: true },
+    },
+    {
+      $set: {
+        orderStatus: "delivered",
+        paymentStatus: "paid",
+        stockDeducted: true,
+      },
+    },
+    {
+      new: true,
+      runValidators: true,
+    },
+  );
+
+  if (!claimedOrder) {
+    order = await Order.findById(orderId);
+
+    if (!order) {
+      throw createError("Order not found", 404);
+    }
+
+    if (order.orderStatus === "delivered") {
+      return Order.findById(order._id)
+        .populate("user", "email phone")
+        .populate(
+          "items.product",
+          "name price costPrice images primaryImage image technologyRequired stock",
+        );
+    }
+
+    if (order.stockDeducted) {
+      order.orderStatus = "delivered";
+      order.paymentStatus = "paid";
+      await order.save();
+
+      return Order.findById(order._id)
+        .populate("user", "email phone")
+        .populate(
+          "items.product",
+          "name price costPrice images primaryImage image technologyRequired stock",
+        );
+    }
+
+    throw createError(
+      "The order changed while being updated. Please try again.",
+      409,
+    );
+  }
+
+  const deductedProducts = [];
+
+  try {
+    for (const item of productsToDeduct) {
+      // الخصم مشروط بأن يكون المخزون كافيًا.
+      const product = await Product.findOneAndUpdate(
+        {
+          _id: item.productId,
+          stock: { $gte: item.quantity },
+        },
+        {
+          $inc: { stock: -item.quantity },
+        },
+        {
+          new: true,
+        },
+      );
+
+      if (!product) {
+        const exists = await Product.exists({
+          _id: item.productId,
+        });
+
+        if (!exists) {
+          throw createError(
+            "A product in this order no longer exists.",
+            409,
+          );
+        }
+
+        throw createError(
+          `Insufficient stock for product: ${item.productId}`,
+          409,
+        );
+      }
+
+      deductedProducts.push(item);
+    }
+  } catch (error) {
+    // محاولة إعادة الكميات التي خُصمت قبل حدوث الخطأ.
+    for (const item of deductedProducts.reverse()) {
+      try {
+        await Product.updateOne(
+          { _id: item.productId },
+          { $inc: { stock: item.quantity } },
+        );
+      } catch (rollbackError) {
+        console.error(
+          "Stock rollback failed:",
+          item.productId,
+          rollbackError.message,
+        );
+      }
+    }
+
+    // إعادة حالة الطلب إلى حالتها السابقة.
+    try {
+      await Order.updateOne(
+        {
+          _id: order._id,
+          orderStatus: "delivered",
+          stockDeducted: true,
+        },
+        {
+          $set: {
+            orderStatus: previousStatus,
+            paymentStatus: previousPaymentStatus,
+            stockDeducted: false,
+          },
+        },
+      );
+    } catch (rollbackError) {
+      console.error(
+        "Order rollback failed:",
+        order._id,
+        rollbackError.message,
+      );
+    }
+
+    throw error;
+  }
+
+  return Order.findById(order._id)
+    .populate("user", "email phone")
+    .populate(
+      "items.product",
+      "name price costPrice images primaryImage image technologyRequired stock",
+    );
 };
+
 
 export const deleteOrder = async (orderId) => {
   if (!mongoose.Types.ObjectId.isValid(orderId)) {

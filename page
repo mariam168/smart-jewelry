@@ -1,0 +1,40 @@
+[1mdiff --git a/client/index.html b/client/index.html[m
+[1mindex 6811b68..f3289b8 100644[m
+[1m--- a/client/index.html[m
+[1m+++ b/client/index.html[m
+[36m@@ -4,7 +4,7 @@[m
+     <meta charset="UTF-8" />[m
+     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />[m
+     <meta name="viewport" content="width=device-width, initial-scale=1.0" />[m
+[31m-    <title>Smart accessories</title>[m
+[32m+[m[32m    <title> Smart Jewelry</title>[m
+   </head>[m
+   <body>[m
+     <div id="root"></div>[m
+[1mdiff --git a/client/src/features/shop/pages/ProductDetailsPage.jsx b/client/src/features/shop/pages/ProductDetailsPage.jsx[m
+[1mindex 7e338d6..8c6a04e 100644[m
+[1m--- a/client/src/features/shop/pages/ProductDetailsPage.jsx[m
+[1m+++ b/client/src/features/shop/pages/ProductDetailsPage.jsx[m
+[36m@@ -646,6 +646,22 @@[m [mconst ProductDetailsPage = () => {[m
+       product?.tags,[m
+       activeLanguage,[m
+     );[m
+[32m+[m[41m    [m
+[32m+[m[32museEffect(() => {[m
+[32m+[m[32m  const defaultTitle = "Smart Jewelry";[m
+[32m+[m
+[32m+[m[32m  if (!product || !localizedProductName) {[m
+[32m+[m[32m    document.title = defaultTitle;[m
+[32m+[m[32m    return;[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  document.title = `${localizedProductName} `;[m
+[32m+[m
+[32m+[m[32m  return () => {[m
+[32m+[m[32m    document.title = defaultTitle;[m
+[32m+[m[32m  };[m
+[32m+[m[32m}, [product, localizedProductName]);[m
+[32m+[m
+ [m
+   if (isLoading) {[m
+     return ([m

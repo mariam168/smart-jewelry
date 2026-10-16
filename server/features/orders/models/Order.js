@@ -403,7 +403,10 @@ const orderSchema = new mongoose.Schema(
 
       default: "pending",
     },
-
+stockDeducted: {
+  type: Boolean,
+  default: false,
+},
     subtotal: {
       type: Number,
       required: true,
