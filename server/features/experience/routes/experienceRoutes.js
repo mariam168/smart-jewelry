@@ -36,6 +36,7 @@ import {
   updateMediaNoteController,
   deleteMediaController,
   replaceMediaController,
+  updateMusicLinkController,
 } from "../controllers/experienceController.js";
 
 import {
@@ -213,7 +214,10 @@ router.get(
   "/customer/:serialNumber/:slug",
   getCustomerExperience,
 );
-
+router.put(
+  "/manage/:token/music-link",
+  updateMusicLinkController,
+);
 router.get(
   "/:serialNumber/:slug",
   getExperienceBySlugController,

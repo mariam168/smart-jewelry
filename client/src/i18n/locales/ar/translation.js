@@ -1201,6 +1201,9 @@ newArrivals: {
     saveMessage: "حفظ الرسالة",
   },
   experienceAccessDate: {
+    saveSuccess: "تم تفعيل حماية التاريخ بنجاح.",
+removeSuccess:
+  "تم إلغاء حماية التاريخ بنجاح، ويمكن الآن فتح التجربة دون إدخال التاريخ.",
     specialAccessDate: "تاريخ الوصول الخاص",
     protected: "محمي",
     description:
@@ -1215,6 +1218,19 @@ newArrivals: {
     removeDateProtection: "إزالة حماية التاريخ",
   },
  mediaUploader: {
+  musicLinkTitle: "رابط الأغنية 🎵",
+musicLinkDescription: "أضيفي رابط الأغنية التي تريدين تضمينها في هذه التجربة.",
+musicLinkLabel: "رابط الأغنية",
+saveMusicLink: "حفظ رابط الأغنية",
+savingMusicLink: "جارٍ الحفظ...",
+musicLinkSavedButton: "✓ تم الحفظ بنجاح",
+musicLinkSaved: "تم حفظ رابط الأغنية بنجاح",
+musicLinkRemoved: "تم حذف رابط الأغنية بنجاح",
+musicLinkSaveFailed: "تعذر حفظ رابط الأغنية",
+invalidMusicLink: "من فضلك أدخلي رابط أغنية صحيحًا يبدأ بـ HTTP أو HTTPS",
+openSong: "فتح الأغنية",
+clearMusicLink: "مسح الرابط",
+
   memories: "الذكريات",
   photoNotePlaceholder: "اكتب ملاحظاتك هنا...",
   addYourMemories: "أضف ذكرياتك",
@@ -1352,6 +1368,9 @@ newArrivals: {
   whatsappMessage: "الرسالة",
 },
  mediaGallery: {
+  music: "الأغنية الخاصة",
+musicTitle: "أغنية مميزة من أجلك",
+openMusic: "اضغط للاستماع إلى الأغنية",
   noMemories: "لم تتم إضافة أي ذكريات حتى الآن.",
   noMemoriesDescription:
     "ستظهر الصور والرسائل الصوتية والفيديوهات المعتمدة هنا.",

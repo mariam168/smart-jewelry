@@ -6,6 +6,7 @@ import {
   updateMediaNote,
   deleteMedia,
   replaceMedia,
+  updateExperienceMusicLink,
 } from "../services/experienceApi";
 
 import getMediaUrl from "../utils/mediaUrl";
@@ -27,6 +28,7 @@ const MediaUploader = ({
   currentMedia = [],
   videoAccess = null,
   serialNumber = "",
+   musicLink: savedMusicLink = "",
   onRefresh,
 }) => {
   const { t } = useTranslation();
@@ -66,7 +68,16 @@ const MediaUploader = ({
 
   const [requesterName, setRequesterName] = useState("");
   const [requesterPhone, setRequesterPhone] = useState("");
+const [musicLink, setMusicLink] = useState(savedMusicLink || "");
+const [savingMusicLink, setSavingMusicLink] = useState(false);
+const [musicLinkSaved, setMusicLinkSaved] = useState(
+  Boolean(savedMusicLink?.trim()),
+);
 
+useEffect(() => {
+  setMusicLink(savedMusicLink || "");
+  setMusicLinkSaved(Boolean(savedMusicLink?.trim()));
+}, [savedMusicLink]);
   const limits = useMemo(
     () => ({
       ...DEFAULT_LIMITS,
@@ -160,7 +171,50 @@ console.log("APPROVED EXTRAS:", approvedExtras);
     }),
     [limits, approvedExtras],
   );
+const handleSaveMusicLink = async () => {
+  const normalizedLink = musicLink.trim();
 
+  if (normalizedLink) {
+    try {
+      const parsedUrl = new URL(normalizedLink);
+
+      if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+        showError(t("mediaUploader.invalidMusicLink"));
+        return;
+      }
+    } catch {
+      showError(t("mediaUploader.invalidMusicLink"));
+      return;
+    }
+  }
+
+  try {
+    setSavingMusicLink(true);
+    setMusicLinkSaved(false);
+    clearMessages();
+
+    await updateExperienceMusicLink(token, normalizedLink);
+
+    setMusicLink(normalizedLink);
+    setMusicLinkSaved(Boolean(normalizedLink));
+
+    showSuccess(
+      normalizedLink
+        ? t("mediaUploader.musicLinkSaved")
+        : t("mediaUploader.musicLinkRemoved"),
+    );
+
+    await onRefresh?.();
+  } catch (err) {
+    console.error(err);
+
+    showError(
+      getErrorMessage(err, t("mediaUploader.musicLinkSaveFailed")),
+    );
+  } finally {
+    setSavingMusicLink(false);
+  }
+};
   const imageMedia = useMemo(
     () => currentMedia.filter((item) => item?.type === "image"),
     [currentMedia],
@@ -698,12 +752,15 @@ event.target.value = "";
     const url = getMediaUrl(item.url);
 
     const canReplace = item.type !== "audio";
+    
 
     return (
+      
       <div
         key={item._id}
         className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
       >
+        
         <div className="mb-3 overflow-hidden rounded-xl bg-gray-100">
           {item.type === "image" && (
             <img
@@ -1304,6 +1361,92 @@ event.target.value = "";
           </div>
         )}
       </div>
+      
+<div className="rounded-2xl border border-gray-200 bg-white p-6">
+  <div className="mb-4">
+    <h3 className="text-lg font-semibold text-gray-900">
+      {t("mediaUploader.musicLinkTitle")} 🎵
+    </h3>
+
+    <p className="mt-1 text-sm text-gray-500">
+      {t("mediaUploader.musicLinkDescription")}
+    </p>
+  </div>
+
+  <label
+    htmlFor="experience-music-link"
+    className="mb-2 block text-sm font-medium text-gray-700"
+  >
+    {t("mediaUploader.musicLinkLabel")}
+  </label>
+
+  <input
+    id="experience-music-link"
+    type="url"
+    value={musicLink}
+    onChange={(event) => {
+      setMusicLink(event.target.value);
+      setMusicLinkSaved(false);
+    }}
+    placeholder="https://..."
+    maxLength={2048}
+    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-gray-500"
+  />
+
+  {musicLinkSaved && musicLink.trim() && (
+    <div className="mt-3 flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
+      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100">
+        ✓
+      </span>
+      {t("mediaUploader.musicLinkSaved")}
+    </div>
+  )}
+
+  <div className="mt-4 flex flex-wrap gap-2">
+    <button
+      type="button"
+      onClick={handleSaveMusicLink}
+      disabled={savingMusicLink}
+      className={`rounded-xl px-5 py-2.5 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+        musicLinkSaved && musicLink.trim()
+          ? "bg-green-600 hover:bg-green-700"
+          : "bg-gray-900 hover:bg-gray-800"
+      }`}
+    >
+      {savingMusicLink
+        ? t("mediaUploader.savingMusicLink")
+        : musicLinkSaved && musicLink.trim()
+          ? t("mediaUploader.musicLinkSavedButton")
+          : t("mediaUploader.saveMusicLink")}
+    </button>
+
+    {musicLink.trim() && (
+      <>
+        <a
+          href={musicLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded-xl border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+        >
+          {t("mediaUploader.openSong")}
+        </a>
+
+        <button
+          type="button"
+          onClick={() => {
+            setMusicLink("");
+            setMusicLinkSaved(false);
+          }}
+          disabled={savingMusicLink}
+          className="rounded-xl border border-red-200 px-5 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+        >
+          {t("mediaUploader.clearMusicLink")}
+        </button>
+      </>
+    )}
+  </div>
+</div>
+
     </section>
   );
 };

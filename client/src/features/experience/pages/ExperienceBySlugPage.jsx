@@ -992,7 +992,10 @@ const calendarMonthLabel = useMemo(() => {
             </div>
 
             <div className="relative z-10">
-              <MediaGallery media={media} />
+            <MediaGallery
+  media={media}
+  musicLink={experience?.musicLink || ""}
+/>
             </div>
           </section>
         )}

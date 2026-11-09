@@ -28,7 +28,9 @@ import {
 
   deleteExperienceMedia,
   updateExperienceMediaNote,
+
   replaceExperienceMedia,
+  updateExperienceMusicLink,
 } from "../services/experienceService.js";
 
 const getCurrentUserId = (req) => {
@@ -601,3 +603,23 @@ export const replaceMediaController =
       next(error);
     }
   };
+  export const updateMusicLinkController = async (
+  req,
+  res,
+  next,
+) => {
+  try {
+    const data = await updateExperienceMusicLink(
+      req.params.token,
+      req.body.musicLink,
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Music link updated successfully.",
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

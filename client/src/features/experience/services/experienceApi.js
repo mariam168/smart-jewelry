@@ -273,3 +273,17 @@ export const replaceMedia = async (
 
   return data.data;
 };
+
+export const updateExperienceMusicLink = async (
+  token,
+  musicLink,
+) => {
+  const { data } = await api.put(
+    `/experience/manage/${encodeURIComponent(token)}/music-link`,
+    {
+      musicLink,
+    },
+  );
+
+  return data.data;
+};

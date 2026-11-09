@@ -16,7 +16,7 @@ const formatFileSize = (bytes) => {
   return `${(bytes / 1024).toFixed(1)} KB`;
 };
 
-const MediaGallery = ({ media = [] }) => {
+const MediaGallery = ({ media = [], musicLink = "" }) => {
   const { t } = useTranslation();
 
   const [flippedImage, setFlippedImage] = useState(null);
@@ -29,7 +29,7 @@ const MediaGallery = ({ media = [] }) => {
 
   const hasNote = (item) => Boolean(item?.note?.trim());
 
-  if (!visibleMedia.length) {
+ if (!visibleMedia.length && !musicLink?.trim()) {
     return (
       <div className="relative flex min-h-[300px] flex-col items-center justify-center overflow-hidden rounded-[28px] border border-light-champagne/80 bg-soft-cream px-5 py-12 text-center shadow-[0_20px_60px_rgba(13,34,53,0.06)] sm:min-h-[340px] sm:rounded-[34px] sm:px-6 sm:py-16">
         <div className="pointer-events-none absolute -left-32 -top-32 h-64 w-64 rounded-full bg-champagne-gold/[0.055] blur-[80px] sm:h-72 sm:w-72" />
@@ -298,6 +298,58 @@ const MediaGallery = ({ media = [] }) => {
         </section>
       )}
 
+{musicLink?.trim() && (
+  <div className="relative mt-7 flex justify-center">
+    <a
+      href={musicLink}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group relative flex w-full items-center gap-4 overflow-hidden rounded-2xl border border-[#DCC18F]/40 bg-gradient-to-r from-[#07192D] via-[#102B45] to-[#07192D] p-4 text-left shadow-[0_12px_30px_rgba(7,25,45,0.18)] transition-all duration-300 hover:-translate-y-1 hover:border-[#DCC18F]/80 hover:shadow-[0_18px_35px_rgba(7,25,45,0.28)] sm:p-5"
+    >
+      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-[#DCC18F]/30 bg-[#DCC18F]/10 transition-colors duration-300 group-hover:bg-[#DCC18F]/20">
+        <span className="text-3xl text-[#DCC18F]">♫</span>
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <p className="mb-1 text-[9px] font-semibold uppercase tracking-[0.25em] text-[#DCC18F]/80">
+          {t("mediaGallery.music")}
+        </p>
+
+        <h3 className="font-serif text-lg text-white sm:text-xl">
+          {t("mediaGallery.musicTitle")}
+        </h3>
+
+        <p className="mt-1 text-xs text-white/60">
+          {t("mediaGallery.openMusic")}
+        </p>
+      </div>
+
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 text-[#DCC18F] transition-all duration-300 group-hover:border-[#DCC18F]/50 group-hover:bg-[#DCC18F]/10">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.7"
+          className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M13 5h6v6M19 5l-9 9"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M18 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"
+          />
+        </svg>
+      </div>
+
+      <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-[#DCC18F]/[0.06] blur-2xl transition-all duration-300 group-hover:bg-[#DCC18F]/[0.12]" />
+    </a>
+  </div>
+)}
    
 {audios.length > 0 && (
 

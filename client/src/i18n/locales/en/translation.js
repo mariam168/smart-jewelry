@@ -1212,6 +1212,9 @@ newArrivals: {
     saveMessage: "Save Message",
   },
   experienceAccessDate: {
+    saveSuccess: "Date protection has been enabled successfully.",
+removeSuccess:
+  "Date protection has been removed successfully. The experience can now be opened without entering the date.",
     specialAccessDate: "Special Access Date",
     protected: "Protected",
     description:
@@ -1226,6 +1229,19 @@ newArrivals: {
     removeDateProtection: "Remove Date Protection",
   },
  mediaUploader: {
+  musicLinkTitle: "Music Link 🎵",
+musicLinkDescription: "Add a link to the song you want to include in this experience.",
+musicLinkLabel: "Song URL",
+saveMusicLink: "Save Music Link",
+savingMusicLink: "Saving...",
+musicLinkSavedButton: "✓ Saved Successfully",
+musicLinkSaved: "Music link saved successfully",
+musicLinkRemoved: "Music link removed successfully",
+musicLinkSaveFailed: "Unable to save the music link",
+invalidMusicLink: "Please enter a valid music link starting with HTTP or HTTPS",
+openSong: "Open Song",
+clearMusicLink: "Clear Link",
+
   memories: "Memories",
   "imageSizeError": "Each image must not exceed {{size}} MB.",
 "videoSizeError": "Each video must not exceed {{size}} MB.",
@@ -1365,6 +1381,9 @@ newArrivals: {
   whatsappMessage: "Message",
 },
  mediaGallery: {
+  music: "YOUR SPECIAL SONG",
+musicTitle: "A Song Just for You",
+openMusic: "Click to listen",
   noMemories: "No memories have been added yet.",
   noMemoriesDescription:
     "Photos, voice messages and approved videos will appear here.",

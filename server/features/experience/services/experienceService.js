@@ -1560,3 +1560,47 @@ export const replaceExperienceMedia = async (token, mediaId, file) => {
 
   return media;
 };
+export const updateExperienceMusicLink = async (
+  token,
+  musicLink,
+) => {
+  const experience = await Experience.findOne({
+    manageToken: token,
+  });
+
+  if (!experience) {
+    throw createError("Experience not found", 404);
+  }
+
+  if (typeof musicLink !== "string") {
+    throw createError("Music link must be a string.", 400);
+  }
+
+  const normalizedLink = musicLink.trim();
+
+  if (normalizedLink.length > 2048) {
+    throw createError("Music link is too long.", 400);
+  }
+
+  if (normalizedLink) {
+    let parsedUrl;
+
+    try {
+      parsedUrl = new URL(normalizedLink);
+    } catch {
+      throw createError("Please enter a valid music URL.", 400);
+    }
+
+    if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+      throw createError("Music link must use HTTP or HTTPS.", 400);
+    }
+  }
+
+  experience.musicLink = normalizedLink;
+
+  await experience.save();
+
+  return {
+    musicLink: experience.musicLink,
+  };
+};

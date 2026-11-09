@@ -63,6 +63,12 @@ const experienceSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
+    musicLink: {
+  type: String,
+  default: "",
+  trim: true,
+  maxlength: 2048,
+},
 
     accessDate: {
       type: String,

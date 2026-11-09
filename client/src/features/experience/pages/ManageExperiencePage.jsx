@@ -18,7 +18,7 @@ const LanguageSwitcher = () => {
   const { i18n } = useTranslation();
 
   const isArabic = i18n.language?.startsWith("ar");
-
+  const [removeSuccess, setRemoveSuccess] = useState(false);
   const handleLanguageChange = (language) => {
     i18n.changeLanguage(language);
   };
@@ -194,7 +194,10 @@ const normalizeVideoAccess = (data, mediaRequests) => {
 const ManageExperiencePage = () => {
   const { token } = useParams();
   const { t } = useTranslation();
-
+const [accessDateFeedback, setAccessDateFeedback] = useState({
+  type: "",
+  message: "",
+});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingAccessDate, setSavingAccessDate] = useState(false);
@@ -346,53 +349,83 @@ const ManageExperiencePage = () => {
     return uploadMedia(token, files);
   };
 
-  const handleSaveAccessDate = async () => {
-    if (!accessDate) {
-      alert(t("manageExperience.pleaseChooseDate"));
+ const handleSaveAccessDate = async () => {
+if (!accessDate) {
+setAccessDateFeedback({
+type: "error",
+message: t("manageExperience.pleaseChooseDate"),
+});
 
-      return;
-    }
 
-    try {
-      setSavingAccessDate(true);
+return;
 
-      await updateAccessDate(token, accessDate);
+}
 
-      alert(t("manageExperience.dateProtectionEnabled"));
+try {
+setSavingAccessDate(true);
+setAccessDateFeedback({ type: "", message: "" });
 
-      await loadExperience();
-    } catch (error) {
-      console.error(error);
 
-      alert(
-        error?.response?.data?.message ||
-          t("manageExperience.failedToSaveAccessDate"),
-      );
-    } finally {
-      setSavingAccessDate(false);
-    }
-  };
+await updateAccessDate(token, accessDate);
 
-  const handleRemoveAccessDate = async () => {
-    try {
-      setSavingAccessDate(true);
+setAccessDateFeedback({
+  type: "success",
+  message: t("experienceAccessDate.saveSuccess"),
+});
 
-      await updateAccessDate(token, "");
+await loadExperience();
 
-      setAccessDate("");
 
-      await loadExperience();
-    } catch (error) {
-      console.error(error);
+} catch (error) {
+console.error(error);
 
-      alert(
-        error?.response?.data?.message ||
-          t("manageExperience.failedToRemoveAccessDate"),
-      );
-    } finally {
-      setSavingAccessDate(false);
-    }
-  };
+setAccessDateFeedback({
+  type: "error",
+  message:
+    error?.response?.data?.message ||
+    t("manageExperience.failedToSaveAccessDate"),
+});
+
+
+} finally {
+setSavingAccessDate(false);
+}
+};
+
+const handleRemoveAccessDate = async () => {
+try {
+setSavingAccessDate(true);
+setAccessDateFeedback({ type: "", message: "" });
+
+
+await updateAccessDate(token, "");
+
+setAccessDate("");
+
+setAccessDateFeedback({
+  type: "success",
+  message: t("experienceAccessDate.removeSuccess"),
+});
+
+await loadExperience();
+
+
+} catch (error) {
+console.error(error);
+
+
+setAccessDateFeedback({
+  type: "error",
+  message:
+    error?.response?.data?.message ||
+    t("manageExperience.failedToRemoveAccessDate"),
+});
+
+} finally {
+setSavingAccessDate(false);
+}
+};
+
 
   const serialNumber = experience?.serialNumber || "";
 
@@ -448,6 +481,7 @@ const ManageExperiencePage = () => {
           currentMedia={media}
           videoAccess={videoAccess}
           serialNumber={serialNumber}
+          musicLink={experience?.musicLink || ""}
           onRefresh={loadExperience}
         />
 
@@ -463,6 +497,7 @@ const ManageExperiencePage = () => {
   onSave={handleSaveAccessDate}
   onRemove={handleRemoveAccessDate}
   saving={savingAccessDate}
+  feedback={accessDateFeedback}
 />
 
       </div>
