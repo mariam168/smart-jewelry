@@ -453,13 +453,18 @@ const ManageExperiencePage = () => {
 
         <MediaGallery media={media} serialNumber={serialNumber} />
 
-        <ExperienceAccessDateCard
-          accessDate={accessDate}
-          setAccessDate={setAccessDate}
-          onSave={handleSaveAccessDate}
-          onRemove={handleRemoveAccessDate}
-          saving={savingAccessDate}
-        />
+       
+<ExperienceAccessDateCard
+  accessDate={accessDate}
+  setAccessDate={setAccessDate}
+  hasSavedDate={Boolean(
+    experience?.accessDate?.trim()
+  )}
+  onSave={handleSaveAccessDate}
+  onRemove={handleRemoveAccessDate}
+  saving={savingAccessDate}
+/>
+
       </div>
     </div>
   );

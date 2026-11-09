@@ -1,3 +1,4 @@
+
 import { useTranslation } from "react-i18next";
 
 const ExperienceAccessDateCard = ({
@@ -10,6 +11,19 @@ const ExperienceAccessDateCard = ({
 }) => {
   const { t } = useTranslation();
 
+  const handleRemove = () => {
+    const confirmed = window.confirm(
+      t(
+        "experienceAccessDate.confirmRemove",
+        "Are you sure you want to disable date protection? The recipient will be able to open the experience without entering the date."
+      )
+    );
+
+    if (confirmed) {
+      onRemove?.();
+    }
+  };
+
   return (
     <section className="relative overflow-hidden rounded-[28px] border border-light-champagne/90 bg-soft-white/90 shadow-[0_20px_60px_rgba(7,19,31,0.055)]">
       <div className="pointer-events-none absolute -right-28 -top-28 h-72 w-72 rounded-full border border-champagne-gold/[0.08]" />
@@ -20,7 +34,7 @@ const ExperienceAccessDateCard = ({
             ◷
           </div>
 
-          <div>
+          <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-3">
               <h2 className="font-serif text-[1.65rem] font-normal tracking-[-0.025em] text-midnight-navy">
                 {t("experienceAccessDate.specialAccessDate")}
@@ -42,19 +56,20 @@ const ExperienceAccessDateCard = ({
       </div>
 
       <div className="px-6 py-7 sm:px-8">
-        <label className="mb-2.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-gray">
+        <label
+          htmlFor="experience-access-date"
+          className="mb-2.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-gray"
+        >
           {t("experienceAccessDate.specialDate")}
         </label>
 
         <input
+          id="experience-access-date"
           type="date"
-          value={accessDate}
-          onChange={(event) =>
-            setAccessDate(
-              event.target.value,
-            )
-          }
-          className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 text-[13px] text-rich-navy outline-none transition-all duration-300 hover:border-champagne-gold/55 focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10"
+          value={accessDate || ""}
+          onChange={(event) => setAccessDate(event.target.value)}
+          disabled={saving}
+          className="h-[54px] w-full rounded-[14px] border border-light-champagne bg-warm-ivory/60 px-5 text-[13px] text-rich-navy outline-none transition-all duration-300 hover:border-champagne-gold/55 focus:border-classic-gold focus:bg-soft-white focus:ring-4 focus:ring-classic-gold/10 disabled:cursor-not-allowed disabled:opacity-60"
         />
 
         <div className="mt-5 rounded-[16px] border border-light-champagne/80 bg-warm-ivory/50 p-5">
@@ -79,10 +94,7 @@ const ExperienceAccessDateCard = ({
           <button
             type="button"
             onClick={onSave}
-            disabled={
-              saving ||
-              !accessDate
-            }
+            disabled={saving || !accessDate}
             className="inline-flex min-h-[46px] items-center justify-center rounded-[13px] bg-midnight-navy px-7 text-[11px] font-semibold text-soft-white shadow-[0_10px_25px_rgba(18,38,58,0.15)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-rich-navy disabled:cursor-not-allowed disabled:opacity-50"
           >
             {saving
@@ -95,11 +107,13 @@ const ExperienceAccessDateCard = ({
           {hasSavedDate && (
             <button
               type="button"
-              onClick={onRemove}
+              onClick={handleRemove}
               disabled={saving}
-              className="inline-flex min-h-[46px] items-center justify-center rounded-[13px] border border-light-champagne bg-soft-white px-7 text-[11px] font-semibold text-slate-gray transition-all duration-300 hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+              className="inline-flex min-h-[46px] items-center justify-center rounded-[13px] border border-light-champagne bg-soft-white px-7 text-[11px] font-semibold text-slate-gray transition-all duration-300 hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {t("experienceAccessDate.removeDateProtection")}
+              {saving
+                ? t("experienceAccessDate.saving")
+                : t("experienceAccessDate.removeDateProtection")}
             </button>
           )}
         </div>
