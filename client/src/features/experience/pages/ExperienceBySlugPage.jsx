@@ -779,8 +779,7 @@ const calendarMonthLabel = useMemo(() => {
     : "";
 
   return (
-    <div className="min-h-screen overflow-hidden bg-[#EAF1F7] text-[#263650]">
-     <LanguageSwitcher />
+   <div className="min-h-screen w-full min-w-0 overflow-x-clip bg-[#EAF1F7] text-[#263650]"> <LanguageSwitcher />
       <section className="relative overflow-hidden bg-[#EAF1F7]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.95),transparent_34%),radial-gradient(circle_at_10%_55%,rgba(159,180,206,0.18),transparent_28%),linear-gradient(180deg,#F8FBFD_0%,#EAF1F7_55%,#E3ECF3_100%)]" />
 
@@ -791,9 +790,7 @@ const calendarMonthLabel = useMemo(() => {
         <div className="pointer-events-none absolute right-10 top-16 h-40 w-40 rounded-full border border-[#52688F]/[0.06] sm:right-20" />
 
         <div className="pointer-events-none absolute -bottom-28 -left-20 h-64 w-64 rounded-full bg-[#52688F]/[0.08] blur-[90px]" />
-
-        <div className="relative mx-auto max-w-5xl px-5 pb-14 pt-12 sm:px-8 sm:pb-16 sm:pt-14 md:pb-18 md:pt-16">
-          <div className="mx-auto max-w-3xl text-center">
+<div className="relative mx-auto w-full min-w-0 max-w-5xl px-4 pb-14 pt-12 sm:px-8 sm:pb-16 sm:pt-14 md:pb-18 md:pt-16">   <div className="mx-auto max-w-3xl text-center">
             <div className="flex items-center justify-center gap-3">
               <span className="h-px w-9 bg-[#52688F]/35 sm:w-12" />
 
@@ -835,9 +832,7 @@ const calendarMonthLabel = useMemo(() => {
 
         <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[#EAF1F7] to-transparent" />
       </section>
-
-      <main className="relative mx-auto max-w-7xl px-5 pb-20 md:px-8 md:pb-28">
-        <section className="relative mx-auto -mt-7 max-w-5xl animate-[contentEnter_0.9s_0.2s_both_ease-out]">
+<main className="relative mx-auto w-full min-w-0 max-w-7xl px-4 pb-20 sm:px-5 md:px-8 md:pb-28">  <section className="relative mx-auto -mt-7 max-w-5xl animate-[contentEnter_0.9s_0.2s_both_ease-out]">
           <div className="absolute -inset-5 rounded-[45px] bg-[#52688F]/[0.045] blur-2xl" />
 
           <div className="relative">
